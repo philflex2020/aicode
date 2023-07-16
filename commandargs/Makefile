@@ -18,5 +18,5 @@ clean:
 	rm -f build/cmdargs
 	rm -f build/cmdargs_test
 
-test: build/cmdargs_test
+test: build build/cmdargs_test
 	./build/cmdargs_test
