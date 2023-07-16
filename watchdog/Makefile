@@ -18,5 +18,5 @@ clean:
 
 
 
-test: build/watchdogtest
+test: build build/watchdogtest
 	./build/watchdogtest
