@@ -1,3 +1,15 @@
+### Overview
+
+This took less than 45 minutes to 
+* generate the spec
+* split up the response
+* slightly modify the code
+* build and run tests
+* commit to git
+
+The code is about 80% complete and will require less than a day to complete.
+
+
 ### Request
 
 create a c++ logging control object as an include file.
@@ -18,8 +30,6 @@ Provide a Makefile, gtest code and documentation for the system.
 ChatGPT
 Certainly! Here's an example implementation of the logging control object in C++ as an include file:
 
-cpp
-Copy code
 ### LogginControlObject
 
 ```
