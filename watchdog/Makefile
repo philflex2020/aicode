@@ -1,22 +1,30 @@
 CC = g++
-CFLAGS = -std=c++17 -pthread -lgtest -lgmock
+CFLAGS = -std=c++17 -pthread -lgtest -lgmock 
 
-all: build build/watchdog build/watchdogtest
+SRC = src/Watchdog.cpp
+TEST_SRC = test/WatchdogTest.cpp
+
+OBJ = build/Watchdog
+TEST_OBJ = build/WatchdogTest
+
+all: build $(OBJ) $(TEST_OBJ)
+
 
 build:
 	mkdir -p build
 
-build/watchdog: src/Watchdog.cpp
+$(OBJ): $(SRC)
 	$(CC) $(CFLAGS) -I./include  -o $@ $<
 
-build/watchdogtest: test/WatchdogTest.cpp
+$(TEST_OBJ): $(TEST_SRC)
 	$(CC) $(CFLAGS) -I./include  -o $@ $<
+
 
 clean:
-	rm -f build/watchdog
-	rm -f build/watchdogtest
+	rm -f $(OBJ)
+	rm -f $(TEST_OBJ)
 
 
 
-test: build build/watchdogtest
-	./build/watchdogtest
+test: build $(TEST_OBJ)
+	./$(TEST_OBJ)
