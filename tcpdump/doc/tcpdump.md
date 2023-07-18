@@ -4,8 +4,16 @@ Show me how to create the pcap file and write a test program using pytest
 ChatGPT
 Certainly! Here's an updated Python script to look for problems like dropped packets, duplicate returns, or excessive response delays in a previously created TCPDump PCAP file and send the findings to an InfluxDB database:
 
-python
-Copy code
+### initial setup
+
+python3 -m pip install scapy
+python3 -m pip install influxdb
+
+
+### python code 
+
+```python
+
 from scapy.all import *
 from influxdb import InfluxDBClient
 
@@ -497,4 +505,28 @@ The second test, test_calculate_average_empty_list, checks if a ValueError is ra
 
 The third test, test_calculate_average_within_range, checks if the calculated average falls within a defined range of values using a tolerance. In this case, the expected average is 30, and the tolerance is set to 1e-6 (a very small value). You can adjust the expected average and tolerance values according to your specific case.
 
+
+
+
+
 Feel free to modify the numbers list and the expected average values in the tests to match your specific requirements.
+from scapy.all import sniff
+pkts = sniff(iface='eth0')
+>>> pkts
+<Sniffed: TCP:346 UDP:0 ICMP:0 Other:0>
+for pkt in pkts:
+    print(pkt.time)
+
+pkt.fields
+
+    {'dst': '02:42:ac:11:00:03', 'src': '02:42:ac:11:00:02', 'type': 2048}
+
+
+['_PickleType', '__all_slots__', '__bool__', '__bytes__', '__class__', '__contains__', '__deepcopy__', '__delattr__', '__delitem__', '__dict__', '__dir__', '__div__', '__doc__', '__eq__', '__format__', '__ge__', '__getattr__', '__getattribute__', '__getitem__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__iter__', '__iterlen__', '__le__', '__len__', '__lt__', '__module__', '__mul__', '__ne__', '__new__', '__nonzero__', '__rdiv__', '__reduce__', '__reduce_ex__', '__repr__', '__rmul__', '__rtruediv__', '__setattr__', '__setitem__', '__setstate__', '__signature__', '__sizeof__', '__slots__', '__str__', '__subclasshook__', '__truediv__', '__weakref__', '_answered', '_defrag_pos', '_do_summary', '_name', '_overload_fields', '_pkt', '_resolve_alias', '_show_or_dump', '_superdir', 'add_parent', 'add_payload', 'add_underlayer', 'aliastypes', 'answers', 'build', 'build_done', 'build_padding', 'build_ps', 'canvas_dump', 'class_default_fields', 'class_default_fields_ref', 'class_dont_cache', 'class_fieldtype', 'class_packetfields', 'clear_cache', 'clone_with', 'command', 'comment', 'copy', 'copy_field_value', 'copy_fields_dict', 'decode_payload_as', 'default_fields', 'default_payload_class', 'delfieldval', 'deprecated_fields', 'direction', 'dispatch_hook', 'display', 'dissect', 'dissection_done', 'do_build', 'do_build_payload', 'do_build_ps', 'do_dissect', 'do_dissect_payload', 'do_init_cached_fields', 'do_init_fields', 'dst', 'explicit', 'extract_padding', 'fields', 'fields_desc', 'fieldtype', 'firstlayer', 'fragment', 'from_hexcap', 'get_field', 'getfield_and_val', 'getfieldval', 'getlayer', 'guess_payload_class', 'hashret', 'haslayer', 'hide_defaults', 'init_fields', 'iterpayloads', 'lastlayer', 'layers', 'lower_bonds', 'match_subclass', 'mysummary', 'name', 'original', 'overload_fields', 'overloaded_fields', 'packetfields', 'parent', 'payload', 'payload_guess', 'pdfdump', 'post_build', 'post_dissect', 'post_dissection', 'post_transforms', 'pre_dissect', 'prepare_cached_fields', 'psdump', 'raw_packet_cache', 'raw_packet_cache_fields', 'remove_parent', 'remove_payload', 'remove_underlayer', 'route', 'self_build', 'sent_time', 'setfieldval', 'show', 'show2', 'show_indent', 'show_summary', 'sniffed_on', 'sprintf', 'src', 'summary', 'svgdump', 'time', 'type', 'underlayer', 'upper_bonds', 'wirelen']
+psdump
+
+<bound method _CanvasDumpExtended.psdump of <Ether  dst=02:42:ac:11:00:02 src=02:42:ac:11:00:03 type=IPv4 |<IP  version=4 ihl=5 tos=0x0 len=61 id=23617 flags=DF frag=0 ttl=64 proto=tcp chksum=0x8652 src=172.17.0.3 dst=172.17.0.2 |<TCP  sport=asa_appl_proto dport=33100 seq=2899372965 ack=3076916004 dataofs=8 reserved=0 flags=PA window=509 chksum=0x5857 urgptr=0 options=[('NOP', None), ('NOP', None), ('Timestamp', (4145049997, 762014087))] |<Raw  load='\x003\x00\x00\x00\x03\\xff\\x83\x02' |>>>>>
+<bound method _CanvasDumpExtended.psdump of <Ether  dst=02:42:ac:11:00:03 src=02:42:ac:11:00:02 type=IPv4 |<IP  version=4 ihl=5 tos=0x10 len=52 id=41413 flags=DF frag=0 ttl=64 proto=tcp chksum=0x40c7 src=172.17.0.2 dst=172.17.0.3 |<TCP  sport=33100 dport=asa_appl_proto seq=3076916004 ack=2899372974 dataofs=8 reserved=0 flags=A window=501 chksum=0x584e urgptr=0 options=[('NOP', None), ('NOP', None), ('Timestamp', (762014088, 4145049997))] |>>>>
+<bound method _CanvasDumpExtended.psdump of <Ether  dst=02:42:ac:11:00:02 src=02:42:ac:11:00:03 type=IPv4 |<IP  version=4 ihl=5 tos=0x0 len=61 id=14363 flags=DF frag=0 ttl=64 proto=tcp chksum=0xaa78 src=172.17.0.3 dst=172.17.0.2 |<TCP  sport=asa_appl_proto dport=33102 seq=260926324 ack=707690419 dataofs=8 reserved=0 flags=PA window=509 chksum=0x5857 urgptr=0 options=[('NOP', None), ('NOP', None), ('Timestamp', (4145049997, 762014088))] |<Raw  load='\x00+\x00\x00\x00\x03\\xff\\x83\x02' |>>>>>
+<bound method _CanvasDumpExtended.psdump of <Ether  dst=02:42:ac:11:00:03 src=02:42:ac:11:00:02 type=IPv4 |<IP  version=4 ihl=5 tos=0x10 len=52 id=21931 flags=DF frag=0 ttl=64 proto=tcp chksum=0x8ce1 src=172.17.0.2 dst=172.17.0.3 |<TCP  sport=33102 dport=asa_appl_proto seq=707690419 ack=260926333 dataofs=8 reserved=0 flags=A window=501 chksum=0x584e urgptr=0 options=[('NOP', None), ('NOP', None), ('Timestamp', (762014088, 4145049997))] |>>>>
+<bound method _CanvasDumpExtended.psdump of <Ether  dst=02:42:ac:11:00:03 src=02:42:ac:11:00:02 type=IPv4 |<IP  version=4 ihl=5 tos=0x10 len=64 id=41414 flags=DF frag=0 ttl=64 proto=tcp chksum=0x40ba src=172.17.0.2 dst=172.17.0.3 |<TCP  sport=33100 dport=asa_appl_proto seq=3076916004 ack=2899372974 dataofs=8 reserved=0 flags=PA window=501 chksum=0x585a urgptr=0 options=[('NOP', None), ('NOP', None), ('Timestamp', (762014088, 4145049997))] |<Raw  load='\x004\x00\x00\x00\x06\\xff\x03\\x9c\\xdc\x00\x01' |>>>>>

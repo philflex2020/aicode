@@ -79,6 +79,48 @@ struct TimerList {
         }
 
     };
+    void add(const std::string& id, int startTimeMs,
+                        int expireTimeMs,
+                        int reloadTimeMs,
+                        std::function<void(void *, Timer*, void*)> callback,
+                        void* callbackParam) {
+        std::lock_guard<std::mutex> lock(timersMutex);
+
+        // Check if the timer already exists
+        auto timerIt = std::find_if(timers.begin(), timers.end(), [id](const Timer& timer) {
+            return timer.id == id;
+        });
+
+        auto startTime =std::chrono::milliseconds(startTimeMs);
+        auto expireTime =std::chrono::milliseconds(expireTimeMs);
+        auto reloadTime =std::chrono::milliseconds(reloadTimeMs);
+
+        if (timerIt != timers.end()) {
+            // Modify existing timer
+            Timer& existingTimer = *timerIt;
+            existingTimer.startTime = std::chrono::high_resolution_clock::now() + startTime;
+            existingTimer.expireTime = existingTimer.startTime + expireTime;
+            existingTimer.reloadTime = reloadTime;
+            existingTimer.callback = callback;
+            existingTimer.callbackParam = callbackParam;
+
+            std::sort(timers.begin(), timers.end(), compareTimers);
+        } else {
+            // Add new timer
+            Timer newTimer;
+            newTimer.id = id;
+            newTimer.startTime = std::chrono::high_resolution_clock::now() + startTime;
+            newTimer.expireTime = newTimer.startTime + expireTime;
+            newTimer.reloadTime = reloadTime;
+            newTimer.callback = callback;
+            newTimer.callbackParam = callbackParam;
+            timers.push_back(newTimer);
+            std::sort(timers.begin(), timers.end(), compareTimers);
+        }
+
+        timersCV.notify_one();
+    };
+
     // Function to add or modify a timer in the list
     void addOrModifyTimer(const std::string& id, std::chrono::high_resolution_clock::duration startTime,
                         std::chrono::high_resolution_clock::duration expireTime,

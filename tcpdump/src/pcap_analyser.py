@@ -1,3 +1,4 @@
+import sys
 from scapy.all import *
 from influxdb import InfluxDBClient
 
@@ -20,18 +21,34 @@ duplicate_returns = []
 excessive_delays = []
 
 for packet in packets:
+    print (packet)
+    if packet.haslayer(ARP):
+        arp_packet = packet[ARP]
+        print('ARP opcode: ', str(arp_packet.op))
+        print('ARP sender MAC: ', arp_packet.hwsrc)
+        print('ARP target MAC: ', arp_packet.hwdst)
+        print('ARP sender IP: ', arp_packet.psrc)
+        print('ARP target IP: ', arp_packet.pdst)
     # Detect dropped packets
-    if packet.time - packets[packet.time - 1].time > 0.1:
-        dropped_packets.append(packet)
+    try:
+        if packet.time - packets[packet.time - 1].time > 0.1:
+            dropped_packets.append(packet)
+    except:
+        print ( " ...... unable to get packet.time")
 
     # Detect duplicate returns
-    if packet.duplicated == 1:
-        duplicate_returns.append(packet)
+    #if packet.duplicated == 1:
+    #    duplicate_returns.append(packet)
 
     # Detect excessive response delays
     if packet.haslayer(TCP) and packet.haslayer(IP):
-        if packet.time - packets[packet.time - 1].time > 0.5:
-            excessive_delays.append(packet)
+        try:
+            if packet.time - packets[packet.time - 1].time > 0.5:
+                excessive_delays.append(packet)
+        except:
+            print ( " ...... TCP layer unable to get packet.time")
+
+sys.exit()
 
 # Connect to InfluxDB
 client = InfluxDBClient(**influx_config)
