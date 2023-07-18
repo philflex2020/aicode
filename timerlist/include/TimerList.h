@@ -38,12 +38,16 @@ bool compareTimers(const Timer& t1, const Timer& t2) {
     return t1.expireTime < t2.expireTime;
 }
 
+
+
 struct TimerList {
     // Variables for managing timers
     std::vector<Timer> timers;
     std::mutex timersMutex;
     std::condition_variable timersCV;
     bool terminateThread = false;
+    std::thread tlThread;
+    bool threadRunning = false;
 
     static void timerManagementThread(TimerList& tl) {
         while (true) {
@@ -78,7 +82,18 @@ struct TimerList {
             }
         }
 
-    };
+    }; 
+    
+    // std::thread run(TimerList* tl) { 
+    //     std::lock_guard<std::mutex> lock(timersMutex);
+    //     if (!threadRunning)
+    //     {
+    //         //tlthread = std::thread(timerManagementThread, std::ref(tl));
+    //         threadRunning = true;
+    //     }
+    //     return tlThread;
+    // };
+
     void add(const std::string& id, int startTimeMs,
                         int expireTimeMs,
                         int reloadTimeMs,
@@ -153,7 +168,7 @@ struct TimerList {
             newTimer.reloadTime = reloadTime;
             newTimer.callback = callback;
             newTimer.callbackParam = callbackParam;
-            timers.push_back(newTimer);
+            timers.push_back(std::move(newTimer));
             std::sort(timers.begin(), timers.end(), compareTimers);
         }
 
@@ -163,6 +178,12 @@ struct TimerList {
     // Function to delete a timer from the list
     void deleteTimer(const std::string& id) {
         std::lock_guard<std::mutex> lock(timersMutex);
+        timers.erase(std::remove_if(timers.begin(), timers.end(), [id](const Timer& timer) {
+            return timer.id == id;
+        }), timers.end());
+    };
+
+    void deleteTimerNoLock(const std::string& id) {
         timers.erase(std::remove_if(timers.begin(), timers.end(), [id](const Timer& timer) {
             return timer.id == id;
         }), timers.end());
@@ -187,9 +208,23 @@ struct TimerList {
     // Function to delete all items in the timer list
     void deleteAllTimers() {
         std::lock_guard<std::mutex> lock(timersMutex);
+        int idx = 0;
+        for (auto &timer : timers) {
+            //timers.erase(idx, idx+1);
+            idx++;
+        }
         timers.clear();
     }
-
-
 };
 
+std::thread TimerListRun (TimerList &tl) {
+    std::lock_guard<std::mutex> lock(tl.timersMutex);
+    std::thread tlThread;
+    if (!tl.threadRunning)
+    {
+        tlThread = std::thread(tl.timerManagementThread, std::ref(tl));
+        tl.tlThread = std::move(tlThread);
+        tl.threadRunning = true;
+    }
+    return tlThread;
+}
