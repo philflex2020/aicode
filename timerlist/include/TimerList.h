@@ -91,9 +91,9 @@ struct TimerList {
             return timer.id == id;
         });
 
-        auto startTime =std::chrono::milliseconds(startTimeMs);
-        auto expireTime =std::chrono::milliseconds(expireTimeMs);
-        auto reloadTime =std::chrono::milliseconds(reloadTimeMs);
+        auto startTime  = std::chrono::milliseconds(startTimeMs);
+        auto expireTime = std::chrono::milliseconds(expireTimeMs);
+        auto reloadTime = std::chrono::milliseconds(reloadTimeMs);
 
         if (timerIt != timers.end()) {
             // Modify existing timer
