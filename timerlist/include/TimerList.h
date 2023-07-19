@@ -228,3 +228,31 @@ std::thread TimerListRun (TimerList &tl) {
     }
     return tlThread;
 }
+
+
+class MyClass {
+public:
+    std::thread mythread;
+
+    void workerThread() {
+        // Function that can be run as a separate thread
+        for (int i = 0; i < 5; i++) {
+            std::cout << "Worker Thread: " << i << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    }
+
+    void runWorkerThread() {
+        // Function that creates a separate thread and runs workerThread()
+        std::thread threadObj(&MyClass::workerThread, this);
+        mythread = threadObj;
+        //mythread(&MyClass::workerThread, this);
+        //threadObj.join();  // Wait for the thread to finish
+    }
+};
+
+// int main() {
+//     MyClass obj;
+//     obj.runWorkerThread();
+//     return 0;
+// }
