@@ -1,17 +1,25 @@
 CC = g++
-CFLAGS = -std=c++11 -Wall
+CFLAGS = -std=c++17 -Wall -Iinclude
 LIBS = -lpthread
 
-SRC = main.cpp DataTransferManager.cpp
-OBJS = $(SRC:.cpp=.o)
-EXECUTABLE = data_transfer_example
+SRC = src/main.cpp 
+#src/DataTransferManager.cpp
+OBJS = build/main.o 
+#build/DataTransferManager.o
+EXECUTABLE = build/data_transfer_example
 
-all: $(EXECUTABLE)
+all: build $(EXECUTABLE)
+
+build:
+	mkdir -p build
 
 $(EXECUTABLE): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(EXECUTABLE) $(LIBS)
+	$(CC) $(CFLAGS) build/*.o -o $(EXECUTABLE) $(LIBS)
 
-.cpp.o:
+build/main.o: src/main.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/DataTransferManager.o: src/DataTransferManager.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
