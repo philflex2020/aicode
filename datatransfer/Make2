@@ -1,0 +1,33 @@
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic -Iinclude
+
+# Directories
+SRCDIR = src
+BUILDDIR = build
+
+# Example code source files
+EXAMPLE_SRCS = $(SRCDIR)/main2.cpp
+EXAMPLE_OBJS = $(patsubst $(SRCDIR)/%.cpp,$(BUILDDIR)/%.o,$(EXAMPLE_SRCS))
+
+# Output binary names
+EXAMPLE_BIN = build/example
+
+# Targets
+.PHONY: all clean
+
+all: $(EXAMPLE_BIN)
+
+# Example code compilation
+$(EXAMPLE_BIN): $(EXAMPLE_OBJS) include/DataTransSmart.h
+	$(CXX) $(CXXFLAGS) $^ -o $@ -lpthread
+
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Create build directory if it does not exist
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+
+clean:
+	rm -rf $(BUILDDIR) $(EXAMPLE_BIN)
