@@ -4,10 +4,13 @@
 Create a timetracker object that creates a list of named objects.
 Each object is given a time interval (in nanoseconds) to record.
 The TimeTracker will record the max , min, avg of each sample given to each object.
-The Timetracker will contruct a Json string for the object on request , a key string for the object is pacced in to the request 
+THe list is stored in a strcture using a timestore thread and the time tracker sends the collected time samples to the thread for storage.
 
-Additionally, gtest functions and a Makefile are provided.
-Note the timetracker object names are now possibly, redundant.
+The Timetracker will construct a Json string for one or more named objects  on request, a key string for the json output  is placed in to the request 
+
+Additionally, please provide detailed  gtest code, sample code  and a Makefile.
+Put the cpp code in the src directory , the include files in the include directory and the test objects in the test directory.
+
 
 ### TimeTracker Include
 

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Canvas with Rectangular Objects</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div>
+        <button onclick="handleButtonClick('create')">Create Object</button>
+        <button onclick="handleButtonClick('delete')">Delete Last Object</button>
+        <button onclick="handleButtonClick('move')">Move Last Object</button>
+    </div>
+    <script>
+        let socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // 3D Canvas setup
+        let scene, camera, renderer;
+        let objects = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            camera.position.z = 5;
+            camera.lookAt(scene.position);
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function createObject() {
+            const geometry = new THREE.BoxGeometry(10, 10, 10);
+            const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+            const object = new THREE.Mesh(geometry, material);
+            // Set the position and other properties of the object as required
+            object.position.set(Math.random() * 5, Math.random() * 5, Math.random() * 5);
+            scene.add(object);
+            objects.push(object);
+        }
+
+        function deleteObject() {
+            const object = objects.pop();
+            if (object) {
+                scene.remove(object);
+            }
+        }
+
+        function moveObject() {
+            const object = objects[objects.length - 1];
+            if (object) {
+                object.position.x += 0.5;
+                object.position.y += 0.5;
+                object.position.z += 0.5;
+
+                // Emit the updated object position to the server
+                socket.emit('move_object', {
+                    name: object.name,
+                    x: object.position.x,
+                    y: object.position.y,
+                    z: object.position.z
+                });
+            }
+        }
+
+        // Event listener for 'object_moved' from server
+        socket.on('object_moved', function (data) {
+            // Find the object in the 3D canvas by name and update its position
+            const object = objects.find(obj => obj.name === data.name);
+            if (object) {
+                object.position.x = data.x;
+                object.position.y = data.y;
+                object.position.z = data.z;
+            }
+        });
+
+        // Function to handle button clicks
+        function handleButtonClick(action) {
+            if (action === 'create') {
+                createObject();
+            } else if (action === 'delete') {
+                deleteObject();
+            } else if (action === 'move') {
+                moveObject();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

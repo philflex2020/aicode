@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Canvas with Rectangular Objects</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script>
+        let scene, camera, renderer;
+        const objects = []; // Array to store rectangular objects
+
+        function init() {
+            // Create the Three.js scene, camera, and renderer
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Add a simple cube as a placeholder for the rectangular objects
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            objects.push(cube);
+
+            // Set up the camera position and look at the center of the scene
+            camera.position.z = 5;
+            camera.lookAt(scene.position);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            // Add any animations or updates for your objects here
+            renderer.render(scene, camera);
+        }
+
+        // Function to create a new rectangular object
+        function createObject() {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const object = new THREE.Mesh(geometry, material);
+            // Set the position and other properties of the object as required
+            scene.add(object);
+            objects.push(object);
+        }
+
+        // Function to delete the last created rectangular object
+        function deleteObject() {
+            const object = objects.pop();
+            if (object) {
+                scene.remove(object);
+            }
+        }
+
+        // Function to move the last created rectangular object to a new position
+        function moveObject() {
+            const object = objects[objects.length - 1];
+            if (object) {
+                // Set the new position and other properties of the object as required
+                object.position.x += 1;
+                object.position.y += 1;
+                object.position.z += 1;
+            }
+        }
+
+        // Function to handle button clicks
+        function handleButtonClick(action) {
+            if (action === 'create') {
+                createObject();
+            } else if (action === 'delete') {
+                deleteObject();
+            } else if (action === 'move') {
+                moveObject();
+            }
+        }
+
+        // Add buttons to interact with the objects
+        const buttons = ['create', 'delete', 'move'];
+        for (const button of buttons) {
+            const btn = document.createElement('button');
+            btn.innerText = button.charAt(0).toUpperCase() + button.slice(1);
+            btn.addEventListener('click', () => handleButtonClick(button));
+            document.body.appendChild(btn);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>

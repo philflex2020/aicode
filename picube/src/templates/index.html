@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Object Display</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <style>
+        #canvas {
+            width: 800px;
+            height: 600px;
+        }
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>3D Object Display</h1>
+    <div>
+        <canvas id="canvas"></canvas>
+    </div>
+    <div>
+        <h2>Control Panel</h2>
+        <form id="objectForm">
+            <label for="objectName">Object Name:</label>
+            <input type="text" id="objectName" required>
+            <label for="xCoord">X:</label>
+            <input type="number" id="xCoord" required>
+            <label for="yCoord">Y:</label>
+            <input type="number" id="yCoord" required>
+            <label for="zCoord">Z:</label>
+            <input type="number" id="zCoord" required>
+            <label for="size">Size:</label>
+            <input type="number" id="size" required>
+            <label for="color">Color:</label>
+            <input type="text" id="color" required>
+            <label for="slewRate">Slew Rate:</label>
+            <input type="number" id="slewRate" required>
+            <input type="submit" value="Add Object">
+        </form>
+    </div>
+    <div>
+        <h2>Object List</h2>
+        <table id="objectTable">
+            <tr>
+                <th>Name</th>
+                <th>X</th>
+                <th>Y</th>
+                <th>Z</th>
+                <th>Size</th>
+                <th>Color</th>
+                <th>Slew Rate</th>
+                <th>Action</th>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:8000');
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        function drawObjects(objects) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const obj of Object.values(objects)) {
+                ctx.beginPath();
+                ctx.arc(obj.x, obj.y, obj.size, 0, 2 * Math.PI);
+                ctx.fillStyle = obj.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server.');
+        });
+
+        socket.on('list_objects', (data) => {
+            const objectTable = document.getElementById('objectTable');
+            const tbody = objectTable.getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+
+            for (const [name, obj] of Object.entries(data)) {
+                const row = tbody.insertRow();
+                row.insertCell().innerText = name;
+                row.insertCell().innerText = obj.x;
+                row.insertCell().innerText = obj.y;
+                row.insertCell().innerText = obj.z;
+                row.insertCell().innerText = obj.size;
+                row.insertCell().innerText = obj.color;
+                row.insertCell().innerText = obj.slew_rate;
+                const moveButton = document.createElement('button');
+                moveButton.innerText = 'Move';
+                moveButton.addEventListener('click', () => {
+                    moveObject(name, obj.x, obj.y, obj.z, obj.slew_rate);
+                });
+                row.insertCell().appendChild(moveButton);
+            }
+
+            drawObjects(data);
+        });
+
+        function addNewObject() {
+            const objectForm = document.getElementById('objectForm');
+            const objectName = document.getElementById('objectName').value;
+            const xCoord = parseFloat(document.getElementById('xCoord').value);
+            const yCoord = parseFloat(document.getElementById('yCoord').value);
+            const zCoord = parseFloat(document.getElementById('zCoord').value);
+            const size = parseFloat(document.getElementById('size').value);
+            const color = document.getElementById('color').value;
+            const slewRate = parseFloat(document.getElementById('slewRate').value);
+
+            const data = {
+                name: objectName,
+                x: xCoord,
+                y: yCoord,
+                z: zCoord,
+                size: size,
+                color: color,
+                slew_rate: slewRate
+            };
+
+            socket.emit('add_object', data);
+            objectForm.reset();
+        }
+
+        document.getElementById('objectForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            addNewObject();
+        });
+
+        function moveObject(name, x, y, z, slewRate) {
+            const newX = parseFloat(prompt('Enter new X coordinate:', x));
+            const newY = parseFloat(prompt('Enter new Y coordinate:', y));
+            const newZ = parseFloat(prompt('Enter new Z coordinate:', z));
+
+            if (!isNaN(newX) && !isNaN(newY) && !isNaN(newZ)) {
+                const data = {
+                    name: name,
+                    x: newX,
+                    y: newY,
+                    z: newZ,
+                    slew_rate: slewRate
+                };
+                socket.emit('move_object', data);
+            }
+        }
+    </script>
+</body>
+</html>

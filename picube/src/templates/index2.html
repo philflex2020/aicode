@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Objects</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <script>
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('update_objects', (objects) => {
+            // Clear the previous scene
+            document.getElementById('canvas-container').innerHTML = '';
+
+            // Create a new scene and camera
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            // Set the camera position
+            camera.position.z = 400;
+
+            // Create a new WebGLRenderer
+            const renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // Append the renderer to the container
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Create and add objects to the scene
+            for (const [name, obj] of Object.entries(objects)) {
+                const geometry = new THREE.BoxGeometry(obj.size, obj.size, obj.size);
+                const material = new THREE.MeshBasicMaterial({ color: obj.color });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.x = obj.x;
+                cube.position.y = obj.y;
+                cube.position.z = obj.z;
+                scene.add(cube);
+            }
+
+            // Render the scene
+            renderer.render(scene, camera);
+        });
+
+        function moveObject() {
+            const name = document.getElementById('obj-name').value;
+            const x = parseFloat(document.getElementById('obj-x').value);
+            const y = parseFloat(document.getElementById('obj-y').value);
+            const z = parseFloat(document.getElementById('obj-z').value);
+            const slew_rate = parseFloat(document.getElementById('obj-slew-rate').value);
+
+            const data = {
+                name: name,
+                x: x,
+                y: y,
+                z: z,
+                slew_rate: slew_rate
+            };
+
+            socket.emit('move_object', data);
+        }
+
+        function listObjects() {
+            socket.emit('list_objects');
+        }
+
+        socket.on('list_objects', (objects) => {
+            const table = document.getElementById('objects-table');
+            table.innerHTML = ''; // Clear the previous table
+
+            // Create the table header
+            const headerRow = table.insertRow();
+            const headerName = headerRow.insertCell();
+            const headerX = headerRow.insertCell();
+            const headerY = headerRow.insertCell();
+            const headerZ = headerRow.insertCell();
+            headerName.innerText = 'Name';
+            headerX.innerText = 'X';
+            headerY.innerText = 'Y';
+            headerZ.innerText = 'Z';
+
+            // Create table rows for each object
+            for (const [name, obj] of Object.entries(objects)) {
+                const row = table.insertRow();
+                const cellName = row.insertCell();
+                const cellX = row.insertCell();
+                const cellY = row.insertCell();
+                const cellZ = row.insertCell();
+                cellName.innerText = name;
+                cellX.innerText = obj.x;
+                cellY.innerText = obj.y;
+                cellZ.innerText = obj.z;
+
+                // Add click event listener to select an object
+                row.addEventListener('click', () => {
+                    document.getElementById('obj-name').value = name;
+                    document.getElementById('obj-x').value = obj.x;
+                    document.getElementById('obj-y').value = obj.y;
+                    document.getElementById('obj-z').value = obj.z;
+                });
+            }
+        });
+    </script>
+    <div>
+        <label for="obj-name">Object Name:</label>
+        <input type="text" id="obj-name">
+        <label for="obj-x">X:</label>
+        <input type="number" id="obj-x">
+        <label for="obj-y">Y:</label>
+        <input type="number" id="obj-y">
+        <label for="obj-z">Z:</label>
+        <input type="number" id="obj-z">
+        <label for="obj-slew-rate">Slew Rate:</label>
+        <input type="number" id="obj-slew-rate">
+        <button onclick="moveObject()">Move Object</button>
+        <button onclick="listObjects()">List Objects</button>
+    </div>
+
+    <table id="objects-table">
+        <!-- Table of objects will be dynamically generated here -->
+    </table>
+</body>
+</html>

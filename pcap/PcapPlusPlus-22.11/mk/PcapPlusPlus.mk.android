@@ -1,0 +1,6 @@
+
+#flags
+PCAPPP_BUILD_FLAGS += --target=$(ANDROID_TARGET) --gcc-toolchain=$(ANDROID_TOOLCHAIN) --sysroot=$(ANDROID_TOOLCHAIN)/sysroot
+
+# libs
+PCAPPP_LIBS += -lpcap

@@ -9,6 +9,9 @@ If no change is detected in the alarm time the watchdog enters the alarm state a
 If the watchdog object is in a fault or warning state and detects an input change it enters the recovery state for the recovery time period and executes a recovery callback with the watchdog object and a void * as parameters.
 If the input continues to change during the recovery time  the watchdog will enter an normal state and executes a normal callback with the watchdog object and a void * as parameters.
 
+If the watchdog receives no input at all i wiil automatically enter the warning and fault states.
+
+
 // value not changed after interval time == problem
    // if problem
    // if (normal)

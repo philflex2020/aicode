@@ -1,0 +1,4 @@
+Spec https://chat.openai.com/c/0994e1ef-95a1-4302-bb65-6b88d3d2ad77
+DataTransfer Manager https://chat.openai.com/c/70c13bd5-6d18-442e-8630-88e236d6a3f8
+Logging Control https://chat.openai.com/c/c5c4792a-3974-4a23-bf84-bfeb3421ffa5
+https://chat.openai.com/c/c5c4792a-3974-4a23-bf84-bfeb3421ffa5
