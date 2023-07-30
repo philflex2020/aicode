@@ -24,30 +24,30 @@ void addDataMapObject(AssetManager& assetManager, const std::string& name, DataM
 }
 
 // Function to map data from the asset_manager to the DataMap data area
-void setDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName) {
-    if (am->amap.find(itemName) != am->amap.end() && dataMap->dataItems.find(itemName) != dataMap->dataItems.end()) {
-        DataItem *dataItem = dataMap->dataItems[itemName];
+void setDataItem(AssetManager* am, DataMap* dataMap, const std::string& amapName, const std::string& mapName) {
+    if (am->amap.find(amapName) != am->amap.end() && dataMap->dataItems.find(mapName) != dataMap->dataItems.end()) {
+        DataItem *dataItem = dataMap->dataItems[mapName];
         if (dataItem->type == "int") {
-            *(int *)(&dataMap->dataArea[dataItem->offset]) = am->amap[itemName].value.intValue;
+            *(int *)(&dataMap->dataArea[dataItem->offset]) = am->amap[amapName]->value.intValue;
         } else if (dataItem->type == "double") {
-            *(double *)(&dataMap->dataArea[dataItem->offset]) = am->amap[itemName].value.doubleValue;
+            *(double *)(&dataMap->dataArea[dataItem->offset]) = am->amap[amapName]->value.doubleValue;
         } else if (dataItem->type == "char") {
-            *(char*)(&dataMap->dataArea[dataItem->offset]) = am->amap[itemName].value.charValue;
+            *(char*)(&dataMap->dataArea[dataItem->offset]) = am->amap[amapName]->value.charValue;
         }
         // Add more cases for other data types as needed
     }
 }
 
 // Function to map data from the DataMap data area to the asset_manager
-void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName) {
-    if (am->amap.find(itemName) != am->amap.end() && dataMap->dataItems.find(itemName) != dataMap->dataItems.end()) {
-        DataItem *dataItem = dataMap->dataItems[itemName];
+void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& amapName, const std::string& mapName) {
+    if (am->amap.find(amapName) != am->amap.end() && dataMap->dataItems.find(mapName) != dataMap->dataItems.end()) {
+        DataItem *dataItem = dataMap->dataItems[mapName];
         if (dataItem->type == "int") {
-            am->amap[itemName].value.intValue = *(int*)(&dataMap->dataArea[dataItem->offset]);
+            am->amap[amapName]->value.intValue = *(int*)(&dataMap->dataArea[dataItem->offset]);
         } else if (dataItem->type == "double") {
-            am->amap[itemName].value.doubleValue = *(double*)(&dataMap->dataArea[dataItem->offset]);
+            am->amap[amapName]->value.doubleValue = *(double*)(&dataMap->dataArea[dataItem->offset]);
         } else if (dataItem->type == "char") {
-            am->amap[itemName].value.charValue = *(char *)(&dataMap->dataArea[dataItem->offset]);
+            am->amap[amapName]->value.charValue = *(char *)(&dataMap->dataArea[dataItem->offset]);
         }
         // Add more cases for other data types as needed
     }
@@ -59,7 +59,7 @@ void* printIntData(char* dataArea, void* arg1, void* arg2, void* arg3) {
     if(arg2) args = true;
     if(arg3) args = true;
     if(args)
-      std::cout << "we got args"<<std::endl;
+      std::cout << __func__<< "we got args"<<std::endl;
     int offset = *static_cast<int*>(arg1);
     int value = *(int*)&dataArea[offset];
     std::cout << "Integer value at offset " << offset << ": " << value << std::endl;
@@ -69,13 +69,53 @@ void* printIntData(char* dataArea, void* arg1, void* arg2, void* arg3) {
 // Sample function 2: Increment the integer value at the given offset in the data area
 void* incrementIntData(char* dataArea, void* arg1, void* arg2, void* arg3) {
     bool args = false;
-    if(arg2) args = true;
+    //if(arg2) args = true;
     if(arg3) args = true;
     if(args)
-      std::cout << "we got args"<<std::endl;
+      std::cout << __func__<<"we got args"<<std::endl;
     int offset = *static_cast<int*>(arg1);
     int incrementValue = *static_cast<int*>(arg2);
     int& value = *(int*)&dataArea[offset];
     value += incrementValue;
     return nullptr;
+}
+
+
+AssetVar *setAVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , std::string type)
+{
+    AssetVar * av = nullptr;
+    if (vmap.find(uri) == vmap.end() )
+    {
+        std::map<std::string, AssetVar*> ci;
+        vmap[uri] = ci;
+    }
+    auto cx = vmap[uri];
+    if (cx.find(id) == cx.end())
+    {
+        cx[id] = new AssetVar;
+        cx[id]->name = id;
+        cx[id]->uri = uri;
+        cx[id]->type = type;
+    }
+    av = cx[id];
+    return av;
+}
+
+AssetVar *setVarIVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , int value )
+{
+    AssetVar *av = setAVal(vmap, uri, id , "int");
+    av->value.intValue = value;
+    return av;
+}
+AssetVar *setVarDVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , double value )
+{
+    AssetVar *av = setAVal(vmap, uri, id , "double");
+    av->value.doubleValue = value;
+    return av;
+}
+AssetVar *setVarCVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , char value )
+{
+    AssetVar *av = setAVal(vmap, uri, id , "char");
+    av->value.charValue = value;
+    return av;
 }

@@ -1,7 +1,17 @@
 
 #include "AssetVar.h"
 
+// Define the example_struct
+struct example_struct {
+    int intValue[10];
+    double doubleValue[10];
+    char charValue[10];
+    // Add more elements as needed
+};
+
 // Example usage
+std::map<std::string, std::map<std::string, AssetVar*>> vmap;
+
 int main() {
     AssetManager assetManager;
 
@@ -9,7 +19,10 @@ int main() {
     DataMap dataMapObject;
 
     dataMapObject.dataSize = sizeof(example_struct); // Updated to use example_struct size
-    dataMapObject.dataArea = (char*) new example_struct; // Example data area with type example_struct
+    auto mapdata = new example_struct;
+    dataMapObject.dataArea = (char*)mapdata; // Example data area with type example_struct
+    mapdata->intValue[0]=1234;
+
 
     // Example DataItem registration from example_struct
     dataMapObject.addDataItem((char*)"intValue", offsetof(example_struct, intValue),(char*)"int",sizeof(int));
@@ -24,20 +37,20 @@ int main() {
 
     // Adding the DataMap object to the AssetManager
     addDataMapObject(assetManager, "example_data_map", dataMapObject);
-
-    // Create a dummy AssetVar to simulate data in the asset_manager
-    AssetVar dummyAssetVar;
-    dummyAssetVar.name = "intValue";
-    dummyAssetVar.uri = "/components/example_data/intValue";
-    dummyAssetVar.type = "int";
-    dummyAssetVar.value.intValue = 42; // Set initial value to 42
-
+   
     // Add the dummy AssetVar to the asset_manager's Amap
-    assetManager.amap[dummyAssetVar.name] = dummyAssetVar;
+    assetManager.amap["intValue"] = setVarIVal(vmap, "/components/example_data","intValue", 42);
+    assetManager.amap["dValue"]   = setVarDVal(vmap, "/components/example_data","dValue", 4.2);
+    assetManager.amap["cValue"]   = setVarCVal(vmap, "/components/example_data","cValue", 'a');
 
     // Example mapping data from asset_manager to DataMap data area
-    std::string itemName = "intValue";
-    setDataItem(&assetManager, &dataMapObject, itemName);
+    std::string amapName = "intValue";
+    std::string mapName = "intValue";
+
+    //to map data from assetvars into the map we use setDataTime with the amapName and the Map item name 
+    std::cout << " mapdata value  :"<< mapdata->intValue[0] << std::endl;
+    setDataItem(&assetManager, &dataMapObject, amapName, mapName);
+    std::cout << " mapdata value has changed to :"<< mapdata->intValue[0] << std::endl;
 
     // Example retrieval of DataMap object from AssetManager
     std::string dataMapObjectName = "example_data_map";
@@ -59,8 +72,8 @@ int main() {
         retrievedDataMapObject.namedFunctions["print_int_data"](retrievedDataMapObject.dataArea, &offset, nullptr, nullptr);
 
         // Example mapping data from DataMap data area back to asset_manager
-        getDataItem(&assetManager, &retrievedDataMapObject, itemName);
-        std::cout << "Value in asset_manager for '" << itemName << "': " << assetManager.amap[itemName].value.intValue << std::endl;
+        getDataItem(&assetManager, &retrievedDataMapObject, amapName, mapName);
+        std::cout << "Value in asset_manager for '" << amapName << "': " << assetManager.amap[amapName]->value.intValue << std::endl;
     } else {
         std::cout << "DataMap Object not found in AssetManager." << std::endl;
     }

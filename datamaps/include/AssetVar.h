@@ -24,13 +24,6 @@ struct DataItem {
     size_t size;
 };
 
-// Define the example_struct
-struct example_struct {
-    int intValue[10];
-    double doubleValue[10];
-    char charValue[10];
-    // Add more elements as needed
-};
 
 struct DataMap {
     std::unordered_map<std::string, DataItem*> dataItems;
@@ -44,14 +37,17 @@ struct DataMap {
 };
 struct AssetManager {
     std::unordered_map<std::string, DataMap> dataMapObjects;
-    std::unordered_map<std::string, AssetVar> amap;
+    std::unordered_map<std::string, AssetVar*> amap;
 };
 
 void addDataMapObject(AssetManager& assetManager, const std::string& name, DataMap dataMapObject);
-void setDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName);
-void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName);
+void setDataItem(AssetManager* am, DataMap* dataMap, const std::string& amapName, const std::string& mapName);
+void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& amapName, const std::string& mapName);
 void* printIntData(char* dataArea, void* arg1, void* arg2, void* arg3);
 void* incrementIntData(char* dataArea, void* arg1, void* arg2, void* arg3);
+AssetVar *setVarIVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , int value );
+AssetVar *setVarDVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , double value );
+AssetVar *setVarCVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , char value );
 
 // // Function to add a named DataMap object to the map of DataMap objects in AssetManager
 // void addDataMapObject(AssetManager& assetManager, const std::string& name, DataMap dataMapObject) {
@@ -105,3 +101,4 @@ void* incrementIntData(char* dataArea, void* arg1, void* arg2, void* arg3);
 //     return nullptr;
 // }
 
+ //std::map<std::string, std::map<std::string, AssetVar*>> vmap;
