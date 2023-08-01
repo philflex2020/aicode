@@ -77,13 +77,15 @@ int main() {
     std::string mapName = "intValue";
 
 
-    // create a transfer block called tblock in out data map
-    dataMapObject.addTransferItem("tblock", "intValue", "intValue");
-    dataMapObject.addTransferItem("tblock", "dValue", "doubleValue");
-
     //to map data from assetvars into the map we use setDataTime with the amapName and the Map item name 
     std::cout << " mapdata int value  :"<< mapdata->intValue[0] << std::endl;
     std::cout << " mapdata double value  :"<< mapdata->doubleValue[0] << std::endl;
+
+    // now overwrite the values in example_map with data from the assetVars
+    // see below for the block transfer way of doing this.
+    setDataItem(&assetManager, &dataMapObject, amapName, mapName);
+    setDataItem(&assetManager, &dataMapObject, "dValue", "doubleValue");
+
     
     std::cout << " mapdata value has changed to :"<< mapdata->intValue[0] << std::endl;
     std::cout << " mapdata double value  :"<< mapdata->doubleValue[0] << std::endl;
@@ -118,10 +120,14 @@ int main() {
     //delete static_cast<example_struct*>(dataMapObject.dataArea);
 
 
+    
 
+    // create a transfer block called tblock to define vars used in in our data map
     // now these bits add <amapName, mapName> pairs to t transfer block called tblock
-    setDataItem(&assetManager, &dataMapObject, amapName, mapName);
-    setDataItem(&assetManager, &dataMapObject, "dValue", "doubleValue");
+    dataMapObject.addTransferItem("tblock", "intValue", "intValue");
+    dataMapObject.addTransferItem("tblock", "dValue", "doubleValue");
+
+
     // take a look at it
     dataMapObject.showTransferItems("tblock");
     // load up our tblock items from the assetVars

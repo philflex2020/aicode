@@ -31,12 +31,10 @@ struct DataMap {
     std::unordered_map<std::string, DataItem*> dataItems;
     uint8_t* dataArea;
     size_t dataSize;
-    std::map<std::string, void* (*)(uint8_t*, void*, void*, void*)> namedFunctions;
 
+    std::map<std::string, void* (*)(uint8_t*, void*, void*, void*)> namedFunctions;
     std::map<std::string, std::vector<std::pair<std::string,std::string>>> transferBlocks;
     
-    //std::map<std::string, DataItem*> dataItems;
-
     void addDataItem(char *name, int offset, char *type , int size);
     void addTransferItem(std::string, std::string, std::string);
     void showTransferItems(std::string bname);
@@ -44,6 +42,7 @@ struct DataMap {
     void getFromAmap(std::string bname, AssetManager* am);
 
 };
+
 struct AssetManager {
     std::unordered_map<std::string, DataMap> dataMapObjects;
     std::unordered_map<std::string, AssetVar*> amap;
@@ -56,56 +55,3 @@ AssetVar *setVarIVal(std::map<std::string, std::map<std::string, AssetVar*>> &vm
 AssetVar *setVarDVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , double value );
 AssetVar *setVarCVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , char value );
 
-// // Function to add a named DataMap object to the map of DataMap objects in AssetManager
-// void addDataMapObject(AssetManager& assetManager, const std::string& name, DataMap dataMapObject) {
-//     assetManager.dataMapObjects[name] = dataMapObject;
-// }
-
-// // Function to map data from the asset_manager to the DataMap data area
-// void setDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName) {
-//     if (am->amap.find(itemName) != am->amap.end() && dataMap->dataItems.find(itemName) != dataMap->dataItems.end()) {
-//         DataItem dataItem = dataMap->dataItems[itemName];
-//         if (dataItem.type == "int") {
-//             dataMap->dataArea->intValue[dataItem.offset] = am->amap[itemName].value.intValue;
-//         } else if (dataItem.type == "double") {
-//             dataMap->dataArea->doubleValue[dataItem.offset] = am->amap[itemName].value.doubleValue;
-//         } else if (dataItem.type == "char") {
-//             dataMap->dataArea->charValue[dataItem.offset] = am->amap[itemName].value.charValue;
-//         }
-//         // Add more cases for other data types as needed
-//     }
-// }
-
-// // Function to map data from the DataMap data area to the asset_manager
-// void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName) {
-//     if (am->amap.find(itemName) != am->amap.end() && dataMap->dataItems.find(itemName) != dataMap->dataItems.end()) {
-//         DataItem dataItem = dataMap->dataItems[itemName];
-//         if (dataItem.type == "int") {
-//             am->amap[itemName].value.intValue = dataMap->dataArea->intValue[dataItem.offset];
-//         } else if (dataItem.type == "double") {
-//             am->amap[itemName].value.doubleValue = dataMap->dataArea->doubleValue[dataItem.offset];
-//         } else if (dataItem.type == "char") {
-//             am->amap[itemName].value.charValue = dataMap->dataArea->charValue[dataItem.offset];
-//         }
-//         // Add more cases for other data types as needed
-//     }
-// }
-
-// // Sample function 1: Print the integer value at the given offset in the data area
-// void* printIntData(void* dataArea, void* arg1, void* arg2, void* arg3) {
-//     int offset = *static_cast<int*>(arg1);
-//     int value = static_cast<example_struct*>(dataArea)->intValue[offset];
-//     std::cout << "Integer value at offset " << offset << ": " << value << std::endl;
-//     return nullptr;
-// }
-
-// // Sample function 2: Increment the integer value at the given offset in the data area
-// void* incrementIntData(void* dataArea, void* arg1, void* arg2, void* arg3) {
-//     int offset = *static_cast<int*>(arg1);
-//     int incrementValue = *static_cast<int*>(arg2);
-//     int& value = static_cast<example_struct*>(dataArea)->intValue[offset];
-//     value += incrementValue;
-//     return nullptr;
-// }
-
- //std::map<std::string, std::map<std::string, AssetVar*>> vmap;

@@ -59,8 +59,6 @@ void DataMap::sendToAmap(std::string bname, AssetManager* am)
 void addDataMapObject(AssetManager& assetManager, const std::string& name, DataMap dataMapObject);
 void setDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName);
 void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName);
-void* printIntData(char* dataArea, void* arg1, void* arg2, void* arg3);
-void* incrementIntData(char* dataArea, void* arg1, void* arg2, void* arg3);
 
 
 

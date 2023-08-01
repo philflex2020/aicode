@@ -44,3 +44,6 @@ clean:
 
 test: $(TARGET)
 	$(TARGET)
+
+run: $(TARGET)
+	./$(TARGET)
