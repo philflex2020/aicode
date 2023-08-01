@@ -9,6 +9,33 @@ struct example_struct {
     // Add more elements as needed
 };
 
+// Sample function 1: Print the integer value at the given offset in the data area
+void* printIntData(uint8_t* dataArea, void* arg1, void* arg2, void* arg3) {
+    bool args = false;
+    if(arg2) args = true;
+    if(arg3) args = true;
+    if(args)
+      std::cout << __func__<< "we got args"<<std::endl;
+    int offset = *static_cast<int*>(arg1);
+    int value = *(int*)&dataArea[offset];
+    std::cout << "Integer value at offset " << offset << ": " << value << std::endl;
+    return nullptr;
+}
+
+// Sample function 2: Increment the integer value at the given offset in the data area
+void* incrementIntData(uint8_t* dataArea, void* arg1, void* arg2, void* arg3) {
+    bool args = false;
+    //if(arg2) args = true;
+    if(arg3) args = true;
+    if(args)
+      std::cout << __func__<<"we got args"<<std::endl;
+    int offset = *static_cast<int*>(arg1);
+    int incrementValue = *static_cast<int*>(arg2);
+    int& value = *(int*)&dataArea[offset];
+    value += incrementValue;
+    return nullptr;
+}
+
 // Example usage
 std::map<std::string, std::map<std::string, AssetVar*>> vmap;
 
@@ -20,8 +47,10 @@ int main() {
 
     dataMapObject.dataSize = sizeof(example_struct); // Updated to use example_struct size
     auto mapdata = new example_struct;
-    dataMapObject.dataArea = (char*)mapdata; // Example data area with type example_struct
+    dataMapObject.dataArea = (uint8_t*)mapdata; // Example data area with type example_struct
     mapdata->intValue[0]=1234;
+    mapdata->doubleValue[0]=1.234;
+    
 
 
     // Example DataItem registration from example_struct
@@ -47,10 +76,17 @@ int main() {
     std::string amapName = "intValue";
     std::string mapName = "intValue";
 
+
+    // create a transfer block called tblock in out data map
+    dataMapObject.addTransferItem("tblock", "intValue", "intValue");
+    dataMapObject.addTransferItem("tblock", "dValue", "doubleValue");
+
     //to map data from assetvars into the map we use setDataTime with the amapName and the Map item name 
-    std::cout << " mapdata value  :"<< mapdata->intValue[0] << std::endl;
-    setDataItem(&assetManager, &dataMapObject, amapName, mapName);
+    std::cout << " mapdata int value  :"<< mapdata->intValue[0] << std::endl;
+    std::cout << " mapdata double value  :"<< mapdata->doubleValue[0] << std::endl;
+    
     std::cout << " mapdata value has changed to :"<< mapdata->intValue[0] << std::endl;
+    std::cout << " mapdata double value  :"<< mapdata->doubleValue[0] << std::endl;
 
     // Example retrieval of DataMap object from AssetManager
     std::string dataMapObjectName = "example_data_map";
@@ -80,6 +116,19 @@ int main() {
 
     // Don't forget to free the memory allocated for the data area
     //delete static_cast<example_struct*>(dataMapObject.dataArea);
+
+
+
+    // now these bits add <amapName, mapName> pairs to t transfer block called tblock
+    setDataItem(&assetManager, &dataMapObject, amapName, mapName);
+    setDataItem(&assetManager, &dataMapObject, "dValue", "doubleValue");
+    // take a look at it
+    dataMapObject.showTransferItems("tblock");
+    // load up our tblock items from the assetVars
+    dataMapObject.getFromAmap("tblock", &assetManager);
+    // send our tblock items to the assetVars
+    dataMapObject.sendToAmap("tblock", &assetManager);
+
 
     return 0;
 }

@@ -11,12 +11,58 @@ void DataMap::addDataItem(char *name, int offset, char *type , int size)
     dataItems[std::string(name)] = dataItem;
 }
 
+void DataMap::addTransferItem(std::string bname, std::string amap, std::string dmap)
+{
+    std::pair<std::string,std::string>item = std::make_pair(amap,dmap);
+    transferBlocks[bname].push_back(item);
+
+}
+
+void DataMap::showTransferItems(std::string bname)
+{
+    if (transferBlocks.find(bname) != transferBlocks.end())
+    {
+        std::cout << " Transfer Block name [" << bname << "] "<< std::endl;
+        for (auto xx : transferBlocks[bname])
+        {
+            std::cout << "  [" << xx.first << "]  <=> ["<<xx.second<<"]"<< std::endl;
+        }
+    }
+
+}
+
+void DataMap::getFromAmap(std::string bname, AssetManager* am)
+{
+    if (transferBlocks.find(bname) != transferBlocks.end())
+    {
+        std::cout << " Get mystruct from Amap using Transfer Block name [" << bname << "] "<< std::endl;
+        for (auto xx : transferBlocks[bname])
+        {
+            setDataItem(am, this, xx.first, xx.second);
+        }
+    }
+
+}
+void DataMap::sendToAmap(std::string bname, AssetManager* am)
+{
+    if (transferBlocks.find(bname) != transferBlocks.end())
+    {
+        std::cout << " Send mystruct to Amap using Transfer Block name [" << bname << "] "<< std::endl;
+        for (auto xx : transferBlocks[bname])
+        {
+            getDataItem(am, this, xx.first, xx.second);
+        }
+    }
+
+}
 
 void addDataMapObject(AssetManager& assetManager, const std::string& name, DataMap dataMapObject);
 void setDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName);
 void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& itemName);
 void* printIntData(char* dataArea, void* arg1, void* arg2, void* arg3);
 void* incrementIntData(char* dataArea, void* arg1, void* arg2, void* arg3);
+
+
 
 // Function to add a named DataMap object to the map of DataMap objects in AssetManager
 void addDataMapObject(AssetManager& assetManager, const std::string& name, DataMap dataMapObject) {
@@ -53,32 +99,6 @@ void getDataItem(AssetManager* am, DataMap* dataMap, const std::string& amapName
     }
 }
 
-// Sample function 1: Print the integer value at the given offset in the data area
-void* printIntData(char* dataArea, void* arg1, void* arg2, void* arg3) {
-    bool args = false;
-    if(arg2) args = true;
-    if(arg3) args = true;
-    if(args)
-      std::cout << __func__<< "we got args"<<std::endl;
-    int offset = *static_cast<int*>(arg1);
-    int value = *(int*)&dataArea[offset];
-    std::cout << "Integer value at offset " << offset << ": " << value << std::endl;
-    return nullptr;
-}
-
-// Sample function 2: Increment the integer value at the given offset in the data area
-void* incrementIntData(char* dataArea, void* arg1, void* arg2, void* arg3) {
-    bool args = false;
-    //if(arg2) args = true;
-    if(arg3) args = true;
-    if(args)
-      std::cout << __func__<<"we got args"<<std::endl;
-    int offset = *static_cast<int*>(arg1);
-    int incrementValue = *static_cast<int*>(arg2);
-    int& value = *(int*)&dataArea[offset];
-    value += incrementValue;
-    return nullptr;
-}
 
 
 AssetVar *setAVal(std::map<std::string, std::map<std::string, AssetVar*>> &vmap , std::string uri, std::string id , std::string type)
