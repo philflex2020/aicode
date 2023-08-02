@@ -7,7 +7,7 @@ Body:         1234
 Timestamp:    2023-08-02 05:35:02.336714
 
 Method:       set
-Uri:          /my/fims/obj1
+Uri:          /my/fims2/obj1
 ReplyTo:      (null)
 Process Name: fims_send
 Username:     root
@@ -15,7 +15,7 @@ Body:         1234
 Timestamp:    2023-08-02 05:35:06.008722
 
 Method:       set
-Uri:          /my/fims/obj2
+Uri:          /my/fims3/obj2
 ReplyTo:      (null)
 Process Name: fims_send
 Username:     root
@@ -43,7 +43,7 @@ Uri:          /my/fims
 ReplyTo:      (null)
 Process Name: fims_send
 Username:     root
-Body:         {"pobj": 1234, "pstuff":"good"}
+Body:         {"pobj": 12, "pstuff":"good"}
 Timestamp:    2023-08-02 05:35:22.557173
 
 Method:       pub
