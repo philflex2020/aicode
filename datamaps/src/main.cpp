@@ -54,9 +54,9 @@ int main() {
 
 
     // Example DataItem registration from example_struct
-    dataMapObject.addDataItem((char*)"intValue", offsetof(example_struct, intValue),(char*)"int",sizeof(int));
-    dataMapObject.addDataItem((char*)"doubleValue", offsetof(example_struct, doubleValue),(char*)"double",sizeof(double));
-    dataMapObject.addDataItem((char*)"charValue", offsetof(example_struct, charValue),(char*)"char",sizeof(char));
+    dataMapObject.addDataItem((char*)"intValue",    offsetof(example_struct, intValue),   (char*)"int",    sizeof(int));
+    dataMapObject.addDataItem((char*)"doubleValue", offsetof(example_struct, doubleValue),(char*)"double", sizeof(double));
+    dataMapObject.addDataItem((char*)"charValue",   offsetof(example_struct, charValue),  (char*)"char",   sizeof(char));
 
     
 
@@ -131,10 +131,44 @@ int main() {
     // take a look at it
     dataMapObject.showTransferItems("tblock");
     // load up our tblock items from the assetVars
-    dataMapObject.getFromAmap("tblock", &assetManager);
+
+    // lock 
+    // sched getFromAmap request
+
+    dataMapObject.getFromAmap("tblock", &assetManager); 
+
+
+    // run code
+    // TODO
+
     // send our tblock items to the assetVars
     dataMapObject.sendToAmap("tblock", &assetManager);
 
 
     return 0;
+}
+
+
+void sample_code() // thread
+{
+    // set up schedItem getfromamapfcn (amname, transfer_data_block, tnow+time, reptime ) which unlocks
+    while (true)
+    {
+
+    // lock assetManager
+    // wait sched getFromAmap request to be run 
+
+    // this has run   dataMapObject.getFromAmap("tblock", &assetManager); 
+    // and unlocks
+
+    // run out example code in thread
+    // TODO
+
+    // send our tblock items to the assetVars
+    dataMapObject.sendToAmap("tblock", &assetManager);
+    // lock assetManager
+    // adjust schedItem sendToAmap (amname, ttansfer_data_block, tnow+time, reptime ) 
+    // sched SendToAmap request
+    }
+    
 }

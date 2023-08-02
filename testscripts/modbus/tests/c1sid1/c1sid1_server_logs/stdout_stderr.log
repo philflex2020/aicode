@@ -1,0 +1,398 @@
+Count 1 variables included in input_registers config object.
+Count 6 variables included in holding_registers config object.
+Map configured: Initializing data.
+Data initialized: setting up modbus connection.
+ Config Device_Id -1 
+Modbus Server test_device_id, listening for connections on 0.0.0.0 port 502.
+
+Setup complete: Entering main loop.
+New connection from 172.17.0.2:49808 on interface test_device_id
+New connection from 172.17.0.2:50320 on interface test_device_id
+New connection from 172.17.0.2:50832 on interface test_device_id
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>1<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>2<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>2<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>11<< 
+>>>device_id #1 >>10<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>10<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>12<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>12<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>255<< 
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>1<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+ setting up debug to [1] 
+Inserted map entry for variable with type input_registers, ID Input_109, and URI /components/no_device_id.
+Starting at an offset of 109 and ending at an offset of 110, there are 1 total individual registers for the input_registers register type.
+Inserted map entry for variable with type holding_registers, ID Holding_100, and URI /components/no_device_id.
+Inserted map entry for variable with type holding_registers, ID Holding_101, and URI /components/no_device_id.
+Inserted map entry for variable with type holding_registers, ID Holding_103, and URI /components/no_device_id.
+Inserted map entry for variable with type holding_registers, ID Holding_107, and URI /components/no_device_id.
+Inserted map entry for variable with type holding_registers, ID Holding_108, and URI /components/no_device_id.
+Inserted map entry for variable with type holding_registers, ID Holding_110, and URI /components/no_device_id.
+Starting at an offset of 100 and ending at an offset of 111, there are 11 total individual registers for the holding_registers register type.
+Waiting for a indication...
+<00><01><00><00><00><06><01><03><00><6D><00><01>
+[00][01][00][00][00][05][01][03][02][00][00]
+Waiting for a indication...
+<00><01><00><00><00><06><01><03><00><64><00><0B>
+[00][01][00][00][00][19][01][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><02><00><00><00><06><01><02><00><6F><00><01>
+[00][02][00][00][00][03][01][82][02]
+Waiting for a indication...
+<00><01><00><00><00><06><01><01><00><6E><00><01>
+[00][01][00][00][00][03][01][81][02]
+Waiting for a indication...
+<00><02><00><00><00><06><01><04><00><6D><00><01>
+[00][02][00][00][00][05][01][04][02][00][00]
+Waiting for a indication...
+<00><02><00><00><00><06><02><01><00><6E><00><01>
+[00][02][00][00][00][03][02][81][02]
+Waiting for a indication...
+<00><03><00><00><00><06><02><02><00><6F><00><01>
+[00][03][00][00][00][03][02][82][02]
+Waiting for a indication...
+<00><03><00><00><00><06><0B><04><00><6D><00><01>
+[00][03][00][00][00][05][0B][04][02][00][00]
+Waiting for a indication...
+<00><04><00><00><00><06><0A><01><00><6E><00><01>
+[00][04][00][00][00][03][0A][81][02]
+Waiting for a indication...
+<00><04><00><00><00><06><0A><02><00><6F><00><01>
+[00][04][00][00][00][03][0A][82][02]
+Waiting for a indication...
+<00><03><00><00><00><06><0A><03><00><64><00><0B>
+[00][03][00][00][00][19][0A][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><05><00><00><00><06><0A><04><00><6D><00><01>
+[00][05][00][00][00][05][0A][04][02][00][00]
+Waiting for a indication...
+<00><04><00><00><00><06><0C><03><00><64><00><0B>
+[00][04][00][00][00][19][0C][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><06><00><00><00><06><0C><01><00><6E><00><01>
+[00][06][00][00][00][03][0C][81][02]
+Waiting for a indication...
+<00><05><00><00><00><06><0C><02><00><6F><00><01>
+[00][05][00][00][00][03][0C][82][02]
+Waiting for a indication...
+<00><07><00><00><00><06><FF><03><00><64><00><0B>
+[00][07][00][00][00][19][FF][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><05><00><00><00><06><0C><04><00><6D><00><01>
+[00][05][00][00][00][05][0C][04][02][00][00]
+Waiting for a indication...
+<00><06><00><00><00><06><01><03><00><6D><00><01>
+[00][06][00][00][00][05][01][03][02][00][00]
+Waiting for a indication...
+<00><08><00><00><00><06><01><01><00><6E><00><01>
+[00][08][00][00][00][03][01][81][02]
+Waiting for a indication...
+<00><07><00><00><00><06><01><02><00><6F><00><01>
+[00][07][00][00][00][03][01][82][02]
+Waiting for a indication...
+<00><06><00><00><00><06><01><03><00><64><00><0B>
+[00][06][00][00][00][19][01][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><08><00><00><00><06><01><04><00><6D><00><01>
+[00][08][00][00][00][05][01][04][02][00][00]
+Waiting for >>>device_id #1 >>2<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>2<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>11<< 
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>10<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>10<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>255<< 
+>>>device_id #1 >>12<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>12<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>1<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>2<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>2<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>11<< 
+>>>device_id #1 >>10<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>10<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>255<< 
+>>>device_id #1 >>12<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>12<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>1<< 
+a indication...
+<00><09><00><00><00><06><02><02><00><6F><00><01>
+[00][09][00][00][00][03][02][82][02]
+Waiting for a indication...
+<00><07><00><00><00><06><02><01><00><6E><00><01>
+[00][07][00][00][00][03][02][81][02]
+Waiting for a indication...
+<00><09><00><00><00><06><0B><04><00><6D><00><01>
+[00][09][00][00][00][05][0B][04][02][00][00]
+Waiting for a indication...
+<00><0A><00><00><00><06><0A><03><00><64><00><0B>
+[00][0A][00][00][00][19][0A][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><0A><00><00><00><06><0A><02><00><6F><00><01>
+[00][0A][00][00][00][03][0A][82][02]
+Waiting for a indication...
+<00><08><00><00><00><06><0A><01><00><6E><00><01>
+[00][08][00][00][00][03][0A][81][02]
+Waiting for a indication...
+<00><0B><00><00><00><06><0A><04><00><6D><00><01>
+[00][0B][00][00][00][05][0A][04][02][00][00]
+Waiting for a indication...
+<00><09><00><00><00><06><FF><03><00><64><00><0B>
+[00][09][00][00][00][19][FF][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><0C><00><00><00><06><0C><01><00><6E><00><01>
+[00][0C][00][00][00][03][0C][81][02]
+Waiting for a indication...
+<00><0B><00><00><00><06><0C><03><00><64><00><0B>
+[00][0B][00][00][00][19][0C][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><0A><00><00><00><06><0C><02><00><6F><00><01>
+[00][0A][00][00][00][03][0C][82][02]
+Waiting for a indication...
+<00><0D><00><00><00><06><0C><04><00><6D><00><01>
+[00][0D][00][00][00][05][0C][04][02][00][00]
+Waiting for a indication...
+<00><0C><00><00><00><06><01><03><00><6D><00><01>
+[00][0C][00][00][00][05][01][03][02][00][00]
+Waiting for a indication...
+<00><0E><00><00><00><06><01><03><00><64><00><0B>
+[00][0E][00][00][00][19][01][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><0D><00><00><00><06><01><01><00><6E><00><01>
+[00][0D][00][00][00][03][01][81][02]
+Waiting for a indication...
+<00><0B><00><00><00><06><01><02><00><6F><00><01>
+[00][0B][00][00][00][03][01][82][02]
+Waiting for a indication...
+<00><0F><00><00><00><06><01><04><00><6D><00><01>
+[00][0F][00][00][00][05][01][04][02][00][00]
+Waiting for a indication...
+<00><0E><00><00><00><06><02><01><00><6E><00><01>
+[00][0E][00][00][00][03][02][81][02]
+Waiting for a indication...
+<00><10><00><00><00><06><02><02><00><6F><00><01>
+[00][10][00][00][00][03][02][82][02]
+Waiting for a indication...
+<00><0F><00><00><00><06><0B><04><00><6D><00><01>
+[00][0F][00][00][00][05][0B][04][02][00][00]
+Waiting for a indication...
+<00><11><00><00><00><06><0A><01><00><6E><00><01>
+[00][11][00][00][00][03][0A][81][02]
+Waiting for a indication...
+<00><10><00><00><00><06><0A><02><00><6F><00><01>
+[00][10][00][00][00][03][0A][82][02]
+Waiting for a indication...
+<00><0C><00><00><00><06><0A><03><00><64><00><0B>
+[00][0C][00][00][00][19][0A][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><12><00><00><00><06><0A><04><00><6D><00><01>
+[00][12][00][00][00][05][0A][04][02][00][00]
+Waiting for a indication...
+<00><11><00><00><00><06><FF><03><00><64><00><0B>
+[00][11][00][00][00][19][FF][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><13><00><00><00><06><0C><01><00><6E><00><01>
+[00][13][00][00][00][03][0C][81][02]
+Waiting for a indication...
+<00><12><00><00><00><06><0C><02><00><6F><00><01>
+[00][12][00][00][00][03][0C][82][02]
+Waiting for a indication...
+<00><0D><00><00><00><06><0C><03><00><64><00><0B>
+[00][0D][00][00][00][19][0C][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><14><00><00><00><06><0C><04><00><6D><00><01>
+[00][14][00][00][00][05][0C][04][02][00][00]
+Waiting for a indication...
+<00><13><00><00><00><06><01><03><00><6D><00><01>
+[00][13][00][00][00][05][01][03][02][00][00]
+>>>device_id #1 >>1<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>1<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>2<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>2<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>11<< 
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>10<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>10<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>255<< 
+>>>device_id #1 >>12<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>12<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>12<< 
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>1<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>1<< 
+>>>device_id #1 >>2<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>2<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>11<< 
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>10<< 
+Illegal data address 0x70 in read_input_bits
+>>>device_id #1 >>10<< 
+Illegal data address 0x6F in read_bits
+>>>device_id #1 >>10<< 
+>>>device_id #1 >>255<< 
+ERROR Connection reset by peer: read
+Modbus Server test_device_id detected a TCP client disconnect.
+
+ERROR Connection reset by peer: read
+Modbus Server test_device_id detected a TCP client disconnect.
+
+ERROR Connection reset by peer: read
+Modbus Server test_device_id detected a TCP client disconnect.
+
+signal of type 15 caught.
+server select() failure: Interrupted system call.
+Main loop complete: Entering clean up.
+Waiting for a indication...
+<00><15><00><00><00><06><01><01><00><6E><00><01>
+[00][15][00][00][00][03][01][81][02]
+Waiting for a indication...
+<00><14><00><00><00><06><01><02><00><6F><00><01>
+[00][14][00][00][00][03][01][82][02]
+Waiting for a indication...
+<00><0E><00><00><00><06><01><03><00><64><00><0B>
+[00][0E][00][00][00][19][01][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><16><00><00><00><06><01><04><00><6D><00><01>
+[00][16][00][00][00][05][01][04][02][00][00]
+Waiting for a indication...
+<00><15><00><00><00><06><02><01><00><6E><00><01>
+[00][15][00][00][00][03][02][81][02]
+Waiting for a indication...
+<00><0F><00><00><00><06><02><02><00><6F><00><01>
+[00][0F][00][00][00][03][02][82][02]
+Waiting for a indication...
+<00><17><00><00><00><06><0B><04><00><6D><00><01>
+[00][17][00][00][00][05][0B][04][02][00][00]
+Waiting for a indication...
+<00><16><00><00><00><06><0A><03><00><64><00><0B>
+[00][16][00][00][00][19][0A][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><10><00><00><00><06><0A><02><00><6F><00><01>
+[00][10][00][00][00][03][0A][82][02]
+Waiting for a indication...
+<00><18><00><00><00><06><0A><01><00><6E><00><01>
+[00][18][00][00][00][03][0A][81][02]
+Waiting for a indication...
+<00><17><00><00><00><06><0A><04><00><6D><00><01>
+[00][17][00][00][00][05][0A][04][02][00][00]
+Waiting for a indication...
+<00><19><00><00><00><06><FF><03><00><64><00><0B>
+[00][19][00][00][00][19][FF][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><1A><00><00><00><06><0C><02><00><6F><00><01>
+[00][1A][00][00][00][03][0C][82][02]
+Waiting for a indication...
+<00><18><00><00><00><06><0C><01><00><6E><00><01>
+[00][18][00][00][00][03][0C][81][02]
+Waiting for a indication...
+<00><11><00><00><00><06><0C><03><00><64><00><0B>
+[00][11][00][00][00][19][0C][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><1B><00><00><00><06><0C><04><00><6D><00><01>
+[00][1B][00][00][00][05][0C][04][02][00][00]
+Waiting for a indication...
+<00><19><00><00><00><06><01><03><00><6D><00><01>
+[00][19][00][00][00][05][01][03][02][00][00]
+Waiting for a indication...
+<00><1C><00><00><00><06><01><01><00><6E><00><01>
+[00][1C][00][00][00][03][01][81][02]
+Waiting for a indication...
+<00><12><00><00><00><06><01><03><00><64><00><0B>
+[00][12][00][00][00][19][01][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><1A><00><00><00><06><01><02><00><6F><00><01>
+[00][1A][00][00][00][03][01][82][02]
+Waiting for a indication...
+<00><1D><00><00><00><06><01><04><00><6D><00><01>
+[00][1D][00][00][00][05][01][04][02][00][00]
+Waiting for a indication...
+<00><1E><00><00><00><06><02><01><00><6E><00><01>
+[00][1E][00][00][00][03][02][81][02]
+Waiting for a indication...
+<00><13><00><00><00><06><02><02><00><6F><00><01>
+[00][13][00][00][00][03][02][82][02]
+Waiting for a indication...
+<00><1B><00><00><00><06><0B><04><00><6D><00><01>
+[00][1B][00][00][00][05][0B][04][02][00][00]
+Waiting for a indication...
+<00><1F><00><00><00><06><0A><03><00><64><00><0B>
+[00][1F][00][00][00][19][0A][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+<00><1C><00><00><00><06><0A><02><00><6F><00><01>
+[00][1C][00][00][00][03][0A][82][02]
+Waiting for a indication...
+<00><14><00><00><00><06><0A><01><00><6E><00><01>
+[00][14][00][00][00][03][0A][81][02]
+Waiting for a indication...
+<00><20><00><00><00><06><0A><04><00><6D><00><01>
+[00][20][00][00][00][05][0A][04][02][00][00]
+Waiting for a indication...
+<00><1D><00><00><00><06><FF><03><00><64><00><0B>
+[00][1D][00][00][00][19][FF][03][16][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00][00]
+Waiting for a indication...
+Waiting for a indication...
+Waiting for a indication...

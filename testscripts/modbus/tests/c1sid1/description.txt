@@ -1,0 +1,2 @@
+A simple no device id test. Client and server do not use device ids.
+ 

@@ -1,0 +1,53 @@
+Count 4 variables included in coils config object.
+Count 4 variables included in discrete_inputs config object.
+Count 4 variables included in input_registers config object.
+Count 23 variables included in holding_registers config object.
+ setting up debug to [1] 
+Inserted map entry for variable with type coils, ID Coil_1_1110, and URI /components/device_id_10.
+Inserted map entry for variable with type coils, ID Coil_2_3110, and URI /components/device_id_10.
+Inserted map entry for variable with type coils, ID Coil_10_6110, and URI /components/device_id_10.
+Inserted map entry for variable with type coils, ID Coil_12_8110, and URI /components/device_id_10.
+Starting at an offset of 1110 and ending at an offset of 8111, there are 7001 total individual registers for the coils register type.
+Inserted map entry for variable with type discrete_inputs, ID discrete_1_1111, and URI /components/device_id_10.
+Inserted map entry for variable with type discrete_inputs, ID discrete_2_3111, and URI /components/device_id_10.
+Inserted map entry for variable with type discrete_inputs, ID discrete_10_6111, and URI /components/device_id_10.
+Inserted map entry for variable with type discrete_inputs, ID discrete_12_8111, and URI /components/device_id_10.
+Starting at an offset of 1111 and ending at an offset of 8112, there are 7001 total individual registers for the discrete_inputs register type.
+Inserted map entry for variable with type input_registers, ID discrete_11_2109, and URI /components/device_id_10.
+Inserted map entry for variable with type input_registers, ID discrete_11_4109, and URI /components/device_id_10.
+Inserted map entry for variable with type input_registers, ID discrete_10_7109, and URI /components/device_id_10.
+Inserted map entry for variable with type input_registers, ID discrete_12_8109, and URI /components/device_id_10.
+Starting at an offset of 2109 and ending at an offset of 8110, there are 6001 total individual registers for the input_registers register type.
+Inserted map entry for variable with type holding_registers, ID holding_1_109, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_1_1100, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_1_1101, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_1_1103, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_1_1107, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_1_1108, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_1_1110, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_10_5110, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_10_5101, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_10_5103, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_10_5107, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_10_5108, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_12_8110, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_12_8101, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_12_8103, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_12_8107, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_12_8108, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_0, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_1, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_3, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_10, and URI /cMap configured: Initializing data.
+Data initialized: setting up modbus connection.
+ Config Device_Id 23 
+Modbus Server test_device_id, listening for connections on 0.0.0.0 port 502.
+
+Setup complete: Entering main loop.
+signal of type 15 caught.
+server select() failure: Interrupted system call.
+Main loop complete: Entering clean up.
+omponents/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_7, and URI /components/device_id_1.
+Inserted map entry for variable with type holding_registers, ID holding_8, and URI /components/device_id_1.
+Starting at an offset of 0 and ending at an offset of 8111, there are 8111 total individual registers for the holding_registers register type.

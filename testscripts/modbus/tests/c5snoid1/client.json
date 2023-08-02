@@ -1,0 +1,206 @@
+{
+    "connection": {
+        "name": "example_notmp",
+        "ip_address":"172.17.0.3",
+        "port": 502,
+        "frequency": 50,
+        "max_num_connections":5
+    },
+    "components": [
+        {
+            "id": "comp_0",
+            "registers": [
+                {
+                    "type": "Holding",
+                    "starting_offset":109,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Holding_1_109", "offset": 109, "size": 1, "random_enum": true, "bit_strings": ["hello", "world"] }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "comp_1",
+            "registers": [
+                {
+                    "type": "Holding",
+                    "starting_offset":1100,
+                    "number_of_registers":10,
+                    "map": [
+                        { "id": "Holding_1_1100", "offset": 1100, "shift": -50 },
+                        { "id": "Holding_1_1101", "offset": 1101, "size": 2 },
+                        { "id": "Holding_1_1103", "offset": 1103, "size": 4 },
+                        { "id": "Holding_1_1107", "offset": 1107, "size": 1, "signed": true },
+                        { "id": "Holding_1_1108", "offset": 1108, "size": 1, "random_enum": true, "bit_strings": ["hello", "world"] },
+                        { "id": "Holding_1_1110", "offset": 1110, "size": 1, "scale": 1000 }
+                    ]
+                },
+                {
+                    "type": "Coil",
+                    "starting_offset":1110,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Coil_1_1110", "offset": 1110, "shift": -50 }
+                    ]
+                },
+                {
+                    "type": "Discrete Input",
+                    "starting_offset":1111,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "DiscreteInput_1_1111", "offset": 1111 }
+                    ]
+                },
+
+                {
+                    "type": "Input",
+                    "starting_offset":2109,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Input_11_2109", "offset": 2109 }
+                    ]
+                }
+
+
+            ]
+        },
+        {
+            "id": "comp_2",
+            "registers": [
+                {
+                    "type": "Coil",
+                    "starting_offset":3110,
+                    "number_of_registers":1,
+
+                    "map": [
+                        { "id": "Coil_2_3110", "offset": 3110 }
+                    ]
+                },
+                {
+                    "type": "Discrete Input",
+                    "starting_offset":3111,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "DiscreteInput_2_3111", "offset": 3111 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "comp_11",
+            "registers": [
+                {
+                    "type": "Input",
+                    "starting_offset":4109,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Input_11_4109", "offset": 4109 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "comp_10",
+            "registers": [
+                {
+                    "type": "Holding",
+                    "starting_offset":5100,
+                    "number_of_registers":10,
+                    "map": [
+                        { "id": "Holding_10_5100", "offset": 5100, "shift": -50 },
+                        { "id": "Holding_10_5101", "offset": 5101, "size": 2 },
+                        { "id": "Holding_10_5103", "offset": 5103, "size": 4 },
+                        { "id": "Holding_10_5110", "offset": 5110, "size": 1, "scale": 1000 },
+                        { "id": "Holding_10_5107", "offset": 5107, "size": 1, "signed": true },
+                        { "id": "Holding_10_5108", "offset": 5108, "size": 1, "random_enum": true, "bit_strings": ["hello", "world"] }
+                    ]
+                },
+                {
+                    "type": "Coil",
+                    "starting_offset":6110,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Coil_10_6110", "offset": 6110 }
+                    ]
+                },
+                {
+                    "type": "Discrete Input",
+                    "starting_offset":6111,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "DiscreteInput_10_6111", "offset": 6111 }
+                    ]
+                },
+                {
+                    "type": "Input",
+                    "starting_offset":7109,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Input_10_7109", "offset": 7109 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "comp_12",
+            "registers": [
+                {
+                    "type": "Holding",
+                    "starting_offset":8100,
+                    "number_of_registers":10,
+                    "map": [
+                        { "id": "Holding_12_8100", "offset": 8100, "shift": -50 },
+                        { "id": "Holding_12_8101", "offset": 8101, "size": 2 },
+                        { "id": "Holding_12_8103", "offset": 8103, "size": 4 },
+                        { "id": "Holding_12_8110", "offset": 8110, "size": 1, "scale": 1000 },
+                        { "id": "Holding_12_8107", "offset": 8107, "size": 1, "signed": true },
+                        { "id": "Holding_12_8108", "offset": 8108, "size": 1, "random_enum": true, "bit_strings": ["hello", "world"] }
+                    ]
+                },
+                {
+                    "type": "Coil",
+                    "starting_offset":8110,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Coil_12_8110", "offset": 8110 }
+                    ]
+                },
+                {
+                    "type": "Discrete Input",
+                    "starting_offset":8111,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "DiscreteInput_12_8111", "offset": 8111 }
+                    ]
+                },
+                {
+                    "type": "Input",
+                    "starting_offset":8109,
+                    "number_of_registers":1,
+                    "map": [
+                        { "id": "Input_12_8109", "offset": 8109 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "comp_00",
+            "registers": [
+                {
+                    "type": "Holding",
+                    "starting_offset":0,
+                    "number_of_registers":10,
+                    "map": [
+                        { "id": "Holding_0", "offset": 0, "shift": -50 },
+                        { "id": "Holding_1", "offset": 1, "size": 2 },
+                        { "id": "Holding_3", "offset": 3, "size": 4 },
+                        { "id": "Holding_10", "offset": 10, "size": 1, "scale": 1000 },
+                        { "id": "Holding_7", "offset": 7, "size": 1, "signed": true },
+                        { "id": "Holding_8", "offset": 8, "size": 1, "random_enum": true, "bit_strings": ["hello", "world"] }
+                    ]
+                }
+            ]
+        }
+    ]
+}

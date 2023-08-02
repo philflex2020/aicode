@@ -1,0 +1,505 @@
+client "example_notmp": Connected to server with 2 connection(s)
+Waiting 2 seconds to initialize the Mono clock before beginning the main program
+Mono clock finished synchronizing after a 2 second wait, this hardware's frequency = 2.419200159302517 GHz. Beginning main program
+ >>>>>>>>>>>Polling total errors 0
+Clear Errors for /components/comp_0 0
+about to poll component #0, mapping #0  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+Clear Errors for /components/comp_1 1
+about to poll component #1, mapping #0  device_id 1
+about to poll component #1, mapping #1  device_id 1
+about to poll component #1, mapping #2  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+Clear Errors for /components/comp_2 2
+ERROR Illegal data address
+about to poll component #1, mapping #3  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+Clear Errors for /components/comp_11 3
+ERROR Illegal data address
+about to poll component #2, mapping #0  device_id 2
+ >>>>>>>>>>>Polling total errors 0
+Clear Errors for /components/comp_10 4
+about to poll component #2, mapping #1  device_id 2
+ >>>>>>>>>>>Polling total errors 0
+Clear Errors for /components/comp_12 5
+ERROR Illegal data address
+ERROR Illegal data address
+about to poll component #3, mapping #0  device_id 11
+about to poll component #4, mapping #0  device_id 10
+ >>>>>>>>>>>Polling total errors 0
+Clear Errors for /components/comp_00 6
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #4, mapping #1  device_id 10
+about to poll component #4, mapping #2  device_id 10
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #1 had an error while polling, it is "Illegal data address"resp time 308430ns
+ERROR Illegal data address
+ERROR Illegal data address
+about to poll component #4, mapping #3  device_id 10
+about to poll component #5, mapping #0  device_id 12
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #2 had an error while polling, it is "Illegal data address"resp time 283971ns
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #5, mapping #1  device_id 12
+about to poll component #5, mapping #2  device_id 12
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #0 had an error while polling, it is "Illegal data address"resp time 282422ns
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #1 had an error while polling, it is "Illegal data address"resp time 237628ns
+ERROR Illegal data address
+about to poll component #5, mapping #3  device_id 12
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+about to poll component #6, mapping #0  device_id 255
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #1 had an error while polling, it is "Illegal data address"resp time 285936ns
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #2 had an error while polling, it is "Illegal data address"resp time 301570ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #0, mapping #0  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #1, mapping #0  device_id 1
+about to poll component #1, mapping #1  device_id 1
+about to poll component #1, mapping #2  device_id 1
+ERROR Illegal data address
+about to poll component #1, mapping #3  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+about to poll component #2, mapping #0  device_id 2
+about to poll component #2, mapping #1  device_id 2
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #1 had an error while polling, it is "Illegal data address"resp time 192820ns
+ERROR Illegal data address
+about to poll component #3, mapping #0  device_id 11
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #2 had an error while polling, it is "Illegal data address"resp time 307358ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #4, mapping #0  device_id 10
+about to poll component #4, mapping #1  device_id 10
+ERROR Illegal data address
+about to poll component #4, mapping #2  device_id 10
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #4, mapping #3  device_id 10
+ERROR Illegal data address
+about to poll component #5, mapping #0  device_id 12
+about to poll component #5, mapping #1  device_id 12
+[00][01][00][00][00][06][01][03][00][6D][00][01]
+Waiting for a confirmation...
+<00><01><00><00><00><05><01><03><02><00><00>
+[00][02][00][00][00][06][01][03][00][64][00][0B]
+[00][01][00][00][00][06][01][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><02><00><00><00><19><01><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><01><00><00><00><03><01><81>[00][03][00][00][00][06][01][02]<02>
+[00][6F][00][01]
+Waiting for a confirmation...
+[00][02][00][00][00][06][01][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><03><00><00><00><03><01><82><02>
+[00][04][00][00][00][06][02][01][00][6E][00][01]
+<00><02><00><00><00><05><01><04><02><00><00>
+Waiting for a confirmation...
+[00][03][00][00][00][06][02][02][00][6F][00][01]
+Waiting for a confirmation...
+<00><04><00><00><00><03><02><81><02>
+<00><03><00><00><00><03><02><82><02>
+[00][04][00][00][00][06][0B][04][00][6D][00][01]
+[00][05][00][00][00][06][0A][03][00][64][00][0B]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><05><00><00><00><19><0A><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><04><00><00><00><05><0B><04><02><00><00>
+[00][06][00][00][00][06][0A][01][00][6E][00][01]
+[00][05][00][00][00][06][0A][02][00][6F][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><06><00><00><00><03><0A><81><02>
+<00><05><00><00><00><03><0A><82><02>
+[00][07][00][00][00][06][0A][04][00][6D][00][01]
+[00][06][00][00][00][06][0C][03][00][64][00][0B]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><07><00><00><00><05><0A><04><02><00><00>
+[00][08][00][00][00][06][0C][01][00][6E][00][01]
+<00><06><00><00><00><19><0C><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][07][00][00][00][06][0C][02][00][6F][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><08><00><00><00><03><0C><81><02>
+[00][09][00][00][00][06][0C][04][00][6D][00][01]
+<00><07><00><00><00><03><0C><82><02>
+Waiting for a confirmation...
+[00][08][00][00][00][06][FF][03][00][64][00][0B]
+Waiting for a confirmation...
+<00><09><00><00><00><05><0C><04><02><00><00>
+<00><08><00><00><00><19><FF><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][0A][00][00][00][06][01][03][00][6D][00][01]
+Waiting for a confirmation...
+<00><0A><00><00><00><05><01><03><02><00><00>
+[00][0B][00][00][00][06][01][03][00][64][00][0B]
+[00][09][00][00][00][06][01][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><0B><00><00><00><19><01><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><09><00><00><00><03><01><81>[00][0C][00][00][00][06][01][02][00][6F][00][01]
+<02>
+[00][0A][00][00][00][06][01][04][00][6D][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><0C><00><00><00><03><01><82><02>
+<00><0A><00><00><00><05><01><04><02>[00][0D][00][00][00][06][02][01][00][6E][00][01]
+<00><00>
+[00][0B][00][00][00][06][02][02][00][6F][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><0D><00><00><00><03><02><81><02>
+<00><0B><00><00><00><03><02><82>[00][0E][00][00][00][06][0B][04][00][6D][00][01]
+<02>
+Waiting for a confirmation...
+<00><0E><00><00><00><05><0B><04><02><00><00>
+[00][0C][00][00][00][06][0A][03][00][64][00][0B]
+[00][0F][00][00][00][06][0A][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><0F><00><00><00><03><0A><81><02>
+<00><0C><00><00><00><19><0A><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][0D][00][00][00][06][0A][02][00][6F][00][01]
+Waiting for a confirmation...
+[00][10][00][00][00][06][0A][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><0D><00><00><00><03><0A><82><02>
+<00><10><00><00><00><05><0A><04><02><00><00>
+[00][0E][00][00][00][06][0C][03][00][64][00][0B]
+[00][11][00][00][00][06][0C][01][00][6E][00][01]
+Waiting for a confirmation...
+Wait >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #1 had an error while polling, it is "Illegal data address"resp time 480246ns
+ERROR Illegal data address
+about to poll component #5, mapping #2  device_id 12
+about to poll component #5, mapping #3  device_id 12
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #2 had an error while polling, it is "Illegal data address"resp time 396622ns
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #6, mapping #0  device_id 255
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #0 had an error while polling, it is "Illegal data address"resp time 406552ns
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #1 had an error while polling, it is "Illegal data address"resp time 447303ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #1 had an error while polling, it is "Illegal data address"resp time 408374ns
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #0, mapping #0  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #1, mapping #0  device_id 1
+about to poll component #1, mapping #1  device_id 1
+about to poll component #1, mapping #2  device_id 1
+ERROR Illegal data address
+about to poll component #1, mapping #3  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+about to poll component #2, mapping #0  device_id 2
+about to poll component #2, mapping #1  device_id 2
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #2 had an error while polling, it is "Illegal data address"resp time 330628ns
+ERROR Illegal data address
+ERROR Illegal data address
+about to poll component #3, mapping #0  device_id 11
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #1 had an error while polling, it is "Illegal data address"resp time 280951ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #4, mapping #0  device_id 10
+about to poll component #4, mapping #1  device_id 10
+about to poll component #4, mapping #2  device_id 10
+ERROR Illegal data address
+about to poll component #4, mapping #3  device_id 10
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #2 had an error while polling, it is "Illegal data address"resp time 338342ns
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #1 had an error while polling, it is "Illegal data address"resp time 367576ns
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #5, mapping #0  device_id 12
+about to poll component #5, mapping #1  device_id 12
+about to poll component #5, mapping #2  device_id 12
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+about to poll component #5, mapping #3  device_id 12
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+about to poll component #6, mapping #0  device_id 255
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #2 had an error while polling, it is "Illegal data address"resp time 239663ns
+about to poll component #0, mapping #0  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #0 had an error while polling, it is "Illegal data address"resp time 269419ns
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #1 had an error while polling, it is "Illegal data address"resp time 307503ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #1, mapping #0  device_id 1
+about to poll component #1, mapping #1  device_id 1
+ERROR Illegal data address
+about to poll component #1, mapping #2  device_id 1
+about to poll component #1, mapping #3  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #1 had an error while polling, it is "Illegal data address"resp time 446664ns
+ERROR Illegal data address
+about to poll component #2, mapping #0  device_id 2
+about to poll component #2, mapping #1  device_id 2
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #2 had an error while polling, it is "Illegal data address"resp time 251271ns
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #1 had an error while polling, it is "Illegal data address"resp time 929362ns
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #2 had an error while polling, it is "Illegal data address"resp time 572980ns
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #3, mapping #0  device_id 11
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #4, mapping #0  device_id 10
+about to poll component #4, mapping #1  device_id 10
+ing for a confirmation...
+<00><11><00><00><00><03><0C><81><02>
+<00><0E><00><00><00><19><0C><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][0F][00][00][00][06][0C][02][00][6F][00][01]
+[00][12][00][00][00][06][0C][04][00][6D][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><12><00><00><00><05><0C><04><02><00><00>
+<00><0F><00><00><00><03><0C><82><02>
+[00][13][00][00][00][06][FF][03][00][64][00][0B]
+Waiting for a confirmation...
+<00><13><00><00><00><19><FF><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][10][00][00][00][06][01][03][00][6D][00][01]
+Waiting for a confirmation...
+<00><10><00><00><00><05><01><03><02><00><00>
+[00][14][00][00][00][06][01][03][00][64][00][0B]
+[00][11][00][00][00][06][01][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><14><00><00><00><19><01><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><11><00><00><00><03><01><81><02>
+[00][15][00][00][00][06][01][02][00][6F][00][01]
+Waiting for a confirmation...
+[00][12][00][00][00][06][01][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><15><00><00><00><03><01><82><02>
+<00><12><00><00><00><05><01><04><02><00><00>[00]
+[16][00][00][00][06][02][01][00][6E][00][01]
+[00][13][00][00][00][06][02][02][00][6F][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><16><00><00><00><03><02><81><02>
+<00><13><00><00><00><03><02><82><02>
+[00][17][00][00][00][06][0B][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><17><00><00><00><05><0B><04><02><00><00>
+[00][18][00][00][00][06][0A][03][00][64][00][0B]
+[00][14][00][00][00][06][0A][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><18><00><00><00><19><0A><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><14><00><00><00><03><0A><81>[00][19][00][00][00][06][0A][02][00][6F][00][01]
+<02>
+Waiting for a confirmation...
+[00][15][00][00][00][06][0A][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><19><00><00><00><03><0A><82><02>
+<00><15><00><00><00><05><0A><04><02><00><00>
+[00][1A][00][00][00][06][0C][03][00][64][00][0B]
+Waiting for a confirmation...
+[00][16][00][00][00][06][0C][01][00][6E][00][01]
+Waiting for a confirmation...
+<00><1A><00><00><00><19><0C><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><16><00><00><00><03><0C><81><02>
+[00][1B][00][00][00][06][0C][02][00][6F][00][01]
+Waiting for a confirmation...
+[00][17][00][00][00][06][0C][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><1B><00><00><00><03><0C><82><02>
+[00][1C][00][00][00][06][FF][03][00][64][00][0B]
+Waiting for a confirmation...
+<00><17><00><00><00><05><0C><04><02><00><00>
+<00><1C><00><00><00><19><FF><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][18][00][00][00][06][01][03][00][6D][00][01]
+Waiting for a confirmation...
+<00><18><00><00><00><05><01><03><02><00><00>
+[00][19][00][00][00][06][01][03][00][64][00][0B]
+[00][1D][00][00][00][06][01][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><1D><00><00><00><03><01><81><02>
+<00><19><00><00><00><19><01><03><16>[00][1E][00][00][00][06][01][02][00][6F][00][01]
+<00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][1A][00][00][00][06][01][04][00][6D][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><1E><00><00><00><03><01><82><02>
+<00><1A><00><00><00><05><01><04><02><00><00>
+[00][1B][00][00][00][06][02][01][00][6E][00][01]
+[00][1F][00][00][00][06][02][02][00][6F][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><1F><00><00><00><03><02><82><02>
+<00><1B><00><00><00><03><02><81><02>
+[00][20][00][00][00][06][0B][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><20><00><00><00><05><0B><04><02><00><00>
+[00][1C][00][00][00][06][0A][03][00][64][00][0B]
+[00][21][00ERROR Illegal data address
+about to poll component #4, mapping #2  device_id 10
+about to poll component #4, mapping #3  device_id 10
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #1 had an error while polling, it is "Illegal data address"resp time 398115ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #5, mapping #0  device_id 12
+about to poll component #5, mapping #1  device_id 12
+about to poll component #5, mapping #2  device_id 12
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #5, mapping #3  device_id 12
+ERROR Illegal data address
+about to poll component #6, mapping #0  device_id 255
+about to poll component #0, mapping #0  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #2 had an error while polling, it is "Illegal data address"resp time 322886ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #1 had an error while polling, it is "Illegal data address"resp time 320704ns
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_2", map array #0 had an error while polling, it is "Illegal data address"resp time 378998ns
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #1, mapping #0  device_id 1
+about to poll component #1, mapping #1  device_id 1
+ERROR Illegal data address
+about to poll component #1, mapping #2  device_id 1
+about to poll component #1, mapping #3  device_id 1
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #1 had an error while polling, it is "Illegal data address"resp time 346382ns
+ERROR Illegal data address
+about to poll component #2, mapping #0  device_id 2
+about to poll component #2, mapping #1  device_id 2
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_10", map array #2 had an error while polling, it is "Illegal data address"resp time 367071ns
+ERROR Illegal data address
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #1 had an error while polling, it is "Illegal data address"resp time 548168ns
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #3, mapping #0  device_id 11
+ >>>>>>>>>>>Polling total errors 0
+about to poll component #4, mapping #0  device_id 10
+about to poll component #4, mapping #1  device_id 10
+about to poll component #4, mapping #2  device_id 10
+ERROR Illegal data address
+about to poll component #4, mapping #3  device_id 10
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_12", map array #2 had an error while polling, it is "Illegal data address"resp time 397129ns
+ >>>>>>>>>>>Polling total errors 0
+ERROR Illegal data address
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+ >>>>>>>>>>>Polling total errors 0
+Component "/components/comp_1", map array #1 had an error while polling, it is "Illegal data address"resp time 651762ns
+Component "/components/comp_1" had 5 or more poll error cycles in a row. Exiting
+][00][00][06][0A][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><21><00><00><00><03><0A><81><02>
+<00><1C><00><00><00><19><0A><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][22][00][00][00][06][0A][02][00][6F][00][01]
+[00][1D][00][00][00][06][0A][04][00][6D][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><22><00><00><00><03><0A><82><02>
+<00><1D><00><00><00><05><0A><04><02><00><00>
+[00][23][00][00][00][06][0C][03][00][64][00][0B]
+[00][1E][00][00][00][06][0C][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><23><00><00><00><19><0C><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><1E><00><00><00><03><0C><81><02>
+[00][24][00][00][00][06][0C][02][00][6F][00][01]
+Waiting for a confirmation...
+[00][1F][00][00][00][06][0C][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><24><00><00><00><03><0C><82><02>
+<00><1F><00><00><00><05><0C><04><02><00><00>
+[00][20][00][00][00][06][FF][03][00][64][00][0B]
+[00][25][00][00][00][06][01][03][00][6D][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><25><00><00><00><05><01><03><02><00><20><00><00><00><19><FF><03><16><00><00>
+<00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][21][00][00][00][06][01][03][00][64][00][0B]
+[00][26][00][00][00][06][01][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><26><00><00><00><03><01><81><02>
+<00><21><00><00><00><19><01><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+[00][27][00][00][00][06][01][02][00][6F][00][01]
+[00][22][00][00][00][06][01][04][00][6D][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><27><00><00><00><03><01><82><02>
+[00][28][00][00][00][06][02][01][00][6E][00][01]
+<00><22><00><00><00><05><01><04><02><00><00>
+Waiting for a confirmation...
+[00][23][00][00][00][06][02][02][00][6F][00][01]
+Waiting for a confirmation...
+<00><28><00><00><00><03><02><81><02>
+<00><23><00><00><00><03><02><82><02>
+[00][29][00][00][00][06][0B][04][00][6D][00][01]
+Waiting for a confirmation...
+<00><29><00><00><00><05><0B><04><02><00><00>
+[00][2A][00][00][00][06][0A][03][00][64][00][0B]
+[00][24][00][00][00][06][0A][01][00][6E][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><2A><00><00><00><19><0A><03><16><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00><00>
+<00><24><00><00><00><03><0A><81>[00][2B][00][00][00][06][0A][02][00][6F][00][01]
+<02>
+[00][25][00][00][00][06][0A][04][00][6D][00][01]
+Waiting for a confirmation...
+Waiting for a confirmation...
+<00><2B><00><00><00><03><0A><82><02>
+<00><25><00><00><00><05><0A><04><02><00><00>

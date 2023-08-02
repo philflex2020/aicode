@@ -44,7 +44,7 @@ struct DataMap {
 };
 
 struct AssetManager {
-    std::unordered_map<std::string, DataMap> dataMapObjects;
+    std::unordered_map<std::string, DataMap> dataMapObjects; //**
     std::unordered_map<std::string, AssetVar*> amap;
 };
 

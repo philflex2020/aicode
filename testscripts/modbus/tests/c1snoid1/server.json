@@ -1,0 +1,122 @@
+{
+   "system":
+   {   "name":"example_notmp",
+       "protocol": "Modbus TCP",
+       "id": "test_device_id",
+       "ip_address": "0.0.0.0",
+        "debug": 1,
+	"bypass_get":true,
+       	"port": 502 
+   },
+   "devices_note": "each one of these has their own mapping which means offsets can overlap and be the same. ids/uris, however, cannot",
+   "devices": [
+    {
+        "device_id": 1,
+        "registers": {
+            "coils":
+            [
+                { "name":"Coil_110","id":"Coil_1_110","offset":110,"uri":"/components/device_id_10" }       ],
+            "discrete_inputs":
+            [
+                { "name":"discrete_11","id":"discrete_1_111","offset":111,"uri":"/components/device_id_10" }       ],
+            "input_registers":
+            [
+                { "name":"discrete_109","id":"discrete_1_109","offset":109,"uri":"/components/device_id_10" }       ],
+            "holding_registers":
+            [
+                { "name":"holding_100","id":"holding_1_100","offset":100,"shift":-50,          "uri":"/components/device_id_1" },
+                { "name":"holding_102","id":"holding_1_102","offset":101,"size": 2,            "uri":"/components/device_id_1" },
+                { "name":"holding_103","id":"Holding_1_103","offset":103,"size": 4,            "uri":"/components/device_id_1" },
+                { "name":"holding_107","id":"Holding_1_107","offset":107,"signed": true,       "uri":"/components/device_id_1" },
+                { "name":"holding_108","id":"Holding_1_108","offset":108,                      "uri":"/components/device_id_1" },
+                { "name":"holding_110","id":"Holding_1_110","offset":110,"scale": 1000.000000, "uri":"/components/device_id_1" }       ]
+        }
+    },
+    {
+        "device_id": 10,
+        "registers": {
+            "coils":
+            [
+                { "name":"Coil_110","id":"Coil_10_110","offset":110,"uri":"/components/device_id_10" }       ],
+            "discrete_inputs":
+            [
+                { "name":"discrete_11","id":"discrete_10_111","offset":111,"uri":"/components/device_id_10" }       ],
+            "input_registers":
+            [
+                { "name":"discrete_109","id":"discrete_10_109","offset":109,"uri":"/components/device_id_10" }       ],
+            "holding_registers":
+            [
+                { "name":"holding_100","id":"holding_10_100","offset":100,"shift":-50,          "uri":"/components/device_id_10" },
+                { "name":"holding_102","id":"holding_10_102","offset":101,"size": 2,            "uri":"/components/device_id_10" },
+                { "name":"holding_103","id":"Holding_10_103","offset":103,"size": 4,            "uri":"/components/device_id_10" },
+                { "name":"holding_107","id":"Holding_10_107","offset":107,"signed": true,       "uri":"/components/device_id_10" },
+                { "name":"holding_108","id":"Holding_10_108","offset":108,                      "uri":"/components/device_id_10" },
+                { "name":"holding_110","id":"Holding_10_110","offset":110,"scale": 1000.000000, "uri":"/components/device_id_10" }       ]
+        }
+    },
+    {
+        "device_id":2,
+        "registers":
+          {
+           "coils":
+            [
+               { "name":"coil_110","id":"Coil_2_110","offset":110,"uri":"/components/comp_2" }       ],
+           "discrete_inputs":
+            [
+               { "name":"discrete_111","id":"discrete_2_111","offset":111,"uri":"/components/comp_2" }       ]
+            }
+     
+    },
+    {
+        "device_id":11,
+        "registers":
+          {
+           "input_registers":
+            [
+               { "name":"discrete_11_109","id":"discrete_11_109","offset":109,"uri":"/components/comp_2" }       ]
+            }
+     
+    },
+    {
+            "device_id":12,
+            "registers":
+              {
+                "holding_registers":
+                [
+                { "name":"holding_100","id":"holding_12_100","offset":100,"shift":-50,          "uri":"/components/device_id_12" },
+                { "name":"holding_102","id":"holding_12_102","offset":101,"size": 2,            "uri":"/components/device_id_12" },
+                { "name":"holding_103","id":"Holding_12_103","offset":103,"size": 4,            "uri":"/components/device_id_12" },
+                { "name":"holding_107","id":"Holding_12_107","offset":107,"signed": true,       "uri":"/components/device_id_12" },
+                { "name":"holding_108","id":"Holding_12_108","offset":108,                      "uri":"/components/device_id_12" },
+                { "name":"holding_110","id":"Holding_12_110","offset":110,"scale": 1000.000000, "uri":"/components/device_id_12" }   ],
+                "coils":
+                [
+                   { "name":"coil_110","id":"Coil_12_110","offset":110,               "uri":"/components/device_id_12" }       ],
+               "discrete_inputs":
+                [
+                   { "name":"discrete_12_109","id":"discrete_12_111","offset":111,    "uri":"/components/device_id_12" }       ],
+                "input_registers":
+                [
+                      { "name":"discrete_12_109","id":"discrete_12_109","offset":109,  "uri":"/components/device_id_12" }       ]
+   
+                }
+         
+    }
+   ],
+   "registers_note": "for this test we'll put them into a fixrd device_id the below registers map is for any non-specified device_id received by the server. In other words, anything NOT inside the 'devices' array above",
+   "registers":
+   {
+    "input_registers":
+       [
+          { "name":"input_109","id":"Input_109","offset":109,                          "uri":"/components/no_device_id" }       ],
+    "holding_registers":
+       [
+          { "name":"holding_100","id":"Holding_100","offset":100,"shift":-50,          "uri":"/components/no_device_id" },
+          { "name":"holding_101","id":"Holding_101","offset":101,"size": 2,            "uri":"/components/no_device_id" },
+          { "name":"holding_103","id":"Holding_103","offset":103,"size": 4,            "uri":"/components/no_device_id" },
+          { "name":"holding_107","id":"Holding_107","offset":107,"signed": true,       "uri":"/components/no_device_id" },
+          { "name":"holding_108","id":"Holding_108","offset":108,                      "uri":"/components/no_device_id" },
+          { "name":"holding_110","id":"Holding_110","offset":110,"scale": 1000.000000, "uri":"/components/no_device_id" }       ]
+    }
+}
+

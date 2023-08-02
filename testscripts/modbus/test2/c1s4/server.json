@@ -1,0 +1,65 @@
+{
+   "system":
+   {   "name":"example_notmp",
+       "protocol": "Modbus TCP",
+       "id": "test_device_id",
+       "ip_address": "0.0.0.0",
+        "debug": 1,
+        "ignore_id": true,
+	     "bypass_get":true,
+       	"port": 502 
+   },
+   "registers":
+   {
+        "holding_registers": [
+            { "name":"holding_1_109","id":"holding_1_109","offset":109,               "uri":"/components/device_id_1" },
+            { "name":"holding_1_1100","id":"holding_1_1100","offset":1100,            "uri":"/components/device_id_1" },
+            { "name":"holding_1_1101","id":"holding_1_1101","offset":1101,"size":2,   "uri":"/components/device_id_1" },
+            { "name":"holding_1_1103","id":"holding_1_1103","offset":1103,"size":4,   "uri":"/components/device_id_1" },
+            { "name":"holding_1_1107","id":"holding_1_1107","offset":1107,"size":1,   "uri":"/components/device_id_1" },
+            { "name":"holding_1_1108","id":"holding_1_1108","offset":1108,"size":1,   "uri":"/components/device_id_1" },
+            { "name":"holding_1_1110","id":"holding_1_1110","offset":1110,"size":1,   "uri":"/components/device_id_1" },
+            { "name":"holding_10_5110","id":"holding_10_5110","offset":5110,"size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_10_5101","id":"holding_10_5101","offset":5101,"size":2, "uri":"/components/device_id_1" },
+            { "name":"holding_10_5103","id":"holding_10_5103","offset":5103,"size":4, "uri":"/components/device_id_1" },
+            { "name":"holding_10_5107","id":"holding_10_5107","offset":5107,"size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_10_5108","id":"holding_10_5108","offset":5108,"size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_12_8110","id":"holding_12_8110","offset":8110,"size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_12_8101","id":"holding_12_8101","offset":8101,"size":2, "uri":"/components/device_id_1" },
+            { "name":"holding_12_8103","id":"holding_12_8103","offset":8103,"size":4, "uri":"/components/device_id_1" },
+            { "name":"holding_12_8107","id":"holding_12_8107","offset":8107,"size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_12_8108","id":"holding_12_8108","offset":8108,"size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_0",      "id":"holding_0",      "offset":0,    "size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_1",      "id":"holding_1",      "offset":1,    "size":2, "uri":"/components/device_id_1" },
+            { "name":"holding_3",      "id":"holding_3",      "offset":3,    "size":4, "uri":"/components/device_id_1" },
+            { "name":"holding_10",     "id":"holding_10",     "offset":10,   "size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_7",      "id":"holding_7",      "offset":7,    "size":1, "uri":"/components/device_id_1" },
+            { "name":"holding_8",      "id":"holding_8",      "offset":8,    "size":1, "uri":"/components/device_id_1" }
+            
+            ],
+            "coils":
+            [
+                { "name":"Coil_1_1110", "id":"Coil_1_1110",  "offset":1110,"uri":"/components/device_id_10" },
+                { "name":"Coil_2_3110", "id":"Coil_2_3110",  "offset":3110,"uri":"/components/device_id_10" },
+                { "name":"Coil_10_6110","id":"Coil_10_6110", "offset":6110,"uri":"/components/device_id_10" },
+                { "name":"Coil_12_8110","id":"Coil_12_8110", "offset":8110,"uri":"/components/device_id_10" }
+
+            ],
+            "discrete_inputs":
+            [
+                { "name":"discrete_1_1111",  "id":"discrete_1_1111", "offset":1111,"uri":"/components/device_id_10" },       
+                { "name":"discrete_2_3111",  "id":"discrete_2_3111", "offset":3111,"uri":"/components/device_id_10" },       
+                { "name":"discrete_10_6111", "id":"discrete_10_6111","offset":6111,"uri":"/components/device_id_10" },       
+                { "name":"discrete_12_8111", "id":"discrete_12_8111","offset":8111,"uri":"/components/device_id_10" }      
+            ],
+            "input_registers":
+            [
+                { "name":"input_11_2109",    "id":"discrete_11_2109","offset":2109,"uri":"/components/device_id_10" },       
+                { "name":"input_11_4109",    "id":"discrete_11_4109","offset":4109,"uri":"/components/device_id_10" },        
+                { "name":"input_10_7109",    "id":"discrete_10_7109","offset":7109,"uri":"/components/device_id_10" },       
+                { "name":"input_12_8109",    "id":"discrete_12_8109","offset":8109,"uri":"/components/device_id_10" }       
+            ]
+    }
+}
+
+

@@ -41,8 +41,8 @@ void DataMap::getFromAmap(std::string bname, AssetManager* am)
             setDataItem(am, this, xx.first, xx.second);
         }
     }
-
 }
+
 void DataMap::sendToAmap(std::string bname, AssetManager* am)
 {
     if (transferBlocks.find(bname) != transferBlocks.end())
