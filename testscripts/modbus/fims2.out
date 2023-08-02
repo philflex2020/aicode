@@ -1,0 +1,80 @@
+{
+  "0.0": {
+    "Method": "set",
+    "Uri": "/my/fims",
+    "ReplyTo": "(null)",
+    "Process Name": "fims_send",
+    "Username": "root",
+    "Body": {
+      "obj": 1234
+    },
+    "Timestamp": "2023-08-02 05:35:02.336714"
+  },
+  "3.672008": {
+    "Method": "set",
+    "Uri": "/my/fims2",
+    "ReplyTo": "(null)",
+    "Process Name": "fims_send",
+    "Username": "root",
+    "Body": {
+      "obj1": 1234
+    },
+    "Timestamp": "2023-08-02 05:35:06.008722"
+  },
+  "6.188381": {
+    "Method": "set",
+    "Uri": "/my/fims3",
+    "ReplyTo": "(null)",
+    "Process Name": "fims_send",
+    "Username": "root",
+    "Body": {
+      "obj2": 1234
+    },
+    "Timestamp": "2023-08-02 05:35:08.525095"
+  },
+  "14.235395": {
+    "Method": "pub",
+    "Uri": "/my/fims",
+    "ReplyTo": "(null)",
+    "Process Name": "fims_send",
+    "Username": "root",
+    "Body": {
+      "obj2": 1234
+    },
+    "Timestamp": "2023-08-02 05:35:16.572109"
+  },
+  "17.689017": {
+    "Method": "pub",
+    "Uri": "/my/fims",
+    "ReplyTo": "(null)",
+    "Process Name": "fims_send",
+    "Username": "root",
+    "Body": {
+      "pobj2": ""
+    },
+    "Timestamp": "2023-08-02 05:35:20.025731"
+  },
+  "20.220459": {
+    "Method": "pub",
+    "Uri": "/my/fims",
+    "ReplyTo": "(null)",
+    "Process Name": "fims_send",
+    "Username": "root",
+    "Body": {
+      "pobj": 1234,
+      "pstuff": "good"
+    },
+    "Timestamp": "2023-08-02 05:35:22.557173"
+  },
+  "24.03578": {
+    "Method": "pub",
+    "Uri": "/my/fims",
+    "ReplyTo": "(null)",
+    "Process Name": "fims_send",
+    "Username": "root",
+    "Body": {
+      "pobj": 1234
+    },
+    "Timestamp": "2023-08-02 05:35:26.372494"
+  }
+}
