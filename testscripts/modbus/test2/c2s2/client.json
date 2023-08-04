@@ -9,7 +9,7 @@
     "components": [
         {
             "id": "comp_0",
-            "device_id": 1,
+            "xdevice_id": 1,
             "registers": [
                 {
                     "type": "Holding",
@@ -23,7 +23,7 @@
         },
         {
             "id": "comp_1",
-            "device_id": 1,
+            "xdevice_id": 1,
             "registers": [
                 {
                     "type": "Holding",
@@ -60,7 +60,7 @@
             ]
         },
         {
-            "device_id": 10,
+            "xdevice_id": 10,
             "id": "comp_10",
             "registers": [
                 {
@@ -98,7 +98,7 @@
         },
         {
             "id": "comp_2",
-            "device_id": 2,
+            "xdevice_id": 2,
             "registers": [
                 {
                     "type": "Coil",
@@ -116,7 +116,7 @@
         },
         {
             "id": "comp_11",
-            "device_id": 11,
+            "xdevice_id": 11,
             "registers": [
                 {
                     "type": "Input",
@@ -128,7 +128,7 @@
         },
         {
             "id": "comp_12",
-            "device_id": 12,
+            "xdevice_id": 12,
             "registers": [
                 {
                     "type": "Holding",

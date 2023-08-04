@@ -5,7 +5,7 @@
         "id": "test_device_id",
         "ip_address": "0.0.0.0",
         "debug": 1,
-        "ignore_id": true,
+        "ignore_id": false,
 	    "bypass_get":true,
        	"port": 502 
    },
@@ -13,13 +13,6 @@
    "registers": [
         {
             "device_id": 1,
-            "holding_registers":
-                [
-                { "name":"holding_1_109","id":"holding_1_109","offset":109,"shift":-50,          "uri":"/components/device_id_12" }
-                ]
-        },
-        {
-            "device_id": 100,
             "holding_registers":
                 [
                 { "name":"holding_100","id":"holding_1_100","offset":100,"shift":-50,          "uri":"/components/device_id_1" },
@@ -35,8 +28,8 @@
                 [{ "name":"discrete_11","id":"discrete_1_111","offset":111,"uri":"/components/device_id_10" }       ],
             "input_registers":
                 [{ "name":"discrete_109","id":"discrete_1_109","offset":109,"uri":"/components/device_id_10" }       ]
-       },
-       {
+    },
+    {
         "device_id": 10,
             "holding_registers":
                 [
@@ -67,7 +60,7 @@
             [ { "name":"discrete_11_109","id":"discrete_11_109","offset":109,"uri":"/components/comp_11" }       ]
     },
     {
-        "device_id": 12,
+        "device_id": 255,
             "holding_registers":
                 [
                 { "name":"holding_100","id":"holding_12_100","offset":100,"shift":-50,          "uri":"/components/device_id_12" },

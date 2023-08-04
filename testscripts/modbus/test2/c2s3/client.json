@@ -23,7 +23,7 @@
         },
         {
             "id": "comp_1",
-            "device_id": 100,
+            "device_id": 101,
             "registers": [
                 {
                     "type": "Holding",

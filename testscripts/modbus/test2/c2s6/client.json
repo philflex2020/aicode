@@ -1,0 +1,49 @@
+{
+    "connection": {
+        "name": "example_notmp",
+        "ip_address":"172.17.0.3",
+        "port": 502,
+        "frequency": 50,
+        "max_num_connections":1
+    },
+    "components": [
+        {
+            "id": "comp_255",
+            "device_id": 255,
+            "registers": [
+                {
+                    "type": "Holding",
+                    "starting_offset":100,
+                    "number_of_registers":10,
+                    "map": [
+                        { "id": "Holding_1_100", "offset": 100, "shift": -50 },
+                        { "id": "Holding_1_101", "offset": 101, "size": 2 },
+                        { "id": "Holding_1_103", "offset": 103, "size": 4 },
+                        { "id": "Holding_1_107", "offset": 107, "size": 1, "signed": true },
+                        { "id": "Holding_1_108", "offset": 108, "size": 1, "random_enum": true, "bit_strings": ["hello", "world"] },
+                        { "id": "Holding_1_110", "offset": 110, "size": 1, "scale": 1000 }
+                    ]
+                },
+                {
+                    "type": "Coil",
+                    "starting_offset":110,
+                    "number_of_registers":1,
+                    "map": [{ "id": "Coil_1_110", "offset": 110, "shift": -50 }]
+                },
+                {
+                    "type": "Discrete Input",
+                    "starting_offset":111,
+                    "number_of_registers":1,
+                    "map": [{ "id": "DiscreteInput_1_111", "offset": 111 }]
+                },
+
+                {
+                    "type": "Input",
+                    "starting_offset":109,
+                    "number_of_registers":1,
+                    "map": [{ "id": "Input_1_109", "offset": 109 }]
+                }
+            ]
+        }
+    ]
+}
