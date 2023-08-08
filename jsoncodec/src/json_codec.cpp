@@ -309,6 +309,23 @@ int  JsonCodec::saveKeyFile(const std::string& keyFilePath) {
     }
 }
 
+int  JsonCodec::savejKeyFile(const std::string& keyFilePath) {
+// Open the file for writing
+    std::ofstream outputFile(keyFilePath);
+
+    if (!outputFile) {
+        std::cerr << "Error opening the file for writing." << std::endl;
+        return -1;
+    }
+
+    // Write the jsonRoot to the file
+    outputFile << jKeyDict.dump(4); // The number 4 specifies the indentation level (optional)
+
+    // Close the file
+    outputFile.close();
+
+    return 0;
+}
 // json JsonCodec::extractJsonData(const std::string& encodedData) const {
 //     // Load the keyfile and create the keyDict
 //     // KeyDict keyDict;
@@ -358,13 +375,18 @@ void JsonCodec::readKeyDictFromFile(const std::string& keyDictFilePath) {
     populateReverseKeyDict();
 }
 
-int JsonCodec::getIndex(const std::string& key) const {
+int JsonCodec::getIndex(std::string& key) {
     auto it = jKeyDict.find(key);
     if (it != jKeyDict.end()) {
         return it.value();
     } else {
+        int idx = jKeyDict.size();
+        idx++;
+        jKeyDict[key] = idx;
+        ReverseKeyDict[idx] = key;
+
         // Return a default value (you can choose -1 or throw an exception, depending on your use case)
-        return -1;
+        return idx;
     }
 }
 

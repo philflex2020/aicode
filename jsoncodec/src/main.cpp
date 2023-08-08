@@ -37,6 +37,7 @@ int main() {
         std::cout << "Decoded JSON data:" << std::endl;
         std::cout << decodedData.dump(4) << std::endl;
     }
+
     std::unordered_map<std::string, int> * keyDict = jsonCodec.getKeyDict();
     json jsonRoot;
 
@@ -63,6 +64,18 @@ int main() {
     // Close the file
     outputFile.close();
 
+    jsonCodec.readKeyDictFromFile("output.json");
+    std::string skey = "nested_key2";
+    int idx = jsonCodec.getIndex(skey);
+    std::cout << " nested_key2 idx = "<< idx << std::endl;
+    skey = "nested_key4";
+    idx = jsonCodec.getIndex(skey);
+    std::cout << " nested_key4 idx = "<< idx << std::endl;
+    
+    skey = jsonCodec.getName(4);
+    std::cout << " skey [4] = "<< skey << std::endl;
+
+    jsonCodec.savejKeyFile("output2.json");
 
     return 0;
 }

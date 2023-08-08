@@ -41,13 +41,15 @@ public:
 //    std::istream& readFileToStream(const std::string& filePath, std::istream& inputStream);
 
     // Function to get the index from a key
-    int getIndex(const std::string& key) const;
+    int getIndex(std::string& key);
 
     // Function to get the key name from an index
     std::string getName(int index) const;
 
     // Function to read KeyDict from a JSON file
     void readKeyDictFromFile(const std::string& keyDictFilePath);
+    int  savejKeyFile(const std::string& keyFilePath);
+
 
 private:
     void compressJsonData(const json& jsonData, std::ostream& outputStream);
