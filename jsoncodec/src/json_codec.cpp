@@ -86,7 +86,12 @@ void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStrea
                 /// Convert numbers and booleans to binary format
                 if (it->is_boolean()) {
                     bool value = *it;
-                    outputStream << key << "b" << sizeof(bool) << value;
+                    if (value)
+                        outputStream << key << 0x2;
+                    else
+                        outputStream << key << 0x1;
+
+                    //outputStream << key << "b" << sizeof(bool) << value;
                 } else if (it->is_number_integer()) {
                     int value = *it;
                     outputStream << key << "n" << sizeof(int);
@@ -148,7 +153,19 @@ json JsonCodec::uncompressJsonData(std::istream& inputStream) const{
 
         if (!inputStream) break;
 
-        if (valueType == 'b') { // Boolean
+        if (valueType == '1') { // Boolean false
+            bool value = false;
+            jsonData[key] = value;
+        } else if (valueType == '2') { // Boolean true
+            bool value = true;
+            jsonData[key] = value;
+        } else if (valueType == '3') { // integer zero
+            int value = 0;
+            jsonData[key] = value;
+        } else if (valueType == '4') { // double zero
+            double value = 0;
+            jsonData[key] = value;
+        } else if (valueType == 'b') { // Boolean
             char sizec;
             inputStream >> sizec;
             bool value;
