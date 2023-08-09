@@ -66,78 +66,107 @@ std::string JsonCodec::encode() {
 
 void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStream) {
     for (auto it = jsonData.begin(); it != jsonData.end(); ++it) {
-        if (it->is_object()) {
-            // Recursively compress object
-            compressJsonData(*it, outputStream);
-        } else {
-            // Check if key exists in keyDict
-            auto dictIt = KeyDict.find(it.key());
+        std::string key;
+        std::string dataType;
+        auto dictIt = KeyDict.find(it.key());
 
-            if (dictIt == KeyDict.end()) {
-                KeyDict[it.key()] = KeyDict.size() + 1;
-                dictIt = KeyDict.find(it.key());
-            }
+        if (dictIt == KeyDict.end()) {
+            KeyDict[it.key()] = KeyDict.size() + 1;
+            dictIt = KeyDict.find(it.key());
+        }
+
+        if (dictIt != KeyDict.end()) {
+                // Write key, data type, data size, and raw data to the output stream
+            key = std::to_string(dictIt->second);
+            dataType = it->type_name();
+        }
+        if (it->is_object()) {
 
             if (dictIt != KeyDict.end()) {
                 // Write key, data type, data size, and raw data to the output stream
-                std::string key = std::to_string(dictIt->second);
-                std::string dataType = it->type_name();
-                std::string rawData = it->dump();
                 /// Convert numbers and booleans to binary format
-                if (it->is_boolean()) {
-                    bool value = *it;
-                    if (value)
-                        outputStream << key << 0x2;
-                    else
-                        outputStream << key << 0x1;
+                // Recursively compress object
+                outputStream << key << "o";
+                compressJsonData(*it, outputStream);
+            }
+        } else if (it->is_array()) {
+            if (dictIt != KeyDict.end()) {
+                // Write key, data type, data size, and raw data to the output stream
+                /// Convert numbers and booleans to binary format
+                // Recursively compress object
+                outputStream << key << "a";
+                compressJsonData(*it, outputStream);
+    
+            // Write array marker to the output stream
+            //   outputStream << "a";
+
+            // Write the size of the array to the output stream
+                size_t st = it->size();
+                outputStream.write(reinterpret_cast<const char*>(&st), sizeof(size_t));
+
+            // Recursively compress each element of the array
+                for (const auto& arrayElem : *it) {
+                    compressJsonData(arrayElem, outputStream);
+                }
+        }
+            // Recursively compress object
+            //compressJsonData(*it, outputStream);
+        } else if (it->is_boolean()) {
+            bool value = *it;
+            if (value)
+                outputStream << key << "T";
+            else
+                outputStream << key << "F";
 
                     //outputStream << key << "b" << sizeof(bool) << value;
-                } else if (it->is_number_integer()) {
-                    int value = *it;
-                    outputStream << key << "n" << sizeof(int);
-                    outputStream.write(reinterpret_cast<const char*>(&value), sizeof(int));
-                } else if (it->is_number_float()) {
-                    double value = *it;
-                    outputStream << key << "f" << sizeof(double);
-                    outputStream.write(reinterpret_cast<const char*>(&value), sizeof(double));
-
-                } else if (it->is_string()) {
-                    //double value = *it;
-                    std::string rawData = it->dump();
-                    size_t dataSize = rawData.size();
-                    outputStream << key << "s" << dataSize << " " << rawData;
-
-                } else {
-                    // For other data types, write raw data to the output stream
-                    std::string rawData = it->dump();
-                    size_t dataSize = rawData.size();
-                    outputStream << key <<  "x" << strlen(it->type_name()) << it->type_name() << dataSize;
-                    outputStream.write(rawData.c_str(), dataSize);
-                }
-            //     std::string dt = "u";
-            //     if (dataType == "boolean")
-            //             dt = "b";
-            //     else if (dataType == "number")
-            //             dt = "n";
-            //    else if (dataType == "string")
-            //              dt = "s";
-
-
-            //     size_t dataSize = rawData.size();
-            //     //outputStream << key.size() << " "<< key <<" "<< dataType.size() << " " << dataType << " " << dataSize;
-            //     outputStream << key <<" "<< " " << dt << " " << dataSize;
-            //     outputStream.write(rawData.c_str(), dataSize);
-            } else {
-                // If key doesn't exist in keyDict, write raw data to the output stream
-                std::string key = it.key();
-                std::string dataType = it->type_name();
-                std::string rawData = it->dump();
-
-                size_t dataSize = rawData.size();
-                outputStream << key.size() << key << dataType.size() << dataType << dataSize;
-                outputStream.write(rawData.c_str(), dataSize);
+        } else if (it->is_number_integer()) {
+            int value = *it;
+            char valc = 'p';
+            if (value < 0)
+            {
+                valc = 'n';
+                value = - value;
             }
+            int siz=sizeof(int);
+            if (value == 0 )
+                siz = 0;
+            else if (value >=0 && value < 1<<8)
+                siz = 1;
+            else if (value >= 0 && value < 1<<16)
+                siz = 2;
+
+            //outputStream << key << "n" << sizeof(int);
+            outputStream << key << valc << siz;
+            outputStream.write(reinterpret_cast<const char*>(&value), siz);
+        } else if (it->is_number_float()) {
+            double value = *it;
+            outputStream << key << "f" << sizeof(double);
+            outputStream.write(reinterpret_cast<const char*>(&value), sizeof(double));
+
+        } else if (it->is_string()) {
+            //double value = *it;
+            std::string rawData = it->dump();
+            size_t dataSize = rawData.size();
+            outputStream << key << "s" << dataSize << " " << rawData;
+
+        } else {
+            // For other data types, write raw data to the output stream
+            std::string rawData = it->dump();
+            size_t dataSize = rawData.size();
+            outputStream << key <<  "x" << strlen(it->type_name()) << it->type_name() << dataSize;
+            outputStream.write(rawData.c_str(), dataSize);
         }
+        //     } else {
+        //         // If key doesn't exist in keyDict, write raw data to the output stream
+        //         std::string key = it.key();
+        //         std::string dataType = it->type_name();
+        //         std::string rawData = it->dump();
+
+        //         size_t dataSize = rawData.size();
+        //         outputStream << key.size() << key << dataType.size() << dataType << dataSize;
+        //         outputStream.write(rawData.c_str(), dataSize);
+        //     }
+        // }
     }
 }
 //hexdump -C  /var/jsoncodec/example_uri/2023-08-10T12:34:56/encoded_data
@@ -152,11 +181,21 @@ json JsonCodec::uncompressJsonData(std::istream& inputStream) const{
         std::string key = std::string(1,keyc);
 
         if (!inputStream) break;
+        if (valueType == 'a') { // Array marker
+            size_t arraySize;
+            inputStream.read(reinterpret_cast<char*>(&arraySize), sizeof(size_t));
 
-        if (valueType == '1') { // Boolean false
+            json jsonArray = json::array();
+            for (size_t i = 0; i < arraySize; ++i) {
+                jsonArray.push_back(uncompressJsonData(inputStream));
+            }
+            return jsonArray;
+        } else if (valueType == 'o') { // An object
+            jsonData[key] = uncompressJsonData(inputStream);
+        } else if (valueType == 'F') { // Boolean false
             bool value = false;
             jsonData[key] = value;
-        } else if (valueType == '2') { // Boolean true
+        } else if (valueType == 'T') { // Boolean true
             bool value = true;
             jsonData[key] = value;
         } else if (valueType == '3') { // integer zero
@@ -171,16 +210,25 @@ json JsonCodec::uncompressJsonData(std::istream& inputStream) const{
             bool value;
             inputStream.read(reinterpret_cast<char*>(&value), sizeof(bool));
             jsonData[key] = value;
-        } else if (valueType == 'n') { // Integer
+        } else if ((valueType == 'p') || (valueType == 'n') ){ // Integer p = positive
 
             char sizec;
             inputStream >> sizec;
             std::cout << " sizec :" << sizec << std::endl;
             std::vector<char>valBuf(sizeof(int));
-            //int value;
-            inputStream.read(valBuf.data(), sizeof(int));
-            printf(" valBuf %x . %x . %x . %x \n", valBuf[0],valBuf[1],valBuf[2],valBuf[3]);
-            int value = *reinterpret_cast<const int*>(valBuf.data());
+            valBuf[0] = 0;
+            valBuf[1] = 0;
+            valBuf[2] = 0;
+            valBuf[3] = 0;
+            int value = 0;
+            if (sizec > 0x30) {
+                inputStream.read(valBuf.data(), sizec - 0x30);
+                //inputStream.read(valBuf.data(), sizeof(int));
+                printf(" valBuf %x . %x . %x . %x \n", valBuf[0],valBuf[1],valBuf[2],valBuf[3]);
+                value = *reinterpret_cast<const int*>(valBuf.data());
+                if (valueType == 'n')
+                    value = - value;
+            }
             jsonData[key] = value;
             std::cout << "key ["<<key<< "] value [" << value <<"] sizeof int :" << sizeof(int) << std::endl;
 

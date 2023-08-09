@@ -9,7 +9,7 @@ int main() {
     std::string jsonBody = R"(
         {
             "key1": "value1",
-            "key2": 42,
+            "key2": -42,
             "key3": true,
             "key4": {
                 "nested_key1": "nested_value1",
