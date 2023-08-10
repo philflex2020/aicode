@@ -38,6 +38,7 @@ public:
     int saveKeyFile(const std::string& keyFilePath);
     json extractJsonData(const std::string& encodedData) const;
     json uncompressJsonData(std::istream& inputStream) const;
+    json xxuncompressJsonData(std::istream& inputStream) const;
 //    std::istream& readFileToStream(const std::string& filePath, std::istream& inputStream);
 
     // Function to get the index from a key

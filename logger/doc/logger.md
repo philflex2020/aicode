@@ -59,3 +59,53 @@ This is a bit developer foccussed I think
 {"time": "05:55:38", "date": "08/09/23", "level": "error",
         "File": "main.cpp", "Func": "main", "Line": 25,
         "MSG": "An Error."}
+
+
+
+        By comparison
+
+
+fims_send -m set -r /$$ -u /ess/config/ess/logging_enabled true
+fims_send -m set -u /ess/cfg/cfile/ess/bms_manager -f /home/docker/git/ess_controller/configs/ess_controller/bms_manager.json
+
+
+note the focussed logs for the event and the information,  we could format it in json format
+
+/var/log/ess_controller/BMSPowerOn_logItCall.txt
+sh-4.2# more  /var/log/ess_controller/BMSPowerOn_logItCall.txt
+[2023-08-09 10:49:44.038] [319.408s] [ESS Logger] [info] Setting /status/ess:FaultShutdown for [/status/bms:BMSCurrentCheckStop] to false
+[2023-08-09 10:49:44.038] [319.408s] [ESS Logger] [info] Setting /status/ess:FaultShutdown for [/status/bms:BMSCurrentCheckStop] to false
+[2023-08-09 10:49:44.038] [319.408s] [ESS Logger] [info] Setting /status/ess:FaultShutdown for [/status/bms:BMSCurrentCheckStop] to false
+[2023-08-09 10:49:44.038] [319.408s] [ESS Logger] [info] Setting /status/ess:FaultShutdown for [/status/bms:BMSCurrentCheckDerate] to false
+[2023-08-09 10:49:44.039] [319.408s] [ESS Logger] [info] [/status/bms:BMSPowerOn] called [LogInfo] with a value of [Off Ready]
+[2023-08-09 10:49:44.039] [319.408s] [ESS Logger] [critical] [/status/bms:BMSPowerOn] called [LogIt] with a value of [Off Ready]
+
+```
+"BMSPowerOn": {
+            "value": "Off Ready",
+            "resetChange": false,
+            "EnableConditionCheck": false,
+            "Type": "string",
+            "AlarmTimeout": 5,
+            "FaultTimeout": 7,
+            "RecoverTimeout": 4,
+
+            "numExpectedVals": 1,
+            "expectedVal1": "On Ready",
+
+            "numConditionVars": 1,
+            "conditionVar1": "SystemState",
+            "conditionType1": "string",
+            "numConditions1": 2,
+            "conditionVal1_1": "Ready",
+            "conditionVal2_1": "Running",
+
+            "actions": {
+                "onSet": [{
+                        "func": [{"func": "LogInfo","amap": "ess"},
+                                 {"inValue": "Off Ready","func": "LogIt","amap": "ess"},
+                                 {"inValue": "On Fault","func": "LogIt","amap": "ess"},
+                                 {"inValue": "Off Fault","func": "LogIt","amap": "ess"}]
+                            }]}
+            }
+```

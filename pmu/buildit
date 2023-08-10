@@ -1,0 +1,1 @@
+g++ -g -std=c++17 -Wall -Wextra -Iinclude  src/PMU.cpp -o build/PMU
