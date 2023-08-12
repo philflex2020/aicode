@@ -37,8 +37,8 @@ public:
     int loadKeyFile(const std::string& keyFilePath);
     int saveKeyFile(const std::string& keyFilePath);
     json extractJsonData(const std::string& encodedData) const;
-    json uncompressJsonData(std::istream& inputStream) const;
-    json xxuncompressJsonData(std::istream& inputStream) const;
+    json uncompressJsonData(std::istream& inputStream);
+    json xxuncompressJsonData(std::istream& inputStream);
 //    std::istream& readFileToStream(const std::string& filePath, std::istream& inputStream);
 
     // Function to get the index from a key
@@ -50,6 +50,12 @@ public:
     // Function to read KeyDict from a JSON file
     void readKeyDictFromFile(const std::string& keyDictFilePath);
     int  savejKeyFile(const std::string& keyFilePath);
+    int setKeyDict(const std::string& key);
+    void writeKey(int key, std::ostream& outputStream);
+    void writeKeyVal(int key, char val, std::ostream& outputStream);
+    int getKeyVal(char &keyc, char &valueType, std::istream& inputStream);
+
+
 
 
 private:

@@ -64,61 +64,74 @@ std::string JsonCodec::encode() {
 //     }
 // }
 
+int JsonCodec::setKeyDict(const std::string& key)
+{
+    int keyid = -1;
+    auto dictIt = KeyDict.find(key);
+
+    if (dictIt == KeyDict.end()) {
+        KeyDict[key] = KeyDict.size() + 1;
+        dictIt = KeyDict.find(key);
+    }
+
+    if (dictIt != KeyDict.end()) {
+            // Write key, data type, data size, and raw data to the output stream
+        //key = std::to_string(dictIt->second);
+        keyid = dictIt->second;
+        ReverseKeyDict[keyid] = key;
+    }
+
+    return keyid;    
+}
+
+void JsonCodec::writeKey(int key, std::ostream& outputStream) {
+    outputStream << std::hex << key;
+}
+
+void JsonCodec::writeKeyVal(int key, char val ,std::ostream& outputStream) {
+    outputStream << std::hex << key << val;
+}
+
 void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStream) {
     for (auto it = jsonData.begin(); it != jsonData.end(); ++it) {
-        std::string key;
+        int key;
         std::string dataType;
-        auto dictIt = KeyDict.find(it.key());
 
-        if (dictIt == KeyDict.end()) {
-            KeyDict[it.key()] = KeyDict.size() + 1;
-            dictIt = KeyDict.find(it.key());
-        }
+        key = setKeyDict(it.key());
 
-        if (dictIt != KeyDict.end()) {
-                // Write key, data type, data size, and raw data to the output stream
-            //key = std::to_string(dictIt->second);
-            key = dictIt->second;
-            dataType = it->type_name();
-        }
+        dataType = it->type_name();
         if (it->is_object()) {
 
-            if (dictIt != KeyDict.end()) {
-                // Write key, data type, data size, and raw data to the output stream
-                /// Convert numbers and booleans to binary format
-                // Recursively compress object
-                outputStream << std::hex << key << "o";
-                compressJsonData(*it, outputStream);
-            }
+            // Write key, data type, data size, and raw data to the output stream
+            /// Convert numbers and booleans to binary format
+            // Recursively compress object
+            outputStream << std::hex << key << "o";
+            compressJsonData(*it, outputStream);
         } else if (it->is_array()) {
-            if (dictIt != KeyDict.end()) {
-                // Write key, data type, data size, and raw data to the output stream
-                /// Convert numbers and booleans to binary format
-                // Recursively compress object
-                outputStream << std::hex << key << "a";
-                compressJsonData(*it, outputStream);
+            // Write key, data type, data size, and raw data to the output stream
+            /// Convert numbers and booleans to binary format
+            // Recursively compress object
+            writeKeyVal(key,'a',outputStream);
+            //outputStream << "a";
+            compressJsonData(*it, outputStream);
     
-            // Write array marker to the output stream
-            //   outputStream << "a";
-
             // Write the size of the array to the output stream
-                size_t st = it->size();
-                outputStream.write(reinterpret_cast<const char*>(&st), sizeof(size_t));
+            size_t st = it->size();
+            outputStream.write(reinterpret_cast<const char*>(&st), sizeof(size_t));
 
-            // Recursively compress each element of the array
-                for (const auto& arrayElem : *it) {
-                    compressJsonData(arrayElem, outputStream);
-                }
-        }
+        // Recursively compress each element of the array
+            for (const auto& arrayElem : *it) {
+                compressJsonData(arrayElem, outputStream);
+            }
             // Recursively compress object
             //compressJsonData(*it, outputStream);
         } else if (it->is_boolean()) {
             bool value = *it;
             if (value)
-                outputStream << std::hex << key << "T";
+                writeKeyVal(key,'T', outputStream);
             else
-                outputStream << key << "F";
-
+                writeKeyVal(key,'F', outputStream);
+ 
                     //outputStream << std::hex << key << "b" << sizeof(bool) << value;
         } else if (it->is_number_integer()) {
             int value = *it;
@@ -137,11 +150,12 @@ void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStrea
                 siz = 2;
 
             //outputStream << std::hex << key << "n" << sizeof(int);
-            outputStream << std::hex << key << valc << siz;
+            writeKey(key,outputStream);
+            outputStream << valc << siz;
             outputStream.write(reinterpret_cast<const char*>(&value), siz);
         } else if (it->is_number_float()) {
             double value = *it;
-            outputStream << std::hex << key << "f";
+            writeKeyVal(key,'f',outputStream);
             outputStream.write(reinterpret_cast<const char*>(&value), sizeof(double));
 
         } else if (it->is_string()) {
@@ -151,7 +165,7 @@ void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStrea
             printf (" Rawdatasize   %d \n", dataSize);
             std::cout << " Rawdatasize :" << dataSize << std::endl;
 
-            outputStream << std::hex << key << "s";
+            writeKeyVal(key,'s',outputStream);
             outputStream.write(reinterpret_cast<const char*>(&dataSize), 1);
             outputStream << rawData;
 
@@ -159,36 +173,36 @@ void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStrea
             // For other data types, write raw data to the output stream
             std::string rawData = it->dump();
             size_t dataSize = rawData.size();
-            outputStream << std::hex << key <<  "x" << strlen(it->type_name()) << it->type_name() << dataSize;
+            writeKeyVal(key,'x', outputStream);
+            outputStream << strlen(it->type_name()) << it->type_name() << dataSize;
             outputStream.write(rawData.c_str(), dataSize);
         }
-        //     } else {
-        //         // If key doesn't exist in keyDict, write raw data to the output stream
-        //         std::string key = it.key();
-        //         std::string dataType = it->type_name();
-        //         std::string rawData = it->dump();
-
-        //         size_t dataSize = rawData.size();
-        //         outputStream << key.size() << key << dataType.size() << dataType << dataSize;
-        //         outputStream.write(rawData.c_str(), dataSize);
-        //     }
-        // }
     }
 }
+int JsonCodec::getKeyVal(char &keyc, char &valueType, std::istream& inputStream)
+{
+    inputStream >> keyc >> valueType;
+    printf(" Hex Key %x \n", keyc);
+    std::string key = std::string(1,keyc+0x30);
+    std::cout << "key ["<<(key)<< "] valueType [" << valueType <<"]"<< std::endl;
+    return (int)keyc;
+}
 //hexdump -C  /var/jsoncodec/example_uri/2023-08-10T12:34:56/encoded_dakeyc +ta
-json JsonCodec::uncompressJsonData(std::istream& inputStream) const{
+json JsonCodec::uncompressJsonData(std::istream& inputStream){
     json jsonData = json::object();
     while (inputStream) {
         // Read key
-        char keyc;
-
+        char keyx;
         char valueType;
-        inputStream >> keyc >> valueType;
-        printf(" Hex Key %x \n", keyc);
-        std::string key = std::string(1,keyc+0x30);
-        std::cout << "key ["<<(key)<< "] valueType [" << valueType <<"]"<< std::endl;
+        int keyc;
 
         if (!inputStream) break;
+        keyc = 
+        getKeyVal(keyx, valueType, inputStream);
+        //std::string key((const char*)&keyc);
+        std::string key = getName(keyc-0x30);
+        //if (!inputStream) break;
+
         if (valueType == 'a') { // Array marker
             size_t arraySize;
             inputStream.read(reinterpret_cast<char*>(&arraySize), sizeof(size_t));
@@ -279,7 +293,7 @@ json JsonCodec::uncompressJsonData(std::istream& inputStream) const{
     }
     return jsonData;
 }
-json JsonCodec::xxuncompressJsonData(std::istream& inputStream) const {
+json JsonCodec::xxuncompressJsonData(std::istream& inputStream)  {
     json jsonData = json::object();
     while (inputStream) {
         // Read key and value type
