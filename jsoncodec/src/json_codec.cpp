@@ -183,6 +183,11 @@ void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStrea
         }
     }
 }
+
+//if bit 7 is set we need to read the next byte
+// do the same for reading in ints ... we donr need the size
+// if int > 0x80 then read next byte I guess the key read and int read is one and the same..
+//  
 int JsonCodec::getKeyVal(char &keyc, char &valueType, std::istream& inputStream)
 {
     inputStream >> keyc >> valueType;
