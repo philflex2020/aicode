@@ -85,11 +85,14 @@ int JsonCodec::setKeyDict(const std::string& key)
 }
 
 void JsonCodec::writeKey(int key, std::ostream& outputStream) {
-    outputStream << std::hex << key;
+    outputStream.write(reinterpret_cast<char*>(&key), 1);
+    //outputStream << std::hex << key;
 }
 
 void JsonCodec::writeKeyVal(int key, char val ,std::ostream& outputStream) {
-    outputStream << std::hex << key << val;
+    outputStream.write(reinterpret_cast<char*>(&key), 1);
+    outputStream << val;
+    //outputStream << std::hex << key << val;
 }
 
 void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStream) {
@@ -105,7 +108,8 @@ void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStrea
             // Write key, data type, data size, and raw data to the output stream
             /// Convert numbers and booleans to binary format
             // Recursively compress object
-            outputStream << std::hex << key << "o";
+            //outputStream << std::hex << key << "o";
+            writeKeyVal(key,'o',outputStream);
             compressJsonData(*it, outputStream);
         } else if (it->is_array()) {
             // Write key, data type, data size, and raw data to the output stream
@@ -195,12 +199,12 @@ json JsonCodec::uncompressJsonData(std::istream& inputStream){
         char keyx;
         char valueType;
         int keyc;
-
-        if (!inputStream) break;
+        std::cout << " input stream peek " << inputStream.peek()<<std::endl;
+        if (inputStream.peek() == -1) break;
         keyc = 
         getKeyVal(keyx, valueType, inputStream);
         //std::string key((const char*)&keyc);
-        std::string key = getName(keyc-0x30);
+        std::string key = getName(keyc);
         //if (!inputStream) break;
 
         if (valueType == 'a') { // Array marker
@@ -261,6 +265,12 @@ json JsonCodec::uncompressJsonData(std::istream& inputStream){
             std::vector<char>valBuf(sizeof(double));
             double value;
             inputStream.read(valBuf.data(), sizeof(double));
+            for ( char c : valBuf)
+            {
+                printf( " [%x] ", c);
+            }
+            printf("\n");
+
             //inputStream.read(reinterpret_cast<char*>(&value), sizeof(double));
             value = *reinterpret_cast<const double*>(valBuf.data());
             jsonData[key] = value;
