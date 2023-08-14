@@ -76,6 +76,31 @@ int main() {
     std::cout << " skey [4] = "<< skey << std::endl;
 
     jsonCodec.savejKeyFile("output2.json");
+    std::vector<char>keyv;
+    keyv.reserve(5);
+    printf( "write  127\n");
+    idx  = jsonCodec.writeKeyV(127, 128, 3, keyv);
+    for ( int xx = 0 ; xx < (int)keyv.size(); xx++)
+    {
+        printf( "[%d] %x ", xx, (unsigned int)keyv.at(xx));
+    }
+    keyv.clear();
+    printf( " idx %d \n", idx);
+    printf( "write  128\n");
+    idx  = jsonCodec.writeKeyV(128, 128, 3, keyv);
+    for ( int xx = 0 ; xx < (int)keyv.size(); xx++)
+    {
+        printf( "[%d] %x ", xx, (unsigned int)keyv.at(xx));
+    }
+    keyv.clear();
+    printf( " idx %d \n", idx);
+    printf( "write  4043\n");
+    idx  = jsonCodec.writeKeyV(4043, 128, 3, keyv);
+    for ( int xx = 0 ; xx < (int)keyv.size(); xx++)
+    {
+        printf( "[%d] %x ", (int)(xx&0x7f), (unsigned int)(keyv.at(xx)& 0x7f));
+    }
+    printf( " idx %d \n", idx);
 
     return 0;
 }

@@ -89,6 +89,94 @@ void JsonCodec::writeKey(int key, std::ostream& outputStream) {
     //outputStream << std::hex << key;
 }
 
+// 127 > 127
+// 128 > 1 , 0
+// 129 > 1, 1
+// 4095 > 31, 
+
+// So we start with idx at say 4 and work down
+int JsonCodec::writeKeyV(int key, int val, int idx, std::vector<char>&keyv) {
+    //int ret  = 1;
+
+    //*keyv ={0,0,0,0,0}; 
+    //int idx  = 0;
+    double rem = 0.0;
+    auto pval = std::pow(val, idx);
+    printf(" check key %d pval %f  idx %d  num %d \n", key, pval, idx, (int)(key/pval) );
+    if (key >= pval)
+    {
+        rem = (key - pval)/pval;
+        printf(" step key %d pval %d  idx %d  num %d  val %f \n", key, (int)pval, idx, (int)(key/pval), rem );
+
+        keyv.emplace(keyv.begin(),(char)(rem));  // but we need to set high order bit
+        
+    } else {
+        if ((keyv.size() > 0) || ( idx == 0 ))
+        {
+            printf(" zero size %d key %d pval %d  idx %d  num %d  val %f \n", (int)keyv.size(), key, (int)pval, idx, (int)(key/pval), rem );
+            keyv.emplace(keyv.begin(),(char)(0));
+        }
+    }
+    if (idx > 0)
+    {
+        idx--;
+        key -= (int)(rem * pval);
+        printf(" next check key %d pval %d  idx %d  num %d \n", key, (int)pval, idx, (int)(key/pval) );
+        writeKeyV(key, val, idx, keyv);
+    }
+
+    return idx;
+
+    {
+
+        if ( key > (128 * 128 * 128 *128))
+        {
+            int keyx = key - (128*128*128*128);
+            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
+            key -= keyx;
+            keyx /= (128*128*128);
+            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
+            idx++;
+
+        }
+        if ( key > (128 * 128 * 128))
+        {
+            int keyx = key - (128*128*128);
+            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
+            key -= keyx;
+            keyx /= (128*128);
+            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
+            idx++;
+        }
+
+        if ( key > (128 * 128 ))
+        {
+            int keyx = key - (128*128);
+            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
+            key -= keyx;
+            keyx /= (128);
+            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
+            idx++;
+        }
+        if ( key > (128))
+        {
+            int keyx = key - 128;
+            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
+            key -= keyx;
+            keyx /= (128);
+            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
+            idx++;
+        }
+        printf(" key [%d] \n", (int)key);
+        keyv.emplace(keyv.begin(),(char)key);
+        key -= key;
+        idx++;
+    }
+    // outputStream.write(reinterpret_cast<char*>(&key), 1);
+    //outputStream << std::hex << key;
+    return idx+1;
+}
+
 void JsonCodec::writeKeyVal(int key, char val ,std::ostream& outputStream) {
     outputStream.write(reinterpret_cast<char*>(&key), 1);
     outputStream << val;
@@ -188,6 +276,30 @@ void JsonCodec::compressJsonData(const json& jsonData, std::ostream& outputStrea
 // do the same for reading in ints ... we donr need the size
 // if int > 0x80 then read next byte I guess the key read and int read is one and the same..
 //  
+//we'll have size embedded in the int type
+int JsonCodec::getKey(std::istream& inputStream)
+{
+    char keyc = 0;
+    int key = 0;
+    bool done = false;
+    while (!done)
+    {
+        inputStream >> keyc;
+        if ((keyc && 0x80) == 0 ) done = true;
+        printf(" Hex Key %x  done %s \n", keyc, done?"true":"false");
+  
+        key = key * 128;
+        keyc &= 0x7f;
+
+        key += (int)keyc;
+    }
+
+    // std::string key = std::string(1,keyc+0x30);
+    // std::cout << "key ["<<(key)<< "] valueType [" << valueType <<"]"<< std::endl;
+    return key;
+}
+
+//we'll have size embedded in the int type
 int JsonCodec::getKeyVal(char &keyc, char &valueType, std::istream& inputStream)
 {
     inputStream >> keyc >> valueType;
@@ -196,6 +308,7 @@ int JsonCodec::getKeyVal(char &keyc, char &valueType, std::istream& inputStream)
     std::cout << "key ["<<(key)<< "] valueType [" << valueType <<"]"<< std::endl;
     return (int)keyc;
 }
+
 //hexdump -C  /var/jsoncodec/example_uri/2023-08-10T12:34:56/encoded_dakeyc +ta
 json JsonCodec::uncompressJsonData(std::istream& inputStream){
     json jsonData = json::object();
