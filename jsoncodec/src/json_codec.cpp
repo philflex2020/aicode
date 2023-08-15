@@ -89,92 +89,43 @@ void JsonCodec::writeKey(int key, std::ostream& outputStream) {
     //outputStream << std::hex << key;
 }
 
-// 127 > 127
-// 128 > 1 , 0
-// 129 > 1, 1
-// 4095 > 31, 
+// 127 > 0x7f
+// 128 > 0x1 , 0
+// 129 > 0x1, 1
+// 4043 > 0x1f, 0x4b 
+
+void JsonCodec::outKeyV(std::vector<char>&keyv, std::ostream& outputStream) {
+    for ( int xx = 0 ; xx < (int)keyv.size(); xx++)
+    {
+        char key = keyv.at(xx);
+        if (xx <(int)keyv.size()-1) key |= 0x80;
+        outputStream.write(reinterpret_cast<char*>(&key), 1);
+        printf( "[%d] %x ", (int)(xx), (unsigned char)(key));
+    }
+}
 
 // So we start with idx at say 4 and work down
 int JsonCodec::writeKeyV(int key, int val, int idx, std::vector<char>&keyv) {
-    //int ret  = 1;
-
-    //*keyv ={0,0,0,0,0}; 
-    //int idx  = 0;
-    double rem = 0.0;
+    int num = 0;
     auto pval = std::pow(val, idx);
-    printf(" check key %d pval %f  idx %d  num %d \n", key, pval, idx, (int)(key/pval) );
     if (key >= pval)
     {
-        rem = (key - pval)/pval;
-        printf(" step key %d pval %d  idx %d  num %d  val %f \n", key, (int)pval, idx, (int)(key/pval), rem );
-
-        keyv.emplace(keyv.begin(),(char)(rem));  // but we need to set high order bit
+        num = (int)(key/pval);
+        keyv.emplace_back((char)(num));  // but we need to set high order bit
         
     } else {
         if ((keyv.size() > 0) || ( idx == 0 ))
         {
-            printf(" zero size %d key %d pval %d  idx %d  num %d  val %f \n", (int)keyv.size(), key, (int)pval, idx, (int)(key/pval), rem );
-            keyv.emplace(keyv.begin(),(char)(0));
+            keyv.emplace_back((char)(0));
         }
     }
     if (idx > 0)
     {
         idx--;
-        key -= (int)(rem * pval);
-        printf(" next check key %d pval %d  idx %d  num %d \n", key, (int)pval, idx, (int)(key/pval) );
+        key -= (int)(num * pval);
         writeKeyV(key, val, idx, keyv);
     }
-
     return idx;
-
-    {
-
-        if ( key > (128 * 128 * 128 *128))
-        {
-            int keyx = key - (128*128*128*128);
-            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
-            key -= keyx;
-            keyx /= (128*128*128);
-            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
-            idx++;
-
-        }
-        if ( key > (128 * 128 * 128))
-        {
-            int keyx = key - (128*128*128);
-            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
-            key -= keyx;
-            keyx /= (128*128);
-            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
-            idx++;
-        }
-
-        if ( key > (128 * 128 ))
-        {
-            int keyx = key - (128*128);
-            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
-            key -= keyx;
-            keyx /= (128);
-            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
-            idx++;
-        }
-        if ( key > (128))
-        {
-            int keyx = key - 128;
-            printf(" key [%d] keyx [%d] \n", (int)key, (int) keyx);
-            key -= keyx;
-            keyx /= (128);
-            keyv.emplace(keyv.begin(),(char)(keyx + 0x80));
-            idx++;
-        }
-        printf(" key [%d] \n", (int)key);
-        keyv.emplace(keyv.begin(),(char)key);
-        key -= key;
-        idx++;
-    }
-    // outputStream.write(reinterpret_cast<char*>(&key), 1);
-    //outputStream << std::hex << key;
-    return idx+1;
 }
 
 void JsonCodec::writeKeyVal(int key, char val ,std::ostream& outputStream) {
@@ -282,15 +233,15 @@ int JsonCodec::getKey(std::istream& inputStream)
     char keyc = 0;
     int key = 0;
     bool done = false;
+    if (inputStream.peek() == -1) return -1;
+
     while (!done)
     {
         inputStream >> keyc;
-        if ((keyc && 0x80) == 0 ) done = true;
-        printf(" Hex Key %x  done %s \n", keyc, done?"true":"false");
-  
+        if ((keyc & 0x80) == 0 ) done = true;
+        //printf(" Hex Key %x  done %s \n", keyc, done?"true":"false");
         key = key * 128;
         keyc &= 0x7f;
-
         key += (int)keyc;
     }
 

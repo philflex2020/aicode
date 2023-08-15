@@ -64,6 +64,8 @@ int main() {
     // Close the file
     outputFile.close();
 
+    //hexdump -C  /var/jsoncodec/example_uri/2023-08-10T12:34:56/encoded_dakeyc +ta
+
     jsonCodec.readKeyDictFromFile("output.json");
     std::string skey = "nested_key2";
     int idx = jsonCodec.getIndex(skey);
@@ -76,31 +78,43 @@ int main() {
     std::cout << " skey [4] = "<< skey << std::endl;
 
     jsonCodec.savejKeyFile("output2.json");
-    std::vector<char>keyv;
-    keyv.reserve(5);
-    printf( "write  127\n");
-    idx  = jsonCodec.writeKeyV(127, 128, 3, keyv);
-    for ( int xx = 0 ; xx < (int)keyv.size(); xx++)
-    {
-        printf( "[%d] %x ", xx, (unsigned int)keyv.at(xx));
-    }
-    keyv.clear();
-    printf( " idx %d \n", idx);
-    printf( "write  128\n");
-    idx  = jsonCodec.writeKeyV(128, 128, 3, keyv);
-    for ( int xx = 0 ; xx < (int)keyv.size(); xx++)
-    {
-        printf( "[%d] %x ", xx, (unsigned int)keyv.at(xx));
-    }
-    keyv.clear();
-    printf( " idx %d \n", idx);
-    printf( "write  4043\n");
-    idx  = jsonCodec.writeKeyV(4043, 128, 3, keyv);
-    for ( int xx = 0 ; xx < (int)keyv.size(); xx++)
-    {
-        printf( "[%d] %x ", (int)(xx&0x7f), (unsigned int)(keyv.at(xx)& 0x7f));
-    }
-    printf( " idx %d \n", idx);
 
+    std::vector<char>keyv;
+    std::ofstream ostr("ostr.json");
+
+    keyv.reserve(5);
+    printf( "\nwrite  127\n");
+    idx  = jsonCodec.writeKeyV(127, 128, 3, keyv);
+    jsonCodec.outKeyV(keyv, ostr);
+    keyv.clear();
+    printf( "\nwrite  128\n");
+    idx  = jsonCodec.writeKeyV(128, 128, 3, keyv);
+    jsonCodec.outKeyV(keyv, ostr);
+    keyv.clear();
+    printf( "\nwrite  4043\n");
+    idx  = jsonCodec.writeKeyV(4043, 128, 3, keyv);
+    jsonCodec.outKeyV(keyv, ostr);
+    printf( "\nwrite  4043000\n");
+    idx  = jsonCodec.writeKeyV(4043000, 128, 6, keyv);
+    jsonCodec.outKeyV(keyv, ostr);
+    ostr.close();
+    std::ifstream istr("ostr.json", std::ios::binary);
+
+    printf( "\n");
+    bool done = false;
+    while (!done)
+    {
+        int x1 = jsonCodec.getKey(istr);
+        printf( "x1  %d\n", x1);
+        if (x1 < 0) done = true;
+
+    }
+    // x1 = jsonCodec.getKey(istr);
+    // printf( "\n x1  %d\n", x1);
+    // x1 = jsonCodec.getKey(istr);
+    // printf( "\n x1  %d\n", x1);
+    // x1 = jsonCodec.getKey(istr);
+    // printf( "\n x1  %d\n", x1);
+ 
     return 0;
 }

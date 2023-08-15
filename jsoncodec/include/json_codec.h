@@ -56,6 +56,7 @@ public:
     int getKeyVal(char &keyc, char &valueType, std::istream& inputStream);
     int getKey(std::istream& inputStream);
     int writeKeyV(int key, int val, int idx, std::vector<char>&keyv);
+    void outKeyV(std::vector<char>&keyv, std::ostream& outputStream);
 
 
 
