@@ -1,0 +1,15 @@
+{
+  "/my/fims": {
+    "obj": 1234,
+    "obj2": 1234,
+    "pobj2": "",
+    "pobj": 1234,
+    "pstuff": "good"
+  },
+  "/my/fims2": {
+    "obj1": 1234
+  },
+  "/my/fims3": {
+    "obj2": 1234
+  }
+}
