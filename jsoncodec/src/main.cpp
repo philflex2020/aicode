@@ -92,8 +92,13 @@ int main() {
     jsonCodec.outKeyV(keyv, ostr);
     keyv.clear();
     printf( "\nwrite  4043\n");
-    idx  = jsonCodec.writeKeyV(4043, 128, 3, keyv);
+    idx  = jsonCodec.writeKeyV(4043, 128, 6, keyv);
     jsonCodec.outKeyV(keyv, ostr);
+    keyv.clear();
+    printf( "\nwrite  140430\n");
+    idx  = jsonCodec.writeKeyV(140430, 128, 6, keyv);
+    jsonCodec.outKeyV(keyv, ostr);
+    keyv.clear();
     printf( "\nwrite  4043000\n");
     idx  = jsonCodec.writeKeyV(4043000, 128, 6, keyv);
     jsonCodec.outKeyV(keyv, ostr);

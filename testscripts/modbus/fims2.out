@@ -61,7 +61,7 @@
     "Process Name": "fims_send",
     "Username": "root",
     "Body": {
-      "pobj": 1234,
+      "pobj": 12,
       "pstuff": "good"
     },
     "Timestamp": "2023-08-02 05:35:22.557173"

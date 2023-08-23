@@ -47,16 +47,7 @@ int main() {
 
     dataMapObject.dataSize = sizeof(example_struct); // Updated to use example_struct size
     auto mapdata = new example_struct;
-    dataMapObject.dataArea = (uint8_t*)mapdata; // Example data area with type example_struct
-    mapdata->intValue[0]=1234;
-    mapdata->doubleValue[0]=1.234;
-    
-
-
-    // Example DataItem registration from example_struct
-    dataMapObject.addDataItem((char*)"intValue",    offsetof(example_struct, intValue),   (char*)"int",    sizeof(int));
-    dataMapObject.addDataItem((char*)"doubleValue", offsetof(example_struct, doubleValue),(char*)"double", sizeof(double));
-    dataMapObject.addDataItem((char*)"charValue",   offsetof(example_struct, charValue),  (char*)"char",   sizeof(char));
+    dataM
 
     
 
