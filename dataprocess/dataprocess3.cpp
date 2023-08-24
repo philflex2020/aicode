@@ -29,9 +29,12 @@ public:
     std::map<int, std::function<void(DataVar&, double)>> operations;
 };
 
-    std::map<int, std::map<int, DataVar*>> items;
-    std::map<std::string, int> itemDict;
-    std::map<std::string, int> idDict;
+typedef std::map<int, std::map<int, DataVar*>> Items;
+typedef std::map<std::string, int> IdDict;
+Items items;
+IdDict itemDict;
+IdDict iDict;
+
 
 // Method to set data value
 void set(int item, int id, int param, double value) {
