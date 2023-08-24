@@ -3,7 +3,10 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <variant>
+#include <type_traits>
 
+using VariableValue = std::variant<bool, int, double>;
 
 struct Node {
     virtual ~Node() = default;
@@ -30,12 +33,13 @@ struct Variable : Node {
     Variable(const std::string &name) : name(name) {}
 };
 
-std::unordered_map<std::string, double> variables = { {"myvar", 5.1} };
+std::unordered_map<std::string, VariableValue> variables = { {"myvar", 5.1} };
 
 
 bool isOperator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/';
 }
+
 int precedence(char c) {
     switch(c) {
         case '+':
@@ -53,7 +57,14 @@ double evaluate(const std::shared_ptr<Node>& node) {
     if (auto operand = std::dynamic_pointer_cast<Operand>(node)) {
         return operand->value;
     } else if (auto variable = std::dynamic_pointer_cast<Variable>(node)) {
-        return variables[variable->name];
+        return std::visit([](auto&& arg) -> double {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, bool>) {
+                return arg ? 1.0 : 0.0;
+            } else {
+                return static_cast<double>(arg);
+            }
+        }, variables[variable->name]);
     } else if (auto op = std::dynamic_pointer_cast<Operator>(node)) {
         double left = evaluate(op->left);
         double right = evaluate(op->right);
