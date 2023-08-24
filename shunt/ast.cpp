@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <variant>
 #include <type_traits>
+//c++ -o ast -I include ast.cpp -std=c++17
 
 using VariableValue = std::variant<bool, int, double>;
 
