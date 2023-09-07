@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modbus Registers</title>
+</head>
+<body>
+    <h1>Modbus Registers</h1>
+    <table border="1">
+        <tr>
+            <th>Type</th>
+            <th>ID</th>
+            <th>Offset</th>
+            <th>Size</th>
+            <th>Value</th>
+            <th>Set Value</th>
+        </tr>
+        {% for register in registers %}
+            <tr>
+                <td>{{ register.type }}</td>
+                <td>{{ register.id }}</td>
+                <td>{{ register.offset }}</td>
+                <td>{{ register.size }}</td>
+                <td>
+                    {% if register.vals %}
+                        {{ register.vals }}
+                    {% elif register.bits %}
+                        {{ register.bits }}
+                    {% endif %}
+                </td>
+                <td>
+                    <form action="/set_register" method="post">
+                        <input type="hidden" name="type" value="{{ register.type }}">
+                        <input type="hidden" name="offset" value="{{ register.offset }}">
+                        <input type="hidden" name="size" value="{{ register.size }}">
+                        {% if register.vals %}
+                            {% for val in register.vals %}
+                                <input type="text" name="value" value="{{ val }}">
+                            {% endfor %}
+                        {% elif register.bits %}
+                            {% for bit in register.bits %}
+                                <input type="text" name="value" value="{{ bit }}">
+                            {% endfor %}
+                        {% endif %}
+        <input type="submit" value="Set">
+    </form>
+</td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

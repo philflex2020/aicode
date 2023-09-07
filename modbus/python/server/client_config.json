@@ -1,0 +1,24 @@
+{
+  "host": "localhost",
+  "port": 502,
+  "registers": [
+    {
+      "type": "coil",
+       "map": [
+        {"id":"coil1","offset":10,"size":1},
+        {"id":"coil2","offset":11,"size":1},
+        {"id":"coil3","offset":12,"size":1},
+        {"id":"coil4","offset":13,"size":1}
+       ]
+    },
+    {
+      "type": "input_register",
+       "map": [
+        {"id":"ip1","offset":110,"size":1},
+        {"id":"ip2","offset":111,"size":2},
+        {"id":"ip3","offset":113,"size":4},
+        {"id":"ip4","offset":117,"size":1}
+       ]
+    }
+  ]
+}

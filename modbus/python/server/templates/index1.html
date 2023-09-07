@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modbus Client</title>
+</head>
+<body>
+    <h1>Modbus Client</h1>
+    <form action="/get" method="post">
+        <h2>Get Register</h2>
+        <label for="type">Type:</label>
+        <select id="type" name="type">
+            <option value="coil">Coil</option>
+            <option value="input_register">Input Register</option>
+            <!-- ... -->
+        </select><br>
+        <label for="id">ID:</label>
+        <input type="text" id="id" name="id"><br>
+        <input type="submit" value="Get">
+    </form>
+    <form action="/set" method="post">
+        <h2>Set Register</h2>
+        <label for="type">Type:</label>
+        <select id="type" name="type">
+            <option value="coil">Coil</option>
+            <option value="holding_register">Holding Register</option>
+            <!-- ... -->
+        </select><br>
+        <label for="id">ID:</label>
+        <input type="text" id="id" name="id"><br>
+        <label for="value">Value:</label>
+        <input type="text" id="value" name="value"><br>
+        <input type="submit" value="Set">
+    </form>
+    {% if value %}
+    <h2>Value: {{ value }}</h2>
+    {% endif %}
+</body>
+</html>
