@@ -10,15 +10,79 @@ pthread_cond_t subscription_lock_cv, subscription_reading_cv;
 struct {
     int reading;
     bool lock;
+    bool write_request;
+    bool write_granted;
 } sub_lock;
 
+
+// old code
 //read only lock of subscriptions allows multiple threads to read simultaneously
+// void lock_subscriptions_ro()
+// {
+//     pthread_mutex_lock(&subscription_mutex);
+
+//     while(sub_lock.lock == true)
+//         //conditional wait for lock to free
+//         pthread_cond_wait(&subscription_lock_cv, &subscription_mutex);
+
+//     sub_lock.reading++;
+//     pthread_mutex_unlock(&subscription_mutex);
+// }
+
+// //free read only lock of subscriptions
+// void unlock_subscriptions_ro()
+// {
+//     pthread_mutex_lock(&subscription_mutex);
+//     sub_lock.reading--;
+//     pthread_cond_signal(&subscription_reading_cv);
+//     pthread_mutex_unlock(&subscription_mutex);
+// }
+
+// // lock subscriptions for editing
+// void lock_subscriptions()
+// {
+//     pthread_mutex_lock(&subscription_mutex);
+
+//     while(sub_lock.lock == true)
+//         //conditional wait for lock to free
+//         pthread_cond_wait(&subscription_lock_cv, &subscription_mutex);
+
+//     sub_lock.lock = true;
+
+//     while(sub_lock.reading > 0)
+//         // conditional wait for read == 0
+//         pthread_cond_wait(&subscription_reading_cv, &subscription_mutex);
+
+//     pthread_mutex_unlock(&subscription_mutex);
+// }
+
+// // clear lock on subscriptions for editing
+// void unlock_subscriptions()
+// {
+//     pthread_mutex_lock(&subscription_mutex);
+//     sub_lock.lock = false;
+//     pthread_cond_signal(&subscription_lock_cv);
+//     pthread_mutex_unlock(&subscription_mutex);
+// }
+
+// //read only lock of subscriptions allows multiple threads to read simultaneously
+// void lock_subscriptions_ro()
+// {
+//     pthread_mutex_lock(&subscription_mutex);
+
+//     while(sub_lock.write_request == true)
+//         //conditional wait for lock to free
+//         pthread_cond_wait(&subscription_lock_cv, &subscription_mutex);
+
+//     sub_lock.reading++;
+//     pthread_mutex_unlock(&subscription_mutex);
+// }
 void lock_subscriptions_ro()
 {
     pthread_mutex_lock(&subscription_mutex);
 
-    while(sub_lock.lock == true)
-        //conditional wait for lock to free
+    while(sub_lock.write_request)
+        //conditional wait for write_request to clear
         pthread_cond_wait(&subscription_lock_cv, &subscription_mutex);
 
     sub_lock.reading++;
@@ -30,7 +94,10 @@ void unlock_subscriptions_ro()
 {
     pthread_mutex_lock(&subscription_mutex);
     sub_lock.reading--;
-    pthread_cond_signal(&subscription_reading_cv);
+    if (sub_lock.reading == 0 && sub_lock.write_request) {
+        // Signal the writer if it's waiting for all readers to finish
+        pthread_cond_signal(&subscription_reading_cv);
+    }
     pthread_mutex_unlock(&subscription_mutex);
 }
 
@@ -39,16 +106,17 @@ void lock_subscriptions()
 {
     pthread_mutex_lock(&subscription_mutex);
 
-    while(sub_lock.lock == true)
-        //conditional wait for lock to free
+    while(sub_lock.write_request)
+        //conditional wait for write_request to clear
         pthread_cond_wait(&subscription_lock_cv, &subscription_mutex);
 
-    sub_lock.lock = true;
+    sub_lock.write_request = true;
 
     while(sub_lock.reading > 0)
         // conditional wait for read == 0
         pthread_cond_wait(&subscription_reading_cv, &subscription_mutex);
 
+    sub_lock.write_granted = true;
     pthread_mutex_unlock(&subscription_mutex);
 }
 
@@ -56,10 +124,12 @@ void lock_subscriptions()
 void unlock_subscriptions()
 {
     pthread_mutex_lock(&subscription_mutex);
-    sub_lock.lock = false;
-    pthread_cond_signal(&subscription_lock_cv);
+    sub_lock.write_granted = false;
+    sub_lock.write_request = false;
+    pthread_cond_signal(&subscription_lock_cv);  // Wake up any waiting readers or writers
     pthread_mutex_unlock(&subscription_mutex);
 }
+
 
 void *reader_func(void *arg) {
     if(debug)printf("Reader %ld trying to lock... \n", (long int)arg);
@@ -133,6 +203,8 @@ int main(int argc, char * argv[]) {
     pthread_cond_init(&subscription_reading_cv, NULL);
     sub_lock.reading = 0;
     sub_lock.lock = false;
+    sub_lock.write_request =  false;
+    sub_lock.write_granted = false;
     for (int i = 0 ; i < 100; i++)
         run_locks();
 return 0;

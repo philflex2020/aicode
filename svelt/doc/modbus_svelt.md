@@ -799,3 +799,135 @@ Run the Python script, and it will start listening on port 5000. When a request 
 
 Remember, this is a basic setup, and you'll likely need to handle errors, edge cases, and other situations in a production environment.
 
+
+To forward the command to a remote node running a Python script listening on port 5000, you'll need to make an HTTP request to that node. Here's a step-by-step breakdown of how you can achieve this:
+
+### 1. Modify Your Node.js server:
+
+When the `/run-command` route is called, instead of executing the command directly, you will send an HTTP request to the remote Python server. We'll use the popular npm package called `axios` for this purpose because it allows for easy handling of asynchronous HTTP requests in Node.js.
+
+**Step 1.1:** First, install `axios`:
+
+```bash
+npm install axios
+```
+
+**Step 1.2:** Modify your Node.js server to use `axios`:
+
+```javascript
+const axios = require('axios');
+
+app.get('/run-command', async (req, res) => {
+    const { ip, port, action, deviceId, type, offset, value, rowId } = req.query;
+    
+    try {
+        // Forward the command to the remote Python server
+        const remoteResponse = await axios.get(`http://[REMOTE_IP]:5000/run-command`, {
+            params: {
+                ip,
+                port,
+                action,
+                deviceId,
+                type,
+                offset,
+                value,
+                rowId
+            }
+        });
+
+        // Send back the response from the remote server to the client
+        res.send(remoteResponse.data);
+    } catch (error) {
+        console.error('Error forwarding command to remote server:', error);
+        res.status(500).send({ result: 'fail', message: 'Error forwarding command to remote server' });
+    }
+});
+```
+
+Replace `[REMOTE_IP]` with the IP address of the machine where your Python script is running.
+
+### 2. Python Server Setup:
+
+Here's a basic example of how you can set up a Python server using Flask to listen to the incoming commands:
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/run-command', methods=['GET'])
+def run_command():
+    # Extract command details
+    ip = request.args.get('ip')
+    port = request.args.get('port')
+    action = request.args.get('action')
+    deviceId = request.args.get('deviceId')
+    type = request.args.get('type')
+    offset = request.args.get('offset')
+    value = request.args.get('value')
+    rowId = request.args.get('rowId')
+
+    # Execute the command and get the result (pseudo-code, replace with actual implementation)
+    # result = execute_the_command(ip, port, action, deviceId, type, offset, value)
+
+    # For now, return a dummy response
+    return jsonify(result="pass")
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+```
+
+Make sure to install Flask:
+
+```bash
+pip install Flask
+```
+
+Run the Python script, and it will start listening on port 5000. When a request comes in from your Node.js server, it will execute the command and return the result.
+
+Remember, this is a basic setup, and you'll likely need to handle errors, edge cases, and other situations in a production environment.
+
+
+Certainly! Below is a simple Python script using the `requests` library to test your server that's running on port 5000:
+
+1. First, you'll need to install the required library if you haven't:
+
+```bash
+pip install requests
+```
+
+2. Then, you can use the following script:
+
+```python
+import requests
+
+def test_run_command():
+    url = "http://localhost:5000/run-command"
+    params = {
+        "ip": "192.168.1.1",
+        "port": "8080",
+        "action": "sample_action",
+        "deviceId": "sample_device",
+        "type": "sample_type",
+        "offset": "sample_offset",
+        "value": "sample_value",
+        "rowId": "sample_rowId"
+    }
+    
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        
+        print("Server Response:", response.json())
+    except requests.RequestException as error:
+        print(f"Error testing server: {error}")
+
+if __name__ == "__main__":
+    test_run_command()
+```
+
+Note:
+- The script is configured to test against `localhost:5000`, assuming your Node.js server is running on the same machine. If your server is running on a different IP or port, make sure to modify the `url` in the `test_run_command` function.
+- Adjust the sample parameters (`params` dictionary) as needed to better simulate your actual use-case scenarios.
+
+Run the script, and it will make a GET request to your server with the specified query parameters. The response from your server will be printed to the console.

@@ -77,6 +77,9 @@
         <button onclick="saveLayoutAs()">Save As</button>
         <input type="text" id="saveFilename" placeholder="Filename for Save As">
         <button id="executeAll" onclick="executeAllCommands()">Execute All</button>
+    </div>    
+    <div>
+        <input type="text" id="testTitle" placeholder="Test Title">
     </div>
 
     <br>
@@ -151,7 +154,7 @@
 //         });
 // }
 
-        async function executeCommand(rowId) {
+        async function xexecuteCommand(rowId) {
             const row = document.getElementById(rowId);
             console.log(rowId);
             const ip = row.querySelector(".ip").value;
@@ -191,7 +194,69 @@
             }
         }
         let rowCounter = 0;
+
         function createCellWithInput(row, inputType, inputValue, inputClass, isInteger=false, inputSize=null) {
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = inputType;
+    // Generate a unique ID based on the current time and class for each input.
+    //input.id = `${row.id}-${inputClass}-${Date.now()}`;
+    input.id = `${row.id}-${inputClass}`;
+    console.log(input.id);
+
+    if (isInteger && inputType === 'number') {
+        input.step = '1';
+        input.style.width = inputSize;
+    }
+    else if (inputSize) {
+        input.size = inputSize;
+    }
+
+    input.value = inputValue;
+    input.className = inputClass;
+    td.appendChild(input);
+    row.appendChild(td);
+}
+
+async function executeCommand(rowId) {
+    const row = document.getElementById(rowId);
+    const ip = row.querySelector(".ip").value;
+    const port = row.querySelector(".port").value;
+    const action = row.querySelector(".action").value;
+    const deviceId = row.querySelector(".deviceId").value;
+    const type = row.querySelector(".type").value;
+    const offset = row.querySelector(".offset").value;
+    const size = row.querySelector(".size").value;
+    const valueField = row.querySelector(".value");
+    const exeField = row.querySelector(".execute");
+    const value = valueField.value;
+    try {
+        exeField.style.backgroundColor = 'orange';
+
+        const response = await fetch(`/run-command?ip=${ip}&port=${port}&action=${action}&deviceId=${deviceId}&type=${type}&offset=${offset}&value=${value}&rowId=${rowId}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        exeField.style.backgroundColor = 'red';
+        if (data.status === "success") {
+            exeField.style.backgroundColor = 'lightgreen';
+            valueField.value = data.value; 
+        } else {
+            exeField.style.backgroundColor = 'red';
+        }
+        //exeField.title = data;
+        exeField.title = JSON.stringify(data, null, 2);
+
+
+    } catch (error) {
+        console.error('Error executing command:', error);
+    }
+}
+
+// Rest of the code remains the same.
+
+        function xcreateCellWithInput(row, inputType, inputValue, inputClass, isInteger=false, inputSize=null) {
             const td = document.createElement('td');
             const input = document.createElement('input');
             input.type = inputType;
@@ -212,18 +277,20 @@
         }
 
         function addRowFromLayout(dataRow) {
+            rowCounter++;
             const tableBody = document.getElementById('tableBody');
             const newRow = document.createElement('tr');
-            const rowId = `row-${Date.now()}`; // Generate a unique ID based on the current time
+            //const rowId = `row-${Date.now()}`; // Generate a unique ID based on the current time
+            const rowId = `row-${rowCounter}`; // Generate a unique ID based on the current time
             newRow.id = rowId;
 
-            createCellWithInput(newRow, 'text', dataRow[0], 'ip',false,8);
-            createCellWithInput(newRow, 'number', dataRow[1], 'port',true,'50px');
-            createCellWithInput(newRow, 'text', dataRow[2], 'action',false,4);
-            createCellWithInput(newRow, 'number', dataRow[3], 'deviceId',true,'50px');
-            createCellWithInput(newRow, 'text', dataRow[4], 'type',false,10);
-            createCellWithInput(newRow, 'number', dataRow[5], 'offset',true,6,'50px');
-            createCellWithInput(newRow, 'number', dataRow[6], 'size',true,4,'50px');
+            createCellWithInput(newRow, 'text',   dataRow[0], 'ip',       false, 8);
+            createCellWithInput(newRow, 'number', dataRow[1], 'port',     true, '50px');
+            createCellWithInput(newRow, 'text',   dataRow[2], 'action',   false, 4);
+            createCellWithInput(newRow, 'number', dataRow[3], 'deviceId', true, '50px');
+            createCellWithInput(newRow, 'text',   dataRow[4], 'type',     false, 10);
+            createCellWithInput(newRow, 'number', dataRow[5], 'offset',   true,  '50px');
+            createCellWithInput(newRow, 'number', dataRow[6], 'size',     true,  '50px');
             createCellWithInput(newRow, 'number', dataRow[7], 'value');
 
             // Add the execute button
@@ -232,9 +299,13 @@
             execBtn.classList.add('execute-button');
             execBtn.innerText = "Execute";
             execBtn.className = "execute";
+            execBtn.id = `${rowId}-"execute"`;
+            execBtn.title = "Test not executed yet.";
+
             execBtn.onclick = function() {
                 // Call the function to execute the command
                 executeCommand(rowId);
+                //execBtn.title = "Test has run.";
             };
             execTd.appendChild(execBtn);
             newRow.appendChild(execTd);
@@ -293,6 +364,8 @@
                     data.rows.forEach(rowData => {
                         addRowFromLayout(rowData);
                     });
+
+                    document.getElementById("testTitle").value = data.title || " Untitled Test";
                 })
                 .catch(error => {
                     console.error("Error loading layout:", error);
@@ -307,13 +380,14 @@
             }
 
             const rowsData = getRowsData();
+            title = document.getElementById("testTitle").value;
 
             fetch(`/saveLayout?filename=${selectedLayout}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ rows: rowsData })
+                body: JSON.stringify({ title: title, rows: rowsData })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -336,13 +410,15 @@
         }
 
         const rowsData = getRowsData();
+        title = document.getElementById("testTitle").value;
+
 
             fetch(`/saveLayoutAs?filename=${filename}`, {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ rows: rowsData })
+                body: JSON.stringify({ title: title, rows: rowsData })
             })
             .then(response => response.json())
             .then(data => {
@@ -374,6 +450,7 @@
     }
 
     // Load initial rows
+    rowCounter = 0;
     layoutData.rows.forEach(row => {
         addRowFromLayout(row);
     });

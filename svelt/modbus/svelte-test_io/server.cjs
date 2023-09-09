@@ -1,4 +1,6 @@
 const express = require('express');
+const axios = require('axios');
+
 const { exec } = require('child_process');
 const fs = require('fs');  // import the fs module
 const path = require('path');  // import the path module
@@ -10,11 +12,42 @@ const DATA_DIR = './data';  // directory where layout data is saved
 app.use(express.json());  // middleware to parse JSON requests
 app.use(express.static('public'));
 
-app.get('/run-command', (req, res) => {
-    const { ip, port, action, deviceId, type, offset, value } = req.query;
-    const cmd = `./test_io ${ip} ${port} ${action} ${deviceId} ${type} ${offset} ${value}`;
-    const rcmd= '{"result":"pass","value":3456}'
-    return res.send(rcmd);
+// async function fetchData() {
+//     const remoteResponse = await axios.get(`http://127.0.0.1:5000/run-command`, {
+//         // ... other code
+//     });
+//     // ... rest of the function
+// }
+
+// fetchData();
+
+
+app.get('/run-command', async (req, res) => {
+    const { ip, port, action, deviceId, type, offset, value, rowId } = req.query;
+    try {
+        // Forward the command to the remote Python server
+        const remoteResponse = await axios.get(`http://127.0.0.1:5000/run-command`, {
+            params: {
+                ip,
+                port,
+                action,
+                deviceId,
+                type,
+                offset,
+                value,
+                rowId
+            }
+        });
+
+        // Send back the response from the remote server to the client
+        res.send(remoteResponse.data);
+    } catch (error) {
+        console.error('Error forwarding command to remote server:', error);
+        res.status(500).send({ result: 'fail', message: 'Error forwarding command to remote server' });
+    }
+    // const cmd = `./test_io ${ip} ${port} ${action} ${deviceId} ${type} ${offset} ${value}`;
+    // const rcmd= '{"result":"pass","value":3456}'
+    // return res.send(rcmd);
     // exec(cmd, (error, stdout, stderr) => {
     //     if (error) {
     //         console.error(`exec error: ${error}`);
@@ -48,8 +81,27 @@ app.get('/loadLayout', (req, res) => {
 // Endpoints to save layout data
 app.post('/saveLayout', (req, res) => {
     const filename = path.join(DATA_DIR, req.query.filename);
-    const data = JSON.stringify(req.body);
-    fs.writeFile(filename, data, err => {
+
+    //let formattedData = "{\n    \"rows\": [\n";
+    //let formattedData = "{\n    \"title\": " + JSON.stringify(title)|| "Untitled" + ",\n";
+    const title = req.body.title || "Untitled 3";
+    let formattedData = "{\n    \"title\": \"" + title + "\",\n";
+
+    formattedData += "   \"rows\": [\n";
+    req.body.rows.forEach((row, index) => {
+        formattedData += "        " + JSON.stringify(row);
+        if (index !== req.body.rows.length - 1) {
+            formattedData += ",\n";
+        }
+    });
+    formattedData += "\n    ]\n}";
+
+    // let data = JSON.stringify(req.body);
+    // // Then replace every '],' with '],\n'
+    // data = data.replace("],"/g, "],\n");
+    // //data = data.replace(/],/g, "],\n");
+
+    fs.writeFile(filename, formattedData, err => {
         if (err) {
             return res.status(500).send("Error saving layout");
         }
@@ -59,8 +111,23 @@ app.post('/saveLayout', (req, res) => {
 
 app.get('/saveLayoutAs', (req, res) => {
     const filename = path.join(DATA_DIR, req.query.filename);
-    const data = JSON.stringify(req.body);
-    fs.writeFile(filename, data, err => {
+    //let formattedData = "{\n    \"rows\": [\n";
+    //let formattedData = "{\n    \"title\": " + JSON.stringify(title) || " Untitled 2" + ",\n";
+    const title = req.body.title || "Untitled 2";
+    let formattedData = "{\n    \"title\": \"" + title + "\",\n";
+
+    formattedData += "   \"rows\": [\n";
+
+    req.body.rows.forEach((row, index) => {
+        formattedData += "        " + JSON.stringify(row);
+        if (index !== req.body.rows.length - 1) {
+            formattedData += ",\n";
+        }
+    });
+    formattedData += "\n    ]\n}";
+
+    // const data = JSON.stringify(req.body);
+    fs.writeFile(filename, formattedData, err => {
         if (err) {
             console.log(`save error: ${err}`);
             return res.status(500).send("Error saving layout");
@@ -71,8 +138,18 @@ app.get('/saveLayoutAs', (req, res) => {
 
 app.post('/saveLayoutAs', (req, res) => {
     const filename = path.join(DATA_DIR, req.query.filename);
-    const data = JSON.stringify(req.body);
-    fs.writeFile(filename, data, err => {
+    const title = req.body.title || "Untitled 1";
+    let formattedData = "{\n    \"title\": \"" + title + "\",\n";
+    formattedData += "   \"rows\": [\n";
+    req.body.rows.forEach((row, index) => {
+        formattedData += "        " + JSON.stringify(row);
+        if (index !== req.body.rows.length - 1) {
+            formattedData += ",\n";
+        }
+    });
+    formattedData += "\n    ]\n}";
+    //const data = JSON.stringify(req.body);
+    fs.writeFile(filename, formattedData, err => {
         if (err) {
             console.log(`save error: ${err}`);
             return res.status(500).send("Error saving layout");
