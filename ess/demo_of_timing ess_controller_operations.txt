@@ -1,0 +1,78 @@
+demo of timing ess_controller operations
+#!/bin/sh
+# p wilshire 02/03/2022
+# p wilshire 08_25_2023
+# demo script to set up enum / calculate var tests and run timings 
+echo
+echo test time to run a calculation
+echo
+fims_send -m set -r /$$ -u /ess/test/bms '
+{
+    "enable":false,
+    "output": false,
+    
+    
+    "BMSVoltage": 1356,
+    "BMSCurrent": 280,
+    "MaxBMSDischargeCurrentFilt": 295,
+    "MaxBMSDischargeCurrentEx": 25,
+    "MaxBMSDischargePowerEst": {
+            "value": 0,
+            "debug": true,
+            "enable": "/test/bms:enable",
+            "useExpr": true,
+            "numVars": 4,
+            "variable1": "/test/bms:BMSVoltage",
+            "variable2": "/test/bms:BMSCurrent",
+            "variable3": "/test/bms:MaxBMSDischargeCurrentFilt",
+            "variable4": "/test/bms:MaxBMSDischargeCurrentEx",
+            "expression": "{1} * ({2} + {3} - {4}) * 0.001 * 0.9492 + 91.519",
+            "actions": { 
+                "onSet":[{
+                    "func":[
+                        {"amap":"ess","func":"CalculateVar"}
+                    ],
+                    "remap":[
+                        {"enable": "/test/ess:bms_output", "uri":"/status/bms:MaxBMSDischargePowerEstFiltIn","fims":"set"},
+                        {"uri": "/test/ess:bms_output", "outValue":true}
+                    ]
+                }]
+            }
+        }
+}'
+fims_send -m set -r /$$ -u /ess/test/bms/enable true
+fims_send -m set -r /$$ -u /ess/test/ess '
+{
+    "run_calc":{
+        "value":1,
+        "enabled":true,
+        "actions":{"onSet":[{ "remap":[
+            {"uri":"/test/ess:bms_output", "outValue":false},
+            {"uri":"/test/ess:run_calc_1", "outTime":0},
+            {"uri":"/test/bms:MaxBMSDischargePowerEst", "outTime":0},
+            {"uri":"/test/ess:run_calc_2", "outTime":0},
+            {"uri":"/test/ess:measure_calc", "outTime":0}
+            ]}]}
+    },
+    "measure_calc":{
+            "value": 0,
+            "enabled": true,
+            "useExpr": true,
+            "numVars": 2,
+            "variable1": "/test/ess:run_calc_1",
+            "variable2": "/test/ess:run_calc_2",
+            "expression": "({2} - {1}) * 1000.0 ",
+            "actions": { 
+                "onSet":[{
+                    "func":[
+                        {"amap":"ess","func":"CalculateVar"}
+                    ],
+                    "remap":[
+                        {"uri":"/timings/ess:run_calc_result_mS"}
+                    ]
+                }]
+            }
+    }
+}'
+echo "fims_send -m get -r /$$ -u /ess/full/timings/ess "
+fims_send -m get -r /$$ -u /ess/full/timings/ess | jq

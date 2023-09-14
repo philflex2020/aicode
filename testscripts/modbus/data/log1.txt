@@ -1,0 +1,7 @@
+Uri: "/components/mynumber" 
+Body: {"myvar":1234}
+Timestamp: 2023-09-12 17:13:03.647206
+
+Uri: "/components/mynumber2" 
+Body: {"myvar2":5678}
+Timestamp: 2023-09-12 17:14:03.647206

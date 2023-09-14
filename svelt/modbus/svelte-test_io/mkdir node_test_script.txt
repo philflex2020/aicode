@@ -1,0 +1,4 @@
+mkdir node_test_script
+cd node_test_script
+npm init -y
+npm install axios

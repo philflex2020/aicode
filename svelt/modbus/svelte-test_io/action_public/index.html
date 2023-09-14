@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCOM Modbus Test Framework</title>
+    <style>
+        .subtitle {
+            background-color: blue;
+            color: white;
+            text-align: left;
+            padding: 10px;
+            font-size: 18px;
+        }
+        .title {
+            background-color: darkblue;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        #left-panel, #right-panel {
+            padding: 20px;
+        }
+
+        #left-panel {
+            float: left;
+            width: 20%;
+            border-right: 1px solid black;
+        }
+
+        #right-panel {
+            float: right;
+            width: 68%;
+            padding-left: 2%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        button.execute-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button.execute-btn:hover {
+            background-color: #45a049;
+        }
+        .xselected {
+            background-color: #f2f2f2;
+        }
+        /* Styles for selected file */
+        .selected {
+            background-color: #d3e5f9; /* Light blue */
+            border: 1px solid #b0c8e1; /* A matching darker blue for the border */
+        }
+
+        /* Styles for highlighted action */
+        .highlighted {
+            background-color: #ffebcc; /* Light orange */
+            border: 1px solid #fdd6a2; /* A matching darker orange for the border */
+        }
+        .editable {
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="title">GCOM Modbus/DNP3 Test Framework</h1>
+    <!-- Drop down list for topics -->
+
+    <div id="left-panel">
+        <h2 class="subtitle">Topics</h2>
+        <label for="topics">Choose a topic:</label>
+        <select id="topics" onchange="loadSteps()">
+            <!-- Topics will be populated dynamically -->
+        </select>
+        <h2 class="subtitle">Steps</h2>
+        <table id="step-list">
+            <!-- Steps will be populated dynamically upon topic selection -->
+        </table>
+    </div>
+
+    <div id="right-panel">
+        <h2 class="subtitle" id="action-header">Actions</h2>
+        <button onclick="addNewStep()" id="add-new-step">Add New Step</button>
+        <button onclick="addNewAction()">Add New Action</button>
+        <button onclick="runAllActions()">Run All Actions</button>
+        <button onclick="deleteSelectedAction()">Delete Selected</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>IP</th>
+                    <th>Function</th>
+                    <th>Arguments</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="action-list">
+                <!-- Actions will be appended here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+
+// Sample Data (you'd replace this with actual AJAX/API calls)
+const topics = {
+            'topic1': {
+                'steps': {
+                    'step1': {
+                        'desc': 'Step 1 Description',
+                        'actions': [
+                            { desc: "desc1.1.1", ip: "127.0.0.1", func: "func1", args: "args1" },
+                            { desc: "desc1.1.2", ip: "127.0.0.1", func: "func2", args: "args2" },
+                        ]
+                    },
+                    'step2': {
+                        'desc': 'Step 2 Description',
+                        'actions': [
+                            { desc: "desc1.2.1", ip: "127.0.0.1", func: "func1", args: "args1" },
+                            { desc: "desc1.2.2", ip: "127.0.0.1", func: "func2", args: "args2" },
+                        ]
+                    }
+                }
+            },
+            'topic2': {
+                'steps': {
+                    'step1': {
+                        'desc': 'Step 1 Description',
+                        'actions': [
+                            { desc: "desc2.1.1", ip: "127.0.0.1", func: "func1", args: "args1" },
+                            { desc: "desc2.1.2", ip: "127.0.0.1", func: "func2", args: "args2" },
+                        ]
+                    }
+                }
+            }
+        };
+
+        function loadTopics() {
+            const topicsDropdown = document.getElementById('topics');
+            for (const topic in topics) {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.text = topic;
+                topicsDropdown.add(option);
+            }
+            // Set the first topic as the selected one
+            if (topicsDropdown.options.length > 0) {
+                topicsDropdown.selectedIndex = 0;
+                topicsDropdown.dispatchEvent(new Event('change'));
+            }
+        }
+
+        function loadSteps() {
+            // Clear previous steps
+            const stepList = document.getElementById('step-list');
+            stepList.innerHTML = '';
+
+            // Get selected topic and load steps
+            const selectedTopic = document.getElementById('topics').value;
+            const steps = topics[selectedTopic].steps;
+            for (const step in steps) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.textContent = step;
+                td.style.cursor = 'pointer';
+                td.onclick = () => displayActions(step);
+                tr.appendChild(td);
+                stepList.appendChild(tr);
+            }
+        }
+
+let selectedFile;
+
+
+function addNewStep() {
+   //alert("newStepName ");
+
+    const selectedTopic = document.getElementById('topics').value;
+
+    const newStepName = prompt("Enter the name for the new step:");
+    // Exit if the user clicked "Cancel" or provided an empty name
+    if (!newStepName || newStepName.trim() === "") {
+        return;
+    }
+
+    // Create a default step description and actions array
+    const newStepDesc = {
+        desc: "New Step Description",
+        actions: []
+    };
+
+    // Find a unique name for the new step. You might have a better naming scheme.
+    //let newStepName = "NewStep";
+    // let count = 1;
+    // while (topics[selectedTopic].steps[newStepName + count]) {
+    //     count++;
+    // }
+    // newStepName = newStepName + count;
+    //alert("newStepName created !", newStepName);
+    const newStepDescription = prompt("Enter a description for the new step:");
+
+    // Exit if the user clicked "Cancel"
+    if (newStepDescription === null) {
+        //return;
+    }
+    else
+    {
+        newStepDesc.desc = newStepDescription.trim();
+
+    }
+
+    // Add the new step to the selected topic
+    topics[selectedTopic].steps[newStepName] = newStepDesc;
+
+    // Refresh the display
+    loadSteps()
+    //displaySteps(selectedTopic);
+    //displayActions(newStepName);  // Automatically select the new step and show its actions
+}
+
+function displaySteps(topic) {
+    const stepList = document.getElementById('step-list');
+    stepList.innerHTML = '';
+
+    const steps = topics[topic].steps;
+
+    Object.keys(steps).forEach((stepName, index) => {
+        const tr = document.createElement('tr');
+
+        // Make the step name editable
+        const tdStepName = document.createElement('td');
+        const inputStepName = document.createElement('input');
+        inputStepName.value = stepName;
+        inputStepName.className = 'editable';
+        inputStepName.onblur = (e) => updateStepName(topic, stepName, e.target.value);
+        tdStepName.appendChild(inputStepName);
+        tr.appendChild(tdStepName);
+
+        // Make the step description editable
+        const tdDesc = document.createElement('td');
+        const inputDesc = document.createElement('input');
+        inputDesc.value = steps[stepName].desc;
+        inputDesc.className = 'editable';
+        inputDesc.onblur = (e) => updateStepDesc(topic, stepName, e.target.value);
+        tdDesc.appendChild(inputDesc);
+        tr.appendChild(tdDesc);
+
+        tr.onclick = () => displayActions(stepName);
+        stepList.appendChild(tr);
+    });
+}
+
+// Handles changes to the step name
+function updateStepName(topic, oldStepName, newStepName) {
+    // if (topics[topic].steps[newStepName]) {
+    //     alert('Step name already exists. Choose another name.');
+    //     //return;
+    // }
+    Object.defineProperty(topics[topic].steps, newStepName,
+        Object.getOwnPropertyDescriptor(topics[topic].steps, oldStepName));
+    delete topics[topic].steps[oldStepName];
+    displaySteps(topic);
+}
+
+// Handles changes to the step description
+function updateStepDesc(topic, stepName, newDesc) {
+    topics[topic].steps[stepName].desc = newDesc;
+}
+
+function displayActions(step) {
+    const selectedTopic = document.getElementById('topics').value;
+    const actions = topics[selectedTopic].steps[step].actions;
+    const actionHeader = document.getElementById('action-header');
+    actionHeader.textContent = `Actions for ${step}: ${topics[selectedTopic].steps[step].desc}`;
+
+    const actionList = document.getElementById('action-list');
+    actionList.innerHTML = '';
+
+    // Assuming you want to highlight the selected step in a similar way as files previously.
+    highlightSelectedStep(step); 
+
+    actions.forEach((action, index) => {
+        const tr = document.createElement('tr');
+        tr.onclick = () => highlightSelectedAction(index);
+
+        ['desc', 'ip', 'func', 'args'].forEach(key => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.className = 'editable';
+            input.value = action[key];
+            input.onblur = (e) => updateActionValue(selectedTopic, step, index, key, e.target.value);
+            td.appendChild(input);
+            tr.appendChild(td);
+        });
+
+        const actionTd = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'execute-btn';
+        btn.textContent = 'Execute';
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            alert(`Executing ${action.desc}`);
+        };
+        actionTd.appendChild(btn);
+        tr.appendChild(actionTd);
+
+        actionList.appendChild(tr);
+    });
+}
+
+function highlightSelectedStep(step) {
+    const stepRows = document.getElementById('step-list').querySelectorAll('tr');
+    stepRows.forEach(row => {
+        row.classList.remove('highlighted');
+        if (row.firstElementChild.textContent === step) {
+            row.classList.add('highlighted');
+        }
+    });
+}
+
+function highlightSelectedAction(index) {
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    actionRows.forEach((row, rowIdx) => {
+        if (index == rowIdx) {
+            row.classList.add('highlighted');
+        } else {
+            row.classList.remove('highlighted');
+        }
+    });
+}
+
+function updateActionValue(topic, step, actionIndex, key, value) {
+    topics[topic].steps[step].actions[actionIndex][key] = value;
+}
+
+
+
+
+function addNewAction() {
+    const selectedTopic = document.getElementById('topics').value;
+    const selectedStep = getHighlightedStep(); // Assuming this function gets the currently selected step.
+    
+    //let newAction;
+
+    //const selectedAction = getSelectedAction();
+    let newAction;
+    const selectedActionIndex = getSelectedActionIndex(); // New function to get the index of the selected action.
+    const selectedAction = topics[selectedTopic].steps[selectedStep].actions[selectedActionIndex];
+
+    if (selectedAction) {
+        newAction = { ...selectedAction };
+    } else {
+        // Default action values if no action is highlighted.
+        newAction = {
+            desc: "",
+            ip: "",
+            func: "",
+            args: ""
+        };
+    }
+
+    if (selectedActionIndex !== -1) {
+        // Insert the new action right after the selected one.
+        topics[selectedTopic].steps[selectedStep].actions.splice(selectedActionIndex + 1, 0, newAction);
+    } else {
+        // If no action is selected, append the new action to the end.
+        topics[selectedTopic].steps[selectedStep].actions.push(newAction);
+    }
+    
+    displayActions(selectedStep);
+}
+// Function to get the index of the selected action.
+function getSelectedActionIndex() {
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    let selectedIndex = -1;
+
+    actionRows.forEach((row, index) => {
+        if (row.classList.contains('highlighted')) {
+            selectedIndex = index;
+        }
+    });
+
+    return selectedIndex;
+}
+function getSelectedAction() {
+    const selectedTopic = document.getElementById('topics').value;
+    const selectedStep = getHighlightedStep();
+
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    const selectedRow = Array.from(actionRows).find(row => row.classList.contains('highlighted'));
+    
+    if (selectedRow) {
+        const actionIndex = Array.from(actionRows).indexOf(selectedRow);
+        return topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+    } else {
+        return null;
+    }
+}
+
+function getHighlightedStep() {
+    const stepRows = document.getElementById('step-list').querySelectorAll('tr');
+    const highlightedStepRow = Array.from(stepRows).find(row => row.classList.contains('highlighted'));
+    
+    return highlightedStepRow ? highlightedStepRow.firstElementChild.textContent : null;
+}
+// function deleteSelectedAction() {
+//     if (!selectedFile || selectedIndex === null) {
+//         alert('Please select an action to delete.');
+//         return;
+//     }
+//     fileActions[selectedFile].splice(selectedIndex, 1);
+//     selectedIndex = null;
+//     displayActions(selectedFile);
+// }
+
+// function deleteSelectedAction() {
+//     const selectedTopic = document.getElementById('topics').value;
+//     const selectedStep = getHighlightedStep();
+
+//     const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+//     const selectedRow = Array.from(actionRows).find(row => row.classList.contains('selected'));
+    
+//     if (selectedRow) {
+//         const actionIndex = Array.from(actionRows).indexOf(selectedRow);
+//         topics[selectedTopic].steps[selectedStep].actions.splice(actionIndex, 1);
+        
+//         displayActions(selectedStep);
+//     } else {
+//         alert('Please select an action to delete.');
+//     }
+//}
+function deleteSelectedAction() {
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    let indexToRemove = -1;
+
+    actionRows.forEach((row, index) => {
+        if (row.classList.contains('highlighted')) {
+            indexToRemove = index;
+        }
+    });
+
+    if (indexToRemove !== -1) {
+        // Assuming you have a method or array to manage your actions
+        // e.g., fileActions[selectedFile].splice(indexToRemove, 1);
+        actionRows[indexToRemove].remove();
+    } else {
+        alert("No action selected to delete!");
+    }
+}
+
+function runAllActions() {
+    if (!selectedFile) {
+        alert('Please select a file first.');
+        return;
+    }
+    alert(`Executing all actions for ${selectedFile}`);
+}
+loadTopics();
+
+// Automatically select the first topic and display its steps and actions:
+const firstTopic = topicsDropdown.options[0].value;
+topicsDropdown.value = firstTopic;  // Set the first topic as selected in the dropdown
+
+displaySteps(firstTopic);  // Assuming you have a function to display the steps of a topic
+displayActions(firstTopic);  // Display actions of the first step of the first topic
+
+    </script>
+</body>
+
+</html>
