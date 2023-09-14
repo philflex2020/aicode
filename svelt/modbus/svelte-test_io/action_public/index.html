@@ -608,9 +608,6 @@ function updateActionValue(topic, step, actionIndex, key, value) {
     topics[topic].steps[step].actions[actionIndex][key] = value;
 }
 
-
-
-
 function addNewAction() {
     const selectedTopic = document.getElementById('topics').value;
     const selectedStep = getHighlightedStep(); // Assuming this function gets the currently selected step.
@@ -644,6 +641,7 @@ function addNewAction() {
     
     displayActions(selectedStep);
 }
+
 // Function to get the index of the selected action.
 function getSelectedActionIndex() {
     const actionRows = document.getElementById('action-list').querySelectorAll('tr');
@@ -657,6 +655,7 @@ function getSelectedActionIndex() {
 
     return selectedIndex;
 }
+
 // Function to get the index of the selected action.
 function getSelectedStepIndex() {
     const actionRows = document.getElementById('step-list').querySelectorAll('tr');
@@ -707,32 +706,7 @@ function getHighlightedStep() {
     
     return highlightedStepRow ? highlightedStepRow.firstElementChild.textContent : null;
 }
-// function deleteSelectedAction() {
-//     if (!selectedFile || selectedIndex === null) {
-//         alert('Please select an action to delete.');
-//         return;
-//     }
-//     fileActions[selectedFile].splice(selectedIndex, 1);
-//     selectedIndex = null;
-//     displayActions(selectedFile);
-// }
 
-// function deleteSelectedAction() {
-//     const selectedTopic = document.getElementById('topics').value;
-//     const selectedStep = getHighlightedStep();
-
-//     const actionRows = document.getElementById('action-list').querySelectorAll('tr');
-//     const selectedRow = Array.from(actionRows).find(row => row.classList.contains('selected'));
-    
-//     if (selectedRow) {
-//         const actionIndex = Array.from(actionRows).indexOf(selectedRow);
-//         topics[selectedTopic].steps[selectedStep].actions.splice(actionIndex, 1);
-        
-//         displayActions(selectedStep);
-//     } else {
-//         alert('Please select an action to delete.');
-//     }
-//}
 function deleteSelectedAction() {
     const actionRows = document.getElementById('action-list').querySelectorAll('tr');
     let indexToRemove = -1;
@@ -819,14 +793,21 @@ document.getElementsByClassName('close-btn')[0].onclick = function() {
 }
 
 function saveActionChanges() {
-    const action = topics[selectedTopic].steps[selectedStep].actions[selActionIndex];
+    const selectedActionIndex = getSelectedActionIndex();
+    const selectedTopic = document.getElementById('topics').value;
+    const selectedStep = getHighlightedStep();
 
-    action.expected = document.getElementById('expected').value;
-    action.tolerance = document.getElementById('tolerance').value;
+    const action = topics[selectedTopic].steps[selectedStep].actions[selectedActionIndex];
+    console.log(selectedTopic);
+    console.log(selectedStep);
+    console.log(selectedActionIndex);
+    action.expected = document.getElementById('modal-expected').textContent;
+    console.log(action.expected);
+    action.tolerance = document.getElementById('modal-tolerance').textContent;
 
     const modal = document.getElementById('actionModal');
     modal.style.display = "none";
-    const selectedStep = getHighlightedStep();
+    //const selectedStep = getHighlightedStep();
 
     displayActions(selectedStep);
 }
