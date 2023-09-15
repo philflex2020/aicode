@@ -170,17 +170,17 @@
     <!-- Drop down list for topics -->
 
     <div id="left-panel">
-        <h2 class="subtitle">Systems</h2>
+        <h2 class="subtitle" id='systemsHeader'>Systems</h2>
         <label for="systems">Choose a System:</label>
         <select id="systems" onchange="loadSystem()">
             <!-- Systems will be populated dynamically -->
         </select>
-        <h2 class="subtitle">Topics</h2>
+        <h2 class="subtitle" id='topicsHeader'>Topics</h2>
         <label for="topics">Choose a topic:</label>
         <select id="topics" onchange="loadSteps()">
             <!-- Topics will be populated dynamically -->
         </select>
-        <h2 class="subtitle">Steps</h2>
+        <h2 class="subtitle" id='stepsHeader'>Steps</h2>
         <table id="step-list">
             <!-- Steps will be populated dynamically upon topic selection -->
         </table>
@@ -266,14 +266,49 @@
     <script>
 
 // Sample Data (you'd replace this with actual AJAX/API calls)
-const systemsData = [
+let systemsData = [
     {'name': 'DNP3', 'description': 'Distributed Network Protocol 3', 'version': '1.0'},
     {'name': 'Modbus', 'description': 'Modbus', 'version': '1.0'}
     // ... other systems
     // this will be dynamically loaded
 ];
 
-const topics = {
+document.getElementById('systemsHeader').addEventListener('click', loadSystemsFromFile);
+document.getElementById('topicsHeader').addEventListener('click', loadTopicsFromFile);
+document.getElementById('stepsHeader').addEventListener('click', loadStepsFromFile);
+
+let topicsData = [
+        {
+            "name": "dnp3_topic1",
+            "description": "Description for dnp3 topic1",
+            "version": "1.0"
+        },
+        {
+            "name": "dnp3_topic2",
+            "description": "Description for dnp3 topic2",
+            "version": "1.0"
+        }
+    ];
+
+let stepsData = [
+        {
+            "name": "dnp3_t1_s1",
+            "description": "Description for step1",
+            "version": "1.0"
+        },
+        {
+            "name": "dnp3_t1_s2",
+            "description": "Description for step2",
+            "version": "1.0"
+        }
+    ];
+
+let actionsData = [
+        { desc: "desc1.1.1", ip: "127.0.0.1", func: "func1", args: "args1", expected:"eval1",actual:"aval1",tolerance:0 },
+        { desc: "desc1.1.2", ip: "127.0.0.1", func: "func2", args: "args2", expected:"eval1",actual:"aval1",tolerance:0 },
+]
+
+let topics = {
             'topic1': {
                 'steps': {
                     'step1': {
@@ -341,10 +376,14 @@ const topics = {
 
         function loadTopics() {
             topicsDropdown = document.getElementById('topics');
-            for (const topic in topics) {
+            // Clear the topicsDropdown
+            topicsDropdown.innerHTML = '';
+
+            for (const topic in topicsData) {
+                //console.log('topic =>', topic);
                 const option = document.createElement('option');
-                option.value = topic;
-                option.text = topic;
+                option.value = topicsData[topic].name;
+                option.text = topicsData[topic].name;
                 topicsDropdown.add(option);
             }
             // Set the first topic as the selected one
@@ -360,12 +399,12 @@ const topics = {
             stepList.innerHTML = '';
 
             // Get selected topic and load steps
-            selectedTopic = document.getElementById('topics').value;
-            const steps = topics[selectedTopic].steps;
-            for (const step in steps) {
+            //selectedTopic = document.getElementById('topics').value;
+            //const steps = topicsData[selectedTopic].steps;
+            for (const step in stepsData) {
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
-                td.textContent = step;
+                td.textContent = stepsData[step].name;
                 td.style.cursor = 'pointer';
                 td.onclick = () => displayActions(step);
                 tr.appendChild(td);
@@ -377,7 +416,7 @@ let selectedFile;
 
 function deleteSelectedStep() {
     const selectedTopic = document.getElementById('topics').value;
-    const selectedStepIndex = getSelectedStepIndex();
+    const selectedStepIndex = getHighlightedStepIndex();
     
     if (selectedStepIndex === -1) {
         alert("Please select a step to delete.");
@@ -401,7 +440,7 @@ function addNewStep() {
 
     const selectedTopic = document.getElementById('topics').value;
     //const selectedActionIndex = getSelectedActionIndex(); // New function to get the index of the selected action.
-    const selectedStepIndex = getSelectedStepIndex(); // New function to get the index of the selected action.
+    const selectedStepIndex = getHighlightedStepIndex(); // New function to get the index of the selected action.
 
     const newStepName = prompt("Enter the name for the new step:");
     // Exit if the user clicked "Cancel" or provided an empty name
@@ -513,9 +552,10 @@ function updateStepDesc(topic, stepName, newDesc) {
 
 function displayActions(step) {
     const selectedTopic = document.getElementById('topics').value;
-    const actions = topics[selectedTopic].steps[step].actions;
+    //const actions = topics[selectedTopic].steps[step].actions;
     const actionHeader = document.getElementById('action-header');
-    actionHeader.textContent = `Actions for ${step}: ${topics[selectedTopic].steps[step].desc}`;
+    //actionHeader.textContent = `Actions for step [${step}]: ${topics[selectedTopic].steps[step].desc}`;
+    actionHeader.textContent = `Actions for step [${step}]`;
 
     const actionList = document.getElementById('action-list');
     actionList.innerHTML = '';
@@ -523,7 +563,7 @@ function displayActions(step) {
     // Assuming you want to highlight the selected step in a similar way as files previously.
     highlightSelectedStep(step); 
 
-    actions.forEach((action, index) => {
+    actionsData.forEach((action, index) => {
         const tr = document.createElement('tr');
         tr.onclick = () => highlightSelectedAction(index);
 
@@ -657,7 +697,7 @@ function getSelectedActionIndex() {
 }
 
 // Function to get the index of the selected action.
-function getSelectedStepIndex() {
+function getHighlightedStepIndex() {
     const actionRows = document.getElementById('step-list').querySelectorAll('tr');
     let selectedIndex = -1;
 
@@ -670,7 +710,7 @@ function getSelectedStepIndex() {
     return selectedIndex;
 }
 
-// function getSelectedStep() {
+// function getHighlightedStep() {
 //     const selectedTopic = document.getElementById('steps').value;
 //     const selectedStep = getHighlightedStep();
 
@@ -739,7 +779,7 @@ let selActionIndex;
 
 function openActionModal(actionIndex) {
     const selectedTopic = document.getElementById('topics').value;
-    //const selectedStep = getSelectedStep();
+    //const selectedStep = getHighlightedStep();
     const selectedStep = getHighlightedStep();
     const selectedAction = topics[selectedTopic].steps[selectedStep].actions[actionIndex];
     selActionIndex = actionIndex;
@@ -820,7 +860,53 @@ function runAllActions() {
     }
     alert(`Executing all actions for ${selectedFile}`);
 }
+window.onload = function() {
+    loadSystemsFromFile();
+}
+
 loadSystems();
+
+function loadSystemsFromFile() {
+    fetch('/getSystemsData')
+        .then(response => response.json())
+        .then(data => {
+            systemsData = data.systems;  // Assuming systemsData is a global or higher scoped variable.
+            loadSystems();
+        })
+        .catch(error => {
+            console.error('Error loading systems:', error);
+        });
+}
+function loadTopicsFromFile() {
+    const systemName = document.getElementById('systems').value;
+    console.log(systemName)
+    fetch(`/getTopicsData?sysname=${systemName}`)
+        .then(response => response.json())
+        .then(data => {
+            topicsData = data.topics;  // Assuming systemsData is a global or higher scoped variable.
+            loadTopics();
+        })
+        .catch(error => {
+            console.error('Error loading topics:', error);
+        });
+}
+
+function loadStepsFromFile() {
+    const systemName = document.getElementById('systems').value;
+    const topicName = document.getElementById('topics').value;
+    console.log(systemName)
+    console.log(topicName)
+    fetch(`/getStepsData/?sysname=${systemName}&topicname=${topicName}`)
+        .then(response => response.json())
+        .then(data => {
+            topicsData = data.topics;  // Assuming systemsData is a global or higher scoped variable.
+            loadTopics();
+        })
+        .catch(error => {
+            console.error('Error loading topics:', error);
+        });
+}
+
 loadTopics();
 
 const firstSystem = systemDropdown.options[0].value;

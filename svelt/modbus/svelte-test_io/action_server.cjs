@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 const fs = require('fs');
+const path = require('path');
+
 
 app.use(express.static('action_public')); // Assuming your front-end files are in a 'public' directory
 
@@ -15,6 +17,17 @@ app.get('/api/actions', (req, res) => {
 app.post('/api/save-response', (req, res) => {
     // TODO: Receive the response, save with test id in the name.
 });
+
+// Endpoint to serve the systems.json file
+app.get('/getSystemsData', (req, res) => {
+    res.sendFile(path.join(__dirname, './test/systems.json'));
+});
+// Endpoint to serve the systems.json file
+app.get('/getTopicsData', (req, res) => {
+    const sysname = req.query.sysname
+    res.sendFile(path.join(__dirname, './test/systems', sysname,'topics.json'));
+});
+
 
 const PORT = 4000;
 app.listen(PORT, () => {
