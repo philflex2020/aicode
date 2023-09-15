@@ -187,6 +187,28 @@
     </div>
 
     <div id="right-panel">
+        <h2 class="subtitle" id="system-header">System</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>System</th>
+                    <th>Topic</th>
+                    <th>Step</th>
+                    <th>Action</th>
+                    <th>Operation</th>
+                </tr>
+            </thead>
+            <tbody id="system-list">
+                <tr>
+                <td id="currSystem"></td>
+                <td id="currTopic"></td>
+                <td id="currStep"></td>
+                <td id="currOper"></td>
+                </tr>
+                <!-- Actions will be appended here dynamically -->
+            </tbody>
+        </table>
+
         <h2 class="subtitle" id="action-header">Actions</h2>
         <button onclick="addNewStep()" id="add-new-step">Add New Step</button>
         <button onclick="deleteSelectedStep()">Delete Selected Step</button>
@@ -392,8 +414,21 @@ let topics = {
                 topicsDropdown.dispatchEvent(new Event('change'));
             }
         }
+
+        function loadSystem()  {
+            selectedSystem = document.getElementById('systems').value;
+            console.log(selectedSystem);
+            const td = document.getElementById('currSystem');
+            td.textContent = selectedSystem;
+        }
+
         let selectedTopic;
         function loadSteps() {
+            selectedTopic = document.getElementById('topics').value;
+            console.log(selectedTopic);
+            const td = document.getElementById('currTopic');
+            td.textContent = selectedTopic;
+
             // Clear previous steps
             const stepList = document.getElementById('step-list');
             stepList.innerHTML = '';
@@ -552,6 +587,17 @@ function updateStepDesc(topic, stepName, newDesc) {
 
 function displayActions(step) {
     const selectedTopic = document.getElementById('topics').value;
+    //const selectedStep = document.getElementById('step-list').value;
+    console.log("display actions")
+    console.log(selectedTopic);
+    //console.log(selectedStep);
+    console.log(stepsData[step]);
+
+    td = document.getElementById('currTopic');
+    td.textContent = selectedTopic;
+    td = document.getElementById('currStep');
+    td.textContent = stepsData[step].name;
+
     //const actions = topics[selectedTopic].steps[step].actions;
     const actionHeader = document.getElementById('action-header');
     //actionHeader.textContent = `Actions for step [${step}]: ${topics[selectedTopic].steps[step].desc}`;
@@ -602,12 +648,6 @@ function displayActions(step) {
         //     });
 
         btn.onclick = (e) => {
-            // if (e.button === 1) {  // 0 is the left button 1 = middle
-            //     e.stopPropagation();
-            //     alert(`View Results`);
-            //     openActionModal(index);
-            // }
-            // else
             {
                 e.stopPropagation();
                 alert(`Executing ${action.desc}`);
@@ -616,9 +656,6 @@ function displayActions(step) {
         actionTd.appendChild(btn);
 
         tr.appendChild(actionTd);
-
-
-
         actionList.appendChild(tr);
     });
 }
@@ -627,7 +664,7 @@ function highlightSelectedStep(step) {
     const stepRows = document.getElementById('step-list').querySelectorAll('tr');
     stepRows.forEach(row => {
         row.classList.remove('highlighted');
-        if (row.firstElementChild.textContent === step) {
+        if (row.firstElementChild.textContent === stepsData[step].name) {
             row.classList.add('highlighted');
         }
     });
@@ -645,7 +682,8 @@ function highlightSelectedAction(index) {
 }
 
 function updateActionValue(topic, step, actionIndex, key, value) {
-    topics[topic].steps[step].actions[actionIndex][key] = value;
+    //topics[topic].steps[step].actions[actionIndex][key] = value;
+    actionsData[actionIndex][key] = value;
 }
 
 function addNewAction() {
@@ -688,6 +726,7 @@ function getSelectedActionIndex() {
     let selectedIndex = -1;
 
     actionRows.forEach((row, index) => {
+        console.log(row.classList);
         if (row.classList.contains('highlighted')) {
             selectedIndex = index;
         }
@@ -734,7 +773,8 @@ function getSelectedAction() {
     
     if (selectedRow) {
         const actionIndex = Array.from(actionRows).indexOf(selectedRow);
-        return topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+        //return topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+        return actionsData[actionIndex];
     } else {
         return null;
     }
@@ -781,11 +821,14 @@ function openActionModal(actionIndex) {
     const selectedTopic = document.getElementById('topics').value;
     //const selectedStep = getHighlightedStep();
     const selectedStep = getHighlightedStep();
-    const selectedAction = topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+    console.log(selectedStep);
+    //const selectedAction = topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+    const selectedAction = actionsData[actionIndex];
     selActionIndex = actionIndex;
 
     // populate the modal
-    document.getElementById('modal-step-desc').textContent = topics[selectedTopic].steps[selectedStep].desc;
+    //document.getElementById('modal-step-desc').textContent = topics[selectedTopic].steps[selectedStep].desc;
+    document.getElementById('modal-step-desc').textContent = selectedStep.desc;
     document.getElementById('modal-action-desc').textContent = selectedAction.desc;
     document.getElementById('modal-expected').textContent = selectedAction.expected || '';  // assuming 'expected' is the key for expected result
     document.getElementById('modal-tolerance').textContent = selectedAction.tolerance || '';  // assuming 'tolerance' is the key for tolerance
@@ -837,10 +880,12 @@ function saveActionChanges() {
     const selectedTopic = document.getElementById('topics').value;
     const selectedStep = getHighlightedStep();
 
-    const action = topics[selectedTopic].steps[selectedStep].actions[selectedActionIndex];
+    //const action = topics[selectedTopic].steps[selectedStep].actions[selectedActionIndex];
+    const action = actionsData[selectedActionIndex];
     console.log(selectedTopic);
     console.log(selectedStep);
     console.log(selectedActionIndex);
+    console.log(action);
     action.expected = document.getElementById('modal-expected').textContent;
     console.log(action.expected);
     action.tolerance = document.getElementById('modal-tolerance').textContent;
@@ -877,47 +922,86 @@ function loadSystemsFromFile() {
             console.error('Error loading systems:', error);
         });
 }
+
 function loadTopicsFromFile() {
     const systemName = document.getElementById('systems').value;
+    return loadTopicsFromSystem(systemName);
+}
+
+function loadTopicsFromSystem(systemName) {
     console.log(systemName)
     fetch(`/getTopicsData?sysname=${systemName}`)
         .then(response => response.json())
         .then(data => {
             topicsData = data.topics;  // Assuming systemsData is a global or higher scoped variable.
             loadTopics();
+            return topicsData;
         })
         .catch(error => {
             console.error('Error loading topics:', error);
         });
-}
+        return null;
+    }
 
 function loadStepsFromFile() {
     const systemName = document.getElementById('systems').value;
     const topicName = document.getElementById('topics').value;
+    return loadStepsFromSystem(systemName, topicName);
+}
+
+function loadStepsFromSystem(systemName, topicName) {
     console.log(systemName)
     console.log(topicName)
     fetch(`/getStepsData/?sysname=${systemName}&topicname=${topicName}`)
         .then(response => response.json())
         .then(data => {
-            topicsData = data.topics;  // Assuming systemsData is a global or higher scoped variable.
-            loadTopics();
+            stepsData = data.steps;  // Assuming systemsData is a global or higher scoped variable.
+            return stepsData;
         })
         .catch(error => {
             console.error('Error loading topics:', error);
         });
+    return null;
+}
+
+function loadActionsFromFile() {
+    const systemName = document.getElementById('systems').value;
+    const topicName = document.getElementById('topics').value;
+    const stepName = document.getElementById('stepss').value;
+    return loadActionsFromSystem(systemName, topicName, stepName);
+}
+
+function loadActionsFromSystem(systemName, topicName, stepName) {
+    console.log(systemName)
+    console.log(topicName)
+    console.log(stepName)
+    fetch(`/getActionsData/?sysname=${systemName}&topicname=${topicName}&stepname=${stepName}`)
+        .then(response => response.json())
+        .then(data => {
+            actionsData = data.actions;  // Assuming systemsData is a global or higher scoped variable.
+            return actionsData;
+        })
+        .catch(error => {
+            console.error('Error loading actions:', error);
+        });
+    return null;
 }
 
 loadTopics();
 
 const firstSystem = systemDropdown.options[0].value;
 systemDropdown.value = firstSystem;  // Set the first system as selected in the dropdown
+td = document.getElementById('currSystem');
+td.textContent = firstSystem;
+
 
 // Automatically select the first topic and display its steps and actions:
 const firstTopic = topicsDropdown.options[0].value;
 topicsDropdown.value = firstTopic;  // Set the first topic as selected in the dropdown
 
 //displaySteps(firstTopic);  // Assuming you have a function to display the steps of a topic
-displayActions(firstTopic);  // Display actions of the first step of the first topic
+//displayActions(firstTopic);  // Display actions of the first step of the first topic
+displayActions(0);  // Display actions of the first step of the first topic
 
     </script>
 </body>
