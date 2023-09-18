@@ -1,0 +1,20 @@
+{
+	"outputs": [
+		{
+			"uri": "/components/comp_sel_2440",
+			"publishRate": 1000,
+			"inputs": [],
+			"echo": {
+				"disconnect_switch": 0,
+				"door_latch": 0,
+				"e_stop": 0,
+				"fire_relay": 0,
+				"fuse_monitoring": 0,
+				"heartbeat": 0,
+				"spare_1": 0,
+				"surge_arrester": 0,
+				"trouble_relay": 0
+			}
+		}
+	]
+}

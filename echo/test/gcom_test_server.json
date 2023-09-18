@@ -1,0 +1,72 @@
+{
+	"fileInfo":{},
+	"system":{
+		"device_id": 1,
+		"id": "SEL-2440",
+		"ip_address": "0.0.0.0",
+		"name": "SEL-2440",
+		"port": 502,
+		"protocol": "Modbus_TCP",
+		"version": "6.0_WIP"
+	},
+	"registers":{
+		"discrete_inputs": [
+			{
+				"id": "fuse_monitoring",
+				"name": "Fuse Monitoring (IN208)",
+				"offset": 393,
+				"uri": "/components/comp_sel_2440"
+			},
+			{
+				"id": "surge_arrester",
+				"name": "Surge Arrester (IN207)",
+				"offset": 392,
+				"uri": "/components/comp_sel_2440"
+			},
+			{
+				"id": "door_latch",
+				"name": "Door Latch (IN206)",
+				"offset": 394,
+				"uri": "/components/comp_sel_2440"
+			},
+			{
+				"id": "disconnect_switch",
+				"name": "DC Disconnect Switch (IN205)",
+				"offset": 395,
+				"uri": "/components/comp_sel_2440"
+			},
+			{
+				"id": "spare_1",
+				"name": "Spare DI 1 (IN204)",
+				"offset": 396,
+				"uri": "/components/comp_sel_2440"
+			},
+			{
+				"id": "e_stop",
+				"name": "E-Stop (IN203)",
+				"offset": 397,
+				"uri": "/components/comp_sel_2440"
+			},
+			{
+				"id": "fire_relay",
+				"name": "Fire Relay (IN202)",
+				"offset": 398,
+				"uri": "/components/comp_sel_2440"
+			},
+			{
+				"id": "trouble_relay",
+				"name": "Trouble Relay (IN201)",
+				"offset": 399,
+				"uri": "/components/comp_sel_2440"
+			}
+		],
+		"input_registers": [
+			{
+				"id": "heartbeat",
+				"name": "Heartbeat",
+				"offset": 400,
+				"uri": "/components/comp_sel_2440"
+			}
+		]
+	}
+}

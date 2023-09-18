@@ -1,0 +1,95 @@
+{
+    "fileInfo": {
+        "sourceFileLastModified": "2022-03-24T20:18:00.000Z",
+        "sourceFileCreatedBy": "Phil Wilshire",
+        "sourceFileLastModifiedBy": "Phil Wilshire",
+        "outputFileName": "gcom_test_client.json",
+        "outputFileType": "client",
+        "outputFileCreated": "2022-03-24T20:18:10.556Z"
+    },
+    "connection": {
+        "device name": "conn_sel_2440",
+        "name": "SEL-2440",
+        "device protocol": "Modbus TCP",
+        "device protocol version": "6.0 WIP",
+        "device id string": "sel_2440",
+        "ip_address1": "192.168.112.20",
+        "ip_address": "172.17.0.3",
+        "port": 502,
+	"max_num_connections":1,
+        "data bits (8 typical)": "Columns marked in green are REQUIRED"
+    },
+    "components": [
+        {
+	    "component_id":"components",
+            "id": "comp_sel_2440",
+            "heartbeat_enabled": false,
+            "modbus_heartbeat_timeout_ms": 200,
+            "component_heartbeat_timeout_ms": 200,
+            "frequency": 1000,
+            "offset_time": 20,
+            "device_id": 1,
+            "registers": [
+                {
+                    "type": "Input Registers",
+                    "starting_offset": 400,
+                    "number_of_registers": 1,
+                    "map": [
+                        {
+                            "id": "heartbeat",
+                            "offset": 400,
+                            "name": "Heartbeat"
+                        }
+                    ]
+                },
+                {
+                    "type": "Discrete Inputs",
+                    "starting_offset": 392,
+                    "number_of_registers": 8,
+                    "map": [
+                        {
+                            "id": "fuse_monitoring",
+                            "offset": 393,
+                            "name": "Fuse Monitoring (IN208)"
+                        },
+                        {
+                            "id": "surge_arrester",
+                            "offset": 392,
+                            "name": "Surge Arrester (IN207)"
+                        },
+                        {
+                            "id": "door_latch",
+                            "offset": 394,
+                            "name": "Door Latch (IN206)"
+                        },
+                        {
+                            "id": "disconnect_switch",
+                            "offset": 395,
+                            "name": "DC Disconnect Switch (IN205)"
+                        },
+                        {
+                            "id": "spare_1",
+                            "offset": 396,
+                            "name": "Spare DI 1 (IN204)"
+                        },
+                        {
+                            "id": "e_stop",
+                            "offset": 397,
+                            "name": "E-Stop (IN203)"
+                        },
+                        {
+                            "id": "fire_relay",
+                            "offset": 398,
+                            "name": "Fire Relay (IN202)"
+                        },
+                        {
+                            "id": "trouble_relay",
+                            "offset": 399,
+                            "name": "Trouble Relay (IN201)"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
