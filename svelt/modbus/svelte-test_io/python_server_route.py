@@ -12,6 +12,63 @@ SERVER_IP = argv[1]
 
 app = Flask(__name__)
 
+
+def format_ping_output(output):
+    lines = output.split('\n')
+    
+    # Filter out empty lines and split each line into a list of words
+    lines = [line.split() for line in lines if line]
+
+    formatted_output = {}
+    formatted_output["Destination"] = lines[1][1]
+
+    # Extract the replies
+    replies = [line for line in lines if "Reply from" in line]
+    formatted_output["Replies"] = []
+    for reply in replies:
+        formatted_output["Replies"].append({
+            "from": reply[2],
+            "bytes": reply[4],
+            "time": reply[6],
+            "TTL": reply[-1]
+        })
+
+    # Extract statistics
+    for line in lines:
+        if "Packets:" in line:
+            stats = line.split(',')
+            formatted_output["Sent"] = stats[0].split('=')[1].strip()
+            formatted_output["Received"] = stats[1].split('=')[1].strip()
+            formatted_output["Lost"] = stats[2].split('=')[1].strip().split(' ')[0]
+        if "Approximate" in line:
+            times = line.split(',')
+            formatted_output["Minimum"] = times[0].split('=')[1].strip()
+            formatted_output["Maximum"] = times[1].split('=')[1].strip()
+            formatted_output["Average"] = times[2].split('=')[1].strip()
+
+    return formatted_output
+
+
+# ...
+
+# For demonstration, we'll use ping
+# cmd = ['ping', '-c', '1', ip]
+# try:
+#     output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+#     formatted_output = format_ping_output(output.decode('utf-8'))
+#     result = {
+#         "status": "success",
+#         "output": formatted_output
+#     }
+# except subprocess.CalledProcessError as e:
+#     result = {
+#         "status": "error",
+#         "output": e.output.decode('utf-8'),  # Decode bytes to string,
+#         "message": str(e)
+#     }
+# print(result)
+
+
 @app.route('/run-command', methods=['GET'])
 def run_command():
     # Extract command details
@@ -46,9 +103,10 @@ def run_command():
     try:
         #output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        formatted_output = format_ping_output(output.decode('utf-8'))
         result = {
             "status": "success",
-            "output": output.decode('utf-8')  # Decode bytes to string
+            "output": formatted_output  # Decode bytes to string
         }
     except subprocess.CalledProcessError as e:
         result = {

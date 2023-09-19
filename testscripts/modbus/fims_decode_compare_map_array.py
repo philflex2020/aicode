@@ -170,19 +170,19 @@ if __name__ == "__main__":
     print(json.dumps(results, indent=2))
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python fims_decode_map_array.py input_file output_file varmap_file")
-        sys.exit(1)
+# if __name__ == "__main__":
+#     if len(sys.argv) != 4:
+#         print("Usage: python fims_decode_map_array.py input_file output_file varmap_file")
+#         sys.exit(1)
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    varmap_file = sys.argv[3]
+#     input_file = sys.argv[1]
+#     output_file = sys.argv[2]
+#     varmap_file = sys.argv[3]
 
-    main(input_file, output_file, varmap_file)
+#     main(input_file, output_file, varmap_file)
 
-    # Print the varmaps_array
-    print("Varmaps at each time instance:")
-    for timestamp_offset, varmap_at_time in varmaps_array.items():
-        print(f"Time instance {timestamp_offset}:")
-        print(json.dumps(varmap_at_time, indent=2))
+#     # Print the varmaps_array
+#     print("Varmaps at each time instance:")
+#     for timestamp_offset, varmap_at_time in varmaps_array.items():
+#         print(f"Time instance {timestamp_offset}:")
+#         print(json.dumps(varmap_at_time, indent=2))
