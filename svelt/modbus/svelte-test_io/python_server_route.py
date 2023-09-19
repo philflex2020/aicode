@@ -12,8 +12,40 @@ SERVER_IP = argv[1]
 
 app = Flask(__name__)
 
-
 def format_ping_output(output):
+    lines = output.split('\n')
+    
+    # Filter out empty lines and split each line into a list of words
+    word_lines = [line.split() for line in lines if line]
+
+    formatted_output = {}
+    formatted_output["Destination"] = word_lines[1][1]
+
+    # Extract the replies
+    replies = [line for line in word_lines if "Reply" in line and "from" in line]
+    formatted_output["Replies"] = []
+    for reply in replies:
+        formatted_output["Replies"].append({
+            "from": reply[2],
+            "bytes": reply[4]
+        })
+#            "time": reply[6],
+#           "TTL": reply[-1]
+
+    # Extract statistics
+    for line in word_lines:
+        if "Packets:" in line:
+            formatted_output["Sent"] = line[line.index("Sent") + 2]
+            formatted_output["Received"] = line[line.index("Received") + 2]
+            formatted_output["Lost"] = line[line.index("Lost") + 2].split(' ')[0]
+        if "Approximate" in line:
+            formatted_output["Minimum"] = line[line.index("Minimum") + 2]
+            formatted_output["Maximum"] = line[line.index("Maximum") + 2]
+            formatted_output["Average"] = line[line.index("Average") + 2]
+
+    return formatted_output
+
+def fold_ormat_ping_output(output):
     lines = output.split('\n')
     
     # Filter out empty lines and split each line into a list of words
@@ -85,6 +117,7 @@ def run_command():
     #Check if the destination is different from the server's IP
     if dest and dest != SERVER_IP:
         try:
+            print("forwarding request")
             # Forward the request
             forwarded_url = f"http://{dest}:5000/run-command?{request.query_string.decode('utf-8')}"
             response = requests.get(forwarded_url)
@@ -101,12 +134,15 @@ def run_command():
     # For demonstration, we'll use ping
     cmd = ['ping', '-c', '1', ip]
     try:
+        print("running request")
+
         #output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        formatted_output = format_ping_output(output.decode('utf-8'))
+        #formatted_output = format_ping_output(output.decode('utf-8'))
+        #    formatted_output  # Decode bytes to string
         result = {
             "status": "success",
-            "output": formatted_output  # Decode bytes to string
+            "output": output.decode('utf-8')
         }
     except subprocess.CalledProcessError as e:
         result = {

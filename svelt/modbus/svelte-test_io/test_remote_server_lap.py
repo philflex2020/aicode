@@ -3,6 +3,7 @@ import requests
 def test_run_command():
     url = "http://127.0.0.1:5000/run-command"
     params = {
+        "route": "192.168.86.76",
         "ip": "192.168.86.76",
         "port": "8080",
         "action": "sample_action",
