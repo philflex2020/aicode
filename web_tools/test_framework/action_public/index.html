@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCOM Modbus Test Framework</title>
+    <style>
+        .subtitle {
+            background-color: blue;
+            color: white;
+            text-align: left;
+            padding: 10px;
+            font-size: 18px;
+        }
+        .title {
+            background-color: darkblue;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        #left-panel, #right-panel {
+            padding: 20px;
+        }
+
+        #left-panel {
+            float: left;
+            width: 20%;
+            border-right: 1px solid black;
+        }
+
+        #right-panel {
+            float: right;
+            width: 68%;
+            padding-left: 2%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        button.results-btn {
+            background-color: #4CAF00;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button.results-btn:hover {
+            background-color: #45a049;
+        }
+
+        button.execute-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        button.execute-btn:hover {
+            background-color: #45a049;
+        }
+        .xselected {
+            background-color: #f2f2f2;
+        }
+        /* Styles for selected file */
+        .selected {
+            background-color: #d3e5f9; /* Light blue */
+            border: 1px solid #b0c8e1; /* A matching darker blue for the border */
+        }
+
+        /* Styles for highlighted action */
+        .highlighted {
+            background-color: #ffebcc; /* Light orange */
+            border: 1px solid #fdd6a2; /* A matching darker orange for the border */
+        }
+        .editable {
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+        /* Style for the modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Table styling */
+        .modal-content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .modal-content th, 
+        .modal-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .modal-content th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #f2f2f2;
+            color: black;
+        }
+        [contenteditable="true"]:focus {
+            background-color: #eef;
+            border: 1px dashed #333;
+            outline: none;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1 class="title">GCOM System Test Framework</h1>
+    <!-- Drop down list for topics -->
+
+    <div id="left-panel">
+        <h2 class="subtitle" id='systemsHeader'>Systems</h2>
+        <label for="systems">Choose a System:</label>
+        <select id="systems" onchange="loadSystem()">
+            <!-- Systems will be populated dynamically -->
+        </select>
+        <h2 class="subtitle" id='topicsHeader'>Topics</h2>
+        <label for="topics">Choose a topic:</label>
+        <select id="topics" onchange="loadSteps()">
+            <!-- Topics will be populated dynamically -->
+        </select>
+        <h2 class="subtitle" id='stepsHeader'>Steps</h2>
+        <table id="step-list">
+            <!-- Steps will be populated dynamically upon topic selection -->
+        </table>
+    </div>
+
+    <div id="right-panel">
+        <h2 class="subtitle" id="system-header">System</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>System</th>
+                    <th>Topic</th>
+                    <th>Step</th>
+                    <th>Action</th>
+                    <th>Operation</th>
+                </tr>
+            </thead>
+            <tbody id="system-list">
+                <tr>
+                <td id="currSystem"></td>
+                <td id="currTopic"></td>
+                <td id="currStep"></td>
+                <td id="currOper"></td>
+                </tr>
+                <!-- Actions will be appended here dynamically -->
+            </tbody>
+        </table>
+
+        <h2 class="subtitle" id="action-header">Actions</h2>
+        <button onclick="addNewStep()" id="add-new-step">Add New Step</button>
+        <button onclick="deleteSelectedStep()">Delete Selected Step</button>
+        <button onclick="addNewAction()">Add New Action</button>
+        <button onclick="runAllActions()">Run All Actions</button>
+        <button onclick="deleteSelectedAction()">Delete Selected Action</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>IP</th>
+                    <th>Function</th>
+                    <th>Arguments</th>
+                    <th>Results</th>
+                    <th>Execute</th>
+                </tr>
+            </thead>
+            <tbody id="action-list">
+                <!-- Actions will be appended here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- The Modal -->
+    <div id="actionModal" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Step Description</th>
+                        <td id="modal-step-desc"></td>
+                    </tr>
+                    <tr>
+                        <th>Action Description</th>
+                        <td id="modal-action-desc"></td>
+                    </tr>
+                    <tr>
+                        <th>Expected Result</th>
+                        <td id="modal-expected" contenteditable="true"></td>
+                    </tr>
+                    <tr>
+                        <th>Tolerance</th>
+                        <td id="modal-tolerance" contenteditable="true"></td>
+                    </tr>
+                    <tr>
+                        <th>Actual Result</th>
+                        <td id="modal-actual"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <span class="close-btn">&times;</span>
+            <button onclick="saveActionChanges()">Save Changes</button>
+        </div>
+    </div>
+
+    <div id="oldactionModal" class="modal">
+        <div class="modal-content">
+          <span class="close-btn">&times;</span>
+          <h2>Edit Action Results</h2>
+          
+          <label for="expected">Expected Result:</label>
+          <input type="text" id="expected" name="expected">
+          
+          <label for="tolerance">Tolerance:</label>
+          <input type="text" id="tolerance" name="tolerance">
+      
+          <label for="actual">Actual Result:</label>
+          <input type="text" id="actual" name="actual" disabled> <!-- Assuming actual value is not editable -->
+      
+          <button onclick="saveActionChanges()">Save Changes</button>
+        </div>
+      </div>
+      
+
+    <script>
+
+// Sample Data (you'd replace this with actual AJAX/API calls)
+let systemsData = [
+    {'name': 'DNP3', 'description': 'Distributed Network Protocol 3', 'version': '1.0'},
+    {'name': 'Modbus', 'description': 'Modbus', 'version': '1.0'}
+    // ... other systems
+    // this will be dynamically loaded
+];
+
+document.getElementById('systemsHeader').addEventListener('click', loadSystemsFromFile);
+document.getElementById('topicsHeader').addEventListener('click', loadTopicsFromFile);
+document.getElementById('stepsHeader').addEventListener('click', loadStepsFromFile);
+
+let topicsData = [
+        {
+            "name": "dnp3_topic1",
+            "description": "Description for dnp3 topic1",
+            "version": "1.0"
+        },
+        {
+            "name": "dnp3_topic2",
+            "description": "Description for dnp3 topic2",
+            "version": "1.0"
+        }
+    ];
+
+let stepsData = [
+        {
+            "name": "dnp3_t1_s1",
+            "description": "Description for step1",
+            "version": "1.0"
+        },
+        {
+            "name": "dnp3_t1_s2",
+            "description": "Description for step2",
+            "version": "1.0"
+        }
+    ];
+
+let actionsData = [
+        { desc: "desc1.1.1", ip: "127.0.0.1", func: "func1", args: "args1", expected:"eval1",actual:"aval1",tolerance:0 },
+        { desc: "desc1.1.2", ip: "127.0.0.1", func: "func2", args: "args2", expected:"eval1",actual:"aval1",tolerance:0 },
+]
+
+let topics = {
+            'topic1': {
+                'steps': {
+                    'step1': {
+                        'desc': 'Step 1 Description',
+                        'actions': [
+                            { desc: "desc1.1.1", ip: "127.0.0.1", func: "func1", args: "args1", expected:"eval1",actual:"aval1",tolerance:0 },
+                            { desc: "desc1.1.2", ip: "127.0.0.1", func: "func2", args: "args2", expected:"eval1",actual:"aval1",tolerance:0 },
+                        ]
+                    },
+                    'step2': {
+                        'desc': 'Step 2 Description',
+                        'actions': [
+                            { desc: "desc1.2.1", ip: "127.0.0.1", func: "func1", args: "args1", expected:"eval1",actual:"aval1",tolerance:0 },
+                            { desc: "desc1.2.2", ip: "127.0.0.1", func: "func2", args: "args2", expected:"eval1",actual:"aval1",tolerance:0 },
+                        ]
+                    }
+                }
+            },
+            'topic2': {
+                'steps': {
+                    'step1': {
+                        'desc': 'Step 1 Description',
+                        'actions': [
+                            { desc: "desc2.1.1", ip: "127.0.0.1", func: "func1", args: "args1", expected:"eval1",actual:"aval1",tolerance:0 },
+                            { desc: "desc2.1.2", ip: "127.0.0.1", func: "func2", args: "args2", expected:"eval1",actual:"aval1",tolerance:0 },
+                        ]
+                    }
+                }
+            }
+        };
+        let systemDropdown;
+        let topicsDropdown;
+
+        function loadSystems() {
+            systemDropdown = document.getElementById('systems');
+            systemDropdown.innerHTML = ''; // clear any existing options
+    
+            systemsData.forEach(system => {
+                const option = document.createElement('option');
+                option.value = system.name;
+                option.textContent = system.description;
+                systemDropdown.appendChild(option);
+            });
+    
+            loadTopics(); // Load topics for the default system.
+        }
+
+// // Function to populate topics for the selected system.
+        function loadTopics2() {
+            const systemDropdown = document.getElementById('systems');
+            const selectedSystem = systemDropdown.value;
+
+            const topicDropdown = document.getElementById('topics');
+            topicDropdown.innerHTML = ''; // clear any existing options
+
+            topicsData[selectedSystem].forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic.name;
+                option.textContent = topic.description;
+                topicDropdown.appendChild(option);
+            });
+            
+            loadSteps(); // Load steps for the default topic.
+        }
+
+        function loadTopics() {
+            topicsDropdown = document.getElementById('topics');
+            // Clear the topicsDropdown
+            topicsDropdown.innerHTML = '';
+
+            for (const topic in topicsData) {
+                //console.log('topic =>', topic);
+                const option = document.createElement('option');
+                option.value = topicsData[topic].name;
+                option.text = topicsData[topic].name;
+                topicsDropdown.add(option);
+            }
+            // Set the first topic as the selected one
+            if (topicsDropdown.options.length > 0) {
+                topicsDropdown.selectedIndex = 0;
+                topicsDropdown.dispatchEvent(new Event('change'));
+            }
+        }
+
+        function loadSystem()  {
+            selectedSystem = document.getElementById('systems').value;
+            console.log(selectedSystem);
+            const td = document.getElementById('currSystem');
+            td.textContent = selectedSystem;
+        }
+
+        let selectedTopic;
+        function loadSteps() {
+            selectedTopic = document.getElementById('topics').value;
+            console.log(selectedTopic);
+            const td = document.getElementById('currTopic');
+            td.textContent = selectedTopic;
+
+            // Clear previous steps
+            const stepList = document.getElementById('step-list');
+            stepList.innerHTML = '';
+
+            // Get selected topic and load steps
+            //selectedTopic = document.getElementById('topics').value;
+            //const steps = topicsData[selectedTopic].steps;
+            for (const step in stepsData) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.textContent = stepsData[step].name;
+                td.style.cursor = 'pointer';
+                td.onclick = () => displayActions(step);
+                tr.appendChild(td);
+                stepList.appendChild(tr);
+            }
+        }
+
+let selectedFile;
+
+function deleteSelectedStep() {
+    const selectedTopic = document.getElementById('topics').value;
+    const selectedStepIndex = getHighlightedStepIndex();
+    
+    if (selectedStepIndex === -1) {
+        alert("Please select a step to delete.");
+        return;
+    }
+
+    const confirmation = confirm("Are you sure you want to delete this step?");
+    if (!confirmation) {
+        return; // Exit if the user clicked "Cancel"
+    }
+
+    const stepKeys = Object.keys(topics[selectedTopic].steps);
+    const selectedStepKey = stepKeys[selectedStepIndex];
+    delete topics[selectedTopic].steps[selectedStepKey];
+
+    loadSteps();
+}
+
+function addNewStep() {
+   //alert("newStepName ");
+
+    const selectedTopic = document.getElementById('topics').value;
+    //const selectedActionIndex = getSelectedActionIndex(); // New function to get the index of the selected action.
+    const selectedStepIndex = getHighlightedStepIndex(); // New function to get the index of the selected action.
+
+    const newStepName = prompt("Enter the name for the new step:");
+    // Exit if the user clicked "Cancel" or provided an empty name
+    if (!newStepName || newStepName.trim() === "") {
+        return;
+    }
+
+    // Create a default step description and actions array
+    const newStepDesc = {
+        desc: "New Step Description",
+        actions: []
+    };
+
+    const newStepDescription = prompt("Enter a description for the new step:");
+
+    // Exit if the user clicked "Cancel"
+    if (newStepDescription !== null) {
+        newStepDesc.desc = newStepDescription.trim();
+    }
+
+    if (selectedStepIndex !== -1) {
+        const stepKeys = Object.keys(topics[selectedTopic].steps);
+        const placementKey = stepKeys[selectedStepIndex];
+        const before = {};
+        const after = {};
+
+        Object.keys(topics[selectedTopic].steps).forEach((key, index) => {
+            if (index <= selectedStepIndex) {
+                before[key] = topics[selectedTopic].steps[key];
+            } else {
+                after[key] = topics[selectedTopic].steps[key];
+            }
+        });
+
+        topics[selectedTopic].steps = {
+            ...before,
+            [newStepName]: newStepDesc,
+            ...after
+        };
+    } else {
+        // If no step is selected, append the new step to the end.
+        topics[selectedTopic].steps[newStepName] = newStepDesc;
+    }
+
+    // if (selectedStepIndex !== -1) {
+    //     // Insert the new step right after the selected one.
+    //     topics[selectedTopic].steps.splice(selectedStepIndex + 1, 0, newStepDesc);
+    // } else {
+    //     // If no step is selected, append the new step to the end.
+    //     topics[selectedTopic].steps.push(newStepDesc);
+    // }
+    // Add the new step to the selected topic
+    //topics[selectedTopic].steps[newStepName] = newStepDesc;
+
+    // Refresh the display
+    loadSteps()
+    //displaySteps(selectedTopic);
+    //displayActions(newStepName);  // Automatically select the new step and show its actions
+}
+
+function displaySteps(topic) {
+    const stepList = document.getElementById('step-list');
+    stepList.innerHTML = '';
+
+    const steps = topics[topic].steps;
+
+    Object.keys(steps).forEach((stepName, index) => {
+        const tr = document.createElement('tr');
+
+        // Make the step name editable
+        const tdStepName = document.createElement('td');
+        const inputStepName = document.createElement('input');
+        inputStepName.value = stepName;
+        inputStepName.className = 'editable';
+        inputStepName.onblur = (e) => updateStepName(topic, stepName, e.target.value);
+        tdStepName.appendChild(inputStepName);
+        tr.appendChild(tdStepName);
+
+        // Make the step description editable
+        const tdDesc = document.createElement('td');
+        const inputDesc = document.createElement('input');
+        inputDesc.value = steps[stepName].desc;
+        inputDesc.className = 'editable';
+        inputDesc.onblur = (e) => updateStepDesc(topic, stepName, e.target.value);
+        tdDesc.appendChild(inputDesc);
+        tr.appendChild(tdDesc);
+
+        tr.onclick = () => displayActions(stepName);
+        stepList.appendChild(tr);
+    });
+}
+
+// Handles changes to the step name
+function updateStepName(topic, oldStepName, newStepName) {
+    // if (topics[topic].steps[newStepName]) {
+    //     alert('Step name already exists. Choose another name.');
+    //     //return;
+    // }
+    Object.defineProperty(topics[topic].steps, newStepName,
+        Object.getOwnPropertyDescriptor(topics[topic].steps, oldStepName));
+    delete topics[topic].steps[oldStepName];
+    displaySteps(topic);
+}
+
+// Handles changes to the step description
+function updateStepDesc(topic, stepName, newDesc) {
+    topics[topic].steps[stepName].desc = newDesc;
+}
+
+function displayActions(step) {
+    const selectedTopic = document.getElementById('topics').value;
+    //const selectedStep = document.getElementById('step-list').value;
+    console.log("display actions")
+    console.log(selectedTopic);
+    //console.log(selectedStep);
+    console.log(stepsData[step]);
+
+    td = document.getElementById('currTopic');
+    td.textContent = selectedTopic;
+    td = document.getElementById('currStep');
+    td.textContent = stepsData[step].name;
+
+    //const actions = topics[selectedTopic].steps[step].actions;
+    const actionHeader = document.getElementById('action-header');
+    //actionHeader.textContent = `Actions for step [${step}]: ${topics[selectedTopic].steps[step].desc}`;
+    actionHeader.textContent = `Actions for step [${step}]`;
+
+    const actionList = document.getElementById('action-list');
+    actionList.innerHTML = '';
+
+    // Assuming you want to highlight the selected step in a similar way as files previously.
+    highlightSelectedStep(step); 
+
+    actionsData.forEach((action, index) => {
+        const tr = document.createElement('tr');
+        tr.onclick = () => highlightSelectedAction(index);
+
+        ['desc', 'ip', 'func', 'args'].forEach(key => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.className = 'editable';
+            input.value = action[key];
+            input.onblur = (e) => updateActionValue(selectedTopic, step, index, key, e.target.value);
+            td.appendChild(input);
+            tr.appendChild(td);
+        });
+
+        const resultsTd = document.createElement('td');
+        const rbtn = document.createElement('button');
+        rbtn.className = 'results-btn';
+        rbtn.textContent = 'Results';
+
+        rbtn.onclick = (e) => {
+            e.stopPropagation();
+            //alert(`View Results`);
+            openActionModal(index);
+        };
+        resultsTd.appendChild(rbtn);
+
+        tr.appendChild(resultsTd);
+
+        const actionTd = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'execute-btn';
+        btn.textContent = 'Execute';
+        // btn.addEventListener('dblclick', function(e) {
+        //         e.stopPropagation();
+        //         alert(`View Results`);
+        //         openActionModal(index);
+        //     });
+
+        btn.onclick = (e) => {
+            {
+                e.stopPropagation();
+                alert(`Executing ${action.desc}`);
+            }
+        };
+        actionTd.appendChild(btn);
+
+        tr.appendChild(actionTd);
+        actionList.appendChild(tr);
+    });
+}
+
+function highlightSelectedStep(step) {
+    const stepRows = document.getElementById('step-list').querySelectorAll('tr');
+    stepRows.forEach(row => {
+        row.classList.remove('highlighted');
+        if (row.firstElementChild.textContent === stepsData[step].name) {
+            row.classList.add('highlighted');
+        }
+    });
+}
+
+function highlightSelectedAction(index) {
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    actionRows.forEach((row, rowIdx) => {
+        if (index == rowIdx) {
+            row.classList.add('highlighted');
+        } else {
+            row.classList.remove('highlighted');
+        }
+    });
+}
+
+function updateActionValue(topic, step, actionIndex, key, value) {
+    //topics[topic].steps[step].actions[actionIndex][key] = value;
+    actionsData[actionIndex][key] = value;
+}
+
+function addNewAction() {
+    const selectedTopic = document.getElementById('topics').value;
+    const selectedStep = getHighlightedStep(); // Assuming this function gets the currently selected step.
+    
+    //let newAction;
+
+    //const selectedAction = getSelectedAction();
+    let newAction;
+    const selectedActionIndex = getSelectedActionIndex(); // New function to get the index of the selected action.
+    const selectedAction = topics[selectedTopic].steps[selectedStep].actions[selectedActionIndex];
+
+    if (selectedAction) {
+        newAction = { ...selectedAction };
+    } else {
+        // Default action values if no action is highlighted.
+        newAction = {
+            desc: "",
+            ip: "",
+            func: "",
+            args: ""
+        };
+    }
+
+    if (selectedActionIndex !== -1) {
+        // Insert the new action right after the selected one.
+        topics[selectedTopic].steps[selectedStep].actions.splice(selectedActionIndex + 1, 0, newAction);
+    } else {
+        // If no action is selected, append the new action to the end.
+        topics[selectedTopic].steps[selectedStep].actions.push(newAction);
+    }
+    
+    displayActions(selectedStep);
+}
+
+// Function to get the index of the selected action.
+function getSelectedActionIndex() {
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    let selectedIndex = -1;
+
+    actionRows.forEach((row, index) => {
+        console.log(row.classList);
+        if (row.classList.contains('highlighted')) {
+            selectedIndex = index;
+        }
+    });
+
+    return selectedIndex;
+}
+
+// Function to get the index of the selected action.
+function getHighlightedStepIndex() {
+    const actionRows = document.getElementById('step-list').querySelectorAll('tr');
+    let selectedIndex = -1;
+
+    actionRows.forEach((row, index) => {
+        if (row.classList.contains('highlighted')) {
+            selectedIndex = index;
+        }
+    });
+
+    return selectedIndex;
+}
+
+// function getHighlightedStep() {
+//     const selectedTopic = document.getElementById('steps').value;
+//     const selectedStep = getHighlightedStep();
+
+//     const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+//     const selectedRow = Array.from(actionRows).find(row => row.classList.contains('highlighted'));
+    
+//     if (selectedRow) {
+//         const actionIndex = Array.from(actionRows).indexOf(selectedRow);
+//         return topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+//     } else {
+//         return null;
+//     }
+// }
+
+function getSelectedAction() {
+    const selectedTopic = document.getElementById('topics').value;
+    const selectedStep = getHighlightedStep();
+
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    const selectedRow = Array.from(actionRows).find(row => row.classList.contains('highlighted'));
+    
+    if (selectedRow) {
+        const actionIndex = Array.from(actionRows).indexOf(selectedRow);
+        //return topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+        return actionsData[actionIndex];
+    } else {
+        return null;
+    }
+}
+
+function getHighlightedStep() {
+    const stepRows = document.getElementById('step-list').querySelectorAll('tr');
+    const highlightedStepRow = Array.from(stepRows).find(row => row.classList.contains('highlighted'));
+    
+    return highlightedStepRow ? highlightedStepRow.firstElementChild.textContent : null;
+}
+
+function deleteSelectedAction() {
+    const actionRows = document.getElementById('action-list').querySelectorAll('tr');
+    let indexToRemove = -1;
+
+    actionRows.forEach((row, index) => {
+        if (row.classList.contains('highlighted')) {
+            indexToRemove = index;
+        }
+    });
+    
+    if (indexToRemove === -1) {
+        alert("No action selected to delete!");
+        return;
+    }
+
+    const confirmation = confirm("Are you sure you want to delete this action?");
+    if (!confirmation) {
+        return; // Exit if the user clicked "Cancel"
+    }
+
+
+    if (indexToRemove !== -1) {
+        // Assuming you have a method or array to manage your actions
+        // e.g., fileActions[selectedFile].splice(indexToRemove, 1);
+        actionRows[indexToRemove].remove();
+    }
+}
+let selActionIndex;
+
+
+function openActionModal(actionIndex) {
+    const selectedTopic = document.getElementById('topics').value;
+    //const selectedStep = getHighlightedStep();
+    const selectedStep = getHighlightedStep();
+    console.log(selectedStep);
+    //const selectedAction = topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+    const selectedAction = actionsData[actionIndex];
+    selActionIndex = actionIndex;
+
+    // populate the modal
+    //document.getElementById('modal-step-desc').textContent = topics[selectedTopic].steps[selectedStep].desc;
+    document.getElementById('modal-step-desc').textContent = selectedStep.desc;
+    document.getElementById('modal-action-desc').textContent = selectedAction.desc;
+    document.getElementById('modal-expected').textContent = selectedAction.expected || '';  // assuming 'expected' is the key for expected result
+    document.getElementById('modal-tolerance').textContent = selectedAction.tolerance || '';  // assuming 'tolerance' is the key for tolerance
+    document.getElementById('modal-actual').textContent = selectedAction.actual || '';  // assuming 'actual' is the key for actual result
+
+    // show the modal
+    document.getElementById('actionModal').style.display = "block";
+}
+
+// Close the modal when the user clicks anywhere outside of it
+window.onclick = function(event) {
+    const modal = document.getElementById('actionModal');
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Close the modal when the user clicks on the "X"
+document.querySelector(".close").onclick = function() {
+    document.getElementById('actionModal').style.display = "none";
+}
+
+function xopenActionModal(actionIndex) {
+    selActionIndex = actionIndex;
+    let resAlert = `View Results index:` + actionIndex;
+    const selectedStep = getHighlightedStep();
+
+
+
+    const action = topics[selectedTopic].steps[selectedStep].actions[actionIndex];
+    
+    document.getElementById('expected').value = action.expected || '';
+    document.getElementById('tolerance').value = action.tolerance || '';
+    document.getElementById('actual').value = action.actual || '';
+    
+    const modal = document.getElementById('actionModal');
+    modal.style.display = "block";
+    alert(resAlert);
+
+}
+
+document.getElementsByClassName('close-btn')[0].onclick = function() {
+  const modal = document.getElementById('actionModal');
+  modal.style.display = "none";
+}
+
+function saveActionChanges() {
+    const selectedActionIndex = getSelectedActionIndex();
+    const selectedTopic = document.getElementById('topics').value;
+    const selectedStep = getHighlightedStep();
+
+    //const action = topics[selectedTopic].steps[selectedStep].actions[selectedActionIndex];
+    const action = actionsData[selectedActionIndex];
+    console.log(selectedTopic);
+    console.log(selectedStep);
+    console.log(selectedActionIndex);
+    console.log(action);
+    action.expected = document.getElementById('modal-expected').textContent;
+    console.log(action.expected);
+    action.tolerance = document.getElementById('modal-tolerance').textContent;
+
+    const modal = document.getElementById('actionModal');
+    modal.style.display = "none";
+    //const selectedStep = getHighlightedStep();
+
+    displayActions(selectedStep);
+}
+
+
+function runAllActions() {
+    if (!selectedFile) {
+        alert('Please select a file first.');
+        return;
+    }
+    alert(`Executing all actions for ${selectedFile}`);
+}
+window.onload = function() {
+    loadSystemsFromFile();
+}
+
+loadSystems();
+
+function loadSystemsFromFile() {
+    fetch('/getSystemsData')
+        .then(response => response.json())
+        .then(data => {
+            systemsData = data.systems;  // Assuming systemsData is a global or higher scoped variable.
+            loadSystems();
+        })
+        .catch(error => {
+            console.error('Error loading systems:', error);
+        });
+}
+
+function loadTopicsFromFile() {
+    const systemName = document.getElementById('systems').value;
+    return loadTopicsFromSystem(systemName);
+}
+
+function loadTopicsFromSystem(systemName) {
+    console.log(systemName)
+    fetch(`/getTopicsData?sysname=${systemName}`)
+        .then(response => response.json())
+        .then(data => {
+            topicsData = data.topics;  // Assuming systemsData is a global or higher scoped variable.
+            loadTopics();
+            return topicsData;
+        })
+        .catch(error => {
+            console.error('Error loading topics:', error);
+        });
+        return null;
+    }
+
+function loadStepsFromFile() {
+    const systemName = document.getElementById('systems').value;
+    const topicName = document.getElementById('topics').value;
+    return loadStepsFromSystem(systemName, topicName);
+}
+
+function loadStepsFromSystem(systemName, topicName) {
+    console.log(systemName)
+    console.log(topicName)
+    fetch(`/getStepsData/?sysname=${systemName}&topicname=${topicName}`)
+        .then(response => response.json())
+        .then(data => {
+            stepsData = data.steps;  // Assuming systemsData is a global or higher scoped variable.
+            return stepsData;
+        })
+        .catch(error => {
+            console.error('Error loading topics:', error);
+        });
+    return null;
+}
+
+function loadActionsFromFile() {
+    const systemName = document.getElementById('systems').value;
+    const topicName = document.getElementById('topics').value;
+    const stepName = document.getElementById('stepss').value;
+    return loadActionsFromSystem(systemName, topicName, stepName);
+}
+
+function loadActionsFromSystem(systemName, topicName, stepName) {
+    console.log(systemName)
+    console.log(topicName)
+    console.log(stepName)
+    fetch(`/getActionsData/?sysname=${systemName}&topicname=${topicName}&stepname=${stepName}`)
+        .then(response => response.json())
+        .then(data => {
+            actionsData = data.actions;  // Assuming systemsData is a global or higher scoped variable.
+            return actionsData;
+        })
+        .catch(error => {
+            console.error('Error loading actions:', error);
+        });
+    return null;
+}
+
+loadTopics();
+
+const firstSystem = systemDropdown.options[0].value;
+systemDropdown.value = firstSystem;  // Set the first system as selected in the dropdown
+td = document.getElementById('currSystem');
+td.textContent = firstSystem;
+
+
+// Automatically select the first topic and display its steps and actions:
+const firstTopic = topicsDropdown.options[0].value;
+topicsDropdown.value = firstTopic;  // Set the first topic as selected in the dropdown
+
+//displaySteps(firstTopic);  // Assuming you have a function to display the steps of a topic
+//displayActions(firstTopic);  // Display actions of the first step of the first topic
+displayActions(0);  // Display actions of the first step of the first topic
+
+    </script>
+</body>
+
+</html>

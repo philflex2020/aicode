@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCOM MODBUS - Direct IO</title>
+    <style>
+        /* Styling for the page */
+        body {font-family: Arial, sans-serif;}
+
+        table {width: 100%;border-collapse: collapse;}
+
+        th, td {border: 1px solid black;padding: 8px;text-align: left;}
+
+        th {background-color: grey;}
+
+        .title {background-color: darkblue;color: white;text-align: center;padding: 20px;font-size: 24px;}
+
+        .execute-button {background-color: blue;color: white;cursor: pointer;}
+
+        .size-column {width: 20px;background-color: lightblue;}
+        .value-column {background-color: lightgrey;}
+        #executeAll {
+            background-color: red;
+            color: white;  /* This will set the text color to white, but you can remove it if not desired */
+            border: none;
+            padding: 10px 20px; /* Adjust as per your needs for padding */
+            cursor: pointer; /* Changes cursor to hand when hovering over the button */
+            border-radius: 5px; /* Makes the button corners slightly rounded */
+        }
+
+    #executeAll:hover {
+        background-color: darkred; /* Makes button darker when hovered */
+    }
+
+    </style>
+</head>
+
+<body>
+    <div class="title">GCOM MODBUS - Direct IO</div>
+    
+    <!-- Controls for layout management -->
+    <div>
+        <select id="layoutsDropdown">
+            <option value="">--Select a Layout--</option>
+            <!-- Options will be populated dynamically using JavaScript -->
+        </select>
+        <button onclick="loadLayout()">Load</button>
+        <button onclick="saveLayout()">Save</button>
+        <button onclick="saveLayoutAs()">Save As</button>
+        <input type="text" id="saveFilename" placeholder="Filename for Save As">
+        <button id="executeAll" onclick="executeAllCommands()">Execute All</button>
+    </div>    
+    <div>
+        <input type="text" id="testTitle" placeholder="Test Title">
+    </div>
+
+    <br>
+
+    <!-- Table for inputs -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width:100px;">IP</th>
+                <th style="width:20px;">Port</th>
+                <th style="width:50px;">Mode</th>
+                <th style="width:100px;">Device ID</th>
+                <th style="width:100px;">Type</th>
+                <th style="width:50px;">Offset</th>
+                <th style="width:20px;" class="size-column">Size</th>
+                <th style="width:50px;" class="value-column">Value</th>
+                <th>Execute</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- Rows will be added dynamically using JavaScript -->
+        </tbody>
+    </table>
+
+    <!-- Add Row button -->
+    <button onclick="addRow()">Add Row</button>
+
+    <script>
+        // JavaScript functions 
+        // Fetch the layouts and populate the dropdown
+        fetch('/layouts')
+        .then(response => response.json())
+        .then(data => {
+            const dropdown = document.getElementById('layoutsDropdown');
+            data.forEach(layout => {
+                const option = document.createElement('option');
+                option.value = layout;
+                option.innerText = layout;
+                dropdown.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Failed to fetch layouts:', error);
+        });
+
+        
+        function executeAllCommands() {
+            const rows = document.getElementById('tableBody').getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                // Assuming each row has an id which is required for `executeCommand` function
+                const rowId = rows[i].id;
+                executeCommand(rowId);
+            }
+        }
+
+        let rowCounter = 0;
+
+function createCellWithInput(row, inputType, inputValue, inputClass, isInteger=false, inputSize=null) {
+    const td = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = inputType;
+    // Generate a unique ID based on the current time and class for each input.
+    //input.id = `${row.id}-${inputClass}-${Date.now()}`;
+    input.id = `${row.id}-${inputClass}`;
+    console.log(input.id);
+
+    if (isInteger && inputType === 'number') {
+        input.step = '1';
+        input.style.width = inputSize;
+    }
+    else if (inputSize) {
+        input.size = inputSize;
+    }
+
+    input.value = inputValue;
+    input.className = inputClass;
+    td.appendChild(input);
+    row.appendChild(td);
+}
+
+async function executeCommand(rowId) {
+    const row = document.getElementById(rowId);
+    const ip = row.querySelector(".ip").value;
+    const port = row.querySelector(".port").value;
+    const action = row.querySelector(".action").value;
+    const deviceId = row.querySelector(".deviceId").value;
+    const type = row.querySelector(".type").value;
+    const offset = row.querySelector(".offset").value;
+    const size = row.querySelector(".size").value;
+    const valueField = row.querySelector(".value");
+    const exeField = row.querySelector(".execute");
+    const value = valueField.value;
+    try {
+        exeField.style.backgroundColor = 'orange';
+
+        const response = await fetch(`/run-command?ip=${ip}&port=${port}&action=${action}&deviceId=${deviceId}&type=${type}&offset=${offset}&value=${value}&rowId=${rowId}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        exeField.style.backgroundColor = 'red';
+        if (data.status === "success") {
+            exeField.style.backgroundColor = 'lightgreen';
+            valueField.value = data.value; 
+        } else {
+            exeField.style.backgroundColor = 'red';
+        }
+        //exeField.title = data;
+        exeField.title = JSON.stringify(data, null, 2);
+
+
+    } catch (error) {
+        console.error('Error executing command:', error);
+    }
+}
+
+        function addRowFromLayout(dataRow) {
+            rowCounter++;
+            const tableBody = document.getElementById('tableBody');
+            const newRow = document.createElement('tr');
+            //const rowId = `row-${Date.now()}`; // Generate a unique ID based on the current time
+            const rowId = `row-${rowCounter}`; // Generate a unique ID based on the current time
+            newRow.id = rowId;
+
+            createCellWithInput(newRow, 'text',   dataRow[0], 'ip',       false, 8);
+            createCellWithInput(newRow, 'number', dataRow[1], 'port',     true, '50px');
+            createCellWithInput(newRow, 'text',   dataRow[2], 'action',   false, 4);
+            createCellWithInput(newRow, 'number', dataRow[3], 'deviceId', true, '50px');
+            createCellWithInput(newRow, 'text',   dataRow[4], 'type',     false, 10);
+            createCellWithInput(newRow, 'number', dataRow[5], 'offset',   true,  '50px');
+            createCellWithInput(newRow, 'number', dataRow[6], 'size',     true,  '50px');
+            createCellWithInput(newRow, 'number', dataRow[7], 'value');
+
+            // Add the execute button
+            const execTd = document.createElement('td');
+            const execBtn = document.createElement('button');
+            execBtn.classList.add('execute-button');
+            execBtn.innerText = "Execute";
+            execBtn.className = "execute";
+            execBtn.id = `${rowId}-"execute"`;
+            execBtn.title = "Test not executed yet.";
+
+            execBtn.onclick = function() {
+                // Call the function to execute the command
+                executeCommand(rowId);
+                //execBtn.title = "Test has run.";
+            };
+            execTd.appendChild(execBtn);
+            newRow.appendChild(execTd);
+
+            tableBody.appendChild(newRow);
+        }
+        const layoutData = {
+            // your layout data
+            "rows":[
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.2","1502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"],
+                ["127.0.0.1","502","Set","1","Holding","1","1","123"]
+            ]
+        };
+
+        function addRow() {
+            if (layoutData.rows.length > 0) {
+                // Fetch the first row from layoutData
+                const firstRowData = layoutData.rows[0];
+
+                // Remove the first row from layoutData to prevent re-adding the same row
+                //layoutData.shift();
+
+                // Use addRowFromLayout to add the row data
+                addRowFromLayout(firstRowData);
+            } else {
+                // Alert or some form of notification if there's no more data in layoutData
+                alert("No more rows in layout data to add!");
+            }   
+        }
+        function loadLayout() {
+            const selectedLayout = document.getElementById('layoutsDropdown').value;
+            if (!selectedLayout) {
+                alert("Please select a layout from the dropdown.");
+                return;
+            }
+
+            fetch(`/loadLayout?filename=${selectedLayout}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear current rows
+                    const tableBody = document.getElementById('tableBody');
+                    while (tableBody.firstChild) {
+                        tableBody.removeChild(tableBody.firstChild);
+                    }
+
+                    // Populate rows with data from server
+                    rowCounter = 0;
+                    data.rows.forEach(rowData => {
+                        addRowFromLayout(rowData);
+                    });
+
+                    document.getElementById("testTitle").value = data.title || " Untitled Test";
+                })
+                .catch(error => {
+                    console.error("Error loading layout:", error);
+                });
+            }
+
+        function saveLayout() {
+            const selectedLayout = document.getElementById('layoutsDropdown').value;
+            if (!selectedLayout) {
+                alert("Please select a layout from the dropdown.");
+                return;
+            }
+
+            const rowsData = getRowsData();
+            title = document.getElementById("testTitle").value;
+
+            fetch(`/saveLayout?filename=${selectedLayout}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title: title, rows: rowsData })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Layout saved successfully!");
+                    } else {
+                        alert("Error saving layout.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error saving layout:", error);
+                });
+            }
+
+    function saveLayoutAs() {
+        const filename = document.getElementById('saveFilename').value;
+        if (!filename) {
+            alert("Please provide a filename.");
+            return;
+        }
+
+        const rowsData = getRowsData();
+        title = document.getElementById("testTitle").value;
+
+
+            fetch(`/saveLayoutAs?filename=${filename}`, {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title: title, rows: rowsData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Layout saved successfully!");
+                } else {
+                    alert("Error saving layout.");
+                }
+            })
+            .catch(error => {
+                console.error("Error saving layout:", error);
+            });
+        }
+
+    function getRowsData() {
+        const tableBody = document.getElementById('tableBody');
+        const rows = tableBody.querySelectorAll('tr');
+        const rowsData = [];
+
+        rows.forEach(row => {
+            const rowData = [];
+            row.querySelectorAll('input').forEach(input => {
+                rowData.push(input.value);
+            });
+            rowsData.push(rowData);
+        });
+
+        return rowsData;
+    }
+
+    // Load initial rows
+    rowCounter = 0;
+    layoutData.rows.forEach(row => {
+        addRowFromLayout(row);
+    });
+    // for (let i = 0; i < 10; i++) {
+    //     addRow();
+    // }
+    </script>
+</body>
+
+</html>

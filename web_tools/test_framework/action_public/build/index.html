@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Web Page</title>
+    <style>
+        /* Add some simple styling */
+        #left-panel {
+            float: left;
+            width: 30%;
+            border-right: 1px solid black;
+        }
+        
+        #right-panel {
+            float: right;
+            width: 68%;
+            padding-left: 2%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="left-panel">
+        <ul id="file-list">
+            <!-- Files will be appended here dynamically -->
+        </ul>
+    </div>
+
+    <div id="right-panel">
+        <!-- Actions will be displayed here dynamically -->
+        <button id="run-individual">Run Individual</button>
+        <button id="run-all">Run All</button>
+    </div>
+
+    <script>
+        // Sample actions, in a real scenario, these might be fetched from the server.
+        const actions = [
+            {id: "1", desc:"desc1", delay: 0, ip: "127.0.0.1", func: "somefunc", args: "someargs"},
+            {id: "2", desc:"desc2", delay: 0.2, ip: "127.0.0.1", func: "somefunc", args: "someargs"}
+            // ... Add more actions if needed
+        ];
+
+        // TODO: Fetch file list and populate #file-list.
+
+        // TODO: Add event listeners to files, when clicked display actions on the right panel.
+        // TODO: Implement "Run Individual" and "Run All" functionality.
+        // TODO: Handle tooltips and display response as a JSON formatted page.
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCOM MODBUS - Direct IO</title>
+    <style>
+        /* Add some basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #2C3E50;
+        }
+
+        form {
+            border: 1px solid #2C3E50;
+            padding: 20px;
+            width: 50%;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #3498DB;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #2980B9;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>GCOM MODBUS - Direct IO</h1>
+
+    <form action="/execute" method="POST">
+        <label>
+            IP:
+            <input type="text" name="ip" required>
+        </label>
+
+        <label>
+            Port:
+            <input type="number" name="port" required>
+        </label>
+
+        <label>
+            Mode (set/pub/get):
+            <input type="text" name="action" required>
+        </label>
+
+        <label>
+            Device ID:
+            <input type="text" name="deviceId" required>
+        </label>
+
+        <label>
+            Type (Holding/Coil):
+            <input type="text" name="type" required>
+        </label>
+
+        <label>
+            Offset:
+            <input type="number" name="offset" required>
+        </label>
+
+        <label>
+            Value:
+            <input type="text" name="value">
+        </label>
+
+        <input type="submit" value="Execute">
+    </form>
+
+    <!-- You can use the below script to handle the form submission using AJAX. This is optional. -->
+    <script>
+        document.querySelector('form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let formData = new FormData(event.target);
+            fetch('/execute', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => alert('Error: ' + error));
+        });
+    </script>
+</body>
+</html>

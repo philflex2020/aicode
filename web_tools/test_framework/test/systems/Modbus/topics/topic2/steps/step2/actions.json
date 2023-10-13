@@ -1,0 +1,22 @@
+{
+    "actions": [
+        {
+            "name": "action1",
+            "description": "Description for action1",
+            "ip": "127.0.0.1",
+            "function": "function1",
+            "args": "args1",
+            "expected": "result1",
+            "version": "1.0"
+        },
+        {
+            "name": "action2",
+            "description": "Description for action2",
+            "ip": "172.17.0.4",
+            "function": "function2",
+            "args": "args2",
+            "expected": "result2",
+            "version": "1.0"
+        }
+    ]
+}

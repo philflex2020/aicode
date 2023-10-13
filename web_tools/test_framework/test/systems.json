@@ -1,0 +1,29 @@
+{
+    "systems": [
+        {
+            "name": "DNP3",
+            "description": "DNP 3",
+            "version": "1.0"
+        },
+        {
+            "name": "Modbus",
+            "description": "Modbus Protocol",
+            "version": "1.0"
+        },
+        {
+            "name": "Fims",
+            "description": "Fims Protocol",
+            "version": "1.0"
+        },
+        {
+            "name": "Ess",
+            "description": "Ess Controller",
+            "version": "1.0"
+        },
+        {
+            "name": "GoMetrics",
+            "description": "Go_metrics",
+            "version": "1.0"
+        }
+    ]
+}

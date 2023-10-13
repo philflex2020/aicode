@@ -1,0 +1,14 @@
+{
+    "steps": [
+        {
+            "name": "step1",
+            "description": "Description for step1",
+            "version": "1.0"
+        },
+        {
+            "name": "step2",
+            "description": "Description for step2",
+            "version": "1.0"
+        }
+    ]
+}

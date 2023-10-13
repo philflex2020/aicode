@@ -1,0 +1,14 @@
+{
+    "topics": [
+        {
+            "name": "dnp3_topic1",
+            "description": "Description for dnp3 topic1",
+            "version": "1.0"
+        },
+        {
+            "name": "dnp3_topic2",
+            "description": "Description for dnp3 topic2",
+            "version": "1.0"
+        }
+    ]
+}

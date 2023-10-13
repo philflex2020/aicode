@@ -1,0 +1,14 @@
+{
+    "topics": [
+        {
+            "name": "topic1",
+            "description": "Description for topic1",
+            "version": "1.0"
+        },
+        {
+            "name": "topic2",
+            "description": "Description for topic2",
+            "version": "1.0"
+        }
+    ]
+}

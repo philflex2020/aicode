@@ -1,0 +1,14 @@
+{
+    "steps": [
+        {
+            "name": "dnp3_t1_s1",
+            "description": "Description for step1",
+            "version": "1.0"
+        },
+        {
+            "name": "dnp3_t1_s2",
+            "description": "Description for step2",
+            "version": "1.0"
+        }
+    ]
+}

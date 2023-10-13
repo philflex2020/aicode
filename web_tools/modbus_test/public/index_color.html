@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCOM MODBUS - direct io</title>
+    <style>
+        /* Styling */
+        body {
+            background-color: lightblue;
+        }
+        h1 {
+            color: darkblue;
+        }
+        th {
+            background-color: grey;
+        }
+        button.execute {
+            background-color: green;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GCOM MODBUS - direct io</h1>
+
+    <table border="1">
+        <!-- Header row -->
+        <thead>
+            <tr>
+                <th>IP</th>
+                <th>Port</th>
+                <th>Mode</th>
+                <th>Device ID</th>
+                <th>Type</th>
+                <th>Offset</th>
+                <th>Size</th>
+                <th>Value</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <!-- Body content where rows will be added -->
+        <tbody id="tableBody">
+            <!-- Rows will be added dynamically using JavaScript -->
+        </tbody>
+    </table>
+
+    <button onclick="addRow()">Add Row</button>
+
+    <script>
+        function addRow() {
+            const tableBody = document.getElementById('tableBody');
+            const newRow = document.createElement('tr');
+
+            const ipInput = document.createElement('input');
+            const portInput = document.createElement('input');
+            const modeInput = document.createElement('input');
+            const deviceIdInput = document.createElement('input');
+            const typeInput = document.createElement('input');
+            const offsetInput = document.createElement('input');
+            const sizeInput = document.createElement('input');  // Added size input
+            const valueInput = document.createElement('input');
+
+            const executeButton = document.createElement('button');
+            executeButton.classList.add('execute');  // Adding class for styling
+            executeButton.textContent = 'Execute';
+            executeButton.onclick = function() {
+                const requestBody = {
+                    ip: ipInput.value,
+                    port: portInput.value,
+                    mode: modeInput.value,
+                    deviceId: deviceIdInput.value,
+                    type: typeInput.value,
+                    offset: offsetInput.value,
+                    size: sizeInput.value,  // Added size to request body
+                    value: valueInput.value
+                };
+
+                fetch('/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result && modeInput.value.toLowerCase() === 'get') {
+                        valueInput.value = data.result;
+                    }
+                });
+            };
+
+            newRow.appendChild(createCell(ipInput));
+            newRow.appendChild(createCell(portInput));
+            newRow.appendChild(createCell(modeInput));
+            newRow.appendChild(createCell(deviceIdInput));
+            newRow.appendChild(createCell(typeInput));
+            newRow.appendChild(createCell(offsetInput));
+            newRow.appendChild(createCell(sizeInput));  // Added size cell
+            newRow.appendChild(createCell(valueInput));
+            newRow.appendChild(createCell(executeButton));
+
+            tableBody.appendChild(newRow);
+        }
+
+        function createCell(child) {
+            const cell = document.createElement('td');
+            cell.appendChild(child);
+            return cell;
+        }
+
+        // Adding 10 rows on page load
+        for (let i = 0; i < 10; i++) {
+            addRow();
+        }
+    </script>
+</body>
+
+</html>
