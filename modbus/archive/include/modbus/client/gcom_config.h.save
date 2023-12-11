@@ -1,0 +1,33 @@
+#pragma once
+
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
+#include <any>
+#include <map>
+#include <vector>
+#include <simdjson.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+#include <string>
+#include <fstream>
+#include <sstream>
+
+
+
+#include "shared_utils.hpp"
+
+#define NEW_FPS_ERROR_PRINT(fmt_str, ...)            fmt::print(stderr, FMT_COMPILE(fmt_str), ##__VA_ARGS__)
+#define NEW_FPS_ERROR_PRINT_NO_COMPILE(fmt_str, ...) fmt::print(stderr, fmt_str, ##__VA_ARGS__) 
+#define NEW_FPS_ERROR_PRINT_NO_ARGS(fmt_str)         fmt::print(stderr, FMT_COMPILE(fmt_str))
+
+bool getMapType(const std::map<std::string, std::any>& m, const std::string& query, const std::type_info& targetType);
+int gcom_parse_file(std::map<std::string, std::any> &m,const char *filename);
+void gcom_printFirstLevel(const std::map<std::string, std::any>& m);
+std::optional<std::string> getMapString(const std::map<std::string, std::any>& m, const std::string& query);
+bool getMapType(const std::map<std::string, std::any>& m, const std::string& query, const std::type_info& targetType);
+template<typename T>
+std::optional<T> getMapValue(const std::map<std::string, std::any>& m, const std::string& query);
+template <typename T>
+bool getItemFromMap(const std::map<std::string, std::any>& m, const std::string& query, T& target, const T& defaultValue, bool def, bool required);
+
