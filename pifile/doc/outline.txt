@@ -8,6 +8,7 @@ echo '{"type":"ess_master"}' > /fuser/ess_1
 this will create the ess_1 entity
 it will run the ess_master module , It will create a basic invironment but have no resources 
 
+
 echo '{"type":"bms_master"}' > /fuser/ess_1/bms
 this will create the bms entity and it will be placed in the ess bus
 it will run the bms_master module , It will create a basic invironment and communicate with the ess but have no resources 
