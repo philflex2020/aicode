@@ -39,7 +39,7 @@ def bms_master(arg1):
     while True:  # 'True' should be capitalized
         count += 1
         myStore["count"] = count
-        print("             bms_running :"+ arg1)
+        print("             bms_running :"+ arg1 +" count "+ str(count))
         time.sleep(5)
     # Implement bms_master logic here
 
@@ -62,11 +62,20 @@ def start_thread(thread_type, *args):
 def update_data_store(uri, body):
     keys = uri.strip("/").split("/")
     current_level = data_store
+
     for key in keys[:-1]:
         if key not in current_level:
             current_level[key] = {}
         current_level = current_level[key]
-    current_level[keys[-1]] = body
+
+    last_key = keys[-1]
+    if last_key in current_level and isinstance(current_level[last_key], dict):
+        # If the last key exists and its value is a dictionary, merge the dictionaries
+        current_level[last_key].update(body)
+    else:
+        # Otherwise, just set the value to body
+        current_level[last_key] = body
+    #current_level[keys[-1]] = body
 
 def echo_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
