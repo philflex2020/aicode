@@ -4,6 +4,76 @@ Setting up MooseFS with FUSE on a Raspberry Pi involves several steps, from inst
 - Multiple Raspberry Pi devices (at least 2: one for the Master Server and one or more for Chunk Servers).
 - A stable network connection.
 - Basic knowledge of Linux commands and networking.
+The `/etc/mfs/mfsmaster.cfg` file is the configuration file for the master server of MooseFS, a distributed file system. This file contains various settings that define how the MooseFS master server operates.
+
+Below is an example configuration for a basic `mfsmaster.cfg` file. Keep in mind that the actual contents and settings may vary based on your specific requirements and the version of MooseFS you are using:
+
+```cfg
+# /etc/mfs/mfsmaster.cfg
+# Sample configuration file for MooseFS master server
+
+# Define the working directory for the master server
+WORKING_USER = mfs
+WORKING_DIRECTORY = /var/lib/moosefs/master
+
+# Set the location of the metadata file (binary file storing filesystem tree)
+DATA_PATH = /var/lib/moosefs/master/metadata.mfs
+
+# Define the location of the custom metadata backup directory
+BACKUP_PATH = /var/lib/moosefs/master/backups
+
+# Set the metadata save frequency in seconds (e.g., 300 seconds)
+METADATA_SAVE_FREQ = 300
+
+# Enable automatic removal of unused chunks
+UNUSED_CHUNKS_DELETE_ENABLE = 1
+
+# Set the master server's listen host and port
+MASTER_HOST = *
+MASTER_PORT = 9421
+
+# Set the location of the mfsmaster.pid file
+LOCKFILE = /var/run/mfsmaster.pid
+
+# Define the mfsmaster log file location and verbosity level
+SYSLOG_IDENT = mfsmaster
+SYSLOG_LEVEL = NOTICE
+
+# Specify the network interface that the master server will use
+NETWORK_INTERFACE = eth0
+
+# Define the maximum number of open files
+MAX_OPEN_FILES = 50000
+
+# Advanced settings (tune these carefully based on your setup)
+CHUNKS_LOOP_TIME = 300
+CHUNKS_WRITE_REP_LIMIT = 10
+CHUNKS_READ_REP_LIMIT = 5
+REPLICATIONS_DELAY_INIT = 300
+ACCEPTABLE_DIFFERENCES = 0.1
+
+# End of mfsmaster.cfg
+```
+
+### Notes on the Configuration:
+- **WORKING_USER**: The user under which the master server will run.
+- **WORKING_DIRECTORY**: The directory where the master server will store its operational data.
+- **DATA_PATH**: Path to the metadata file.
+- **BACKUP_PATH**: Location for storing metadata backups.
+- **METADATA_SAVE_FREQ**: How often (in seconds) metadata should be saved.
+- **UNUSED_CHUNKS_DELETE_ENABLE**: Whether to automatically delete unused chunks.
+- **MASTER_HOST** and **MASTER_PORT**: Network settings for the master server.
+- **SYSLOG_IDENT** and **SYSLOG_LEVEL**: Settings for logging.
+- **NETWORK_INTERFACE**: Specifies which network interface the master server will use.
+- **MAX_OPEN_FILES**: The maximum number of files that can be opened by the master server.
+- **Advanced Settings**: Parameters like `CHUNKS_LOOP_TIME`, `CHUNKS_WRITE_REP_LIMIT`, etc., are advanced settings that should be adjusted based on the specific requirements and performance characteristics of your setup.
+
+### Important:
+- This is just a basic example. Your actual configuration may need additional parameters or different values depending on your specific setup and version of MooseFS.
+- Before making changes to the configuration, it's a good practice to backup the existing configuration file.
+- After modifying the configuration, restart the MooseFS master server for the changes to take effect.
+
+Always refer to the official MooseFS documentation for detailed explanations of each configuration option and for guidelines on how to configure the master server based on your specific requirements.
 
 ### Step 1: Installing MooseFS Master
 
@@ -438,3 +508,122 @@ Here are some examples of FUSE operations that can be implemented in a custom fi
 
 Implementing these operations depends on your specific requirements and the behavior you want your filesystem to exhibit. Some operations might be essential for your filesystem, while others could be optional based on the use case. For example, a read-only filesystem might not implement write-related operations. Each operation has its complexities and requires a good understanding of file system concepts and the operating system's expectations.
 
+#define FUSE_USE_VERSION 26
+
+#include <fuse.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <map>
+
+static const char *writeFilePath = "/write_file.txt";
+std::map<std::string, std::vector<char>> file_contents;
+
+static int my_getattr(const char *path, struct stat *stbuf) {
+    int res = 0;
+    memset(stbuf, 0, sizeof(struct stat));
+
+    if(strcmp(path, "/") == 0) {
+        stbuf->st_mode = S_IFDIR | 0755;
+        stbuf->st_nlink = 2;
+    } else if(strcmp(path, writeFilePath) == 0) {
+        stbuf->st_mode = S_IFREG | 0666;
+        stbuf->st_nlink = 1;
+        stbuf->st_size = file_contents[writeFilePath].size();
+    } else
+        res = -ENOENT;
+
+    return res;
+}
+
+static int my_open(const char *path, struct fuse_file_info *fi) {
+    return 0;
+}
+
+static int my_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+    std::vector<char>& content = file_contents[path];
+    if (offset >= content.size()) {
+        return 0;
+    }
+    if (offset + size > content.size()) {
+        size = content.size() - offset;
+    }
+    std::copy(content.begin() + offset, content.begin() + offset + size, buf);
+    return size;
+}
+
+static int my_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+    std::vector<char>& content = file_contents[path];
+    if (offset + size > content.size()) {
+        content.resize(offset + size);
+    }
+    std::copy(buf, buf + size, content.begin() + offset);
+    return size;
+}
+
+static struct fuse_operations my_oper = {
+    .getattr = my_getattr,
+    .open = my_open,
+    .read = my_read,
+    .write = my_write,
+};
+
+int main(int argc, char *argv[]) {
+    file_contents[writeFilePath] = std::vector<char>(); // Initialize empty file content
+    return fuse_main(argc, argv, &my_oper, NULL);
+}
+
+
+To implement the logic for traversing and possibly creating entries in your `std::any` root data structure based on the components of the path, you'll need to repeatedly look for each component in the current map, and if it doesn't exist, create a new map entry for it. This process involves quite a bit of type checking and casting, as `std::any` can hold data of any type.
+
+Below is an example function showing how you might implement this:
+
+```cpp
+#include <any>
+#include <map>
+#include <string>
+#include <vector>
+#include <stdexcept>
+
+// Assume 'root' is a global or class member variable
+std::any root = std::make_any<std::map<std::string, std::any>>();
+
+std::map<std::string, std::any>& getOrCreateMap(std::any& a) {
+    if (a.type() != typeid(std::map<std::string, std::any>)) {
+        a = std::make_any<std::map<std::string, std::any>>();
+    }
+    return std::any_cast<std::map<std::string, std::any>&>(a);
+}
+
+void createPathInMap(const std::vector<std::string>& pathParts) {
+    std::any* current = &root;
+
+    for (const auto& part : pathParts) {
+        std::map<std::string, std::any>& map = getOrCreateMap(*current);
+        current = &map[part];
+    }
+}
+
+// Example usage
+int main() {
+    std::vector<std::string> path = splitPath("/mysys/mycomp/myid/value");
+    createPathInMap(path);
+    // Now 'root' contains the nested maps according to the path
+}
+```
+
+In this example:
+- `root` is a `std::any` variable that initially stores a map.
+- `getOrCreateMap` is a utility function that ensures the `std::any` object contains a map. If it doesn't, the function initializes a new map in it.
+- `createPathInMap` takes a vector of path parts and traverses the `root` structure, creating new maps as needed.
+
+### Important Points:
+- This example assumes that every path component represents a map. If a component represents a value (like the final component in your case), you would need additional logic to handle this.
+- Type safety is critical. Because `std::any` can hold anything, you must be careful to ensure that each `std::any` object contains the type of data you expect. Mismanaging types can lead to runtime errors.
+- Error handling is not included in this example. In a robust application, you would need to handle exceptions and edge cases, like attempting to create a map where a value already exists.
+
+This example provides a basic framework, but you'll need to expand and adapt it to fit the specific requirements and behaviors of your FUSE application.

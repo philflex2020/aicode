@@ -1,0 +1,44 @@
+fuser control
+p wilshire
+12_13_2023
+
+
+
+echo '{"type":"ess_master"}' > /fuser/ess_1
+this will create the ess_1 entity
+it will run the ess_master module , It will create a basic invironment but have no resources 
+
+echo '{"type":"bms_master"}' > /fuser/ess_1/bms
+this will create the bms entity and it will be placed in the ess bus
+it will run the bms_master module , It will create a basic invironment and communicate with the ess but have no resources 
+
+echo '{"type":"battery_module"}' > /fuser/ess_1/bms/rack_1
+this will create a battery module entity and it will be placed in the bms bus. It will have default capacity limits soc etc
+cat /fuser/ess_1/bms/rack_1 to see them
+
+echo '{"type":"battery_module"}' > /fuser/ess_1/bms/rack_2
+this will create a second battery module entity and it will be placed in the bms bus. It will have default capacity limits soc etc
+cat /fuser/ess_1/bms/rack_2 to see them
+
+cat /fuser/ess_1/bms to see both racks
+
+
+
+
+
+
+echo '{"maxCap":120000, "minCap":100, "r1": 100}' > /fuser/ess_1/bms/rack_1
+can be used to adjust the default features of rack_1
+
+echo '{"charge": 3456 }' > /fuser/ess_1
+will tell ess_1 to charge its racks at the designated power if possible 
+
+echo '{"open_contactors": true }' > /fuser/ess_1/bms/rack_1
+will tell rack_1 open_contactors 
+
+echo '{"open_contactors": true }' > /fuser/ess_1/bms
+will tell bms open_contactors in all its racks 
+
+
+
+
