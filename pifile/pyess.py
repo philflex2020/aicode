@@ -155,6 +155,47 @@ def echo_server(host, port):
 
                     #conn.sendall(data)
 
+
+# Handle client requests needs fixup
+def handle_client(conn, addr):
+    print(f"Connected by {addr}")
+    while True:
+        data = conn.recv(1024)
+        if not data:
+            break
+
+        try:
+            json_data = json.loads(data.decode())
+            uri = json_data.get('uri', '')
+            method = json_data.get('method', '')
+            body = json_data.get('body', {}) if isinstance(json_data.get('body'), dict) else {}
+
+            if method == "run":
+                update_data_store(uri, body)
+                if 'type' in body:
+                    start_thread(body['type'], uri)
+                conn.sendall(data)
+
+            elif method == "get":
+                myStore = get_store(uri)
+                data = json.dumps(myStore)
+                conn.sendall(data.encode())
+
+            elif method == "set":
+                update_data_store(uri, body)
+                myStore = get_store(uri)
+                data = json.dumps(myStore)
+                conn.sendall(data.encode())
+
+            elif method == "show":
+                print(f"Data store: {data_store}")
+
+        except json.JSONDecodeError:
+            print("Invalid JSON received")
+        #finally:
+            #conn.sendall(data)
+
+
 def my_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

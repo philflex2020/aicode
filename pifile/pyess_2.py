@@ -79,6 +79,7 @@ def handle_client(conn, addr):
                 update_data_store(uri, body)
                 if 'type' in body:
                     start_thread(body['type'], uri)
+                conn.sendall(data)
 
             elif method == "get":
                 myStore = get_store(uri)
