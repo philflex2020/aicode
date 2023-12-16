@@ -3,8 +3,123 @@ import json
 import threading
 import time
 
+# note on shared objects (vlinks)
+# my_data = {
+#     "level1": {
+#         "level2": {
+#             "value": 1234
+#        }
+#   }
+# }
+
+# my_other_data = {}
+# Assign the dictionary object
+#my_other_data["sample"] = my_data["level1"]["level2"]
+
+# assign "actions" to variables
+
+# my_data = {
+#     "level1": {
+#         "level2": {
+#             "value": 1234,
+#             "key": 123456  << this is the look up for actions
+#        }
+#   }
+# }
+
+# def lookup(uri):
+#     parts = uri.split('/')
+#     current = my_data
+#     for part in parts:
+#         current = current.get(part)
+#         if current is None:
+#             return None
+#     return current
+
+# def set_key_value(obj, value, key):
+#     # Define how to set the 'key'
+#     print(f"Setting {key} to {value}")
+#     obj[key] = value
+
+# setFuncs = {
+#     123456: set_key_value
+# }
+
+# def setValue(uri, value):
+#     myObj = lookup(uri)
+#     if myObj is not None and "key" in myObj:
+#         setFuncs["key"](myObj, value)
+#     else:
+#         print(f"No 'key' found at {uri}")
+#
+# def setValue(uri, value, key):
+#     myObj = lookup(uri)
+#     if myObj is not None:
+#         if "key" in myObj:
+#             # Use the special function for 'key' if it exists
+#             setFuncs[myObj["key"]](myObj, value, key)
+#         else:
+#             # Otherwise, directly set the 'value'
+#             myObj[key] = value
+#     else:
+#         print(f"No object found at {uri}")
+# setValue("level1/level2", 3456, "value")
+
+# import uuid
+
+#unique_key_counter = 0
+
+#def get_unique_key():
+#    global unique_key_counter
+#    unique_key_counter += 1
+#    return unique_key_counter
+
+# def addSetFunc(data, uri, set_func):
+#     unique_key = str(uuid.uuid4())  # Generate a unique key
+#     unique_key = get_unique_key()
+#     myObj = lookup(uri)
+
+#     if myObj is not None:
+#         # Add the unique key to the object at the specified URI
+#         myObj["setFuncKey"] = unique_key
+
+#         # Associate the unique key with the set function in setFuncs
+#         setFuncs[unique_key] = set_func
+#     else:
+#         print(f"Object not found at {uri}")
+
+# # Update setValue to use the unique key for setFuncs
+# def setValue(uri, value):
+#     myObj = lookup(uri)
+#     if myObj is not None:
+#         setFuncKey = myObj.get("setFuncKey")
+#         if setFuncKey and setFuncKey in setFuncs:
+#             setFuncs[setFuncKey](myObj, value)
+#         else:
+#             myObj["value"] = value
+#     else:
+#         print(f"No object found at {uri}")
+
+# # Usage example
+# addSetFunc(my_data, "level1/level2", set_key_value)
+# setValue("level1/level2", 3456)
+
+
+
 # Global data store and thread function mappings
 data_store = {}
+
+def limit_depth(data, max_depth):
+    if max_depth <= 0 or not isinstance(data, dict):
+        return data
+    else:
+        return {k: limit_depth(v, max_depth - 1) for k, v in data.items()}
+
+def json_dumps_limited_depth(data, max_depth, **kwargs):
+    limited_data = limit_depth(data, max_depth)
+    return json.dumps(limited_data, **kwargs)
+#json_string = json_dumps_limited_depth(my_data, 2, indent=4)
+
 
 # Thread functions
 def ess_master(arg1):
@@ -93,7 +208,20 @@ def handle_client(conn, addr):
                 conn.sendall(data.encode())
 
             elif method == "show":
-                print(f"Data store: {data_store}")
+                #print(f"Data store: {data_store}")
+                #print(f"Data store updated: {data_store}")
+                myStore = get_store(uri)
+
+                data = json.dumps(myStore, indent=4)
+                conn.sendall(data.encode())
+
+            elif method == "showall":
+                #print(f"Data store: {data_store}")
+                #print(f"Data store updated: {data_store}")
+                myStore = get_store(uri)
+
+                data = json.dumps(data_store, indent=4)
+                conn.sendall(data.encode())
 
         except json.JSONDecodeError:
             print("Invalid JSON received")

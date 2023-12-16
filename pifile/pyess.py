@@ -16,6 +16,10 @@ def get_store(uri):
         current_level = current_level[key]
     return current_level
 
+def get_last(uri):
+    keys = uri.strip("/").split("/")
+    return keys[-1]
+
 def ess_master(arg1):
     myStore = get_store(arg1)
     myStore["uri"] = arg1
@@ -33,7 +37,76 @@ def ess_master(arg1):
 # Define another thread function for example
 def bms_master(arg1):
     myStore = get_store(arg1)
+    myStore["name"] = get_last(arg1)
     print(f" bms myStore {myStore}")
+    myStore["uri"] = arg1
+    myStore["status"] = {}
+    myStore["status"]["state"] = "off"
+    myStore["command"] = "off"
+    myStore["status"]["SOC"] = 100
+    myStore["status"]["capacity"] = 40000
+    myStore["max_capacity"] = 40000
+    myStore["status"]["power"] = 0
+    myStore["maxpower"] = 400
+    myStore["powerRequest"] = 0
+
+
+
+    count = 0
+    if "count" not in myStore:
+        myStore["count"] = 0
+    else:
+        count = myStore["count"]
+
+    while True:  # 'True' should be capitalized
+        mycount = myStore.get("mycount", 0)
+        count = myStore["count"]
+        count += 1
+        myStore["count"] = count
+        myname = myStore["name"]
+        mycap = myStore["status"]["capacity"]
+        mystate = myStore["status"]["state"]
+        mycommand = myStore["command"]
+        prequest = myStore["powerRequest"]
+        if prequest > myStore["maxpower"]:
+            prequest = myStore["maxpower"]
+        elif prequest < -myStore["maxpower"]:
+            prequest = -myStore["maxpower"]
+        if mystate in ["off" ,"charge", "discharge"] :
+            if mycommand == "standby": 
+                print(f" changing state to standby")
+                myStore["status"]["power"] = 0
+                myStore["status"]["state"] = "standby"
+        elif mystate in ["standby" ] :
+            if mycommand == "charge":
+                print(f" changing state to charge")
+                myStore["status"]["state"] = "charge"
+            elif mycommand == "discharge": 
+                print(f" changing state to discharge")
+                myStore["status"]["state"] = "discharge"
+        mystate = myStore["status"]["state"]
+        if mystate in ["charge"] :
+            if mycap <  myStore["max_capacity"] and prequest > 0:
+                myStore["status"]["capacity"] += prequest
+                myStore["status"]["power"] = prequest
+            else:
+                myStore["status"]["power"] = 0
+
+        if mystate in ["discharge"] :
+            if mycap >  0 and prequest < 0:
+                myStore["status"]["capacity"] += prequest
+                myStore["status"]["power"] = prequest
+            else:
+                myStore["status"]["power"] = 0
+
+
+        print(f"             bms_running : {myname}  state  {mystate}  capacity {mycap}")
+        time.sleep(5)
+    # Implement bms_master logic here
+
+def pcs_master(arg1):
+    myStore = get_store(arg1)
+    print(f" pcs myStore {myStore}")
     myStore["uri"] = arg1
     count = 0
     if "count" not in myStore:
@@ -46,7 +119,7 @@ def bms_master(arg1):
         count = myStore["count"]
         count += 1
         myStore["count"] = count
-        print("             bms_running :"+ arg1 + " count "+ str(count) + " mycount "+ str(mycount))
+        print("             pcs_running :"+ arg1 + " count "+ str(count) + " mycount "+ str(mycount))
         time.sleep(5)
     # Implement bms_master logic here
 
@@ -55,6 +128,7 @@ def bms_master(arg1):
 thread_functions = {
     'ess_master': ess_master,  # Reference the function directly
     'bms_master': bms_master,  # Reference the function directly
+    'pcs_master': pcs_master,  # Reference the function directly
 }
 
 # Start a thread based on the type
@@ -119,9 +193,9 @@ def echo_server(host, port):
                             body = json.loads(jbody)
                         else :
                             body = jbody   
-                        print("Keys in body:")
-                        for key in body:
-                            print(key)
+                        #print("Keys in body:")
+                        #for key in body:
+                        #    print(key)
 
                         # Process the data
                         if method == "run":
@@ -132,26 +206,45 @@ def echo_server(host, port):
                                 start_thread(body['type'],uri)
                             conn.sendall(data)
 
-                        if method == "show":
+                        elif method == "showall":
                             #print(f"Data store updated: {data_store}")
                             data = json.dumps(data_store, indent=4)
                             conn.sendall(data.encode())
 
-                        if method == "get":
+                        elif method == "showall":
+                            #print(f"Data store updated: {data_store}")
+                            data = json.dumps(data_store, indent=4)
+                            conn.sendall(data.encode())
+                        elif method == "show":
+                            myStore = get_store(uri)
+                            #print(f"Data store updated: {data_store}")
+                            data = json.dumps(myStore, indent=4)
+                            conn.sendall(data.encode())
+
+                        elif method == "get":
                             #print(f"Data store updated: {data_store}")
                             myStore = get_store(uri)
                             print(f"uri: {uri}")
                             print(f"Mystore: {myStore}")
                             data = json.dumps(myStore)
                             conn.sendall(data.encode())
-                        if method == "set":
+
+                        elif method == "set":
                             update_data_store(uri, body)
                             myStore = get_store(uri)
                             data = json.dumps(myStore)
                             conn.sendall(data.encode())
+                        else:
+                            out = f"unknown method: [{method}]"
+                            conn.sendall(out.encode())
 
                     except json.JSONDecodeError:
-                        print("Invalid JSON received")
+                        print(data.decode())
+                        if type(data) == type("") :
+                            err = f"String received"
+                        else:
+                            err = f"Invalid JSON received"
+                        conn.sendall(err.encode())
 
                     #conn.sendall(data)
 
