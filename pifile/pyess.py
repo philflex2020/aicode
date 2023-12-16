@@ -2,23 +2,39 @@ import socket
 import json
 import threading
 import time
+from bms import bms_master 
+
+# python3 pyclient.py -mrun -u/mysys/ess/ess_2/bms/bms_2 -b'{"type":"bms_master", "data":"data for bms2","count":123}'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"standby"'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"charge"'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"discharge"'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/powerRequest  -b-40
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"standby"'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"discharge"'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"standby"'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"charge"'
+# python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/powerRequest  -b40
+
 
 # Global data store and thread function mappings
-data_store = {}
+from pyutils import data_store 
+from pyutils import get_store, get_last, update_data_store
 
-def get_store(uri):
-    keys = uri.strip("/").split("/")
-    current_level = data_store
-    #for key in keys[:-1]:
-    for key in keys:
-        if key not in current_level:
-            current_level[key] = {}
-        current_level = current_level[key]
-    return current_level
+#data_store = {}
 
-def get_last(uri):
-    keys = uri.strip("/").split("/")
-    return keys[-1]
+# def get_store(uri):
+#     keys = uri.strip("/").split("/")
+#     current_level = data_store
+#     #for key in keys[:-1]:
+#     for key in keys:
+#         if key not in current_level:
+#             current_level[key] = {}
+#         current_level = current_level[key]
+#     return current_level
+
+# def get_last(uri):
+#     keys = uri.strip("/").split("/")
+#     return keys[-1]
 
 def ess_master(arg1):
     myStore = get_store(arg1)
@@ -34,75 +50,6 @@ def ess_master(arg1):
         time.sleep(5)
 
 
-# Define another thread function for example
-def bms_master(arg1):
-    myStore = get_store(arg1)
-    myStore["name"] = get_last(arg1)
-    print(f" bms myStore {myStore}")
-    myStore["uri"] = arg1
-    myStore["status"] = {}
-    myStore["status"]["state"] = "off"
-    myStore["command"] = "off"
-    myStore["status"]["SOC"] = 100
-    myStore["status"]["capacity"] = 40000
-    myStore["max_capacity"] = 40000
-    myStore["status"]["power"] = 0
-    myStore["maxpower"] = 400
-    myStore["powerRequest"] = 0
-
-
-
-    count = 0
-    if "count" not in myStore:
-        myStore["count"] = 0
-    else:
-        count = myStore["count"]
-
-    while True:  # 'True' should be capitalized
-        mycount = myStore.get("mycount", 0)
-        count = myStore["count"]
-        count += 1
-        myStore["count"] = count
-        myname = myStore["name"]
-        mycap = myStore["status"]["capacity"]
-        mystate = myStore["status"]["state"]
-        mycommand = myStore["command"]
-        prequest = myStore["powerRequest"]
-        if prequest > myStore["maxpower"]:
-            prequest = myStore["maxpower"]
-        elif prequest < -myStore["maxpower"]:
-            prequest = -myStore["maxpower"]
-        if mystate in ["off" ,"charge", "discharge"] :
-            if mycommand == "standby": 
-                print(f" changing state to standby")
-                myStore["status"]["power"] = 0
-                myStore["status"]["state"] = "standby"
-        elif mystate in ["standby" ] :
-            if mycommand == "charge":
-                print(f" changing state to charge")
-                myStore["status"]["state"] = "charge"
-            elif mycommand == "discharge": 
-                print(f" changing state to discharge")
-                myStore["status"]["state"] = "discharge"
-        mystate = myStore["status"]["state"]
-        if mystate in ["charge"] :
-            if mycap <  myStore["max_capacity"] and prequest > 0:
-                myStore["status"]["capacity"] += prequest
-                myStore["status"]["power"] = prequest
-            else:
-                myStore["status"]["power"] = 0
-
-        if mystate in ["discharge"] :
-            if mycap >  0 and prequest < 0:
-                myStore["status"]["capacity"] += prequest
-                myStore["status"]["power"] = prequest
-            else:
-                myStore["status"]["power"] = 0
-
-
-        print(f"             bms_running : {myname}  state  {mystate}  capacity {mycap}")
-        time.sleep(5)
-    # Implement bms_master logic here
 
 def pcs_master(arg1):
     myStore = get_store(arg1)
@@ -139,32 +86,6 @@ def start_thread(thread_type, *args):
     else:
         print(f"Unknown thread type: {thread_type}")
 
-# Update the data store based on URI
-def update_data_store(uri, body):
-    keys = uri.strip("/").split("/")
-    current_level = data_store
-
-    for key in keys[:-1]:
-        if key not in current_level:
-            current_level[key] = {}
-        current_level = current_level[key]
-
-    last_key = keys[-1]
-    if last_key in current_level and isinstance(current_level[last_key], dict):
-        # If the last key exists and its value is a dictionary, merge the dictionaries
-        print(f" merge last key {last_key}")
-        print(body)
-        for mkey in body:
-            print(mkey)
-            print(last_key)
-            #current_level[last_key].update(body)
-            current_level[last_key][mkey] = body[mkey]
-    else:
-        # Otherwise, just set the value to body
-        print(f" set last key {last_key}")
-        print(body)
-        current_level[last_key] = body
-    #current_level[keys[-1]] = body
 
 def echo_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
