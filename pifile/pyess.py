@@ -19,7 +19,7 @@ from pcs import pcs_master
 
 # Global data store and thread function mappings
 from pyutils import data_store 
-from pyutils import get_store, get_last, update_data_store
+from pyutils import get_store, get_last, update_data_store, new_update_data_store
 
 #data_store = {}
 
@@ -183,6 +183,12 @@ def echo_server(host, port):
                         elif method == "set":
                             print(" running set ")
                             update_data_store(uri, body)
+                            myStore = get_store(uri)
+                            data = json.dumps(myStore)
+                            conn.sendall(data.encode())
+                        elif method == "setnew":
+                            print(" running setnew ")
+                            new_update_data_store(uri, body)
                             myStore = get_store(uri)
                             data = json.dumps(myStore)
                             conn.sendall(data.encode())
