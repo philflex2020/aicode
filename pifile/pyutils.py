@@ -1,5 +1,12 @@
-
+import json
 data_store = {}
+
+def is_valid_json(test_string):
+    try:
+        json_object = json.loads(test_string)
+        return True
+    except json.JSONDecodeError:
+        return False
 
 def get_store(uri):
     keys = uri.strip("/").split("/")
@@ -39,6 +46,16 @@ def update_data_store(uri, body):
     else:
         # Otherwise, just set the value to body
         print(f" set last key {last_key}")
-        print(body)
-        current_level[last_key] = body
+        print(" body type ")
+        print(type(body))
+        #body may be a json object
+        if False and is_valid_json(body):
+            json_object = json.loads(body)
+            for mkey in json_object:
+                print(mkey)
+                print(last_key)
+                #current_level[last_key].update(body)
+                current_level[last_key][mkey] = json_object[mkey]
+        else:
+            current_level[last_key] = body
     #current_level[keys[-1]] = body

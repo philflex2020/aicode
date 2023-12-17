@@ -151,7 +151,7 @@ def echo_server(host, port):
                                 if type(body) == type(''):
                                      body = json.loads(body)
 
-                                print(f"Received type: {body['type']}")
+                                print(f"Received function: {body['type']}")
 
                                 start_thread(body["type"], uri)
                             conn.sendall(data)
