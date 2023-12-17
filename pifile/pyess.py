@@ -3,6 +3,7 @@ import json
 import threading
 import time
 from bms import bms_master 
+from pcs import pcs_master 
 
 # python3 pyclient.py -mrun -u/mysys/ess/ess_2/bms/bms_2 -b'{"type":"bms_master", "data":"data for bms2","count":123}'
 # python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"standby"'
@@ -51,24 +52,24 @@ def ess_master(arg1):
 
 
 
-def pcs_master(arg1):
-    myStore = get_store(arg1)
-    print(f" pcs myStore {myStore}")
-    myStore["uri"] = arg1
-    count = 0
-    if "count" not in myStore:
-        myStore["count"] = 0
-    else:
-        count = myStore["count"]
+# def pcs_master(arg1):
+#     myStore = get_store(arg1)
+#     print(f" pcs myStore {myStore}")
+#     myStore["uri"] = arg1
+#     count = 0
+#     if "count" not in myStore:
+#         myStore["count"] = 0
+#     else:
+#         count = myStore["count"]
 
-    while True:  # 'True' should be capitalized
-        mycount = myStore.get("mycount", 0)
-        count = myStore["count"]
-        count += 1
-        myStore["count"] = count
-        print("             pcs_running :"+ arg1 + " count "+ str(count) + " mycount "+ str(mycount))
-        time.sleep(5)
-    # Implement bms_master logic here
+#     while True:  # 'True' should be capitalized
+#         mycount = myStore.get("mycount", 0)
+#         count = myStore["count"]
+#         count += 1
+#         myStore["count"] = count
+#         print("             pcs_running :"+ arg1 + " count "+ str(count) + " mycount "+ str(mycount))
+#         time.sleep(5)
+#     # Implement bms_master logic here
 
 
 # Thread function mappings
@@ -109,22 +110,50 @@ def echo_server(host, port):
                         json_data = json.loads(data.decode())
                         uri = json_data.get('uri', '')
                         method = json_data.get('method', '')
-                        jbody = json_data.get('body', {})  # Assuming 'body' is already a dictionary
+                        print(" so far so good ")
+                        try:
+                            jbody = json_data.get('body', {})  # Assuming 'body' is already a dictionary
+                            print(" body is  a dict")
+                            print(type(jbody))
+                        except:
+                            print(" body is not a dict")
+                            try:
+                                jbody = json_data.get('body', '')  # Assuming 'body' is already a dictionary
+                                print(" body is  a string")
+                            except:
+                                print(" body is not a string")
+                                try:
+                                    jbody = json_data.get('body', 1)  # Assuming 'body' is already a dictionary
+                                    print(" body is  a number")
+                                except:
+                                    err = f" Json not decoded"
+
+                        print(" so far so good 2 ")
                         if type(jbody) == type(""):
-                            body = json.loads(jbody)
+                            print(" so far so good 3 ")
+                            body = jbody   
+                            print(" so far so good 4 ")
                         else :
+                            #body = json.loads(jbody)
                             body = jbody   
                         #print("Keys in body:")
                         #for key in body:
                         #    print(key)
 
                         # Process the data
+                        print(" so far so good 3 ")
                         if method == "run":
                             update_data_store(uri, body)
 
                             if 'type' in body:
-                                #print(f"Received type: {body['type']}")
-                                start_thread(body['type'],uri)
+                                print(body)
+                                print(type(body))
+                                if type(body) == type(''):
+                                     body = json.loads(body)
+
+                                print(f"Received type: {body['type']}")
+
+                                start_thread(body["type"], uri)
                             conn.sendall(data)
 
                         elif method == "showall":
@@ -136,6 +165,7 @@ def echo_server(host, port):
                             #print(f"Data store updated: {data_store}")
                             data = json.dumps(data_store, indent=4)
                             conn.sendall(data.encode())
+
                         elif method == "show":
                             myStore = get_store(uri)
                             #print(f"Data store updated: {data_store}")
@@ -151,6 +181,7 @@ def echo_server(host, port):
                             conn.sendall(data.encode())
 
                         elif method == "set":
+                            print(" running set ")
                             update_data_store(uri, body)
                             myStore = get_store(uri)
                             data = json.dumps(myStore)
@@ -164,7 +195,7 @@ def echo_server(host, port):
                         if type(data) == type("") :
                             err = f"String received"
                         else:
-                            err = f"Invalid JSON received"
+                            err = f"Invalid ugly JSON received"
                         conn.sendall(err.encode())
 
                     #conn.sendall(data)
@@ -178,34 +209,35 @@ def handle_client(conn, addr):
         if not data:
             break
 
-        try:
-            json_data = json.loads(data.decode())
-            uri = json_data.get('uri', '')
-            method = json_data.get('method', '')
-            body = json_data.get('body', {}) if isinstance(json_data.get('body'), dict) else {}
+        json_data = json.loads(data.decode())
+        uri = json_data.get('uri', '')
+        method = json_data.get('method', '')
+        body = json_data.get('body', {}) if isinstance(json_data.get('body'), dict) else {}
 
-            if method == "run":
-                update_data_store(uri, body)
-                if 'type' in body:
-                    start_thread(body['type'], uri)
-                conn.sendall(data)
+        #try:
 
-            elif method == "get":
-                myStore = get_store(uri)
-                data = json.dumps(myStore)
-                conn.sendall(data.encode())
+        if method == "run":
+            update_data_store(uri, body)
+            if 'type' in body:
+                start_thread(body['type'], uri)
+            conn.sendall(data)
 
-            elif method == "set":
-                update_data_store(uri, body)
-                myStore = get_store(uri)
-                data = json.dumps(myStore)
-                conn.sendall(data.encode())
+        elif method == "get":
+            myStore = get_store(uri)
+            data = json.dumps(myStore)
+            conn.sendall(data.encode())
 
-            elif method == "show":
-                print(f"Data store: {data_store}")
+        elif method == "set":
+            update_data_store(uri, body)
+            myStore = get_store(uri)
+            data = json.dumps(myStore)
+            conn.sendall(data.encode())
 
-        except json.JSONDecodeError:
-            print("Invalid JSON received")
+        elif method == "show":
+            print(f"Data store: {data_store}")
+
+        #except json.JSONDecodeError:
+        #    print("Invalid JSON received")
         #finally:
             #conn.sendall(data)
 

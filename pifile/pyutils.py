@@ -20,7 +20,8 @@ def update_data_store(uri, body):
     keys = uri.strip("/").split("/")
     current_level = data_store
 
-    for key in keys[:-1]:
+    #for key in keys[:-1]:
+    for key in keys:
         if key not in current_level:
             current_level[key] = {}
         current_level = current_level[key]
