@@ -2,8 +2,8 @@ import socket
 import json
 import threading
 import time
-from bms import bms_master 
-from pcs import pcs_master 
+from bms import bms_master , bms_unit
+from pcs import pcs_master , pcs_unit
 
 # python3 pyclient.py -mrun -u/mysys/ess/ess_2/bms/bms_2 -b'{"type":"bms_master", "data":"data for bms2","count":123}'
 # python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/command  -b'"standby"'
@@ -19,7 +19,13 @@ from pcs import pcs_master
 
 # Global data store and thread function mappings
 from pyutils import data_store 
-from pyutils import get_store, get_last, update_data_store, new_update_data_store
+from pyutils import get_store, get_last, update_data_store, new_update_data_store, start_thread, set_thread_func
+
+#set_thread_func('ess_master', ess_master)
+set_thread_func('bms_master', bms_master)
+set_thread_func('pcs_master', pcs_master)
+set_thread_func('bms_unit',   bms_unit)
+set_thread_func('pcs_unit',   pcs_unit)
 
 #data_store = {}
 
@@ -38,17 +44,48 @@ from pyutils import get_store, get_last, update_data_store, new_update_data_stor
 #     return keys[-1]
 
 def ess_master(arg1):
-    myStore = get_store(arg1)
-    myStore["uri"] = arg1
     count = 0
-    myStore["count"] = 0
+    print(f" Ess_master {arg1}")
+    myStore = get_store(arg1)
+    myStore["ess"] = {}
+    myStore["ess"]["status"] = {}
+    myStore["ess"]["controls"] = {}
+    myStore["ess"]["controls"]["command"] = "off"
+    myStore["ess"]["controls"]["ChargeCurrent"] = "off"
+    myStore["ess"]["status"]["SOC"] = 100
+    myStore["ess"]["status"]["capacity"] = 40000
+
+    num_bms =  myStore.get("num_bms")
+    num_pcs =  myStore.get("num_pcs")
+    print(f" num_bms {num_bms} num_pcs {num_pcs}")
+    for x in range(num_bms):
+        arg3=f"{arg1}/ess/bms/bms_{x}"
+        start_thread("bms_unit", arg3)
+    for x in range(num_pcs):
+        arg3=f"{arg1}/ess/pcs/pcs_{x}"
+        start_thread("pcs_unit", arg3)
     while True:  # 'True' should be capitalized
         count += 1
-        myStore["count"] = count
-        print("ess_running :"+ arg1)
+        myStore["ess"]["count"] = count
+        print("  ess_running :")
         #print(arg1)
-        print(myStore)
+        #print(myStore)
         time.sleep(5)
+
+
+set_thread_func('ess_master', ess_master)
+
+    # myStore = get_store(arg1)
+    # myStore["uri"] = arg1
+    # count = 0
+    # myStore["count"] = 0
+    # while True:  # 'True' should be capitalized
+    #     count += 1
+    #     myStore["count"] = count
+    #     print("ess_running :"+ arg1)
+    #     #print(arg1)
+    #     print(myStore)
+    #     time.sleep(5)
 
 
 
@@ -72,20 +109,22 @@ def ess_master(arg1):
 #     # Implement bms_master logic here
 
 
-# Thread function mappings
-thread_functions = {
-    'ess_master': ess_master,  # Reference the function directly
-    'bms_master': bms_master,  # Reference the function directly
-    'pcs_master': pcs_master,  # Reference the function directly
-}
+# # Thread function mappings
+# thread_functions = {
+#     'ess_master': ess_master,  # Reference the function directly
+#     'bms_master': bms_master,  # Reference the function directly
+#     'pcs_master': pcs_master,  # Reference the function directly
+#     'bms_unit':   bms_unit,  # Reference the function directly
+#     'pcs_unit':   pcs_unit,  # Reference the function directly
+# }
 
 # Start a thread based on the type
-def start_thread(thread_type, *args):
-    if thread_type in thread_functions:
-        thread = threading.Thread(target=thread_functions[thread_type],args=args)
-        thread.start()
-    else:
-        print(f"Unknown thread type: {thread_type}")
+# def start_thread(thread_type, *args):
+#     if thread_type in thread_functions:
+#         thread = threading.Thread(target=thread_functions[thread_type],args=args)
+#         thread.start()
+#     else:
+#         print(f"Unknown thread type: {thread_type}")
 
 
 def echo_server(host, port):

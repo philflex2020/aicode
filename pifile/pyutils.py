@@ -1,4 +1,9 @@
 import json
+import threading
+
+# from bms import bms_master , bms_unit
+# from pcs import pcs_master , pcs_unit
+
 data_store = {}
 
 def is_valid_json(test_string):
@@ -183,3 +188,26 @@ def xnew_update_data_store(uri, body):
     #     else:
     #         current_level[last_key] = body
     # #current_level[keys[-1]] = body
+    # Start a thread based on the type
+
+
+# Thread function mappings
+thread_functions = {
+    # 'ess_master': ess_master,  # Reference the function directly
+    # 'bms_master': bms_master,  # Reference the function directly
+    # 'pcs_master': pcs_master,  # Reference the function directly
+    # 'bms_unit':   bms_unit,  # Reference the function directly
+    # 'pcs_unit':   pcs_unit,  # Reference the function directly
+}
+
+
+def set_thread_func(name, func):
+    thread_functions[name] = func
+
+def start_thread(thread_type, *args):
+    if thread_type in thread_functions:
+        thread = threading.Thread(target=thread_functions[thread_type],args=args)
+        thread.start()
+    else:
+        print(f"Unknown thread type: {thread_type}")
+

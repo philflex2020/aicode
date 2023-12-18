@@ -1,10 +1,22 @@
 import time
 
-from pyutils import get_store, get_last
+from pyutils import get_store, get_last, start_thread
 
 # Define another thread function for example
-
 def bms_master(arg1):
+    print(f" Bms_master {arg1}")
+    myStore = get_store(arg1)
+    myStore["bms"] = {}
+    num_units =  myStore.get("num_units")
+    print(f" num_units {num_units}")
+    for x in range(num_units):
+        #arg2 = arg1+"/bms"
+        arg3=f"{arg1}/bms/bms_{x}"
+        print(f" Bms_master {arg3}")
+        start_thread("bms_unit", arg3)
+
+
+def bms_unit(arg1):
     myStore = get_store(arg1)
     myStore["name"] = get_last(arg1)
     #print(f" bms myStore {myStore}")
