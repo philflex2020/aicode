@@ -149,7 +149,7 @@ def echo_server(host, port):
                         json_data = json.loads(data.decode())
                         uri = json_data.get('uri', '')
                         method = json_data.get('method', '')
-                        print(" so far so good ")
+                        # print(" so far so good ")
                         try:
                             jbody = json_data.get('body', {})  # Assuming 'body' is already a dictionary
                             print(" body is  a dict")
@@ -167,11 +167,11 @@ def echo_server(host, port):
                                 except:
                                     err = f" Json not decoded"
 
-                        print(" so far so good 2 ")
+                        # print(" so far so good 2 ")
                         if type(jbody) == type(""):
-                            print(" so far so good 3 ")
+                            # print(" so far so good 3 ")
                             body = jbody   
-                            print(" so far so good 4 ")
+                            # print(" so far so good 4 ")
                         else :
                             #body = json.loads(jbody)
                             body = jbody   
@@ -195,10 +195,6 @@ def echo_server(host, port):
                                 start_thread(body["type"], uri)
                             conn.sendall(data)
 
-                        elif method == "showall":
-                            #print(f"Data store updated: {data_store}")
-                            data = json.dumps(data_store, indent=4)
-                            conn.sendall(data.encode())
 
                         elif method == "showall":
                             #print(f"Data store updated: {data_store}")
@@ -225,6 +221,7 @@ def echo_server(host, port):
                             myStore = get_store(uri)
                             data = json.dumps(myStore)
                             conn.sendall(data.encode())
+                            
                         elif method == "setnew":
                             print(" running setnew ")
                             new_update_data_store(uri, body)
