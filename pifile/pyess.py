@@ -42,9 +42,11 @@ set_thread_func('pcs_unit',   pcs_unit)
 # def get_last(uri):
 #     keys = uri.strip("/").split("/")
 #     return keys[-1]
-
+# python3 pyclient.py -mset -u/mytest2/templates -b'{"mytemp":{"num_bms":3,"num_pcs":2 }}'
+# python3 pyclient.py -mrun -u/mytest2 -b'{"type":"ess_master", "system":"mytemp"}'
 def ess_master(arg1):
     count = 0
+    total_power = 0
     print(f" Ess_master {arg1}")
     myStore = get_store(arg1)
     myStore["ess"] = {}
@@ -52,11 +54,24 @@ def ess_master(arg1):
     myStore["ess"]["controls"] = {}
     myStore["ess"]["controls"]["command"] = "off"
     myStore["ess"]["controls"]["ChargeCurrent"] = "off"
+
+    myStore["ess"]["controls"]["Discharge"] = 0
     myStore["ess"]["status"]["SOC"] = 100
     myStore["ess"]["status"]["capacity"] = 40000
+    myStore["ess"]["status"]["state"] = "idle"
+    
 
-    num_bms =  myStore.get("num_bms")
-    num_pcs =  myStore.get("num_pcs")
+
+    template =  myStore.get("system", '')
+    if template == '':
+
+        num_bms =  myStore.get("num_bms")
+        num_pcs =  myStore.get("num_pcs")
+    else:
+        num_bms =  myStore["templates"][template].get("num_bms", 1)
+        num_pcs =  myStore["templates"][template].get("num_pcs", 1)
+
+
     print(f" num_bms {num_bms} num_pcs {num_pcs}")
     for x in range(num_bms):
         arg3=f"{arg1}/ess/bms/bms_{x}"
@@ -64,12 +79,93 @@ def ess_master(arg1):
     for x in range(num_pcs):
         arg3=f"{arg1}/ess/pcs/pcs_{x}"
         start_thread("pcs_unit", arg3)
+
+    oldState =  myStore["ess"]["status"]["state"]
     while True:  # 'True' should be capitalized
+        sysState =  myStore["ess"]["status"]["state"]
         count += 1
         myStore["ess"]["count"] = count
         print("  ess_running :")
         #print(arg1)
         #print(myStore)
+        if sysState == "charge":
+            print("charging")    
+
+        elif sysState == "discharge":
+            cap = 0
+            Soc = 0
+            for x in range(num_bms):
+                bms_id=f"bms_{x}"
+                bmsStore = myStore["ess"]["bms"][bms_id]
+                bms_cap = bmsStore["status"]["capacity"]
+                bms_SOC = bmsStore["status"]["SOC"]
+                cap+=bms_cap*bms_SOC/100
+                Soc+=bms_SOC
+            total_discharge = Soc / 2
+            if oldState != "discharge":
+                oldState = "discharge"
+                total_power = total_discharge / 4
+            print(f">>>>   ess discharging total capacity {cap} total Soc {Soc} total_power {total_power}")    
+            for x in range(num_bms):
+                bms_id=f"bms_{x}"
+                bmsStore = myStore["ess"]["bms"][bms_id]
+                bms_SOC = bmsStore["status"]["SOC"]
+                bms_cap = bmsStore["status"]["capacity"]
+                bmsPower = total_power * (bms_SOC /2) / total_discharge 
+                bmsStore["status"]["capacity"] = bms_cap - bmsPower
+                max_cap = bmsStore["max_capacity"]
+                bms_cap = bmsStore["status"]["capacity"]
+                bms_SOC = bms_cap * 100 / max_cap
+                bmsStore["status"]["SOC"]= bms_SOC
+
+                print(f">>>>  >>> {bms_id} discharge {bmsPower} cap {bms_cap}")    
+
+
+        # def distribute_power_demand(battery_socs, total_power_demand):
+        #     # Calculate the total discharge power availability (50% of each battery's power based on SoC)
+        #     total_discharge_capability = sum(soc / 2 for soc in battery_socs)  # 50% of each battery's SoC
+
+        #     # Calculate the proportion of total power demand each battery should supply
+        #     power_distribution = [total_power_demand * (soc / 2) / total_discharge_capability for soc in battery_socs]
+
+        #     return power_distribution
+
+        # # Example Usage
+        # battery_socs = [60, 50, 40]  # SoC of three batteries in percent
+        # total_power_demand = 100  # Total power demand
+
+        # power_distribution = distribute_power_demand(battery_socs, total_power_demand)
+        # print("Power distribution:", power_distribution)
+        # def adjust_discharge_rates(battery_socs, total_power_demand, discharge_period_hours):
+        #     initial_power_distribution = [soc / 2 for soc in battery_socs]  # 50% of each battery's SoC
+        #     total_initial_discharge_power = sum(initial_power_distribution)
+
+        #     # Calculate initial discharge rates
+        #     discharge_rates = [power / total_initial_discharge_power * total_power_demand for power in initial_power_distribution]
+
+        #     # Simulate discharge to adjust rates
+        #     adjusted_discharge_rates = list(discharge_rates)
+        #     for _ in range(int(discharge_period_hours * 60)):  # Assuming adjustment every minute
+        #         # Simulate discharge for one minute and update SoCs
+        #         battery_socs = [max(0, soc - rate / 60) for soc, rate in zip(battery_socs, adjusted_discharge_rates)]
+                
+        #         # Recalculate total discharge power based on new SoCs
+        #         total_discharge_power = sum(soc / 2 for soc in battery_socs)
+                
+        #         # Adjust discharge rates to balance SoCs
+        #         adjusted_discharge_rates = [total_power_demand * (soc / 2) / total_discharge_power for soc in battery_socs]
+
+        #     return adjusted_discharge_rates
+
+        # # Example Usage
+        # battery_socs = [60, 50, 40]  # Initial SoC of three batteries in percent
+        # total_power_demand = 100     # Total power demand in Watts
+        # discharge_period_hours = 0.5  # Half the discharge period in hours
+
+        # adjusted_rates = adjust_discharge_rates(battery_socs, total_power_demand, discharge_period_hours)
+        # print("Adjusted Discharge Rates:", adjusted_rates)
+
+
         time.sleep(5)
 
 
