@@ -17,6 +17,20 @@ from pcs import pcs_master , pcs_unit
 # python3 pyclient.py -mset -u/mysys/ess/ess_2/bms/bms_2/powerRequest  -b40
 
 
+# python3 pyclient.py -mset -u/mytest2/templates -b'{"mytemp":{"num_bms":3,"num_pcs":2 }}'
+# python3 pyclient.py -mrun -u/mytest2 -b'{"type":"ess_master", "system":"mytemp"}'
+# python3 pyclient.py -mset -u/mytest2/ess/bms/bms_0/status/SOC -b'50'
+# python3 pyclient.py -mset -u/mytest2/ess/status/state -b'discharge'
+# python3 pyclient.py -mshow -u/mytest2/ess/status/state -b'discharge'
+# python3 pyclient.py -mshow -u/mytest2/ess/bms/bms_0/status/SOC -b'50'
+# python3 pyclient.py -mset -u/mytest2/ess/bms/bms_0/status/SOC -b'50'
+# python3 pyclient.py -mshow -u/mytest2/ess/bms/bms_0/status/SOC -b'50'
+# python3 pyclient.py -mshow -u/mytest2/ess/bms/bms_0/status/SOC -b'50'
+# python3 pyclient.py -mset -u/mytest2/ess/bms/bms_0/status/capacity -b'20000'
+# python3 pyclient.py -mshow -u/mytest2/ess/bms/bms_0/status/SOC -b'50'
+# python3 pyclient.py -mshow -u/mytest2/ess/bms/bms_0/status/SOC -b'50'
+# python3 pyclient.py -mset -u/mytest2/ess/bms/bms_2/status/capacity -b'30000'
+
 # Global data store and thread function mappings
 from pyutils import data_store 
 from pyutils import get_store, get_last, update_data_store, new_update_data_store, start_thread, set_thread_func
@@ -99,12 +113,16 @@ def ess_master(arg1):
                 bmsStore = myStore["ess"]["bms"][bms_id]
                 bms_cap = bmsStore["status"]["capacity"]
                 bms_SOC = bmsStore["status"]["SOC"]
+
                 cap+=bms_cap*bms_SOC/100
                 Soc+=bms_SOC
             total_discharge = Soc / 2
             if oldState != "discharge":
                 oldState = "discharge"
                 total_power = total_discharge / 4
+            if Soc == 0:
+                total_power = 0
+
             print(f">>>>   ess discharging total capacity {cap} total Soc {Soc} total_power {total_power}")    
             for x in range(num_bms):
                 bms_id=f"bms_{x}"
@@ -112,7 +130,10 @@ def ess_master(arg1):
                 bms_SOC = bmsStore["status"]["SOC"]
                 bms_cap = bmsStore["status"]["capacity"]
                 bmsPower = total_power * (bms_SOC /2) / total_discharge 
-                bmsStore["status"]["capacity"] = bms_cap - bmsPower
+                bms_cap -= bmsPower
+                if bms_cap == 0:
+                    bms_cap = 0
+                bmsStore["status"]["capacity"] = bms_cap
                 max_cap = bmsStore["max_capacity"]
                 bms_cap = bmsStore["status"]["capacity"]
                 bms_SOC = bms_cap * 100 / max_cap

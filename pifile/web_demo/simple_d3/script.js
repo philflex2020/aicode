@@ -69,12 +69,22 @@ document.addEventListener("DOMContentLoaded", function() {
                 const x2 = parseInt(element.style("left")) + 50;
                 const y2 = parseInt(element.style("top")) + 50;
 
+                // Define control points for the Bezier curve
+                const ctrlX1 = (x1 + x2) / 2;
+                const ctrlY1 = y1;
+                const ctrlX2 = (x1 + x2) / 2;
+                const ctrlY2 = y2;
+
+                // Create the SVG path for the Bezier curve
+                // const path = svg.append("path")
+                //             .attr("d", `M ${x1} ${y1} C ${ctrlX1} ${ctrlY1}, ${ctrlX2} ${ctrlY2}, ${x2} ${y2}`)
+                //             .attr("class", "line");
                 const line = svg.append("line")
-                    .attr("x1", x1)
-                    .attr("y1", y1)
-                    .attr("x2", x2)
-                    .attr("y2", y2)
-                    .attr("class", "line");
+                     .attr("x1", x1)
+                     .attr("y1", y1)
+                     .attr("x2", x2)
+                     .attr("y2", y2)
+                     .attr("class", "line");
                 console.log("Drawing line:", x1, y1, x2, y2);
                 lines.push({line, start: selectedElement, end: element});
                 // Get the values from the input fields of the start and end elements
