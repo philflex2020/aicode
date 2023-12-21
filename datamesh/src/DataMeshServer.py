@@ -17,6 +17,9 @@ def is_valid_json(test_string):
 def get_store(uri):
     keys = uri.strip("/").split("/")
     current_level = data_store
+    if uri == '/':
+        return current_level
+
     #for key in keys[:-1]:
     for key in keys:
         if key not in current_level:
@@ -35,7 +38,7 @@ def update_data_store(uri, body):
     for i, key in enumerate(keys):
         if i == len(keys) - 1:  # If it's the last key
             if is_valid_json(body):
-                print(" body is json")
+                #print(" body is json")
                 new_data = json.loads(body)
                 if isinstance(new_data, dict) and isinstance(current_level.get(key, {}), dict):
                     print("Merge dictionaries")
@@ -69,19 +72,22 @@ def handle_set(dm, data):
     #json_data = json.dumps({"command": "set"})
     dm.sendall("set ok".encode())
 
+
+def handle_show(dm, data):
+    uri = data["uri"]
+    myStore = get_store(uri)
+    data = json.dumps(myStore, indent=4)
+    dm.sendall(data.encode())
+
 def handle_run(dm, data):
     print(f"Handling 'run' with data: {data}")
     json_data = json.dumps({"command": "run"})
     dm.sendall(json_data.encode())
 
 def handle_get(dm,data):
-    print(f"Handling 'get' with data: {data}")
-    #print(f"Data store updated: {data_store}")
     body = data["body"]
     uri = data["uri"]
     myStore = get_store(uri)
-    print(f"uri: {uri}")
-    print(f"Mystore: {myStore}")
     sdata = json.dumps(myStore)
     dm.sendall(sdata.encode())
     # json_data = json.dumps({"command": "get"})
@@ -119,6 +125,8 @@ class DataMeshServer:
                     handle_run(client_socket,message)
                 elif message["method"] == "get":
                     handle_get(client_socket,message)
+                elif message["method"] == "show":
+                    handle_show(client_socket,message)
             else:
                 print("Unknown message type received")
         client_socket.close()

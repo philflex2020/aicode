@@ -16,7 +16,7 @@ def py_client(host, port, uri, body, method):
 
         s.sendall(json_data.encode())
         data = s.recv(4096)
-    print(f"Received: {data.decode()}")
+    print(f"{data.decode()}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Echo client - sends and receives JSON data.')
