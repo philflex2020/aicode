@@ -796,3 +796,348 @@ In this example, when `custom_dumps` is called on `data_store`, it serializes bo
 
 This approach centralizes the handling of remote data fetching within your JSON serialization process, making it more streamlined to work with a mix of local and remote data in your DataMesh system.
 
+
+some more concepts.
+
+
+copy , like the template thing a copy will take a root uri and repilcate it under different roots.
+
+ copy /mystuff/obj1/obj2/thing1 '{"to": [ "thing2","thing3","thing4"]}   
+
+ path or end node or  both ??
+
+ a path is simply a link or association
+ /mystuff/obj1/obj2/thing1
+
+an end node will have a value and , if we can find a way of doing ot other atttributes
+
+ /mystuff/obj1/obj2/thing1/item1@value
+ /mystuff/obj1/obj2/thing1/item1@name
+
+ /mystuff/obj1/obj2/thing1/item1@id
+ so maybe item1 is an itemdict not a simple dict
+
+To accommodate attributes in your nested dictionary structure while maintaining a JSON-like hierarchy, you indeed need a custom dictionary object. This custom object should handle both regular key-value pairs and special attribute pairs. 
+
+One approach is to use a special syntax for attributes (like the "@" symbol in your examples) and store these attributes separately within each dictionary. Let's design a custom dictionary class, `AttrDict`, which behaves like a regular dictionary but also has a special sub-dictionary for attributes.
+
+### Designing the Custom `AttrDict` Class
+
+```python
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.attributes = {}  # Separate dictionary for attributes
+
+    def set_attribute(self, key, value):
+        self.attributes[key] = value
+
+    def get_attribute(self, key, default=None):
+        return self.attributes.get(key, default)
+
+    def to_dict(self):
+        # Convert to a regular dictionary for JSON serialization
+        regular_dict = dict(self)
+        if self.attributes:
+            regular_dict["@attributes"] = self.attributes
+        return regular_dict
+```
+
+### Usage of `AttrDict`
+
+```python
+# Creating nested structure with attributes
+data_store = AttrDict({
+    "mystuff": AttrDict({
+        "obj1": AttrDict({
+            "obj2": AttrDict({
+                "thing1": AttrDict()
+            })
+        })
+    })
+})
+
+# Setting attributes
+data_store["mystuff"]["obj1"]["obj2"]["thing1"].set_attribute("name", "this is thing 1")
+data_store["mystuff"]["obj1"]["obj2"]["thing1"].set_attribute("value", 1234)
+
+# Accessing attributes
+thing1_name = data_store["mystuff"]["obj1"]["obj2"]["thing1"].get_attribute("name")
+print(f"Thing1 Name: {thing1_name}")
+
+# Serializing including attributes
+import json
+def custom_dumps(obj):
+    if isinstance(obj, AttrDict):
+        return json.dumps(obj.to_dict())
+    return json.dumps(obj)
+
+serialized_data = custom_dumps(data_store)
+print(serialized_data)
+```
+
+### Explanation
+
+- `AttrDict` extends the Python `dict` class, adding an additional dictionary (`attributes`) to store attribute key-value pairs.
+- `set_attribute` and `get_attribute` methods are used to set and retrieve attributes.
+- The `to_dict` method converts the `AttrDict` (and its sub-dictionaries) to a regular dictionary structure, suitable for JSON serialization. The attributes are stored under a special key `@attributes`.
+- The `custom_dumps` function is a custom JSON serialization function that handles `AttrDict` objects.
+
+### Considerations
+
+- **Naming Conventions**: The choice of `"@attributes"` as the key for storing attributes is arbitrary. You can choose any naming convention that fits your application and avoids conflicts with your actual data keys.
+- **JSON Compatibility**: The resulting JSON structure from this approach is still valid JSON and should be compatible with systems that expect standard JSON, though they may not interpret the attributes as intended unless also using this convention.
+- **Data Access**: Regular dictionary access methods work for non-attribute data. Special methods (`set_attribute`, `get_attribute`) are used for attribute data.
+
+This approach provides a flexible way to include attributes in your nested dictionary structure while retaining compatibility with JSON serialization and the familiar dictionary interface.
+It appears that the `serialized_data` output doesn't include the attributes as expected. This is because the `to_dict` method needs to be applied recursively to all nested `AttrDict` objects within the structure. The current implementation only converts the top-level `AttrDict` to a regular dictionary, without processing nested `AttrDict` objects.
+
+Let's adjust the `to_dict` method to handle nested `AttrDict` objects properly:
+
+### Updated `AttrDict` Class with Recursive `to_dict`
+
+```python
+class AttrDict(dict):
+    # ... existing __init__, set_attribute, get_attribute ...
+
+    def to_dict(self):
+        # Convert to a regular dictionary for JSON serialization
+        regular_dict = {k: v.to_dict() if isinstance(v, AttrDict) else v for k, v in self.items()}
+        if self.attributes:
+            regular_dict["@attributes"] = self.attributes
+        return regular_dict
+
+# ... rest of the code ...
+
+# Now serializing including attributes
+serialized_data = custom_dumps(data_store)
+```
+
+With this update, the `to_dict` method recursively converts all nested `AttrDict` objects, ensuring that the attributes at each level are correctly included in the serialized JSON. The output of `print(serialized_data)` should now display the structure with the attributes included.
+The contents of `serialized_data` for the given example, after serializing the nested `AttrDict` structure with attributes, are as follows:
+
+```json
+{
+  "mystuff": {
+    "obj1": {
+      "obj2": {
+        "thing1": {
+          "@attributes": {
+            "name": "this is thing 1",
+            "value": 1234
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+This JSON representation shows the nested dictionary structure along with the attributes for `thing1`, which are stored under the `"@attributes"` key. The attributes `"name"` and `"value"` are correctly serialized as part of the `thing1` dictionary.
+
+
+
+To modify the `custom_dumps` function to use the `get_data` method for `remdict` objects, you need to change the serializer so that it calls `get_data` when it encounters an instance of `remdict`. This will fetch the data from the remote source and include it in the serialized output.
+
+Here’s how to implement this:
+
+### Updated `custom_dumps` Function
+
+```python
+import json
+
+def custom_dumps(obj):
+    """
+    Custom JSON serialization that handles remdict objects.
+    """
+    def default_serializer(o):
+        if isinstance(o, remdict):
+            # Fetch data from the remote dictionary using get_data
+            remote_data = o.get_data()
+            # Parse the remote data back into a Python object for JSON serialization
+            try:
+                parsed_data = json.loads(remote_data)
+            except json.JSONDecodeError:
+                parsed_data = None  # Or handle the error as appropriate
+            return parsed_data
+
+        # Add more custom serialization here if necessary.
+        raise TypeError(f'Object of type {o.__class__.__name__} is not JSON serializable')
+
+    return json.dumps(obj, default=default_serializer)
+```
+
+### Explanation
+
+- When `custom_dumps` encounters an object of type `remdict`, it calls the `get_data` method of that object to retrieve the data from the remote source.
+- The received data, presumably in JSON format, is then parsed back into a Python object so that it can be properly serialized by `json.dumps`.
+- If there's an error in decoding the JSON (e.g., if the remote data isn't in a valid JSON format), it's handled appropriately.
+
+### Usage Example
+
+Assuming you have a `data_store` dictionary that may contain `remdict` objects:
+
+```python
+data_store = {
+    'local_data': {'key1': 'value1'},
+    'remote_data': remdict(app='datastore', ip='172.17.0.3', port=1234, copy=True)
+}
+
+serialized_data = custom_dumps(data_store)
+print(serialized_data)
+```
+
+In this setup, `custom_dumps` will serialize both the local data and the data fetched from the remote dictionary represented by the `remdict` object.
+
+### Important Considerations
+
+1. **Network Latency and Errors**: Fetching data from the remote source can introduce latency and potential network errors. Make sure these are handled gracefully.
+2. **Data Integrity and Security**: Ensure the integrity and security of the data being fetched remotely.
+3. **Performance Impact**: Consider the performance impact of remote calls during serialization, especially if `custom_dumps` is called frequently or on large data structures.
+
+This approach allows for dynamic retrieval of remote data during the serialization process, which can be particularly useful in distributed systems where data may reside on different nodes.
+
+
+The error you're encountering with the `DateTimeEncoder` custom JSON encoder is due to the override of the `iterencode` method in a way that doesn't fully conform to how `json.JSONEncoder` expects it to work. Specifically, the overridden `iterencode` method doesn't accept or pass on additional arguments it might receive, such as `_one_shot`. This is causing an issue when `json.dumps` tries to use the `_one_shot` optimization.
+
+### Resolving the Issue
+
+To resolve this, you can modify the `DateTimeEncoder` class to ensure that the `iterencode` method can handle additional arguments, even if it doesn't use them. This way, it will be compatible with the internal workings of `json.dumps`.
+
+Here's how you can modify the `DateTimeEncoder` class:
+
+```python
+import json
+import datetime
+
+class DateTimeEncoder(json.JSONEncoder):
+
+    def _preprocess_date(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime, datetime.timedelta)):
+            return str(obj)
+        elif isinstance(obj, dict):
+            return {self._preprocess_date(k): self._preprocess_date(v) for k,v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._preprocess_date(i) for i in obj]
+        return obj
+
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime, datetime.timedelta)):
+            return str(obj)
+        return super().default(obj)
+
+    def iterencode(self, obj, **kwargs):  # Modified to accept and ignore additional kwargs
+        return super(DateTimeEncoder, self).iterencode(self._preprocess_date(obj), **kwargs)
+
+# Test dictionary with various types including datetime
+test = {
+        "key_1": "Value_1",
+        "key_2": 10,
+        "key_3": ["list_" + str(i) for i in range(5)],
+        "key_4": {"nestkey_" + str(i) : "nestvalue_" + str(i) for i in range(5) },
+        "key_5": datetime.datetime(1970, 1, 1, 8, 0, 0),
+        datetime.datetime(1970, 1, 1, 8, 0, 0): "datetime_key"
+}
+
+# Serializing the dictionary using the custom encoder
+res = json.dumps(test, cls=DateTimeEncoder, indent=4)
+print(res)
+```
+
+### Explanation
+
+- The `iterencode` method in `DateTimeEncoder` now accepts and passes along arbitrary keyword arguments (`**kwargs`). This change means it will not break if the `json` module's internal functions pass additional, unexpected arguments (like `_one_shot`).
+- The `_preprocess_date` method is unchanged, still performing its role of ensuring that dates and times are converted to strings before serialization.
+
+By modifying the `iterencode` method in this way, you should avoid the `TypeError` about unexpected keyword arguments and allow your custom encoder to work with `json.dumps` as expected. This modification makes the encoder more robust and compatible with the possible variations in how Python's `json` module might call it.
+
+
+
+If you want to integrate the `RemDict` object with your custom JSON serialization and make it handle remote data retrieval through a socket connection, you need to ensure that the `RemDict` class has a method like `get_data` which interacts with the remote server using the socket. Then, in your custom JSON encoder (`DateTimeEncoder` or whichever you are using), you need to handle the `RemDict` type and utilize its method for fetching data.
+
+Here's a step-by-step guide on how you can proceed:
+
+### 1. Ensure `RemDict` Has Necessary Attributes and Methods
+
+The `RemDict` class should have:
+- A `socket_fd` attribute representing the socket connection.
+- A `get_data` method for fetching data from the remote server.
+
+```python
+class RemDict:
+    def __init__(self, uri, socket_fd=None):
+        self.uri = uri
+        self.socket_fd = socket_fd
+
+    def connect(self, host, port):
+        import socket
+        self.socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_fd.connect((host, port))
+
+    def get_data(self):
+        # Only proceed if there's an active socket connection
+        if self.socket_fd:
+            get_request = json.dumps({
+                "method": "get",
+                "uri": self.uri,
+                "body": ""
+            })
+            self.socket_fd.sendall(get_request.encode('utf-8'))
+            response = self.socket_fd.recv(1024)
+            return response.decode('utf-8')
+        else:
+            return None  # or raise an exception, or handle as appropriate
+```
+
+### 2. Modify Custom JSON Encoder to Handle `RemDict`
+
+Modify your custom JSON encoder to detect and properly handle `RemDict` objects. When the encoder encounters a `RemDict`, it should use its `get_data` method to fetch and return the appropriate data.
+
+```python
+class DateTimeEncoder(json.JSONEncoder):
+    # ... existing methods ...
+
+    def default(self, obj):
+        if isinstance(obj, RemDict):
+            remote_data = obj.get_data()
+            try:
+                parsed_data = json.loads(remote_data)
+            except json.JSONDecodeError:
+                parsed_data = None
+            return parsed_data
+        
+        # Handle datetime objects as before
+        if isinstance(obj, (datetime.date, datetime.datetime, datetime.timedelta)):
+            return str(obj)
+        
+        return super().default(obj)
+```
+
+### 3. Usage
+
+Make sure to create and connect your `RemDict` objects properly before attempting to serialize them.
+
+```python
+rem_obj = RemDict("/mysys/ess")
+rem_obj.connect("127.0.0.1", 345)
+
+data_store = {
+    "mystuff": {
+        "obj1": {
+            "remobj2": rem_obj
+        }
+    }
+}
+
+# Now serialize using the custom encoder
+serialized_data = json.dumps(data_store, cls=DateTimeEncoder, indent=4)
+print(serialized_data)
+```
+
+### Important Considerations
+
+- **Error Handling**: Robust error handling in `get_data` is crucial. Ensure you handle cases where the socket connection might fail, or the remote server might send unexpected responses.
+- **Closing Sockets**: Manage your socket connections carefully. Close them when they're no longer needed to avoid resource leaks.
+- **Testing**: Thoroughly test the entire system, especially the network interactions, to ensure it behaves as expected under various conditions.
+
+By integrating these changes, your custom JSON encoder should now be able to handle normal objects, datetime objects, and your custom `RemDict` objects, fetching data from remote servers as needed.

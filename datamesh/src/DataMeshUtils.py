@@ -29,22 +29,25 @@ def get_last(uri):
 
 def update_data_store(uri, body):
     keys = uri.strip("/").split("/")
+    new_data = body
+    if isinstance(body, str):
+        if  is_valid_json(body):
+            #print(" body is json")
+            new_data = json.loads(body)
+    
     current_level = data_store
 
     for i, key in enumerate(keys):
         if i == len(keys) - 1:  # If it's the last key
-            if is_valid_json(body):
-                #print(" body is json")
-                new_data = json.loads(body)
-                if isinstance(new_data, dict) and isinstance(current_level.get(key, {}), dict):
-                    print("Merge dictionaries")
-                    current_level[key] = merge_dicts(current_level.get(key, {}), new_data)
-                else:
-                    # Replace the existing value
-                    current_level[key] = new_data
+            if isinstance(new_data, dict) and isinstance(current_level.get(key, {}), dict):
+                print("Merge dictionaries")
+                current_level[key] = merge_dicts(current_level.get(key, {}), new_data)
             else:
-                print("If body is not a JSON string, just assign the value")
-                current_level[key] = body
+                # Replace the existing value
+                current_level[key] = new_data
+            # else:
+            #     print("If body is not a JSON string, just assign the value")
+            #     current_level[key] = body
         else:
             # Navigate or create new nested dictionary
             current_level = current_level.setdefault(key, {})

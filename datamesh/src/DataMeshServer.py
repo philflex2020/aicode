@@ -10,10 +10,10 @@ from DataMeshUtils import *
 def handle_set(dm, uri, data):
     print(f"Handling 'set' with data: {data}")
     body = data["body"]
-    jbody = json.loads(body)
+    #jbody = json.loads(body)
     update_data_store(uri, body)
 
-    print(f"Handling 'set' got uri: {uri} jbody: {jbody}")
+    print(f"Handling 'set' got uri: {uri} body: {body}")
     #json_data = json.dumps({"command": "set"})
     dm.sendall("set ok".encode())
 
