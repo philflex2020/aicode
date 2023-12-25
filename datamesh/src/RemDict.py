@@ -45,12 +45,41 @@ class RemDict(dict):
             print(f"Error in getting data from remdict: {e}")
             return None
 
+    def send_request(self, uri, body):
+        """
+        Retrieve data from the remote dictionary by sending a 'get' request
+        with the URI set to '/'.
+        """
+        #print(f" set request uri {uri} body [{body}]")
+        if self.socket_fd == None:
+            return None
+
+        try:
+            # Create a 'set' request with URI
+            set_request = json.dumps({
+                "method": "request",
+                "uri": uri,
+                "body": body
+            })
+            # # Create a 'get' request with URI as '/'
+            # mystr = f'{"method": "get", "uri": "{uri}", "body":"""}'
+            # get_request = json.dumps(mystr)
+            ret = self.socket_fd.sendall(set_request.encode('utf-8'))
+            print(f" set request ret {ret}")
+
+            # Receive the response from the remote server
+            response = self.socket_fd.recv(1024)
+            return response.decode('utf-8')
+        except Exception as e:
+            print(f"Error in getting data from remdict: {e}")
+            return None
+
     def set_data(self, uri, body):
         """
         Retrieve data from the remote dictionary by sending a 'get' request
         with the URI set to '/'.
         """
-        print(f" set request uri {uri} body [{body}]")
+        #print(f" set request uri {uri} body [{body}]")
         if self.socket_fd == None:
             return None
 
@@ -167,7 +196,7 @@ def set(uri, body, data_store):
     # Navigate through the data_store using the URI
     current_level = data_store
     for i, part in enumerate(parts):
-        print(f" set request part {part}")
+        #print(f" set request part {part}")
 
         if isinstance(current_level, RemDict):
 
@@ -196,6 +225,26 @@ def merge_dicts(d1, d2):
         else:
             d1[k] = v
     return d1
+
+
+
+myrequest = {
+    "method":"request",
+    "uri":"/my/request",
+    "body":{
+                "name" :"reqname",
+                "every": 0.1, 
+                "uris": 
+                    [ 
+                    {"/stuff/obj21/val1":"value1"},
+                    {"/stuff/obj22/val2":"value2"},
+                    {"/stuff/obj23/val134":"value3"}
+                    ]
+            }
+        }
+
+
+
 
 if __name__ == "__main__":
 
@@ -240,9 +289,7 @@ if __name__ == "__main__":
     print(serialized_data)
 
 
-    # Assuming data_store is your main data structure
-
-
+    # data_store is your main data structure
     print(f"Try local set  on /mystuff/obj1/obj2")
     set('/mystuff/obj1/obj2', {'new_key': 'new_value'}, data_store)
     serialized_data = json.dumps(data_store, cls=RemDictEncoder, indent=4)
@@ -252,3 +299,5 @@ if __name__ == "__main__":
     set('/mystuff/obj1/remobj2/stuff', {'new_rem_key2': 'new_rem_value2'}, data_store)
     serialized_data = json.dumps(data_store, cls=RemDictEncoder, indent=4)
     print(serialized_data)
+
+    data_store["mystuff"]["obj1"]["remobj2"].send_request("/my/request", myrequest)

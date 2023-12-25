@@ -4,7 +4,40 @@ import threading
 import argparse
 import signal
 import sys
+import time
 from DataMeshUtils import *
+
+class DataRequest:
+    def __init__(self, name, every, uris):
+        self.name = name
+        self.every = every  # in seconds
+        self.uris = uris
+
+requests = {} 
+
+def fetch_data_for_request(request, data_store):
+    result = {}
+    for uri_dict in request.uris:
+        for uri, key in uri_dict.items():
+            # Fetch the data from the uri
+            # Assuming a function get(uri, data_store) returns the data at the uri
+            data = get(uri, data_store)
+            result[key] = data
+    return result
+
+
+def schedule_request(request, data_store):
+    def run_request():
+        while True:
+            # Fetch and process data for request
+            result = fetch_data_for_request(request, data_store)
+            print(f"/my/request/{request.name} {result}")  # Or handle the result appropriately
+
+            # Wait for the next interval
+            time.sleep(request.every)
+
+    # Start the periodic task
+    threading.Thread(target=run_request).start()
 
 
 def handle_set(dm, uri, data):
@@ -17,6 +50,20 @@ def handle_set(dm, uri, data):
     #json_data = json.dumps({"command": "set"})
     dm.sendall("set ok".encode())
 
+
+def handle_request(dm, uri, data):
+    name = data.get('name')
+    every = data.get('every', 1)  # Frequency in seconds
+    uris = data.get('uris', [])  # List of URIs to fetch
+    print(f" request [{name}] every {every} uris [{uris}]")
+    # Create and store the request
+    new_request = DataRequest(name, every, uris)
+    requests[name] = new_request
+    myStore = get_store(uri)
+    schedule_request(new_request, myStore)
+
+    data = json.dumps(myStore, indent=4)
+    dm.sendall(data.encode())
 
 def handle_show(dm, uri, data):
     myStore = get_store(uri)
@@ -65,12 +112,15 @@ class DataMeshServer:
                 uri = message["uri"]
                 if message["method"] == "set":
                     handle_set(client_socket, uri, message)
+                elif message["method"] == "request":
+                    print(" request method received")
+                    handle_request(client_socket, uri, message)
                 elif message["method"] == "run":
-                    handle_run(client_socket,uri, message)
+                    handle_run(client_socket, uri, message)
                 elif message["method"] == "get":
-                    handle_get(client_socket,uri, message)
+                    handle_get(client_socket, uri, message)
                 elif message["method"] == "show":
-                    handle_show(client_socket,uri, message)
+                    handle_show(client_socket, uri, message)
             else:
                 print("Unknown message type received")
         client_socket.close()

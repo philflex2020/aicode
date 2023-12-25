@@ -1141,3 +1141,116 @@ print(serialized_data)
 - **Testing**: Thoroughly test the entire system, especially the network interactions, to ensure it behaves as expected under various conditions.
 
 By integrating these changes, your custom JSON encoder should now be able to handle normal objects, datetime objects, and your custom `RemDict` objects, fetching data from remote servers as needed.
+
+
+
+### Requests
+
+Now I want to add a "request" command
+this will create a named request each will ask for the system to send items in a list of uris under a specified  name . 
+the request can be serviced once or repeated periodically.
+here is an example of a request 
+
+
+
+method request
+uri /my/request
+body {
+name : reqname
+every : 0.1 secs
+uris: [ 
+{"/stuff/obj21/val1":"value1"},
+{"/stuff/obj22/val2":"value2"},
+{"/stuff/obj23/val134":"value3"}
+]
+
+this will fetch all the data items and produce a response 
+/my/request/reqname '{"value1": 3345, "value2":5567,"value3":"running"}'
+and repeat is every 100 mS
+
+To implement a "request" command that periodically fetches data from a list of URIs and aggregates the responses under a specified name, you'll need to build several components:
+
+1. **Request Handling**: A function to parse and store the request information.
+2. **Data Fetching**: Functions to fetch data from the specified URIs.
+3. **Scheduling**: A mechanism to repeat the request periodically.
+
+### 1. Request Handling
+
+First, you need to parse the request and store it in a format that your system can work with. You might use a class to represent these requests and a global structure to keep track of them:
+
+```python
+class DataRequest:
+    def __init__(self, name, every, uris):
+        self.name = name
+        self.every = every  # in seconds
+        self.uris = uris
+
+requests = {}  # Global dictionary to track requests
+
+def handle_request(uri, body, data_store):
+    # Parse the body to get the request details
+    name = body.get('name')
+    every = body.get('every')  # Frequency in seconds
+    uris = body.get('uris')  # List of URIs to fetch
+
+    # Create and store the request
+    new_request = DataRequest(name, every, uris)
+    requests[name] = new_request
+
+    # Schedule the request to be serviced
+    schedule_request(new_request, data_store)
+```
+
+### 2. Data Fetching
+
+You'll need a function that can take a `DataRequest` object, fetch the data for all specified URIs, and then store or return the aggregated result:
+
+```python
+def fetch_data_for_request(request, data_store):
+    result = {}
+    for uri_dict in request.uris:
+        for uri, key in uri_dict.items():
+            # Fetch the data from the uri
+            # Assuming a function get(uri, data_store) returns the data at the uri
+            data = get(uri, data_store)
+            result[key] = data
+    return result
+```
+
+### 3. Scheduling
+
+To repeat the request periodically, you can use a scheduler like `sched` or a loop with a sleep delay. Here's a simple way using Python's threading:
+
+```python
+import threading
+
+def schedule_request(request, data_store):
+    def run_request():
+        while True:
+            # Fetch and process data for request
+            result = fetch_data_for_request(request, data_store)
+            print(f"/my/request/{request.name} {result}")  # Or handle the result appropriately
+
+            # Wait for the next interval
+            time.sleep(request.every)
+
+    # Start the periodic task
+    threading.Thread(target=run_request).start()
+```
+
+### Putting It All Together
+
+When you receive a new "request" command, you would:
+
+1. Call `handle_request` with the URI and body of the command.
+2. `handle_request` parses the request, creates a `DataRequest` object, and stores it.
+3. `schedule_request` is then called to start periodically fetching data for the request.
+
+### Considerations
+
+- **Error Handling**: Robustly handle possible errors in data fetching and parsing.
+- **Concurrency**: If you have many requests or long-running fetches, consider the impact on performance and concurrency.
+- **Stopping Requests**: Implement a way to stop or modify requests.
+- **Data Store Access**: Ensure that access to the data store is thread-safe if you use threading.
+
+This setup provides a basic structure for your periodic data-fetching request system. Depending on your specific requirements and scale, you might need more sophisticated scheduling, error handling, and concurrency management.
