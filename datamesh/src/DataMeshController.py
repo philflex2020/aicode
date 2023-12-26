@@ -42,10 +42,16 @@ class DataMeshController:
                     # Check if server is already running on the requested port
                     if port not in self.server_threads:
                         print("Starting server on port:", port)
-                        self.run_server(port)  # Handle starting the server
 
                         hostname = socket.gethostname()  # Assuming server_hosts is defined somewhere
-                        server_hosts[hostname]["ports"].append(port)
+                        dmserver = {}
+                        dmserver["port"] = port
+                        name = body.get("name", "dmserver")
+
+                        dmserver["name"] = name
+                        self.run_server(name, port)  # Handle starting the server
+
+                        server_hosts[hostname]["ports"].append(dmserver)
 
                         run_message = json.dumps({"app": "running", "port": port})
                     else:
@@ -72,7 +78,7 @@ class DataMeshController:
 
         client_socket.close()
 
-    def run_server(self, port):
+    def run_server(self, name, port):
         # Initialize the DataMeshServer here, assuming it's a class you've defined
         server = DataMeshServer(port)
 
@@ -83,7 +89,7 @@ class DataMeshController:
         # Store the thread reference if needed for later management
         self.server_threads[port] = server_thread
 
-        print(f"DataMeshServer started on port {port} as a background thread.")
+        print(f"DataMeshServer {name} started on port {port} as a background thread.")
 
     def run_app(self, app_name, port):
         print(f"Running {app_name} on port {port}")
@@ -96,11 +102,16 @@ if __name__ == "__main__":
     print(hostname)
     local_ip = socket.gethostbyname(hostname)
     controller = DataMeshController()
+    #port = 5000
     server_hosts[hostname] = {}
     server_hosts[hostname]["name"] = hostname
     server_hosts[hostname]["ip_address"] = local_ip
     server_hosts[hostname]["ports"] = []
-    server_hosts[hostname]["ports"].append(controller.port)
+    dmserver = {}
+    dmserver["port"] = controller.port
+    dmserver["app"] = "dmcontroller"
+
+    server_hosts[hostname]["ports"].append(dmserver)
     # port = 345
     # print("main starting Server")
     # server = DataMeshServer(port)

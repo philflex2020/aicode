@@ -1,0 +1,27 @@
+[
+    {
+        "name": "Ess",
+        "color": "#f0f0f0"
+    },
+    {
+        "name": "Pcs",
+        "color": "#add8e6"
+    },
+    {
+        "name": "Bms",
+        "color": "#90ee90"
+    },
+    {
+        "name": "PV",
+        "color": "#add8e6"
+    },
+    {
+        "name": "Wind",
+        "color": "#add8e6"
+    },
+    {
+        "name": "Gen",
+        "color": "#add8e6"
+    }
+
+]
