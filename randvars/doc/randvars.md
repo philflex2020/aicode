@@ -74,3 +74,15 @@ In this code:
 - Finally, we clean up by deleting all the variable and attribute objects.
 
 Note that this code is just for demonstration purposes and should be adjusted according to your specific requirements and implementation. Also, the actual time taken for the lookups may vary based on the system and compiler optimizations.
+
+
+// randomly associate 3000 variable objects with attribute objects
+srand(time(0));
+int i = 0;
+while(i < 3000) {
+    int index = rand() % 10000;
+    if(variableAttributeMap.find(variables[index]) == variableAttributeMap.end()) {
+        variableAttributeMap[variables[index]] = new Attribute();
+        i++;
+    }
+}
