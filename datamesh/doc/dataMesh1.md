@@ -1253,4 +1253,168 @@ When you receive a new "request" command, you would:
 - **Stopping Requests**: Implement a way to stop or modify requests.
 - **Data Store Access**: Ensure that access to the data store is thread-safe if you use threading.
 
-This setup provides a basic structure for your periodic data-fetching request system. Depending on your specific requirements and scale, you might need more sophisticated scheduling, error handling, and concurrency management.
+This setup provides a basic structure for your periodic data-fetching request system. Depending on your specific requirements anTo modify your `DataMeshController` class to handle starting up a `DataMeshServer` service with the port as an argument and maintain a list of servers running on different ports, you'll need to implement several changes:
+
+1. **Maintain a List of Active Servers:** Use a dictionary or another data structure to keep track of active servers and their ports.
+2. **Modify the `run_app` Method:** Change this method to start a `DataMeshServer` instance with the given port and data store.
+3. **Check for Existing Server:** Before starting a new server, check if there's already one running on the given port.
+
+Here's how you can modify your code:
+
+```python
+import socket
+import json
+import threading
+
+class DataMeshController:
+    def __init__(self, port=5000):
+        self.port = port
+        self.active_servers = {}  # Track active servers by port
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind(('', self.port))
+        self.sock.listen(5)
+
+    def start(self):
+        print(f"DataMeshController started on port {self.port}")
+        while True:
+            client, addr = self.sock.accept()
+            threading.Thread(target=self.handle_client, args=(client, addr)).start()
+
+    def handle_client(self, client_socket, addr):
+        data = client_socket.recv(1024)
+        try:
+            request = json.loads(data.decode('utf-8'))
+            if "command" in request and "port" in request and request["command"] == "run":
+                # Check if server is already running
+                if request["port"] not in self.active_servers:
+                    # Extract the data store if any and start a new server
+                    data_store = request.get("data_store", {})
+                    self.run_app(request["port"], data_store)
+                    run_message = json.dumps({"app": "running"})
+                else:
+                    run_message = json.dumps({"app": "already running"})
+                client_socket.sendall(run_message.encode('utf-8'))
+            else:
+                run_message = json.dumps({"message": "error"})
+                client_socket.sendall(run_message.encode('utf-8'))
+
+        except:
+            run_message = json.dumps({"json": "error"})
+            client_socket.sendall(run_message.encode('utf-8'))
+
+        client_socket.close()
+
+    def run_app(self, port, data_store):
+        print(f"Starting DataMeshServer on port {port}")
+        # Initialize and start the DataMeshServer
+        # You might have a DataMeshServer class or similar to start here.
+        # For example, server = DataMeshServer(port, data_store).start()
+        # For now, just simulate by printing and add to active servers
+        self.active_servers[port] = "Running"  # Replace with actual server reference if needed
+
+        # TODO: Replace the below line with actual server start logic
+        print(f"DataMeshServer started on port {port} with data store {data_store}")
+
+# Example to start the controller
+if __name__ == "__main__":
+    controller = DataMeshController()
+    controller.start()
+```
+
+### Explanation:
+
+- **active_servers**: This dictionary keeps track of all the active servers. You can replace the "Running" value with actual server objects or references if you are managing them.
+- **run_app**: This method has been modified to accept a `port` and `data_store`. It now starts the server and registers it in the `active_servers` dictionary.
+- **Checking Existing Server**: Before starting a server on a requested port, the code checks if there is already a server running on that port in the `active_servers` dictionary.
+
+### What's Not Included:
+
+- **Actual Server Starting Logic**: Replace the print statements in `run_app` with actual logic to start your `DataMeshServer`. You might have a separate class or method to handle the server initialization and running.
+- **Data Store Handling**: The method assumes you pass some form of data store or configuration to your server. You'll need to adjust this according to how your `DataMeshServer` is implemented.
+
+Make sure to replace the placeholders and mock logic with your actual server starting and handling code. Also, ensure proper synchronization if needed when accessing the `active_servers` dictionary, as multiple threads will access and modify it.
+
+To start the `DataMeshServer` in the background as a thread, you should utilize the threading module in Python. You can create a new thread for each server you start and manage these threads similarly to how you manage the servers themselves. Here's how you can adapt your code:
+
+1. **Modify the `run_app` method:** Since you're directly starting the server in the `handle_client` method, it's better to encapsulate the server starting logic into a separate method like `run_server` and handle threading there.
+2. **Start Server as a Thread:** Use `threading.Thread` to start the `DataMeshServer` as a background thread.
+3. **Manage Threads:** Optionally, keep track of the threads if you need to manage them later, such as for clean shutdowns.
+
+Here's how you could implement these changes:
+
+```python
+import threading
+import socket
+import json
+
+class DataMeshController:
+    def __init__(self, port=5000):
+        self.port = port
+        self.server_threads = {}  # Track active server threads by port
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind(('', self.port))
+        self.sock.listen(5)
+
+    def handle_client(self, client_socket, addr):
+        data = client_socket.recv(1024)
+        try:
+            request = json.loads(data.decode('utf-8'))
+            if "method" in request and request["method"] == "add" and "body" in request:
+                bodys = request["body"]
+                body = json.loads(bodys)
+                port = body["port"]
+
+                # Check if server is already running on the requested port
+                if port not in self.server_threads:
+                    print("Starting server on port:", port)
+                    self.run_server(port)  # Handle starting the server
+
+                    hostname = socket.gethostname()  # Assuming server_hosts is defined somewhere
+                    server_hosts[hostname]["ports"].append(port)
+
+                    run_message = json.dumps({"app": "running", "port": port})
+                else:
+                    run_message = json.dumps({"app": "already running", "port": port})
+                
+                client_socket.sendall(run_message.encode('utf-8'))
+
+        except Exception as e:
+            run_message = json.dumps({"error": str(e)})
+            client_socket.sendall(run_message.encode('utf-8'))
+
+        client_socket.close()
+
+    def run_server(self, port):
+        # Initialize the DataMeshServer here, assuming it's a class you've defined
+        server = DataMeshServer(port)
+
+        # Create a new thread for the server and start it
+        server_thread = threading.Thread(target=server.start)
+        server_thread.start()
+
+        # Store the thread reference if needed for later management
+        self.server_threads[port] = server_thread
+
+        print(f"DataMeshServer started on port {port} as a background thread.")
+
+# Example to start the controller
+if __name__ == "__main__":
+    controller = DataMeshController()
+    controller.start()
+```
+
+### Key Changes:
+
+- **run_server Method**: This new method encapsulates the logic for starting the server as a separate thread. This keeps your code organized and makes it easier to manage the servers.
+- **server_threads Dictionary**: Similar to tracking active servers, this dictionary tracks the threads associated with each server. This can be useful if you need to manage the server's lifecycle, perform clean shutdowns, or monitor server status.
+
+### Notes:
+
+- **DataMeshServer**: Replace any references to `DataMeshServer` with your actual server class or method. The code assumes `DataMeshServer` has a `start` method that begins the server's main loop.
+- **Error Handling**: The code includes a basic exception catch block. You might want to expand upon this to handle specific exceptions or log errors as needed.
+- **Server Hosts**: The `server_hosts[hostname]["ports"].append(port)` line assumes you have a `server_hosts` data structure to track ports for each hostname. Modify this part according to your actual data structures and what information you need to track about each server.
+
+Make sure to test this implementation thoroughly, especially because threading can introduce complexities, particularly around shared resources and shutdown procedures.
+

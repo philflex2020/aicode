@@ -21,7 +21,7 @@ def py_client(host, port, uri, body, method):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Echo client - sends and receives JSON data.')
     parser.add_argument('-m', '--method', required=True, help='Method to send to the server')
-    parser.add_argument('-u', '--uri',    required=True, help='URI to send to the server')
+    parser.add_argument('-u', '--uri',    required=False, help='URI to send to the server')
     parser.add_argument('-b', '--body',   required=False, help='Body content to send to the server')
 
     args = parser.parse_args()
