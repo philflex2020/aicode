@@ -5,6 +5,8 @@ import threading
 import time
 from DataMeshServer import DataMeshServer
 
+#python3 pymsg.py -p5000 -madd -b'{"port":2347,"name":"bms"}'
+
 server_hosts = {}
 
 class DataMeshController:

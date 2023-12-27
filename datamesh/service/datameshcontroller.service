@@ -1,0 +1,15 @@
+[Unit]
+Description=DataMesh Controller Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/DataMeshController.py
+WorkingDirectory=/var/datamesh
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi5
+Group=pi5
+
+[Install]
+WantedBy=multi-user.target
