@@ -1418,3 +1418,156 @@ if __name__ == "__main__":
 
 Make sure to test this implementation thoroughly, especially because threading can introduce complexities, particularly around shared resources and shutdown procedures.
 
+
+To add a thread to the `DataMeshController` that broadcasts system status over UDP, you will need to:
+
+1. **Understand UDP Broadcasting:** UDP broadcasting sends a packet to all devices on a subnet. This requires setting up a UDP socket and sending data to the broadcast address.
+2. **Define System Status:** Determine what constitutes the system status. It might include the number of active servers, their ports, system load, etc.
+3. **Implement Broadcasting in a Thread:** Create a method in your controller class to handle the broadcasting and then run this method in a separate thread.
+
+Here's how you can integrate these steps into your `DataMeshController`:
+
+```python
+import socket
+import json
+import threading
+import time
+
+class DataMeshController:
+    def __init__(self, port=5000, broadcast_port=5001):
+        self.port = port
+        self.broadcast_port = broadcast_port
+        self.server_threads = {}
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind(('', self.port))
+        self.sock.listen(5)
+        self.running = True  # Flag to control the broadcasting thread
+
+    def start(self):
+        # Start the main controller listener
+        threading.Thread(target=self.start_controller).start()
+        # Start the broadcasting thread
+        threading.Thread(target=self.broadcast_status).start()
+
+    def start_controller(self):
+        print(f"DataMeshController started on port {self.port}")
+        while True:
+            client, addr = self.sock.accept()
+            threading.Thread(target=self.handle_client, args=(client, addr)).start()
+
+    def handle_client(self, client_socket, addr):
+        # ... [Your existing handle_client code] ...
+
+    def broadcast_status(self):
+        # Set up a UDP socket for broadcasting
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+        while self.running:
+            try:
+                # Prepare the status message
+                status_msg = self.get_system_status()
+                # Send the status message to the broadcast address
+                sock.sendto(status_msg.encode(), ('<broadcast>', self.broadcast_port))
+                time.sleep(10)  # Broadcast every 10 seconds or desired interval
+            except Exception as e:
+                print(f"Broadcast Error: {e}")
+
+    def get_system_status(self):
+        # Implement your logic to generate a status message
+        # For example, it might include number of active servers and their ports
+        status = {
+            "active_servers": len(self.server_threads),
+            "ports": list(self.server_threads.keys())
+        }
+        return json.dumps(status)
+
+    def stop(self):
+        self.running = False
+        # Close the controller socket and other cleanup if necessary
+
+# Example to start the controller
+if __name__ == "__main__":
+    controller = DataMeshController()
+    controller.start()
+```
+
+### Key Points:
+
+- **Broadcasting Interval:** The example broadcasts the system status every 10 seconds. You can adjust this interval as needed.
+- **Broadcast Address:** The broadcast address is typically the subnet address with the host portion set to all ones (e.g., `192.168.1.255` for a `192.168.1.0/24` network). Here, `<broadcast>` is used as a placeholder, and many systems will interpret this as the local subnet broadcast address. Ensure this works for your network configuration or provide the specific broadcast address.
+- **System Status:** The `get_system_status` method should be implemented to return the actual status of your system. This example provides a basic structure with active servers and their ports. You'll need to adjust this to include the actual data you want to broadcast.
+- **Error Handling:** The broadcasting loop includes basic error handling. Ensure you handle specific exceptions and errors as needed, especially for robustness in long-running applications.
+
+### Final Notes:
+
+Before implementing this in a production environment, be aware of the following:
+
+- **Network Configuration:** Ensure that UDP broadcasting is permitted and appropriate in your network. Some networks restrict broadcasting to prevent excessive traffic or for security reasons.
+- **Security Considerations:** Broadcasting system status can reveal potentially sensitive information. Ensure that only authorized devices are listening and that the information broadcasted does not expose vulnerabilities.
+- **Resource Management:** Ensure that the broadcasting thread and other aspects of your system are adequately managed, especially the handling of socket resources and thread lifecycle.
+
+Test thoroughly in a controlled environment before deploying, as network broadcasting can affect other network clients and services.
+To create a Python broadcast listener that picks up the status messages from the DataMeshController's broadcast, you'll need to set up a UDP socket that listens to the broadcast port. Here's how you could implement such a listener:
+
+1. **Set Up a UDP Socket:** Configure it to listen to the broadcast messages on the designated port.
+2. **Receive Messages:** Continuously listen for messages and handle them as they arrive.
+3. **Decode and Process Messages:** Convert the incoming data from JSON or your chosen format back into a Python object and do whatever processing is needed.
+
+Here's a sample implementation of a broadcast listener in Python:
+
+```python
+import socket
+import json
+
+def start_broadcast_listener(listen_port=5001):
+    # Create a UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Enable reuse address/port
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    # Bind to the broadcast port
+    sock.bind(('', listen_port))
+
+    print(f"Listening for broadcasts on port {listen_port}")
+
+    try:
+        while True:
+            # Receive broadcast message
+            message, address = sock.recvfrom(1024)  # Buffer size is 1024 bytes
+            # Decode the message
+            decoded_message = message.decode()
+            
+            try:
+                # Attempt to parse the message as JSON
+                status = json.loads(decoded_message)
+                # Process the received status message
+                print(f"Received status: {status} from {address}")
+            except json.JSONDecodeError:
+                # Handle case where message is not JSON or is malformed
+                print(f"Received non-JSON message: {decoded_message} from {address}")
+
+    except KeyboardInterrupt:
+        # Handle graceful shutdown if Ctrl+C is pressed
+        print("Broadcast listener stopped")
+    finally:
+        sock.close()
+
+if __name__ == "__main__":
+    start_broadcast_listener()
+```
+
+### How This Works:
+
+- **UDP Socket:** The script creates a UDP socket and binds it to the specified listening port. It listens for any message sent to that port.
+- **Receiving Messages:** It waits in a loop for messages. When a message is received, it decodes and attempts to parse it as JSON.
+- **Error Handling:** The script includes basic error handling for non-JSON messages and a way to stop the listener gracefully with a keyboard interrupt (Ctrl+C).
+- **Message Processing:** Upon receiving a valid message, it prints out the status. In a real-world scenario, you might update a status dashboard, trigger other processes, or store the status information.
+
+### Notes:
+
+- **Network Configuration:** Ensure your network configuration allows for UDP broadcasting and that the listener is on the same subnet as the broadcaster or appropriately routed to receive the broadcasts.
+- **Security Considerations:** As with broadcasting, be aware of what information you're sending and receiving over the network. Ensure that your broadcast listener only processes messages from trusted sources.
+- **Testing:** Thoroughly test this in a controlled environment to understand how it behaves in your network and ensure it meets your needs.
+
+Adjust the `listen_port` variable to match the `broadcast_port` you set in your DataMeshController. Make sure this script runs on machines that should receive the status updates, and they're configured to be on the same network segment as the broadcasting server for them to receive the messages.

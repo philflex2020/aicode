@@ -2,21 +2,27 @@ import socket
 import json
 import subprocess
 import threading
+import time
 from DataMeshServer import DataMeshServer
 
 server_hosts = {}
 
 class DataMeshController:
-    def __init__(self, port=5000):
+    def __init__(self, port=5000, broadcast_port=5001):
         self.port = port
+        self.broadcast_port = broadcast_port
+        self.broadcast_addr = "172.17.255.255"
+        self.broadcast_time = 5
         self.server_threads = {}
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(('', self.port))
         self.sock.listen(5)
+        self.running = True
 
     def start(self):
         print(f"DataMeshController started on port {self.port}")
+        threading.Thread(target=self.broadcast_status).start()
         while True:
             client, addr = self.sock.accept()
             threading.Thread(target=self.handle_client, args=(client, addr)).start()
@@ -96,11 +102,40 @@ class DataMeshController:
         # Launch the app as a subprocess
         #subprocess.Popen(["python3", app_name, str(port)])
 
+    def broadcast_status(self):
+        # Set up a UDP socket for broadcasting
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        count = 0
+        while self.running:
+            try:
+                # Prepare the status message
+                #status_msg = self.get_system_status()
+                #print("broadcast status")
+                status_msg = json.dumps(server_hosts)
+                # Send the status message to the broadcast address
+                #sock.sendto(status_msg.encode(), ('<broadcast>', self.broadcast_port))
+                foo = sock.sendto(status_msg.encode(), (self.broadcast_addr, self.broadcast_port))
+                print(f"broadcast status {count} : {foo}")
+                count+=1
+                time.sleep(self.broadcast_time)  # Broadcast every 10 seconds or desired interval
+            except Exception as e:
+                print(f"Broadcast Error: {e}")
+
+def get_ip():
+    ip_cmd = "ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1"
+    try:
+        IP = subprocess.check_output(ip_cmd, shell=True).decode().strip()
+    except Exception as e:
+        IP = "Could not determine IP"
+    return IP
+
 # Example to start the controller
 if __name__ == "__main__":
     hostname = socket.gethostname()
     print(hostname)
-    local_ip = socket.gethostbyname(hostname)
+    local_ip = get_ip() #socket.gethostbyname(hostname)
+    print(local_ip)
     controller = DataMeshController()
     #port = 5000
     server_hosts[hostname] = {}
