@@ -4,16 +4,33 @@ import subprocess
 import threading
 import time
 from DataMeshServer import DataMeshServer
+import ipaddress
 
 #python3 pymsg.py -p5000 -madd -b'{"port":2347,"name":"bms"}'
 
+
 server_hosts = {}
 
+# Function to convert IP to its corresponding broadcast address
+def ip_to_broadcast(ip):
+    # Create an IPv4 interface object from the IP and default subnet mask
+    # Assuming a default subnet mask of 255.255.255.0 (/24)
+    interface = ipaddress.IPv4Interface(f"{ip}/24")
+
+    # Return the broadcast address of the network
+    return str(interface.network.broadcast_address)
+# Example Usage
+#original_ip = "192.168.86.123"  # Replace with your actual IP address
+#broadcast_ip = ip_to_broadcast(original_ip)
+#print("Original IP:", original_ip)
+#print("Broadcast IP:", broadcast_ip)
+
+
 class DataMeshController:
-    def __init__(self, port=5000, broadcast_port=5001):
+    def __init__(self, ip , port=5000, broadcast_port=5001):
         self.port = port
         self.broadcast_port = broadcast_port
-        self.broadcast_addr = "172.17.255.255"
+        self.broadcast_addr = ip_to_broadcast(ip)
         self.broadcast_time = 5
         self.server_threads = {}
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -64,9 +81,9 @@ class DataMeshController:
                         run_message = json.dumps({"app": "running", "port": port})
                     else:
                         run_message = json.dumps({"app": "already running", "port": port})
-                
+
                     client_socket.sendall(run_message.encode('utf-8'))
-                    
+
                 elif request["method"] == "show":
                     #app_name = request["app"] + ".py"
                     #self.run_app(app_name, request["port"])
@@ -118,43 +135,72 @@ class DataMeshController:
                 # Send the status message to the broadcast address
                 #sock.sendto(status_msg.encode(), ('<broadcast>', self.broadcast_port))
                 foo = sock.sendto(status_msg.encode(), (self.broadcast_addr, self.broadcast_port))
-                print(f"broadcast status {count} : {foo}")
+                #print(f"broadcast status {count} : {foo}")
                 count+=1
                 time.sleep(self.broadcast_time)  # Broadcast every 10 seconds or desired interval
             except Exception as e:
                 print(f"Broadcast Error: {e}")
 
-def get_ip():
-    ip_cmd = "ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1"
+
+
+
+def get_ip(dev):
+    # Properly form the command using array format for subprocess
+    ip_cmd = [
+        "bash",
+        "-c",
+        f"ip addr show {dev} | grep 'inet ' | awk '{{print $2}}' | cut -d/ -f1"
+    ]
+
     try:
-        IP = subprocess.check_output(ip_cmd, shell=True).decode().strip()
+        # Execute the command and decode the output from bytes to string
+        IP = subprocess.check_output(ip_cmd).decode().strip()
+    except subprocess.CalledProcessError as e:
+        IP = "Could not determine IP: " + str(e)
     except Exception as e:
-        IP = "Could not determine IP"
+        IP = "An error occurred: " + str(e)
+
     return IP
+
+# def xget_ip(dev):
+#     ip_cmd = f"ip addr show {dev} | grep 'inet ' | awk '{{print $2}}' | cut -d/ -f1"
+#     try:
+#         IP = subprocess.check_output(ip_cmd, shell=True).decode().strip()
+#     except Exception as e:
+#         IP = "Could not determine IP"
+#     return IP
 
 # Example to start the controller
 if __name__ == "__main__":
     hostname = socket.gethostname()
     print(hostname)
-    local_ip = get_ip() #socket.gethostbyname(hostname)
-    print(local_ip)
-    controller = DataMeshController()
+    local_ip1 = get_ip("eth0") #socket.gethostbyname(hostname)
+    local_ip2 = get_ip("wlan0") #socket.gethostbyname(hostname)
+    local_ip = local_ip1
     #port = 5000
     server_hosts[hostname] = {}
     server_hosts[hostname]["name"] = hostname
-    server_hosts[hostname]["ip_address"] = local_ip
-    server_hosts[hostname]["ports"] = []
-    dmserver = {}
-    dmserver["port"] = controller.port
-    dmserver["app"] = "dmcontroller"
+    if local_ip1:
+        server_hosts[hostname]["ip_address_eth0"] = local_ip1
 
-    server_hosts[hostname]["ports"].append(dmserver)
+    if local_ip2:
+        server_hosts[hostname]["ip_address_wlan0"] = local_ip2
+        local_ip = local_ip2
+    server_hosts[hostname]["ports"] = []
+
     # port = 345
     # print("main starting Server")
     # server = DataMeshServer(port)
     # server.start()
     # server_hosts[hostname]["ports"] = server_hosts[hostname]["ports"].append(server.port)
+    controller = DataMeshController(local_ip)
+
+    dmserver = {}
+    dmserver["port"] = controller.port
+    dmserver["app"] = "dmcontroller"
+    server_hosts[hostname]["ports"].append(dmserver)
+
     controller.start()
 
-    ##python3 pymsg.py -p5000 -mshow 
+    ##python3 pymsg.py -p5000 -mshow
     ##python3 pymg.py -p5000 -mshow -u/mysys/ess/ess_1 -b'{"type":"ess_master"}'
