@@ -25,7 +25,8 @@
 #             "heartbeat_uri": "heartbeat"
 #         },
 #     ],
-#     "ips": [
+#     "ips": {
+#        "client"[
 #         {
 #             "config_file": "risen_bms_addressed_client.json",
 #             "dest_ip": "172.17.0.13",
@@ -34,7 +35,18 @@
 #             "reachable": false,
 #             "pingable": false,
 #             "device": "eth0"
-#         },
+#         }
+#     ],
+#    "server": [
+#             {
+#                 "config_file": "broken_test_device_id.json",
+#                 "file_type": "server",
+#                 "src_ip": "127.0.0.1",
+#                 "srv_port": 502,
+#                 "reachable": false,
+#                 "pingable": true,
+#                 "device": "lo"
+#             }
 #     ],
 #     "ip_addrs": {
 #         "172.17.0.13": {
@@ -56,6 +68,8 @@ import argparse
 import socket
 import subprocess
 import netifaces as ni
+import glob
+
 
 ips = []
 devs = []
@@ -118,80 +132,134 @@ def is_ip_reachable(ip, port, timeout=3):
 def scan_config_files(config_dir):
     configs = {}
     configs["heartbeats"] = []
-    configs["ips"] = []
+    configs["ips"] = {}
     configs["ip_addrs"] = {}
     configs["interfaces"] = []
 
+    for c_dir in glob.glob(config_dir):
+        if os.path.isdir(c_dir):
+            for filename in os.listdir(c_dir):
+                if filename.endswith(".json"):  # Ensure it's a JSON file
+                    filepath = os.path.join(c_dir, filename)
+                    print(f" scanning file {filename}")
+                    with open(filepath, 'r') as file:
+                        server_file = False
+                        client_file = False
+                        try:
+                            data = json.load(file)
+                            # client file
+                            connection = data.get("connection", None)
+                            components = data.get("components", None)
+                            #server file
+                            system = data.get("system", {})
+                            registers = data.get("registers", None)
+                            if components and connection:
+                                print(" found a client file")
+                                client_file = True
+                            elif system and registers:
+                                print(" found a server file")
+                                server_file = True
+                            else:
+                                print(" file passed")
+                                continue
 
-    for filename in os.listdir(config_dir):
-        if filename.endswith(".json"):  # Ensure it's a JSON file
-            filepath = os.path.join(config_dir, filename)
-            print(f" scanning file {filename}")
-            with open(filepath, 'r') as file:
-                try:
-                    data = json.load(file)
-                    connection = data.get("connection", {})
-                    components = data.get("components", [])
-
-                    ip_address = connection.get("ip_address", "")
-                    port = connection.get("port", 502)
-                    device_id = connection.get("device_id", 255)
-                    is_pingable = is_ip_pingable(ip_address)
-                    is_reachable = is_ip_reachable(ip_address, port)
-                    my_ip = find_local_ip(ip_address)
-                    my_device = find_interface_name(my_ip)
+                            if  client_file:
+                                ip_address = connection.get("ip_address", "")
+                                port = connection.get("port", 502)
+                                device_id = connection.get("device_id", 255)
+                                is_pingable = is_ip_pingable(ip_address)
+                                is_reachable = is_ip_reachable(ip_address, port)
+                                my_ip = find_local_ip(ip_address)
+                                my_device = find_interface_name(my_ip)
 
 
-                    ip_info = {
-                                "config_file": filename,  # Track which file the heartbeat info came from
-                                "dest_ip": ip_address,
-                                "src_ip": my_ip,
-                                "dest_port": port,
-                                "reachable": is_reachable,  # Mark the IP as reachable or not
-                                "pingable": is_pingable,  # Mark the IP as reachable or not
-                                "device": my_device,  # Mark the IP as reachable or not
-                    }
-                    configs["ips"].append(ip_info)
-                    if ip_address not in configs["ip_addrs"]:
-                        configs["ip_addrs"][ip_address] = {}
-                    if "ports" not in  configs["ip_addrs"][ip_address]:
-                        configs["ip_addrs"][ip_address]["ports"] = []
-                    if port not in  configs["ip_addrs"][ip_address]["ports"]:
-                        configs["ip_addrs"][ip_address]["ports"].append(port)
+                                ip_info = {
+                                            "config_file": filename,  # Track which file the heartbeat info came from
+                                            "dest_ip": ip_address,
+                                            "src_ip": my_ip,
+                                            "dest_port": port,
+                                            "file_type": "client",  # Track which file the heartbeat info came from
+                                            "reachable": is_reachable,  # Mark the IP as reachable or not
+                                            "pingable": is_pingable,  # Mark the IP as reachable or not
+                                            "device": my_device,  # Mark the IP as reachable or not
+                                }
+                                if "client" not in configs["ips"]:
+                                    configs["ips"]["client"] = []
+                                configs["ips"]["client"].append(ip_info)
+                                if ip_address not in configs["ip_addrs"]:
+                                    configs["ip_addrs"][ip_address] = {}
+                                if "ports" not in  configs["ip_addrs"][ip_address]:
+                                    configs["ip_addrs"][ip_address]["ports"] = []
+                                if port not in  configs["ip_addrs"][ip_address]["ports"]:
+                                    configs["ip_addrs"][ip_address]["ports"].append(port)
 
-                    if "interfaces" not in configs:
-                        configs["interfaces"] = []
-                    if my_device not in configs["interfaces"]:
-                        configs["interfaces"].append(my_device)
-                    for component in components:
-                        if component.get("heartbeat_enabled", True):
-                            hb_uri = component.get("heartbeat_read_uri","heartbeat")
-                            heartbeat_info = {
-                                "config_file": filename,  # Track which file the heartbeat info came from
-                                "component_id": component.get("id", "Unknown"),  # Track component ID for uniqueness
-                                 "dest_ip": ip_address,
-                                 "dest_port": port,
-                                 "device_id": device_id,
-                                 "heartbeat_reg_type": "Holding Registers",  # Assuming default as Holding Registers
-                                 "heartbeat_size": 1,  # Default size
-                                 "heartbeat_offset": None,  # Will set this next
-                                 "heartbeat_uri" : hb_uri,
-                             }
+                                if "interfaces" not in configs:
+                                    configs["interfaces"] = []
+                                if my_device not in configs["interfaces"]:
+                                    configs["interfaces"].append(my_device)
+                                for component in components:
+                                    if component.get("heartbeat_enabled", True):
+                                        hb_uri = component.get("heartbeat_read_uri","heartbeat")
+                                        heartbeat_info = {
+                                            "config_file": filename,  # Track which file the heartbeat info came from
+                                            "component_id": component.get("id", "Unknown"),  # Track component ID for uniqueness
+                                            "dest_ip": ip_address,
+                                            "dest_port": port,
+                                            "device_id": device_id,
+                                            "heartbeat_reg_type": "Holding Registers",  # Assuming default as Holding Registers
+                                            "heartbeat_size": 1,  # Default size
+                                            "heartbeat_offset": None,  # Will set this next
+                                            "heartbeat_uri" : hb_uri,
+                                        }
 
-                            for register in component.get("registers", []):
-                                # Check for heartbeat by id
-                                reg_type =  register.get("type")
-                                reg_map =  register.get("map")
-                                for item in reg_map:
-                                    if item.get("id") == hb_uri:
-                                        heartbeat_info['heartbeat_offset'] = item.get('offset', 0)
-                                        heartbeat_info['heartbeat_size'] = item.get('size', 1)
-                                        heartbeat_info['heartbeat_reg_type'] = reg_type
+                                        for register in component.get("registers", []):
+                                            # Check for heartbeat by id
+                                            reg_type =  register.get("type")
+                                            reg_map =  register.get("map")
+                                            for item in reg_map:
+                                                if item.get("id") == hb_uri:
+                                                    heartbeat_info['heartbeat_offset'] = item.get('offset', 0)
+                                                    heartbeat_info['heartbeat_size'] = item.get('size', 1)
+                                                    heartbeat_info['heartbeat_reg_type'] = reg_type
 
-                                        configs["heartbeats"].append(heartbeat_info)
-                                        break  # Assuming only one heartbeat per component
-                except json.JSONDecodeError as e:
-                    print(f"Error decoding JSON from {filename}: {e}")
+                                                    configs["heartbeats"].append(heartbeat_info)
+                                                    break  # Assuming only one heartbeat per component
+
+                            if  server_file:
+                                ip_address = system.get("ip_address", "")
+                                port = system.get("port", 502)
+                                device_id = system.get("device_id", 255)
+                                is_pingable = is_ip_pingable(ip_address)
+                                is_reachable = is_ip_reachable(ip_address, port)
+                                my_ip = find_local_ip(ip_address)
+                                my_device = find_interface_name(my_ip)
+
+
+                                ip_info = {
+                                            "config_file": filename,  # Track which file the heartbeat info came from
+                                            "file_type": "server",  # Track which file the heartbeat info came from
+                                            "dest_ip": my_ip,
+                                            "srv_port": port,
+                                            "reachable": is_reachable,  # Mark the IP as reachable or not
+                                            "pingable": is_pingable,  # Mark the IP as reachable or not
+                                            "device": my_device,  # Mark the IP as reachable or not
+                                }
+                                if "server" not in configs["ips"]:
+                                    configs["ips"]["server"] = []
+                                configs["ips"]["server"].append(ip_info)
+                                if ip_address not in configs["ip_addrs"]:
+                                    configs["ip_addrs"][ip_address] = {}
+                                if "ports" not in  configs["ip_addrs"][ip_address]:
+                                    configs["ip_addrs"][ip_address]["ports"] = []
+                                if port not in  configs["ip_addrs"][ip_address]["ports"]:
+                                    configs["ip_addrs"][ip_address]["ports"].append(port)
+                                if "interfaces" not in configs:
+                                    configs["interfaces"] = []
+                                if my_device not in configs["interfaces"]:
+                                    configs["interfaces"].append(my_device)
+
+                        except json.JSONDecodeError as e:
+                            print(f"Error decoding JSON from {filename}: {e}")
 
     return configs
 

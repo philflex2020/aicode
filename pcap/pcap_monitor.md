@@ -224,3 +224,51 @@ journalctl -u pcap_monitor
 4. **Safety**: Be cautious when running scripts as root, especially if they're custom or untested, as this can pose significant security risks.
 
 By following these steps, you should be able to set up your script as a service that starts automatically and runs continuously in the background, capturing network packets as specified. Ensure to test everything in a controlled environment before deploying to production.
+
+Your script aims to parse arguments for configuration file, configuration directory, and log directory, set up signal handling, ensure the log directory exists, and run a function called `run_pcap_file_scanner` with the configuration directory as an argument. Here's a breakdown of whether it will work and potential issues:
+
+1. **Argument Parsing**: You're using `argparse` to set up arguments for the script. This part looks fine, but it's worth noting that both `config_file` and `config_dir` are positional arguments with optional defaults due to `nargs='?'`. This means if a user provides one argument, it will be assumed to be `config_file`, and if they provide two, the second will be taken as `config_dir`. Ensure this is the intended behavior.
+
+2. **Signal Handling**: You're setting up signal handlers for `SIGINT` and `SIGTERM` signals, which should allow the script to handle interrupt and termination signals gracefully. This part seems appropriate for long-running scripts and is especially useful when running as a service.
+
+3. **Log Directory**: The script checks and ensures that the log directory exists. This is good practice, especially for scripts that write out logs or data files.
+
+4. **Running pcap_file_scanner**: The script attempts to run a function `run_pcap_file_scanner(args.config_dir)`. For this to work:
+   - Ensure that the function `run_pcap_file_scanner` is defined somewhere in your script or imported from another module.
+   - Ensure that the function is designed to accept the configuration directory as an argument and performs the expected actions, like running the `pcap_file_scanner.py` script or equivalent functionality.
+
+5. **Permissions**: If the script is meant to perform network packet capturing and write to `/var/log/gcom`, it might require elevated permissions (root). Ensure that it's run with appropriate permissions, especially when deployed as a service.
+
+6. **Testing**: Before deploying, test the script manually with various combinations of arguments to ensure it behaves as expected.
+
+Here's an improved version of your script segment considering the above points and a bit more clarification on the `run_pcap_file_scanner` function:
+
+```python
+import argparse
+import signal
+# ... other necessary imports ...
+
+# Ensure this function is defined or imported
+def run_pcap_file_scanner(config_dir):
+    # Your code to initiate pcap_file_scanner with the given directory
+    pass
+
+if __name__ == "__main__":
+    # Setup argument parser
+    parser = argparse.ArgumentParser(description="Continuously capture network packets on multiple interfaces")
+    parser.add_argument("config_file", help="Configuration file containing the list of interfaces", nargs='?', default="pcap_monitor.json")
+    parser.add_argument("config_dir", help="Configuration dir containing the list of config files", nargs='?', default="/home/docker/configs/modbus/client")
+    parser.add_argument("--logdir", help="Directory to store log files", default="/var/log/gcom")
+
+    args = parser.parse_args()
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    ensure_log_dir(args.logdir)
+
+    # Assuming this function exists and is correctly implemented
+    run_pcap_file_scanner(args.config_dir)
+```
+
+Ensure all referenced functions are defined and tested, and be aware of permissions and execution contexts, especially when dealing with network interfaces and system directories. With these considerations in mind, your script segment is on the right track for its intended purpose.

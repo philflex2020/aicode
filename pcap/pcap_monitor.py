@@ -19,10 +19,14 @@ import argparse
 import signal
 import subprocess
 import time
+import socket
 from datetime import datetime
 dt_format = "%Y%m%d_%H%M%S"
 
-procs = {}
+new_procs = {}
+old_procs = {}
+new_filenames = {}
+old_filenames = {}
 
 
 def ensure_log_dir(log_dir):
@@ -34,7 +38,8 @@ def ensure_log_dir(log_dir):
             print(f"Error: {e.strerror} - Log directory ({log_dir}) could not be created.")
             exit(1)
 
-def run_pcap_file_scanner():
+def run_pcap_file_scanner(config_dir):
+    #use the -c option to determine the config dir
     scanner_script = '/usr/local/bin/pcap_file_scanner.py'  # Update with the actual path
     try:
         # Run the scanner script and wait for it to complete
@@ -49,7 +54,9 @@ def run_pcap_file_scanner():
 def signal_handler(signum, frame):
     print(f"Received termination signal {signum}")
     # Terminate all tcpdump processes
-    for proc in procs.values():
+    for proc in new_procs.values():
+        proc.terminate()
+    for proc in old_procs.values():
         proc.terminate()
     print("All captures terminated. Exiting.")
     exit(0)  # Exit the program
@@ -59,46 +66,65 @@ def load_config(config_file):
         config = json.load(file)
     return config
 
-def start_tcpdump(interface, log_dir, duration=300):
+def start_tcpdump(hostname, interface, log_dir, duration=300):
     # Generate a unique filename for each pcap
     timestamp = datetime.now().strftime(dt_format)
-    filename = f"{log_dir}/capture_{interface}_{timestamp}.pcap"
+    pcap_filename = f"{log_dir}/{hostname}_{interface}_{timestamp}.pcap"
+    log_filename = f"{log_dir}/{hostname}_{interface}_{timestamp}.log"
 
+    # Open a file to write logs to
+    log_file = open(log_filename, "w")
     # Start tcpdump
-    tcpdump_cmd = ["tcpdump", "-i", interface, "-w", filename]
-    proc = subprocess.Popen(tcpdump_cmd)
+    tcpdump_cmd = ["tcpdump", "-i", interface, "-w", pcap_filename]
+    proc = subprocess.Popen(tcpdump_cmd, stdout=log_file, stderr=subprocess.STDOUT)
 
     # Return the process and filename for later use
-    return proc, filename
+    return proc, pcap_filename
 
-def manage_captures(interfaces, log_dir, overlap=10, duration=300):
-    global procs
+def manage_captures(hostname, interfaces, log_dir, overlap=10, duration=30):
+    global new_procs , old_procs
+    global new_filenames , old_filenames
+    first = True
     try:
         while True:
-            filenames = {}
             
             # Start captures for each interface
-            for interface in interfaces:
-                procs[interface], filenames[interface] = start_tcpdump(interface, log_dir, duration)
+            if first:
+                first = False
+                for interface in interfaces:
+                    if interface == "lo":
+                        continue
+                    new_procs[interface], new_filenames[interface] = start_tcpdump(hostname,interface, log_dir, duration)
 
             # Wait for duration minus overlap
             time.sleep(duration - overlap)
 
             # Stop previous captures and analyze them
             for interface in interfaces:
-                procs[interface].terminate()
-                subprocess.run(["python3", "pcap_modbus.py", filenames[interface]])
-
+                if interface == "lo":
+                    continue
+                old_procs[interface] = new_procs[interface]
+                old_filenames[interface] = new_filenames[interface]
+                
                 # Immediately start the next capture for no gap
-                procs[interface], filenames[interface] = start_tcpdump(interface, duration)
+                new_procs[interface], new_filenames[interface] = start_tcpdump(hostname, interface, log_dir, duration)
+
+                
 
             # Wait for the overlap period
             time.sleep(overlap)
+            for interface in interfaces:
+                if interface == "lo":
+                    continue
+                if interface in old_procs:
+                    old_procs[interface].terminate()
+                    print(f"now run pcap_modbus.py on {old_filenames[interface]}")
+                    #subprocess.run(["python3", "pcap_modbus.py", old_filenames[interface]])
 
     except KeyboardInterrupt:
         # On a keyboard interrupt/termination signal, terminate all tcpdump processes
         print("\nTerminating all captures...")
-        for proc in procs.values():
+        for proc in new_procs.values():
             proc.terminate()
         print("All captures terminated.")
 
@@ -106,7 +132,8 @@ def manage_captures(interfaces, log_dir, overlap=10, duration=300):
 if __name__ == "__main__":
     # Setup argument parser
     parser = argparse.ArgumentParser(description="Continuously capture network packets on multiple interfaces")
-    parser.add_argument("config_file", help="Configuration file containing the list of interfaces", nargs='?', default="pcap_monitor.json")
+    parser.add_argument("config_file", help="Configuration file containing the list of interfaces", nargs='?', default="/var/log/gcom/pcap_monitor.json")
+    parser.add_argument("config_dir", help="Configuration dir containing the list of config files", nargs='?', default="/home/docker/configs/file_scan/modbus_*")
     parser.add_argument("--logdir", help="Directory to store log files", default="/var/log/gcom")
 
     args = parser.parse_args()
@@ -116,15 +143,19 @@ if __name__ == "__main__":
 
     ensure_log_dir(args.logdir)
 
-    run_pcap_file_scanner()
+    hostname =  socket.gethostname()
+    print(f" hostname {hostname}")
 
+    #run_pcap_file_scanner(args.config_dir)
+    config_file = f"{args.config_file}"
+    print(f" config file: {config_file}")
     try:
-        config = load_config(args.config_file)
+        config = load_config(config_file)
         interfaces = config.get('interfaces', [])  # Provide default empty list if not found
 
         # Check if interfaces are provided
         if interfaces:
-            manage_captures(interfaces,args.logdir)
+            manage_captures(hostname, interfaces, args.logdir)
         else:
             print("No interfaces found in configuration file.")
     except FileNotFoundError:
