@@ -1,5 +1,8 @@
 ###
 #pcap_file_scanner seeks ip addresses, port and heartbeat info from a list of config files.
+
+# python3 /home/docker/aicode/pcap/pcap_file_scanner.py -c/home/docker/configs/file_scan/modbus_*/
+
 # we discover if the selected ip_address is routable , pingable and that a port exists
 # then we determine which interface we need to use to talk to the devices
 # this list is used by the tcpdump manager to capture interface data

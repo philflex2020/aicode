@@ -272,3 +272,263 @@ if __name__ == "__main__":
 ```
 
 Ensure all referenced functions are defined and tested, and be aware of permissions and execution contexts, especially when dealing with network interfaces and system directories. With these considerations in mind, your script segment is on the right track for its intended purpose.
+
+Detecting TCP retransmissions using Python and the pcap library involves several steps. TCP retransmissions occur when segments of data are not acknowledged by the recipient and need to be resent. Here's a general approach you might consider:
+
+1. **Capture Packets**: First, you need to capture the network packets. This can be done using the `pcap` library, which can capture packets over the network interface.
+
+2. **Analyze TCP Segments**: Once you have the packets, you need to analyze the TCP segments within those packets. Specifically, you'll want to look at the sequence and acknowledgment numbers, as well as the retry intervals.
+
+3. **Identify Retransmissions**: A TCP retransmission can be identified if you observe:
+
+    - **Duplicate Segments**: The same segment (identified by sequence number) is sent more than once.
+    - **Out-of-Order Segments**: Received segments are not in the expected sequence.
+    - **Acknowledgment Numbers**: An acknowledgment number that goes back instead of progressing can indicate a retransmission.
+
+Here's a simplified structure of how you might code this:
+
+```python
+import pcap
+import socket
+import struct
+
+# Open live pcap session on interface
+pc = pcap.pcap(name='en0', promisc=True, immediate=True, timeout_ms=50)
+
+# Filter for TCP packets
+pc.setfilter('tcp')
+
+for timestamp, packet in pc:
+    # Unpack the Ethernet frame (assuming Ethernet + IPv4)
+    eth_header = packet[:14]
+    eth_unpacked = struct.unpack("!6s6s2s", eth_header)
+    ip_header = packet[14:34]
+    iph = struct.unpack('!BBHHHBBH4s4s', ip_header)
+
+    # Extract IP headers to calculate offsets
+    iph_length = (iph[0] & 0xF) * 4
+    tcp_header = packet[14+iph_length:34+iph_length]
+
+    # Unpack TCP header
+    tcph = struct.unpack('!HHLLBBHHH', tcp_header)
+
+    # Extract sequence and acknowledgment numbers
+    seq_number = tcph[2]
+    ack_number = tcph[3]
+
+    # Logic to detect retransmissions based on sequence and acknowledgment numbers
+    # This would likely involve maintaining a history of observed segments and
+    # detecting duplicates or unusual patterns indicating a retransmission.
+
+    # Print or log suspected retransmissions
+```
+
+This is a very simplified outline, and in practice, you'd need to handle various edge cases and potentially use a more robust method of dissecting packets (like using a library specifically for packet dissection such as dpkt or scapy).
+
+Remember, working with live network data and interpreting TCP can be complex, and ensuring that you're correctly identifying retransmissions involves understanding the nuances of TCP behavior under various network conditions. Always test your implementation in a controlled environment before deploying it in a production setting.
+Using Scapy to detect TCP retransmissions involves capturing packets, analyzing them for TCP protocol details, and looking for signs of retransmissions. Scapy is a powerful Python-based interactive packet manipulation program that can handle tasks from packet sniffing to packet crafting and more.
+
+Here's a basic outline of steps and a sample code structure you might use:
+
+1. **Install Scapy**: Make sure you have Scapy installed in your Python environment. You can typically install it via pip:
+
+    ```bash
+    pip install scapy
+    ```
+
+2. **Capture Packets**: Use Scapy to capture TCP packets and analyze them.
+
+3. **Analyze for Retransmissions**: Look for sequence numbers of packets. A TCP retransmission is typically identified by the same sequence number being used more than once with no acknowledgment from the other side.
+
+Here is how you might write the script:
+
+```python
+from scapy.all import sniff, TCP
+
+# Define a packet handling function
+def packet_callback(packet):
+
+    if packet[TCP].flags == 'PA':  # Adjust the flags as needed for your context
+        seq_num = packet[TCP].seq
+        ack_num = packet[TCP].ack
+
+        # Assuming you're storing seen sequence numbers in some form of data structure
+        # For the sake of example, let's assume a global dictionary with IP pairs as keys
+        global seen_seq_nums
+        ip_pair = (packet[IP].src, packet[IP].dst)
+
+        if ip_pair not in seen_seq_nums:
+            seen_seq_nums[ip_pair] = set()
+
+        # Check if sequence number has been seen before
+        if seq_num in seen_seq_nums[ip_pair]:
+            print(f"Retransmission Detected: {packet.summary()}")
+        else:
+            seen_seq_nums[ip_pair].add(seq_num)
+
+# Initialize a structure to hold seen sequence numbers
+seen_seq_nums = {}
+
+# Start sniffing the network.
+sniff(filter="tcp", prn=packet_callback, store=0)
+```
+
+### Notes:
+
+- **Flags**: The script above is checking for packets with a particular TCP flag ('PA' - PSH and ACK). In practice, you might need to adjust the flags you're looking for based on the type of traffic you expect to capture or the characteristics of retransmissions you're interested in.
+- **Performance**: Scapy is quite powerful, but it's not designed for performance in high-throughput environments. For monitoring or real-time analysis on busy networks, consider using more performant solutions or directly capturing packets with Scapy and then analyzing them offline.
+- **Environment**: Ensure you have the necessary permissions and are compliant with all relevant policies and laws when capturing network traffic, especially on networks that you do not own or manage.
+
+This script provides a starting point. You'd likely need to refine the detection logic based on the specific characteristics of the network traffic you're dealing with and the nature of TCP retransmissions you're trying to identify.
+
+To detect connection attempts from TCP dump files using Python and Scapy, you'll need to follow a general process that involves reading the TCP dump files, filtering for TCP packets, and then examining those packets for connection attempts. Here's a step-by-step guide on how you might approach this:
+
+1. **Install Scapy**: If you haven't already, you will need to install the Scapy library, which is a powerful interactive packet manipulation program. You can install it using pip:
+
+    ```bash
+    pip install scapy
+    ```
+
+2. **Read the TCP dump files**: Use Scapy to read the TCP dump files. TCP dump files are typically saved in the `.pcap` format. Scapy has a `rdpcap()` function that can read these files.
+
+3. **Filter for TCP packets**: Once you have read the dump file, you will need to filter out the TCP packets as they are the ones that are used to establish connections.
+
+4. **Detect Connection Attempts**: A TCP connection is established through a process known as the three-way handshake. This involves three steps: SYN, SYN-ACK, and ACK. To detect an initial connection attempt, you should look for packets with the SYN flag set, which indicates the initiation of a TCP connection.
+
+Here is a basic script that demonstrates these steps:
+
+```python
+from scapy.all import rdpcap, TCP
+
+# Read the tcpdump file
+packets = rdpcap('path_to_file.pcap')
+
+# Filter for TCP packets and then look for SYN packets which indicate connection attempts
+for packet in packets:
+    if packet.haslayer(TCP):
+        # Check for SYN and not ACK to identify a new connection attempt
+        if packet[TCP].flags == 'S':
+            src_ip = packet[IP].src
+            dst_ip = packet[IP].dst
+            print(f"Connection attempt from {src_ip} to {dst_ip}")
+```
+
+Replace `'path_to_file.pcap'` with the path to your actual .pcap file.
+
+**Important Notes:**
+
+- This script assumes that the TCP dump file is named 'file.pcap' and is located in the same directory as the script. You will need to adjust the path as necessary.
+- The script is quite simplistic and demonstrates the basics of detecting TCP connection attempts (SYN packets). Depending on your specific needs, you might want to handle SYN-ACK packets or add more sophisticated analysis.
+- Ensure that you run these scripts with the necessary permissions. Accessing network interfaces and reading pcap files might require administrative privileges depending on your system's configuration.
+
+Always test this in a controlled environment before deploying in a live network, and make sure you're compliant with legal restrictions and ethical guidelines when working with network traffic.
+
+Capturing the response to a connection attempt and timing it involves several additional steps. First, you'll need to track not just the SYN packets that represent the initiation of a connection attempt but also the SYN-ACK packets that represent the server's response and the final ACK packet that completes the client's request. This series is what forms the well-known "three-way handshake" in TCP connections.
+
+Here's an outline of the steps and a script to guide you:
+
+1. **Track the Three-Way Handshake**: Monitor for the SYN, SYN-ACK, and ACK packets to understand the complete flow of a TCP connection establishment.
+
+2. **Capture the Response**: Look for SYN-ACK packets that are responses to initial SYN packets.
+
+3. **Time the Connection**: Record the time when you first see a SYN packet and then the time when you see the corresponding ACK packet. The difference between these timestamps will give you the duration of the connection setup.
+
+Here's how you might implement this:
+
+```python
+from scapy.all import rdpcap, TCP, IP
+
+# Read the tcpdump file
+packets = rdpcap('path_to_file.pcap')
+
+# Initialize a dictionary to keep track of SYN times
+syn_times = {}
+
+# Iterate through packets
+for packet in packets:
+    if packet.haslayer(TCP) and packet.haslayer(IP):
+        src_ip = packet[IP].src
+        dst_ip = packet[IP].dst
+        tcp_layer = packet[TCP]
+        # Check for SYN flag (connection initiation)
+        if tcp_layer.flags == 'S':
+            syn_times[(src_ip, dst_ip)] = packet.time
+        # Check for SYN-ACK flag (connection response)
+        elif tcp_layer.flags == 'SA':
+            if (dst_ip, src_ip) in syn_times:  # Note the reversed src and dst
+                # Calculate the time difference
+                duration = packet.time - syn_times[(dst_ip, src_ip)]
+                print(f"Connection established from {dst_ip} to {src_ip} in {duration} seconds")
+                # Remove the recorded SYN time if you no longer need it
+                del syn_times[(dst_ip, src_ip)]
+```
+
+Here's what this script does:
+
+- It reads the pcap file and iterates through the packets, looking for TCP layers.
+- When it finds a SYN packet (indicating an attempt to start a connection), it records the time.
+- When it finds a SYN-ACK packet (indicating a response to a connection attempt), it looks up the time of the original SYN packet, calculates the duration, and then outputs the time it took to establish the connection.
+
+**Important Considerations:**
+
+- **Accuracy and Precision**: The accuracy of the timing will depend on the precision of your packet timestamps which is often dependent on the capturing tool and system resolution.
+- **Packet Loss**: In real networks, packets might get lost. Make sure to handle cases where you might not see a SYN-ACK or the final ACK for every SYN.
+- **Duplicate SYNs**: Sometimes, especially in poor network conditions, a client might send multiple SYN packets. Ensure that your script can handle these cases, possibly by updating the timestamp for the last SYN packet received from the same source.
+- **Permissions and Environment**: Similar to before, ensure you have the right permissions and are aware of legal and ethical guidelines in your environment.
+
+This script is quite basic and might need to be expanded or modified to fit specific needs or to handle more complex scenarios in network traffic. Always thoroughly test in a controlled environment before deploying any network analysis tool in a live or production environment.
+
+
+To modify the script to keep track of connection attempts, responses, and their respective times without deleting the entries in `syn_times`, you can use a more comprehensive dictionary structure. Also, to translate times to UTC, you will typically use the `datetime` module from Python to handle and format the timestamps properly. Here's how you can do it:
+
+1. **Keep Connection Details**: Store connection attempt and result details in the `syn_times` dictionary.
+2. **Translate Time to UTC**: Use the `datetime` module to convert timestamps to UTC.
+
+Here's the modified script:
+
+```python
+from scapy.all import rdpcap, TCP, IP
+from datetime import datetime, timezone
+
+# Read the tcpdump file
+packets = rdpcap('path_to_file.pcap')
+
+# Initialize a dictionary to keep track of connection details
+syn_times = {}
+
+# Iterate through packets
+for packet in packets:
+    if packet.haslayer(TCP) and packet.haslayer(IP):
+        src_ip = packet[IP].src
+        dst_ip = packet[IP].dst
+        tcp_layer = packet[TCP]
+        # Check for SYN flag (connection initiation)
+        if tcp_layer.flags == 'S':
+            syn_times[(src_ip, dst_ip)] = {'attempt_time': datetime.utcfromtimestamp(packet.time).replace(tzinfo=timezone.utc), 'duration': None, 'result': 'Initiated'}
+        # Check for SYN-ACK flag (connection response)
+        elif tcp_layer.flags == 'SA':
+            if (dst_ip, src_ip) in syn_times:  # Note the reversed src and dst
+                # Calculate the duration and record the response time
+                duration = packet.time - syn_times[(dst_ip, src_ip)]['attempt_time'].timestamp()
+                syn_times[(dst_ip, src_ip)]['response_time'] = datetime.utcfromtimestamp(packet.time).replace(tzinfo=timezone.utc)
+                syn_times[(dst_ip, src_ip)]['duration'] = duration
+                syn_times[(dst_ip, src_ip)]['result'] = 'Success'
+
+# Print out connection details
+for conn, details in syn_times.items():
+    print(f"Connection from {conn[0]} to {conn[1]}: {details}")
+```
+
+Here's what's changed:
+
+- **syn_times Dictionary**: Now, `syn_times` is used to store detailed information about each connection attempt, including the attempt time, duration (if the connection was established), and the result of the attempt.
+- **Time Conversion**: The script converts the packet times to UTC using the `datetime` module and attaches timezone information for clarity.
+- **Preserve Data**: It no longer deletes entries from `syn_times` after processing them, allowing you to print out all connection attempts at the end.
+
+**Note:**
+
+- This script assumes the pcap file includes the correct timestamps. Ensure the system capturing the packets is synchronized with a reliable time source.
+- The script labels a connection as 'Success' upon seeing a SYN-ACK packet, which might not always be accurate in real-world scenarios where connections can fail later in the process. For more robust handling, consider tracking the final ACK in the three-way handshake or subsequent connection teardown packets.
+- The script now prints out a detailed dictionary at the end, which includes all the tracked connection attempts and their outcomes. You might want to format this printout or further process the data depending on your needs.
+
+As always, validate this approach in a controlled environment and ensure you're authorized to analyze any network traffic you work with.

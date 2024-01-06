@@ -1302,3 +1302,48 @@ The line you've provided appears to be a summary of a network packet captured an
 ### In Summary:
 
 This line describes a TCP packet in a network communication, specifically an acknowledgment packet originating from `192.168.112.5` and intended for `192.168.112.10` on the Modbus port 502. It indicates that there's no additional data being sent in this packet (Len=0); instead, it's part of the control and management of data flow, likely in a Modbus TCP communication or similar TCP-based protocol. This packet is part of the ongoing communication, ensuring that data is correctly sequenced and acknowledging the receipt of previous packets.
+To use the packet's timestamp (`packet.time`) as the unique identifier instead of a simple incrementing counter, you can modify the script to store and compare the timestamp of the packets along with the sequence numbers. Here's how you can adapt the script:
+
+```python
+# Loop through packets or handle packets in your routine
+for packet in packets:
+    # Your existing logic to define conv_id
+    conv_id = (packet[IP].src, packet[IP].dst, packet[TCP].sport, packet[TCP].dport)
+
+    # Initialize if not present
+    if conv_id not in seq_nums:
+        seq_nums[conv_id] = {}
+
+    # TCP sequence number
+    seq = packet[TCP].seq
+
+    # Check for retransmission
+    if seq in seq_nums[conv_id]:
+        # If the sequence number exists, check if packet time matches
+        # Note: You might want to format or round the time to a desired precision
+        if seq_nums[conv_id][seq] != packet.time:
+            # Retransmission Detected
+            retrans_details.append({
+                "retrans_seq": seq,
+                "original_packet_time": seq_nums[conv_id][seq],
+                "retrans_packet_time": packet.time,
+                "details": packet.summary()
+            })
+            if 'pair_id' in locals():  # Assuming pair_id is defined in your scope
+                pair_data["retrans"] += 1
+    else:
+        # Store the sequence number and packet time
+        seq_nums[conv_id][seq] = packet.time
+```
+
+In this version of the script:
+
+- **Packet Time as Identifier**: The script uses `packet.time` as the unique identifier for each packet instead of an incrementing `packet_id`. This assumes that `packet.time` is unique enough for your packets, which is typically the case, especially when packets are recorded with a fine time resolution.
+- **Retransmission Detection**: The script compares the stored packet time for each sequence number against the current packet's time to detect retransmissions.
+
+**Important Notes**:
+
+- **Time Precision**: The timestamps in packet captures can have high precision. Depending on the resolution of your timestamps and the possibility of having packets with very close timestamps, you might want to round the times or format them to a certain precision to avoid identifying two quickly successive packets as retransmissions.
+- **Timezone and Synchronization**: Ensure that the time source for your packets is consistent and accurate. Timestamps are typically in UTC, but you should verify this according to how your packet capture tool records time.
+
+This adjustment should allow you to use each packet's timestamp as a unique identifier to track retransmissions more accurately, using the time the packets were captured as the key metric. As always, ensure you thoroughly test any changes to the script in your specific environment and with your specific data to confirm it behaves as expected.
