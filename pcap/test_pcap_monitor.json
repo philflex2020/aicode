@@ -1,0 +1,517 @@
+
+{
+    "heartbeats": [
+        {
+            "config_file": "test_bms_addressed_client.json",
+            "component_id": "bms_running_info",
+            "dest_ip": "192.168.112.13",
+            "dest_port": 502,
+            "device_id": 1,
+            "heartbeat_reg_type": "Holding Registers",
+            "heartbeat_size": 1,
+            "heartbeat_offset": 1424,
+            "heartbeat_uri": "heartbeat"
+        },
+        {
+            "config_file": "test_bms_addressed_client.json",
+            "component_id": "bms_running_info",
+            "dest_ip": "192.168.112.13",
+            "dest_port": 502,
+            "device_id": 1,
+            "heartbeat_reg_type": "Holding Registers",
+            "heartbeat_size": 1,
+            "heartbeat_offset": 1425,
+            "heartbeat_uri": "heartbeat"
+        },
+        {
+            "config_file": "risen_bms_addressed_client.json",
+            "component_id": "bms_running_info",
+            "dest_ip": "172.17.0.13",
+            "dest_port": 11000,
+            "device_id": 255,
+            "heartbeat_reg_type": "Input Registers",
+            "heartbeat_size": 2,
+            "heartbeat_offset": 278,
+            "heartbeat_uri": "heartbeat"
+        },
+        {
+            "config_file": "risen_bms_addressed_client_test.json",
+            "component_id": "bms_running_info",
+            "dest_ip": "172.17.0.3",
+            "dest_port": 11000,
+            "device_id": 255,
+            "heartbeat_reg_type": "Input Registers",
+            "heartbeat_size": 2,
+            "heartbeat_offset": 278,
+            "heartbeat_uri": "heartbeat"
+        },
+        {
+            "config_file": "sel_2440_modbus_client.json",
+            "component_id": "comp_sel_2440",
+            "dest_ip": "172.17.0.3",
+            "dest_port": 502,
+            "device_id": 255,
+            "heartbeat_reg_type": "Input Registers",
+            "heartbeat_size": 1,
+            "heartbeat_offset": 400,
+            "heartbeat_uri": "heartbeat"
+        },
+        {
+            "config_file": "test_hb_out_modbus_client.json",
+            "component_id": "comp_sel_2440",
+            "dest_ip": "172.17.0.3",
+            "dest_port": 502,
+            "device_id": 255,
+            "heartbeat_reg_type": "Input Registers",
+            "heartbeat_size": 1,
+            "heartbeat_offset": 400,
+            "heartbeat_uri": "heartbeat"
+        }
+    ],
+    "ips": {
+        "client": [
+            {
+                "config_file": "agt_pv_1_client.json",
+                "dest_ip": "10.128.103.91",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": false,
+                "device": "eth0"
+            },
+            {
+                "config_file": "broken_test_device_id.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "client_device_id.json",
+                "dest_ip": "10.10.1.37",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": false,
+                "device": "eth0"
+            },
+            {
+                "config_file": "client_device_id_2.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "client_scarlet_pcs.json",
+                "dest_ip": "172.30.0.21",
+                "src_ip": "172.17.0.2",
+                "dest_port": 10501,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": false,
+                "device": "eth0"
+            },
+            {
+                "config_file": "clou_ess_1.json",
+                "dest_ip": "172.17.0.2",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "clou_ess_1_client.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "gcom_test_client.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "gcom_test_client_bad.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "packed_client.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 10006,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "packed_client_1.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 10006,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "packed_client_2.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 10006,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "pe_enngie_faults_client.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 10501,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "risen_bms_addressed_client.json",
+                "dest_ip": "172.17.0.13",
+                "src_ip": "172.17.0.2",
+                "dest_port": 11000,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": false,
+                "device": "eth0"
+            },
+            {
+                "config_file": "risen_bms_addressed_client_test.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 11000,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "sel_2440_modbus_client.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "sel_2440_modbus_client_nohb.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "test_device_id.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "test_device_id_debug.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "test_hb_out_modbus_client.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 502,
+                "file_type": "client",
+                "reachable": true,
+                "pingable": true,
+                "device": "eth0"
+            },
+            {
+                "config_file": "tx100_ess_31.json",
+                "dest_ip": "172.17.0.3",
+                "src_ip": "172.17.0.2",
+                "dest_port": 2502,
+                "file_type": "client",
+                "reachable": false,
+                "pingable": true,
+                "device": "eth0"
+            }
+        ],
+        "server": [
+            {
+                "config_file": "broken_test_device_id.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "clou_ess_1_server.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "clou_ess_1_server1.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 503,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "clou_ess_1_server_jq.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "gcom_test_server.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "packed_server.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 10006,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "packed_server_2.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 10006,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "pe_enngie_faults_erver.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 10501,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "risen_bms_virtual_server.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 11000,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "sel_2440_modbus_server.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "server_device_id.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "server_device_id_2.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "test_device_id.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "test_device_id_all_new.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "test_device_id_debug.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "test_device_id_new.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "test_device_id_reg_new.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "test_gcom_1.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "test_hb_out_modbus_server.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            },
+            {
+                "config_file": "tx100_ess_31.json",
+                "file_type": "server",
+                "dest_ip": "127.0.0.1",
+                "srv_port": 2502,
+                "reachable": false,
+                "pingable": true,
+                "device": "lo"
+            }
+        ]
+    },
+    "ip_addrs": {
+        "10.128.103.91": {
+            "ports": [
+                502
+            ]
+        },
+        "172.17.0.3": {
+            "ports": [
+                502,
+                10006,
+                10501,
+                11000,
+                2502
+            ]
+        },
+        "10.10.1.37": {
+            "ports": [
+                502
+            ]
+        },
+        "172.30.0.21": {
+            "ports": [
+                10501
+            ]
+        },
+        "172.17.0.2": {
+            "ports": [
+                502
+            ]
+        },
+        "172.17.0.13": {
+            "ports": [
+                11000
+            ]
+        },
+        "0.0.0.0": {
+            "ports": [
+                502,
+                503,
+                10006,
+                10501,
+                11000,
+                2502
+            ]
+        }
+    },
+    "interfaces": [
+        "eth0",
+        "lo"
+    ]
+}
