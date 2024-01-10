@@ -1,0 +1,193 @@
+Time [2023-11-18 15:16:26.38401 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11412  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:28.38396 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11415  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:30.38415 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11418  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:32.38500 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11421  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:34.39155 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11424  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:36.38627 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11427  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:38.38632 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11430  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:40.38650 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11433  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:42.38517 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11436  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:44.38510 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11439  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:46.38400 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11442  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:48.38499 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11445  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:50.38504 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11448  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:52.38849 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11451  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:54.38624 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11454  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:56.38654 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11457  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:16:58.38629 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11460  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:00.38649 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11463  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:02.38502 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11466  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:04.38397 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11469  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:06.38505 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11472  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:08.38641 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11475  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:10.38447 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11478  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:12.38967 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11481  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:14.39106 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11484  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:16.38974 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11487  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:18.38530 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11490  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:20.38408 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11493  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:22.38416 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11496  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:24.38436 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11499  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:26.38981 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11502  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:28.38670 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11505  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:30.38665 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11508  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:32.38426 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11511  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:34.38427 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11514  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:36.38500 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11517  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:38.38501 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11520  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:40.39150 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11523  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:42.39033 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11526  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:44.39028 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11529  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:46.38496 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11532  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:48.38601 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11535  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:50.38615 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11538  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:52.38596 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11541  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:54.38505 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11544  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:56.38608 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11547  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:17:58.38614 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11550  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:00.38401 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11553  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:02.38448 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11556  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:04.38510 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11559  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:06.38395 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11562  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:08.39116 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11565  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:10.38396 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11568  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:12.38621 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11571  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:14.38646 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11574  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:16.38404 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11577  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:18.38402 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11580  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:20.38498 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11583  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:22.38500 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11586  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:24.38494 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11589  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:26.38848 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11592  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:28.38513 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11595  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:30.38648 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11598  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:32.38854 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11601  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:34.38654 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11604  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:36.38428 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11607  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:38.38420 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11610  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:40.38448 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11613  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:42.38370 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11616  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:44.38397 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11619  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:46.38654 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11622  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:48.38417 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11625  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:50.38499 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11628  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:52.38398 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11631  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:54.38396 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11634  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:56.38420 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11637  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:18:58.38304 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11640  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:00.38395 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11643  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:02.38625 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11646  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:04.39110 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11649  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:06.38506 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11652  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:08.39004 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11655  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:10.38934 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11658  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:12.38505 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11661  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:14.38395 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11664  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:16.38493 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11667  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:18.38632 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11670  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:20.38647 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11673  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:22.38637 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11676  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:24.38608 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11679  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:26.38935 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11682  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:28.38410 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11685  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:30.38509 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11688  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:32.38531 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11691  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:34.38502 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11694  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:36.38523 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11697  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:38.38933 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11700  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:40.38945 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11703  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:42.38630 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11706  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:44.38515 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11709  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:46.38667 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11712  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:48.38625 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11715  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:50.39046 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11718  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:52.38529 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11721  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:54.38499 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11724  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:56.38498 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11727  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:19:58.38507 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11730  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:00.38666 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11733  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:02.38908 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11736  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:04.38435 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11739  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:06.38649 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11742  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:08.38527 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11745  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:10.38631 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11748  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:12.38619 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11751  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:14.39113 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11754  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:16.38492 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11757  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:18.52797 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11760  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:20.38307 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11763  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:22.38304 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11766  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:24.38613 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11769  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:26.38298 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11772  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:28.38315 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11775  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:30.43167 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11778  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:32.38309 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11781  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:34.38326 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11784  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:36.38294 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11787  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:38.38308 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11790  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:40.22596 UTC] Conn 192.168.114.5-192.168.114.20:502 TransId 9044  no response to query found [1-3@0_4] status [Query] 
+Time [2023-11-18 15:20:40.38307 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11793  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:40.70668 UTC] Conn 192.168.114.5-192.168.114.20:1024 TransId 40792  no response to query found [1-2@0_1] status [Query] 
+Time [2023-11-18 15:20:40.72648 UTC] Conn 192.168.114.5-192.168.114.20:502 TransId 9045  no response to query found [1-3@0_4] status [Query] 
+Time [2023-11-18 15:20:41.20723 UTC] Conn 192.168.114.5-192.168.114.20:1024 TransId 40793  no response to query found [1-2@0_1] status [Query] 
+Time [2023-11-18 15:20:41.22703 UTC] Conn 192.168.114.5-192.168.114.20:502 TransId 9046  no response to query found [1-3@0_4] status [Query] 
+Time [2023-11-18 15:20:41.70783 UTC] Conn 192.168.114.5-192.168.114.20:1024 TransId 40794  no response to query found [1-2@0_1] status [Query] 
+Time [2023-11-18 15:20:41.72739 UTC] Conn 192.168.114.5-192.168.114.20:502 TransId 9047  no response to query found [1-3@0_4] status [Query] 
+Time [2023-11-18 15:20:42.20851 UTC] Conn 192.168.114.5-192.168.114.20:1024 TransId 40795  no response to query found [1-2@0_1] status [Query] 
+Time [2023-11-18 15:20:42.22791 UTC] Conn 192.168.114.5-192.168.114.20:502 TransId 9048  no response to query found [1-3@0_4] status [Query] 
+Time [2023-11-18 15:20:42.38416 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11796  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:42.44594 UTC] Conn 192.168.114.5-192.168.114.20:502 TransId 37738 port 9044 Duplicate response received  
+Time [2023-11-18 15:20:42.50933 UTC] Conn 192.168.114.5-192.168.114.20:1024 TransId 41720 port 40792 Duplicate response received  
+Time [2023-11-18 15:20:44.38306 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11799  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:46.38306 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11802  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:48.38304 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11805  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:50.38398 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11808  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:52.38594 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11811  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:53.17575 UTC] Connection from 192.168.114.5 to 192.168.114.20:502 established at 2023-11-18 15:20:53.17575 +0000 UTC, took 488µs
+Time [2023-11-18 15:20:54.38407 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11814  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:54.67514 UTC] Connection from 192.168.114.5 to 192.168.114.20:1024 established at 2023-11-18 15:20:54.67514 +0000 UTC, took 401µs
+Time [2023-11-18 15:20:56.38394 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11817  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:20:58.38398 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11820  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:00.39213 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11823  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:02.38408 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11826  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:04.38411 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11829  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:06.38396 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11832  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:08.38404 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11835  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:10.38926 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11838  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:12.38501 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11841  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:14.38951 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11844  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:16.39042 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11847  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:18.38504 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11850  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:20.39027 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11853  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:22.39150 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11856  query found [255-4@0_1] error code 4 
+Time [2023-11-18 15:21:24.38919 UTC] Conn 192.168.114.20-192.168.114.5:502 TransId 11859  query found [255-4@0_1] error code 4 
+192.168.114.5-192.168.114.20:502  
+     key: 192.168.114.5-192.168.114.20:502
+     Connections: 1
+     Connection Duration: 488µs
+     Query Count: 32185
+     Response Count: 32180
+     Duplicate Response Count: 0
+     Average Response Time: 4.752546ms
+     Maximum Response Time: 2.687585s
+     Minimum Response Time: 712µs
+192.168.114.5-192.168.114.20:1024  
+     key: 192.168.114.5-192.168.114.20:1024
+     Connections: 1
+     Connection Duration: 401µs
+     Query Count: 2829
+     Response Count: 2826
+     Duplicate Response Count: 0
+     Average Response Time: 4.662265ms
+     Maximum Response Time: 2.271046s
+     Minimum Response Time: 732µs
+192.168.114.20-192.168.114.5:502  
+     key: 192.168.114.20-192.168.114.5:502
+     Connections: 0
+     Connection Duration: 0s
+     Query Count: 449
+     Response Count: 449
+     Duplicate Response Count: 0
+     Average Response Time: 51.389µs
+     Maximum Response Time: 178µs
+     Minimum Response Time: 13µs

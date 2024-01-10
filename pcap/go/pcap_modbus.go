@@ -22,6 +22,10 @@ import (
 // ./pcap_modbus ../data/ess_capture.pcap "502,1024"
 // go build pcap_modbus.go
 // Define a struct to hold our connection data
+//sudo apt-get install libpcap-dev
+
+var modbusExceptions map[uint8]string
+
 type ConnectionData struct {
     HostIP        string
     TargetIP      string
@@ -31,12 +35,24 @@ type ConnectionData struct {
 	QueryCount    int                 // Count of queries issued
     ResponseCount int                 // Count of responses received
     QueryTimes    map[uint16]time.Time  // Track time of each query by transaction ID
-    ResponseTimes map[uint16]time.Time  // Track time of each response by transaction ID
+    QueryKeys     map[uint16]string     // Track query key by transaction ID
+
+	ResponseTimes map[uint16]time.Time  // Track time of each response by transaction ID
 	DuplicateResponses int            // Count of duplicate responses received
 	TotalResponseTime time.Duration // Total of all response times
     MaxResponseTime   time.Duration // Maximum response time
     MinResponseTime   time.Duration // Minimum response time, initialized to a large value
 	connectionDuration time.Duration 
+	Queries                 map[string]*ModbusQuery
+}
+type ModbusQuery struct {
+	Key           string
+	DeviceId      uint8
+    FunctionCode  uint8
+    StartOffset   uint16
+    NumRegisters  uint16
+	Status        string
+	TransactionID []uint16
 }
 
 // Define a struct to hold connection data and state
@@ -50,14 +66,15 @@ type ConnectionAttempt struct {
 	Connections   int
 	connectionDuration time.Duration 
 
-	QueryCount    int                 // Count of queries issued
-    ResponseCount int                 // Count of responses received
+	QueryCount    int                   // Count of queries issued
+    ResponseCount int                   // Count of responses received
     QueryTimes    map[uint16]time.Time  // Track time of each query by transaction ID
+    QueryKeys     map[uint16]string     // Track query key by transaction ID
     ResponseTimes map[uint16]time.Time  // Track time of each response by transaction ID
-	DuplicateResponses int            // Count of duplicate responses received
-	TotalResponseTime time.Duration // Total of all response times
-    MaxResponseTime   time.Duration // Maximum response time
-    MinResponseTime   time.Duration // Minimum response time, initialized to a large value
+	DuplicateResponses int              // Count of duplicate responses received
+	TotalResponseTime time.Duration     // Total of all response times
+    MaxResponseTime   time.Duration     // Maximum response time
+    MinResponseTime   time.Duration     // Minimum response time, initialized to a large value
 
 }
 
@@ -71,6 +88,7 @@ type ConnectionResult struct {
     AverageResponseTime     time.Duration `json:"average_response_time"`
     MaximumResponseTime     time.Duration `json:"maximum_response_time"`
     MinimumResponseTime     time.Duration `json:"minimum_response_time"`
+	Queries                 map[string]*ModbusQuery
 }
 
 // Map to track ongoing connection attempts
@@ -78,7 +96,19 @@ var connectionAttempts = make(map[string]*ConnectionAttempt)
     // Prepare a map to hold our connections
 var  connections = make(map[string]*ConnectionData)
 var allResults []ConnectionResult
+var logs = make(map[string][]string)
 
+func addLog(logs map[string][]string, connectionKey string, logMessage string) {
+
+	fmt.Printf("%s", logMessage)
+    // Check if the key exists in the map
+    if _, exists := logs[connectionKey]; !exists {
+        // If the key does not exist, initialize a new slice
+        logs[connectionKey] = []string{}
+    }
+    // Append the new log message to the slice associated with the connectionKey
+    logs[connectionKey] = append(logs[connectionKey], logMessage)
+}
 // getPayload dynamically extracts a value from a payload at a given offset.
 // The value's type is determined by the type of the 'output' argument.
 func autoPayload(payload []byte, offset int, output interface{}) error {
@@ -118,7 +148,52 @@ func getPayload(payload []byte, offset int) (uint16, error) {
     return value, nil
 }
 
+func extractModbusQueryData(payload []byte) (uint8, uint8, uint16, uint16, error) {
+    var deviceId uint8
+    var functionCode uint8
+    var startOffset uint16
+    var numRegisters uint16
+
+    // Extract deviceId
+    err := autoPayload(payload, 6, &deviceId)
+    if err != nil {
+        return 0, 0, 0, 0, err
+    }
+    // Extract function code
+    err = autoPayload(payload, 7, &functionCode)
+    if err != nil {
+        return 0, 0, 0, 0, err
+    }
+
+    // Extract starting address (offset)
+    err = autoPayload(payload, 8, &startOffset)
+    if err != nil {
+        return 0, 0, 0, 0, err
+    }
+
+    // Extract quantity of registers
+    err = autoPayload(payload, 10, &numRegisters)
+    if err != nil {
+        return 0, 0, 0, 0, err
+    }
+
+    return deviceId, functionCode, startOffset, numRegisters, nil
+}
+
 func main() {
+	modbusExceptions = map[uint8]string{
+		1: "Illegal Function",
+		2: "Illegal Data Address",
+		3: "Illegal Data Value",
+		4: "Slave Device Failure",
+		5: "Acknowledge",
+		6: "Slave Device Busy",
+		7: "Negative Acknowledge",
+		8: "Memory Parity Error",
+		9: "Gateway Path Unavailable",
+		10: "Gateway Target Device Failed to Respond",
+	}
+	
     if len(os.Args) != 3 {
         log.Fatalf("Usage: %s <pcap file> <port list>", os.Args[0])
     }
@@ -154,7 +229,7 @@ func main() {
     for packet := range packetSource.Packets() {
         // Process packet here
         // ...
-
+		var serr string
         // Check if it's TCP and IPv4
         networkLayer := packet.NetworkLayer()
         transportLayer := packet.TransportLayer()
@@ -171,18 +246,22 @@ func main() {
 		if !srcPortInList && !dstPortInList {
 			continue
 		}
-	
+		timestamp := packet.Metadata().Timestamp
+		/// Format the timestamp. You can change the layout string to your desired format
+		formattedTime := timestamp.Format("2006-01-02 15:04:05.00000 MST")
+
 		var connectionKey string
+
 		if dstPortInList {
 			// If destination port is in the list
-			connectionKey = fmt.Sprintf("%s->%s:%d", ip.SrcIP, ip.DstIP, tcp.DstPort)
+			connectionKey = fmt.Sprintf("%s-%s:%d", ip.SrcIP, ip.DstIP, tcp.DstPort)
 		} else {
 			// If source port is in the list
-			connectionKey = fmt.Sprintf("%s->%s:%d", ip.DstIP, ip.SrcIP, tcp.SrcPort)
+			connectionKey = fmt.Sprintf("%s-%s:%d", ip.DstIP, ip.SrcIP, tcp.SrcPort)
 		}
-
-		 // Check for SYN flag to detect connection initiation
-		 if tcp.SYN && !tcp.ACK {
+        //fmt.Printf("connectionKey : %s srcport %v (%s)  destport %v (%s)\n",connectionKey, srcPortInList, ip.SrcIP,  dstPortInList, ip.DstIP)
+		// Check for SYN flag to detect connection initiation
+		if tcp.SYN && !tcp.ACK {
 			// This is a new connection attempt
 			connectionAttempts[connectionKey] = &ConnectionAttempt{
 				ClientIP:   ip.SrcIP.String(),
@@ -191,6 +270,7 @@ func main() {
 				StartTime:  packet.Metadata().Timestamp,
 				State:      "Initiating",
 				QueryTimes:    make(map[uint16]time.Time),
+				QueryKeys:     make(map[uint16]string),
             	ResponseTimes: make(map[uint16]time.Time),
 				DuplicateResponses: 0,
 				Connections: 0,
@@ -217,8 +297,9 @@ func main() {
 				// Calculate connection time
 				conn.connectionDuration = conn.AckTime.Sub(conn.StartTime)
 				conn.Connections += 1
-				fmt.Printf("Connection from %s to %s:%d established at %s, took %s\n",
-				            conn.ClientIP, conn.ServerIP, conn.ServerPort, conn.AckTime, conn.connectionDuration)
+				serr = fmt.Sprintf("Time [%s] Connection from %s to %s:%d established at %s, took %s\n",
+				            formattedTime, conn.ClientIP, conn.ServerIP, conn.ServerPort, conn.AckTime, conn.connectionDuration)
+				addLog(logs, connectionKey, serr)
 				//newConnect =  true
 			}
 		}
@@ -232,28 +313,23 @@ func main() {
        
         // Extract Transaction ID (First 2 bytes of payload in Modbus TCP/IP)
         transactionID := uint16(payload[0])<<8 + uint16(payload[1])
-		// var transId uint16
-		// autoPayload(payload, 0, &transId)
-		// fmt.Printf("transId %d transactionId %d \n", transId, transactionID)
-
-
-        // // Generate a unique key for each connection
-        // connectionKey := fmt.Sprintf("%s->%s:%d", ip.SrcIP, ip.DstIP, tcp.DstPort)
 
         // If we don't have this connection yet, create it
         conn, exists := connections[connectionKey];
 		if  !exists {
             connections[connectionKey] = &ConnectionData{
-                HostIP:        ip.SrcIP.String(),
-                TargetIP:      ip.DstIP.String(),
-                TargetPort:    tcp.DstPort.String(),
-                TransactionID: make([]uint16, 0),
-				Connections: 0,
-				QueryTimes:    make(map[uint16]time.Time),
-            	ResponseTimes: make(map[uint16]time.Time),
+                HostIP:             ip.SrcIP.String(),
+                TargetIP:           ip.DstIP.String(),
+                TargetPort:         tcp.DstPort.String(),
+                TransactionID:      make([]uint16, 0),
+				Connections:        0,
+				QueryTimes:         make(map[uint16]time.Time),
+				QueryKeys:          make(map[uint16]string),
+            	ResponseTimes:      make(map[uint16]time.Time),
 				DuplicateResponses: 0,
-				ResponseCount: 0,
-				QueryCount: 0,
+				ResponseCount:      0,
+				QueryCount:         0,
+				Queries:            make(map[string]*ModbusQuery),
 
             }
 			conn = connections[connectionKey]
@@ -264,12 +340,84 @@ func main() {
 		if dstPortInList {
 			conn.QueryCount++
 			conn.QueryTimes[transactionID] = packet.Metadata().Timestamp.UTC()
-	
+			deviceId, functionCode, startOffset, numRegisters, err := extractModbusQueryData(payload)
+			if err == nil  {
+				queryKey := fmt.Sprintf("%d-%d@%d_%d", deviceId, functionCode, startOffset, numRegisters)
+				// check for queryKey already present 
+				//fmt.Printf("conn.Queries  [%v] \n", conn.Queries)
+				conn.QueryKeys[transactionID] = queryKey
+				
+				conq,exists := conn.Queries[queryKey]
+				if !exists {
+					//fmt.Printf("TransId %d  new query [%s] \n",transactionID,queryKey)
+					conn.Queries[queryKey] = &ModbusQuery{
+						Key:           queryKey,
+						DeviceId:      deviceId,
+						FunctionCode:  functionCode,
+						StartOffset:   startOffset,
+						NumRegisters:  numRegisters,
+						Status:        "Query",
+						TransactionID:  make([]uint16, transactionID),
+
+						}
+				} else {
+					if conq.Status != "Response" {
+
+						serr = fmt.Sprintf("Time [%s] Conn %s TransId %d  no response to query found [%s] status [%s] \n",
+						               formattedTime, connectionKey, transactionID, queryKey, conq.Status)
+						addLog(logs, connectionKey, serr)
+
+					}
+					conq.TransactionID = make([]uint16, transactionID)
+					conq.Status = "Query"
+				}
+			}
+
 		}
 	
 		// Handle response packets
 		if srcPortInList {
+			xconnectionKey := fmt.Sprintf("%s-%s:%d", ip.SrcIP, ip.DstIP, tcp.SrcPort)
+
 			if queryTime, queryExists := conn.QueryTimes[transactionID]; queryExists {
+				var functionCode uint8
+				queryKey := conn.QueryKeys[transactionID]
+				err = autoPayload(payload, 7, &functionCode)
+			    if err == nil {
+					//fmt.Printf("TransId %d  query found [%s] error code %d \n",transactionID, queryKey, functionCode)
+        		}
+
+
+				if err == nil {
+					if functionCode >= 0x80 {
+						description, exists := modbusExceptions[functionCode & 0x7f]
+						if exists {
+							//fmt.Printf("Error Code %d: %s\n", errorCode, description)
+						} else {
+							description = fmt.Sprintf("Unknown error code")
+						}
+
+						serr = fmt.Sprintf("Time [%s] Conn %s TransId %d  query found [%s] error code %d: %s\n",
+										formattedTime, xconnectionKey, transactionID, queryKey, functionCode & 0x7f, description)
+						addLog(logs, xconnectionKey, serr)
+
+					}
+					conq,exists := conn.Queries[queryKey]
+					if exists {
+						//fmt.Printf("TransId %d  query found [%s] status [%s] \n",transactionID, queryKey, conq.Status)
+						if conq.Status != "Query" {
+							serr = fmt.Sprintf("Time [%s] Conn %s TransId %d port %v Duplicate response received  \n",
+									formattedTime, xconnectionKey, tcp.DstPort, transactionID)
+							addLog(logs, xconnectionKey, serr)
+
+ 						}
+						conq.Status = "Response"
+					} else {
+						serr = fmt.Sprintf("Time [%s] Conn %s TransId %d note  no query found for [%s] \n",
+											formattedTime, xconnectionKey,transactionID, queryKey)
+						addLog(logs, xconnectionKey, serr)
+					}
+				}
 				if !queryTime.IsZero() {
 					// This is the first response to the query
 					responseTime := packet.Metadata().Timestamp.UTC()
@@ -293,20 +441,21 @@ func main() {
 				} else {
 					// Query time is zero, this is a duplicate response
 					conn.DuplicateResponses++
-					fmt.Printf("Transaction ID %d: Duplicate response received\n", transactionID)
 				}
 			}
 	
 			// Track the response time regardless
 			conn.ResponseTimes[transactionID] = packet.Metadata().Timestamp.UTC()
 		}
-        //connections[connectionKey]
-		conn.TransactionID = append(connections[connectionKey].TransactionID, transactionID)
-        // if newConnect {
-		// 	//connections[connectionKey
-		// 	conn.Connections += 1
-		// 	conn.connectionDuration =  connectionDuration
+		// if srcPortInList {
+		// 	connectionKey = fmt.Sprintf("%s-%s:%d", ip.SrcIP, ip.DstIP, tcp.SrcPort)
+		// } else {
+		// 	connectionKey = fmt.Sprintf("%s-%s:%d", ip.SrcIP, ip.DstIP, tcp.DstPort)
+
 		// }
+        //connections[connectionKey]
+		//fmt.Printf("connectionKey %s\n",connectionKey)
+		conn.TransactionID = append(connections[connectionKey].TransactionID, transactionID)
 	}
 
     // Now print all connections with their transaction IDs

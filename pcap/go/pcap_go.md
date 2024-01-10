@@ -934,3 +934,85 @@ func startTcpdump(hostname, intf, logDir string, duration, overlap time.Duration
 Error handling is simplified for brevity. Consider enhancing it based on your production needs.
 The integration with pcap_modbus.py or pcap_dnp3.py is mentioned but not implemented. You can use exec.Command to run these scripts, passing the generated pcap filenames as arguments.
 The Go program runs indefinitely. Implement additional logic if you want it to stop after a certain condition or time.
+
+
+To create a map of "query" objects for each client-to-server:port path in your `pcap_modbus.go` program, you need to define a structure for the "query" objects and then use a map to track them. Each key in the map will be a unique combination of the client IP, server IP, and server port. The value will be another map or a slice of query objects, depending on how you want to structure your data.
+
+Here's a basic outline of how you might implement this:
+
+### Step 1: Define the Query Structure
+
+Define a struct to represent a Modbus query with the required fields:
+
+```go
+type ModbusQuery struct {
+    FunctionCode  uint8
+    StartOffset   uint16
+    NumRegisters  uint16
+}
+```
+
+### Step 2: Create the Map for Tracking Queries
+
+You can use a map of slices to track these queries. Each key in the map will be a unique identifier for each path (client->server:port), and the value will be a slice of `ModbusQuery` objects:
+
+```go
+var pathQueries = make(map[string][]ModbusQuery)
+```
+
+### Step 3: Populate the Map with Query Data
+
+As you process each packet, extract the necessary Modbus information and add it to the map. You'll need to generate a unique key for each path and then append the new query data to the slice associated with that key.
+
+Here's a conceptual example:
+
+```go
+// Example function to process a packet and extract Modbus query data
+func processPacket(packet /* ... packet type ... */) {
+    // Extract client IP, server IP, and server port from the packet
+    clientIP := /* ... */
+    serverIP := /* ... */
+    serverPort := /* ... */
+
+    // Generate a unique key for the path
+    pathKey := fmt.Sprintf("%s->%s:%d", clientIP, serverIP, serverPort)
+
+    // Extract Modbus query data from the packet
+    functionCode := /* ... */
+    startOffset := /* ... */
+    numRegisters := /* ... */
+
+    // Create a new query object
+    query := ModbusQuery{
+        FunctionCode:  functionCode,
+        StartOffset:   startOffset,
+        NumRegisters:  numRegisters,
+    }
+
+    // Append the query to the slice in the map for this path
+    pathQueries[pathKey] = append(pathQueries[pathKey], query)
+}
+```
+
+### Step 4: Use the Map in Your Program
+
+You can now use this map to access query data for each client-to-server path. For example, to print all queries for a specific path:
+
+```go
+pathKey := "192.168.1.1->192.168.1.2:502" // Example path
+if queries, exists := pathQueries[pathKey]; exists {
+    for _, query := range queries {
+        fmt.Printf("Query: FunctionCode=%d, StartOffset=%d, NumRegisters=%d\n",
+            query.FunctionCode, query.StartOffset, query.NumRegisters)
+    }
+}
+```
+
+### Notes:
+
+- **Packet Processing**: You'll need to implement the actual packet processing logic to extract the Modbus query data (function code, start offset, and number of registers) from each packet.
+- **Concurrency Considerations**: If your packet processing involves concurrent operations (e.g., using goroutines), ensure proper synchronization when accessing and modifying the `pathQueries` map to avoid race conditions.
+- **Unique Path Key**: The unique key for each path is created by combining the client IP, server IP, and server port. Adjust this format according to your specific requirements and the data available in your packets.
+
+This implementation provides a basic structure to track Modbus queries per client-server path. You may need to tailor it further based on the specifics of the Modbus protocol and the details available in your pcap data.
+
