@@ -52,7 +52,7 @@ type ModbusQuery struct {
     StartOffset   uint16
     NumRegisters  uint16
 	Status        string
-	TransactionID []uint16
+	TransactionID uint16
 }
 
 // Define a struct to hold connection data and state
@@ -153,7 +153,9 @@ func extractModbusQueryData(payload []byte) (uint8, uint8, uint16, uint16, error
     var functionCode uint8
     var startOffset uint16
     var numRegisters uint16
-
+	if len(payload) < 11 {
+		return 0,0,0,0, fmt.Errorf("payload too small to hold query data")
+	}
     // Extract deviceId
     err := autoPayload(payload, 6, &deviceId)
     if err != nil {
@@ -239,7 +241,11 @@ func main() {
         ip, _ := networkLayer.(*layers.IPv4)
         tcp, _ := transportLayer.(*layers.TCP)
 		// Check if either the source or destination TCP port matches our list
+		// if srcPort is in the list then this is a response
 		srcPortInList := ports[uint16(tcp.SrcPort)]
+
+		// if dstPort is in the list then this is a query
+		// not that the response should be to the same srcport as the query
 		dstPortInList := ports[uint16(tcp.DstPort)]
 	
 		// If neither the source nor destination port is in the list, skip this packet
@@ -310,9 +316,15 @@ func main() {
         if len(payload) < 2 {
             continue // Not enough data for it to be a valid Modbus packet
         }
-       
+		var transID uint16
+		// Extract transactionID
+		err = autoPayload(payload, 0, &transID)
+		if err != nil {
+            continue
+		}
+		//fmt.Printf(" autoPayload transID is [%d]\n", transId)
         // Extract Transaction ID (First 2 bytes of payload in Modbus TCP/IP)
-        transactionID := uint16(payload[0])<<8 + uint16(payload[1])
+        transactionID := transID // uint16(payload[0])<<8 + uint16(payload[1])
 
         // If we don't have this connection yet, create it
         conn, exists := connections[connectionKey];
@@ -321,8 +333,8 @@ func main() {
                 HostIP:             ip.SrcIP.String(),
                 TargetIP:           ip.DstIP.String(),
                 TargetPort:         tcp.DstPort.String(),
-                TransactionID:      make([]uint16, 0),
 				Connections:        0,
+				TransactionID:      make([]uint16,0),
 				QueryTimes:         make(map[uint16]time.Time),
 				QueryKeys:          make(map[uint16]string),
             	ResponseTimes:      make(map[uint16]time.Time),
@@ -357,7 +369,7 @@ func main() {
 						StartOffset:   startOffset,
 						NumRegisters:  numRegisters,
 						Status:        "Query",
-						TransactionID:  make([]uint16, transactionID),
+						TransactionID:  transactionID,
 
 						}
 				} else {
@@ -368,7 +380,7 @@ func main() {
 						addLog(logs, connectionKey, serr)
 
 					}
-					conq.TransactionID = make([]uint16, transactionID)
+					conq.TransactionID = transactionID
 					conq.Status = "Query"
 				}
 			}
