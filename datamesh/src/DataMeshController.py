@@ -149,7 +149,7 @@ def get_ip(dev):
     ip_cmd = [
         "bash",
         "-c",
-        f"ip addr show {dev} | grep 'inet ' | awk '{{print $2}}' | cut -d/ -f1"
+        f"ip addr show {dev} | grep 'inet ' | awk '{{print $2}}' | head -n 1 |cut -d/ -f1"
     ]
 
     try:
