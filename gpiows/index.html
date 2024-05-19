@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket GPIO Control</title>
+</head>
+<body>
+    <h1>GPIO Control via WebSocket</h1>
+    <label for="pin">Pin:</label>
+    <input type="number" id="pin" name="pin" min="0"><br><br>
+    <button onclick="sendCommand('ON')">Turn ON</button>
+    <button onclick="sendCommand('OFF')">Turn OFF</button>
+    <p id="status"></p>
+
+    <script>
+        const ws = new WebSocket('ws://<RaspberryPi_IP>:8765');
+
+        ws.onopen = function() {
+            document.getElementById('status').innerHTML = 'Connected';
+        };
+
+        ws.onmessage = function(event) {
+            document.getElementById('status').innerHTML = event.data;
+        };
+
+        ws.onclose = function() {
+            document.getElementById('status').innerHTML = 'Disconnected';
+        };
+
+        function sendCommand(command) {
+            const pin = document.getElementById('pin').value;
+            ws.send(`${command} ${pin}`);
+        }
+    </script>
+</body>
+</html>

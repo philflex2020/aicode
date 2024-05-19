@@ -8,8 +8,8 @@ WorkingDirectory=/var/datamesh
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
-User=pi
-Group=pi
+User=pi5
+Group=pi5
 
 [Install]
 WantedBy=multi-user.target
