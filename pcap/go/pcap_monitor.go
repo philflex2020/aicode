@@ -1,16 +1,17 @@
 package main
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
+	"strings"
     // "bytes"
     // "encoding/binary"
 )
@@ -20,41 +21,57 @@ type Config struct {
 }
 
 func main() {
-	configFile := flag.String("c", "/var/log/gcom/pcap_monitor.json", "Configuration file containing the list of interfaces")
+	//configFile := flag.String("c", "/var/log/gcom/pcap_monitor.json", "Configuration file containing the list of interfaces")
     logDir := flag.String("l", "/var/log/gcom", "Directory to store log files")
+    logTime := flag.Int("t", 300, "Time for each file log files")
+
 	// Define a custom help flag
-	help := flag.Bool("h", false, "Display this help message")
+	//help := flag.Bool("h", false, "Display this help message")
+    // Rest of your main function...
+	ifList := flag.String("i", "", "Comma-separated list of interfaces")
 
 	flag.Parse()
 
-	if *help {
-		fmt.Printf("Usage of %s:\n", os.Args[0])
-		flag.PrintDefaults()
-		return
-	}
+	// if *help {
+	// 	fmt.Printf("Usage of %s:\n", os.Args[0])
+	// 	flag.PrintDefaults()
+	// 	return
+	// }
 	
-    // Rest of your main function...
-    fmt.Printf("Config file: %s\n", *configFile)
+	// Validate arguments
+    if *ifList == "" {
+        flag.Usage()
+		fmt.Printf(" For example :./pcap_monotor -i eth0,eth1  \n")
+		fmt.Printf("              ./pcap_monotor -i eth0,eth1  -t 20 -l /var/logs/mydir \n")
+        os.Exit(1)
+    }
+
+    //fmt.Printf("Config file: %s\n", *configFile)
     fmt.Printf("Log directory: %s\n", *logDir)
 	//configFile := flag.String("config_file", "/var/log/gcom/pcap_monitor.json", "Configuration file containing the list of interfaces")
-	//logDir := flag.String("logdir", "/var/log/gcom", "Directory to store log files")
-	//flag.Parse()
+	//logDir = flag.String("logdir", "/var/log/gcom", "Directory to store log files")
 
 	hostname, err := os.Hostname()
 	if err != nil {
 		fmt.Printf("Failed to get hostname: %v\n", err)
 		return
 	}
-	fmt.Printf("Hostname: %s\n", hostname)
 
-	config, err := loadConfig(*configFile)
-	if err != nil {
-		fmt.Printf("Failed to load config: %v\n", err)
+	fmt.Printf("Hostname: %s\n", hostname)
+	
+	if *ifList == "" {
+		fmt.Printf("please provide an interface list\n")
 		return
 	}
+	ifStrs := strings.Split(*ifList, ",")
+	// config, err := loadConfig(*configFile)
+	// if err != nil {
+	// 	fmt.Printf("Failed to load config: %v\n", err)
+	// 	return
+	// }
 
-	if len(config.Interfaces) == 0 {
-		fmt.Println("No interfaces found in configuration file.")
+	if len(ifStrs) == 0 {
+		fmt.Println("No interfaces found on command line.")
 		return
 	}
 
@@ -74,22 +91,22 @@ func main() {
 		os.Exit(0)
 	}()
 
-	manageCaptures(hostname, config.Interfaces, *logDir)
+	manageCaptures(hostname, ifStrs, *logDir, *logTime)
 }
 
-func loadConfig(filePath string) (Config, error) {
-	var config Config
-	data, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return config, err
-	}
-	err = json.Unmarshal(data, &config)
-	return config, err
-}
+// func loadConfig(filePath string) (Config, error) {
+// 	var config Config
+// 	data, err := ioutil.ReadFile(filePath)
+// 	if err != nil {
+// 		return config, err
+// 	}
+// 	err = json.Unmarshal(data, &config)
+// 	return config, err
+// }
 
-func manageCaptures(hostname string, interfaces []string, logDir string) {
+func manageCaptures(hostname string, interfaces []string, logDir string, logTime int) {
 	overlap := 10 * time.Second
-	duration := 30 * time.Second
+	duration := time.Duration(logTime * 60)
 
 	for _, intf := range interfaces {
 		if intf == "lo" {
@@ -104,11 +121,14 @@ func manageCaptures(hostname string, interfaces []string, logDir string) {
 func startTcpdump(hostname, intf, logDir string, duration, overlap time.Duration) {
 	for {
 		timestamp := time.Now().Format("20060102_150405")
+		hostname = "mything"
+		logDir = "/tmp/pcap"
 		pcapFilename := filepath.Join(logDir, fmt.Sprintf("%s_%s_%s.pcap", hostname, intf, timestamp))
 		logFilename := filepath.Join(logDir, fmt.Sprintf("%s_%s_%s.log", hostname, intf, timestamp))
 
 		fmt.Printf("Starting tcpdump on %s, output file: %s\n", intf, pcapFilename)
-		cmd := exec.Command("tcpdump", "-i", intf, "-w", pcapFilename)
+		//cmd := exec.Command("timeout", "60", "tcpdump", "-i", intf, "-w", pcapFilename)
+		cmd := exec.Command("sh", "run_tcp.sh", "60", intf, pcapFilename)
 		logFile, err := os.Create(logFilename)
 		if err != nil {
 			fmt.Printf("Failed to create log file: %v\n", err)

@@ -1,8 +1,24 @@
 package main
 
+// 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+//     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+//     inet 127.0.0.1/8 scope host lo
+//        valid_lft forever preferred_lft forever
+// 2: tunl0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN group default qlen 1000
+//     link/ipip 0.0.0.0 brd 0.0.0.0
+// 3: sit0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN group default qlen 1000
+//     link/sit 0.0.0.0 brd 0.0.0.0
+// 15: eth0@if16: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+//     link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+//     inet 172.17.0.3/16 brd 172.17.255.255 scope global eth0
+//        valid_lft forever preferred_lft forever
+//ip address | grep eth | grep UP | cut -d '@' -f1 | cut -d ' ' -f2
+//timeout  300 tcpdump -i ethxxx0  -w /tmp/ethxxx0_pcap_01_12_2023_09_18 &
+//timeout  300 tcpdump -i ethxxx1  -w /tmp/ethxxx1_pcap_01_12_2023_09_18 &
 import (
     "fmt"
     "log"
+	"flag"
     "os"
     "strconv"
     "strings"
@@ -19,7 +35,10 @@ import (
     "github.com/google/gopacket/layers"
     "github.com/google/gopacket/pcap"
 )
+
+// TODO allow list of ports and/or host ip
 // ./pcap_modbus ../data/ess_capture.pcap "502,1024"
+//./pcap_modbus -pcap myfile.pcap  -hosts "192.168.1.1,192.168.1.2"
 // go build pcap_modbus.go
 // Define a struct to hold our connection data
 //sudo apt-get install libpcap-dev
@@ -88,9 +107,14 @@ type ConnectionResult struct {
     AverageResponseTime     time.Duration `json:"average_response_time"`
     MaximumResponseTime     time.Duration `json:"maximum_response_time"`
     MinimumResponseTime     time.Duration `json:"minimum_response_time"`
-	Queries                 map[string]*ModbusQuery
+	Queries                 map[string]*ModbusQuery `json:"Queries,omitempty"`
 }
 
+type Result struct {
+    Hosts       []string     `json:"hosts"`
+    Ports       []uint16     `json:"ports"`
+    Connections []ConnectionResult `json:"connections"`
+}
 // Map to track ongoing connection attempts
 var connectionAttempts = make(map[string]*ConnectionAttempt)
     // Prepare a map to hold our connections
@@ -182,7 +206,90 @@ func extractModbusQueryData(payload []byte) (uint8, uint8, uint16, uint16, error
     return deviceId, functionCode, startOffset, numRegisters, nil
 }
 
+// contains checks if a string is present in a slice
+func contains(slice []string, item string) bool {
+    for _, s := range slice {
+        if s == item {
+            return true
+        }
+    }
+    return false
+}
 func main() {
+	// Set up command-line flags
+    pcapFile := flag.String("pcap", "", "Path to the pcap file")
+    hostList := flag.String("hosts", "", "Comma-separated list of hosts (use with -mode=h)")
+    portList := flag.String("ports", "", "Comma-separated list of ports (use with -mode=p)")
+    //mode := flag.String("mode", "", "Mode of operation: 'h' for hosts, 'p' for ports")
+    flag.Parse()// Validate arguments
+
+	// Validate arguments
+    if *pcapFile == "" || (*hostList == "" && *portList == "") {
+        flag.Usage()
+		fmt.Printf(" For example :./pcap_modbus -pcap ../data/tcpdump.log_2023-09-21_16_52_16.pcap -hosts 192.168.114.5,192.168.114.58 \n")
+		fmt.Printf("              ./pcap_modbus -pcap ../data/tcpdump.log_2023-09-21_16_52_16.pcap -ports 502,1024 \n")
+        os.Exit(1)
+    }
+
+	// Determine the mode based on the provided arguments
+    useHosts := *hostList != ""
+    usePorts := *portList != ""
+
+	// Extract base filename without extension
+    baseFilename := strings.TrimSuffix(*pcapFile, filepath.Ext(*pcapFile))
+
+	
+    // if len(os.Args) != 4 {
+    //     log.Fatalf("Usage: %s <pcap file> h <host list> || p <port list>", os.Args[0])
+    // }
+	// // Extract base filename without extension
+	// baseFilename := strings.TrimSuffix(os.Args[1], filepath.Ext(os.Args[1]))
+
+	// Create JSON filename
+	jsonFilename := baseFilename + ".json"
+	
+	ports := make(map[uint16]bool)
+	hostStrs := []string{}
+	hosts := []string{}
+	
+    //hostOrPort := os.Args[2]
+	//var useHosts bool
+	// if hostOrPort == "h" {
+	// 	hostStrs = strings.Split(os.Args[3], ",")
+	// 	useHosts = true
+	// } else {
+	// 	// Parse ports argument into a slice of integers
+	// 	portStrs := strings.Split(os.Args[3], ",")
+	// 	for _, p := range portStrs {
+	// 		port, err := strconv.Atoi(p)
+	// 		if err != nil {
+	// 			log.Fatalf("Invalid port %s: %s", p, err)
+	// 		}
+	// 		ports[uint16(port)] = true
+	// 	}
+	// }
+	if useHosts {
+        hostStrs = strings.Split(*hostList, ",")
+    } else if usePorts {
+        // Parse ports argument into a slice of integers
+        portStrs := strings.Split(*portList, ",")
+        for _, p := range portStrs {
+            port, err := strconv.Atoi(p)
+            if err != nil {
+                log.Fatalf("Invalid port %s: %s", p, err)
+            }
+            ports[uint16(port)] = true
+        }
+    }
+
+    // Open the pcap file
+    handle, err := pcap.OpenOffline(*pcapFile)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer handle.Close()
+
+
 	modbusExceptions = map[uint8]string{
 		1: "Illegal Function",
 		2: "Illegal Data Address",
@@ -195,36 +302,6 @@ func main() {
 		9: "Gateway Path Unavailable",
 		10: "Gateway Target Device Failed to Respond",
 	}
-	
-    if len(os.Args) != 3 {
-        log.Fatalf("Usage: %s <pcap file> <port list>", os.Args[0])
-    }
-	// Extract base filename without extension
-	baseFilename := strings.TrimSuffix(os.Args[1], filepath.Ext(os.Args[1]))
-
-	// Create JSON filename
-	jsonFilename := baseFilename + ".json"
-
-
-    // Parse ports argument into a slice of integers
-    portStrs := strings.Split(os.Args[2], ",")
-    ports := make(map[uint16]bool)
-    for _, p := range portStrs {
-        port, err := strconv.Atoi(p)
-        if err != nil {
-            log.Fatalf("Invalid port %s: %s", p, err)
-        }
-        ports[uint16(port)] = true
-    }
-
-
-    // Open the pcap file
-    handle, err := pcap.OpenOffline(os.Args[1])
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer handle.Close()
-
 
     // Loop through packets in file
     packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
@@ -240,6 +317,22 @@ func main() {
         }
         ip, _ := networkLayer.(*layers.IPv4)
         tcp, _ := transportLayer.(*layers.TCP)
+
+		if useHosts == true {
+			if contains(hostStrs, ip.SrcIP.String()) {
+				if _,exists := ports[uint16(tcp.DstPort)]; exists {
+
+				} else {
+					fmt.Printf( " adding port %d  to ports list \n", uint16(tcp.DstPort))
+					ports[uint16(tcp.DstPort)] = true	
+				}
+
+			}
+		} else {
+			for _,h := range hostStrs {
+				hosts=append(hosts, h)
+			}
+		}
 		// Check if either the source or destination TCP port matches our list
 		// if srcPort is in the list then this is a response
 		srcPortInList := ports[uint16(tcp.SrcPort)]
@@ -252,6 +345,7 @@ func main() {
 		if !srcPortInList && !dstPortInList {
 			continue
 		}
+
 		timestamp := packet.Metadata().Timestamp
 		/// Format the timestamp. You can change the layout string to your desired format
 		formattedTime := timestamp.Format("2006-01-02 15:04:05.00000 MST")
@@ -260,6 +354,9 @@ func main() {
 
 		if dstPortInList {
 			// If destination port is in the list
+			if !contains(hosts, ip.SrcIP.String()) {
+				hosts = append(hosts, ip.SrcIP.String())
+			}
 			connectionKey = fmt.Sprintf("%s-%s:%d", ip.SrcIP, ip.DstIP, tcp.DstPort)
 		} else {
 			// If source port is in the list
@@ -470,6 +567,9 @@ func main() {
 		conn.TransactionID = append(connections[connectionKey].TransactionID, transactionID)
 	}
 
+	var portsSlice []uint16
+	var hostsSlice []string
+
     // Now print all connections with their transaction IDs
     // for _, conn := range connections {
     //     fmt.Printf("%s->%s:%s - Transaction IDs: %v\n", conn.HostIP, conn.TargetIP, conn.TargetPort, conn.TransactionID)
@@ -495,6 +595,8 @@ func main() {
 		fmt.Printf("     Average Response Time: %s\n",    avgResponseTime)
 		fmt.Printf("     Maximum Response Time: %s\n",    conn.MaxResponseTime)
 		fmt.Printf("     Minimum Response Time: %s\n",    conn.MinResponseTime)
+
+
 		result := ConnectionResult{
 			Key: key,
 			Connections: conn.Connections,
@@ -509,9 +611,29 @@ func main() {
 		}
 		allResults = append(allResults, result)
     }
+	// After the main logic
+	fmt.Println("List of ports:")
+	for port := range ports {
+			fmt.Println(port)
+	}
 
+	fmt.Println("List of hosts:")
+	for h := range hosts {
+		fmt.Println(hosts[h])
+		hostsSlice = append(hostsSlice, hosts[h])
+    }
+
+	for port := range ports {
+		portsSlice = append(portsSlice, port)
+	}
+
+	result := Result{
+		Hosts: hostsSlice,
+		Ports: portsSlice,
+		Connections: allResults,
+	}
 	// Convert the slice to JSON
-	jsonData, err := json.MarshalIndent(allResults, "", "    ")
+	jsonData, err := json.MarshalIndent(result, "", "    ")
 	if err != nil {
     	log.Fatalf("Error converting results to JSON: %v", err)
 	}
