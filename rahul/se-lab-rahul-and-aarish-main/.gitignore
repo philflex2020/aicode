@@ -1,0 +1,12 @@
+*.o
+se
+test-se
+csim
+test-csim
+test-hw
+*.txt
+*.out
+*.log
+.vscode
+*.json
+.clang-format

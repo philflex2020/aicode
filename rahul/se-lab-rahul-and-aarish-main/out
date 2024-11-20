@@ -1,0 +1,80 @@
+Machine state checkpoint after 22 cycles:
+	Processor state:
+		Program Counter: 400158
+		Stack Pointer: 7fffffff8
+		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+		General Purpose Register File state:
+			Register  X0: ffff
+			Register  X1: ffff0000
+			Register  X2: ffff00000000
+			Register  X3: ffff000000000000
+			Register  X4: 1
+			Register  X5: ffffffff
+			Register  X6: ffffffff00000000
+			Register  X7: ffffffffffffffff
+			Register  X8: 0
+			Register  X9: 0
+			Register X10: 0
+			Register X11: 0
+			Register X12: 0
+			Register X13: 0
+			Register X14: 0
+			Register X15: 0
+			Register X16: 0
+			Register X17: 0
+			Register X18: 0
+			Register X19: 0
+			Register X20: 0
+			Register X21: 0
+			Register X22: 0
+			Register X23: 0
+			Register X24: 0
+			Register X25: 0
+			Register X26: 0
+			Register X27: 0
+			Register X28: 0
+			Register X29: 0
+			Register X30: 0
+		Status: INS
+	Memory state:
+		Text segment:
+			Address 0x400000: 0x10102464c457f
+			Address 0x400010: 0x100b70002
+			Address 0x400018: 0x400110
+			Address 0x400020: 0x40
+			Address 0x400028: 0x380
+			Address 0x400030: 0x38004000000000
+			Address 0x400038: 0x6000700400003
+			Address 0x400040: 0x500000001
+			Address 0x400050: 0x400000
+			Address 0x400058: 0x400000
+			Address 0x400060: 0x154
+			Address 0x400068: 0x154
+			Address 0x400070: 0x10000
+			Address 0x400078: 0x400000004
+			Address 0x400080: 0xe8
+			Address 0x400088: 0x4000e8
+			Address 0x400090: 0x4000e8
+			Address 0x400098: 0x24
+			Address 0x4000a0: 0x24
+			Address 0x4000a8: 0x4
+			Address 0x4000b0: 0x66474e551
+			Address 0x4000e0: 0x10
+			Address 0x4000e8: 0x1400000004
+			Address 0x4000f0: 0x554e4700000003
+			Address 0x4000f8: 0x2b1769a5a498668f
+			Address 0x400100: 0x96c85db6142b2930
+			Address 0x400108: 0xb5cf42bc
+			Address 0x400110: 0xd2bfffe1d29fffe0
+			Address 0x400118: 0xd2ffffe3d2dfffe2
+			Address 0x400120: 0xab010005d2800024
+			Address 0x400128: 0xab030046d503201f
+			Address 0x400130: 0xd503201fd503201f
+			Address 0x400138: 0xab0600a7d503201f
+			Address 0x400140: 0xd503201fd503201f
+			Address 0x400148: 0xab070088d503201f
+			Address 0x400150: 0xd65f03c0
+		Data segment:
+		Heap:
+		Stack:
+

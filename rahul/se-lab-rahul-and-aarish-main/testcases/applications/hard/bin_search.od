@@ -1,0 +1,95 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <binary_search>:
+   0:	d2800003 	mov	x3, #0x0                   	// #0
+   4:	d2800004 	mov	x4, #0x0                   	// #0
+   8:	d1000424 	sub	x4, x1, #0x1
+
+000000000000000c <.loop>:
+   c:	eb04007f 	cmp	x3, x4
+  10:	5400024c 	b.gt	58 <.end>
+  14:	d2800005 	mov	x5, #0x0                   	// #0
+  18:	cb030085 	sub	x5, x4, x3
+  1c:	9341fca5 	asr	x5, x5, #1
+  20:	8b050065 	add	x5, x3, x5
+  24:	8b050806 	add	x6, x0, x5, lsl #2
+  28:	f84000c7 	ldur	x7, [x6]
+  2c:	f2407ce7 	ands	x7, x7, #0xffffffff
+  30:	eb0200ff 	cmp	x7, x2
+  34:	54000080 	b.eq	44 <.returnMid>  // b.none
+  38:	540000ca 	b.ge	50 <.decRight>  // b.tcont
+  3c:	910004a3 	add	x3, x5, #0x1
+  40:	17fffff3 	b	c <.loop>
+
+0000000000000044 <.returnMid>:
+  44:	cb000000 	sub	x0, x0, x0
+  48:	8b050000 	add	x0, x0, x5
+  4c:	d65f03c0 	ret
+
+0000000000000050 <.decRight>:
+  50:	d10004a4 	sub	x4, x5, #0x1
+  54:	17ffffee 	b	c <.loop>
+
+0000000000000058 <.end>:
+  58:	d2800000 	mov	x0, #0x0                   	// #0
+  5c:	d1000400 	sub	x0, x0, #0x1
+  60:	d65f03c0 	ret
+  64:	d503201f 	nop
+
+0000000000000068 <is_same_tree>:
+  68:	a9be7bfd 	stp	x29, x30, [sp, #-32]!
+  6c:	f80103e9 	stur	x9, [sp, #16]
+  70:	f80183ea 	stur	x10, [sp, #24]
+  74:	f100001f 	cmp	x0, #0x0
+  78:	54000480 	b.eq	108 <.is_second_zero>  // b.none
+  7c:	f100003f 	cmp	x1, #0x0
+  80:	540003a0 	b.eq	f4 <.is_other_zero>  // b.none
+  84:	d2800009 	mov	x9, #0x0                   	// #0
+  88:	8b000129 	add	x9, x9, x0
+  8c:	aa000020 	orr	x0, x1, x0
+  90:	b4000280 	cbz	x0, e0 <.is_true>
+  94:	d280000a 	mov	x10, #0x0                   	// #0
+  98:	8b01014a 	add	x10, x10, x1
+  9c:	f8410122 	ldur	x2, [x9, #16]
+  a0:	f841002d 	ldur	x13, [x1, #16]
+  a4:	eb0d005f 	cmp	x2, x13
+  a8:	54000121 	b.ne	cc <.is_false>  // b.any
+  ac:	f8400120 	ldur	x0, [x9]
+  b0:	f8400141 	ldur	x1, [x10]
+  b4:	94000000 	bl	68 <is_same_tree>
+  b8:	b40000a0 	cbz	x0, cc <.is_false>
+  bc:	f8408141 	ldur	x1, [x10, #8]
+  c0:	f8408120 	ldur	x0, [x9, #8]
+  c4:	94000000 	bl	68 <is_same_tree>
+  c8:	b50000c0 	cbnz	x0, e0 <.is_true>
+
+00000000000000cc <.is_false>:
+  cc:	d2800000 	mov	x0, #0x0                   	// #0
+  d0:	f84103e9 	ldur	x9, [sp, #16]
+  d4:	f84183ea 	ldur	x10, [sp, #24]
+  d8:	a8c27bfd 	ldp	x29, x30, [sp], #32
+  dc:	d65f03c0 	ret
+
+00000000000000e0 <.is_true>:
+  e0:	d2800020 	mov	x0, #0x1                   	// #1
+  e4:	f84103e9 	ldur	x9, [sp, #16]
+  e8:	f84183ea 	ldur	x10, [sp, #24]
+  ec:	a8c27bfd 	ldp	x29, x30, [sp], #32
+  f0:	d65f03c0 	ret
+
+00000000000000f4 <.is_other_zero>:
+  f4:	f100041f 	cmp	x0, #0x1
+  f8:	d2800000 	mov	x0, #0x0                   	// #0
+  fc:	54fffe80 	b.eq	cc <.is_false>  // b.none
+ 100:	d2800020 	mov	x0, #0x1                   	// #1
+ 104:	54fffee1 	b.ne	e0 <.is_true>  // b.any
+
+0000000000000108 <.is_second_zero>:
+ 108:	f100003f 	cmp	x1, #0x0
+ 10c:	54fffea0 	b.eq	e0 <.is_true>  // b.none
+ 110:	d2800000 	mov	x0, #0x0                   	// #0
+ 114:	54fffdc1 	b.ne	cc <.is_false>  // b.any

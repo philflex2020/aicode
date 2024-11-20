@@ -1,0 +1,68 @@
+
+temp.o:     file format elf64-littleaarch64
+
+
+Disassembly of section .text:
+
+0000000000000000 <add_two_nums>:
+   0:	8b010000 	add	x0, x0, x1
+   4:	d503201f 	nop
+   8:	d503201f 	nop
+   c:	d503201f 	nop
+  10:	d65f03c0 	ret
+  14:	d503201f 	nop
+  18:	d503201f 	nop
+  1c:	d503201f 	nop
+
+0000000000000020 <start>:
+  20:	a9bf7bfd 	stp	x29, x30, [sp, #-16]!
+  24:	d503201f 	nop
+  28:	d503201f 	nop
+  2c:	d503201f 	nop
+  30:	910003fd 	mov	x29, sp
+  34:	d503201f 	nop
+  38:	d503201f 	nop
+  3c:	d503201f 	nop
+  40:	d2807d01 	mov	x1, #0x3e8                 	// #1000
+  44:	d503201f 	nop
+  48:	d503201f 	nop
+  4c:	d503201f 	nop
+  50:	d2800c80 	mov	x0, #0x64                  	// #100
+  54:	d503201f 	nop
+  58:	d503201f 	nop
+  5c:	d503201f 	nop
+  60:	94000000 	bl	0 <add_two_nums>
+  64:	d503201f 	nop
+  68:	d503201f 	nop
+  6c:	d503201f 	nop
+  70:	92800001 	mov	x1, #0xffffffffffffffff    	// #-1
+  74:	d503201f 	nop
+  78:	d503201f 	nop
+  7c:	d503201f 	nop
+  80:	f9000020 	str	x0, [x1]
+  84:	d503201f 	nop
+  88:	d503201f 	nop
+  8c:	d503201f 	nop
+  90:	a8c17bfd 	ldp	x29, x30, [sp], #16
+  94:	d503201f 	nop
+  98:	d503201f 	nop
+  9c:	d503201f 	nop
+  a0:	d65f03c0 	ret
+  a4:	d503201f 	nop
+  a8:	d503201f 	nop
+  ac:	d503201f 	nop
+
+Disassembly of section .comment:
+
+0000000000000000 <.comment>:
+   0:	43434700 	.inst	0x43434700 ; undefined
+   4:	5528203a 	.inst	0x5528203a ; undefined
+   8:	746e7562 	.inst	0x746e7562 ; undefined
+   c:	33312075 	.inst	0x33312075 ; undefined
+  10:	302e322e 	adr	x14, 5c655 <start+0x5c635>
+  14:	7533322d 	.inst	0x7533322d ; undefined
+  18:	746e7562 	.inst	0x746e7562 ; undefined
+  1c:	20293475 	.inst	0x20293475 ; undefined
+  20:	322e3331 	orr	w17, w25, #0x7ffc0000
+  24:	Address 0x24 is out of bounds.
+
