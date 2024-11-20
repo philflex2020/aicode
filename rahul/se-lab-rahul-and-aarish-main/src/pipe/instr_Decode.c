@@ -53,7 +53,7 @@ static comb_logic_t generate_DXMW_control(opcode_t op,
 
     X_sigs->valb_sel = (op == OP_ADDS_RR || op == OP_CMN_RR || op == OP_SUBS_RR || 
                         op == OP_CMP_RR || op == OP_ORR_RR || op == OP_EOR_RR || 
-                        op == OP_ANDS_RR || op == OP_TST_RR);
+                        op == OP_ANDS_RR || op == OP_TST_RR || op == OP_MVN);
 
     X_sigs->set_flags = (op == OP_ADDS_RR || op == OP_SUBS_RR || op == OP_ANDS_RR || 
                          op == OP_TST_RR || op == OP_CMN_RR);
@@ -63,7 +63,8 @@ static comb_logic_t generate_DXMW_control(opcode_t op,
 
     W_sigs->dst_sel = (op == OP_BL);
     W_sigs->wval_sel = (op == OP_LDUR);
-    W_sigs->w_enable = !(op == OP_NOP || op == OP_RET || op == OP_HLT || op == OP_B || op == OP_B_COND);
+    W_sigs->w_enable = !(op == OP_NOP || op == OP_RET || op == OP_HLT || op == OP_B || op == OP_B_COND || op == OP_CMN_RR || op == OP_CMP_RR
+                            || op == OP_TST_RR || op == OP_STUR || op == OP_ERROR);
 
     return;
 }
@@ -89,7 +90,7 @@ static void extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
             break;
 
         case OP_ADRP:
-            *imm = bitfield_s64(insnbits, 5, 19); // check manual
+            *imm = (bitfield_s64(insnbits, 5, 19) << 2 | bitfield_u32(insnbits, 29, 2)) << 12; // check manual
             break;
 
         case OP_ADD_RI:
@@ -145,6 +146,7 @@ static void decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
             *ALU_op = MINUS_OP; 
             break;
         case OP_ANDS_RR: 
+        case OP_TST_RR:
             *ALU_op = AND_OP; 
             break;
         case OP_ORR_RR: 
@@ -165,6 +167,9 @@ static void decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         case OP_MOVK: 
         case OP_MOVZ: 
             *ALU_op = MOV_OP; 
+            break;
+        case OP_MVN:
+            *ALU_op = INV_OP;
             break;
         default: 
             *ALU_op = PASS_A_OP; 
@@ -204,16 +209,17 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
     if (op == OP_LDUR || op == OP_STUR || op == OP_RET || op == OP_ADD_RI || 
         op == OP_ADDS_RR || op == OP_CMN_RR || op == OP_SUB_RI || 
         op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_ORR_RR || 
-        op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_TST_RR) {
+        op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_TST_RR || op == OP_MVN) {
         *src1 = bitfield_u32(insnbits, 5, 5);
     } else {
         *src1 = XZR_NUM;
     }
 
+
     // Extract src2
     if (op == OP_ADDS_RR || op == OP_CMN_RR || op == OP_SUBS_RR || 
         op == OP_CMP_RR || op == OP_ORR_RR || op == OP_EOR_RR || 
-        op == OP_ANDS_RR || op == OP_TST_RR) {
+        op == OP_ANDS_RR || op == OP_TST_RR || op == OP_MVN) {
         *src2 = bitfield_u32(insnbits, 16, 5);
     } else {
         *src2 = XZR_NUM;
@@ -225,13 +231,17 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
         op == OP_CMP_RR || op == OP_ORR_RR || op == OP_EOR_RR || 
         op == OP_ANDS_RR || op == OP_ADRP || op == OP_MOVZ ||
         op == OP_MOVK || op == OP_LSL || op == OP_LSR || 
-        op == OP_ASR || op == OP_MVN || op == OP_UBFM) {
+        op == OP_ASR || op == OP_MVN || op == OP_UBFM || OP_MVN) {
         *dst = bitfield_u32(insnbits, 0, 5);
    } else {
         *dst = XZR_NUM;
    }
 
-   if (*src1 == SP_NUM && !(op == OP_LDUR || op == OP_STUR || op == OP_ADD_RI || op == OP_SUB_RI)) {
+   if (op == OP_STUR) {
+    *src2 = bitfield_u32(insnbits, 0, 5);
+   }
+
+   if (*src1 == SP_NUM && !(op == OP_LDUR || op == OP_STUR || op == OP_ADD_RI || op == OP_SUB_RI || op == OP_MVN || op == OP_RET)) {
     *src1 = XZR_NUM;
    }
 
@@ -242,6 +252,10 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
    if (*dst == SP_NUM && !(op == OP_ADD_RI || op == OP_SUB_RI)) {
     *dst = XZR_NUM;
    }
+
+   if (op == OP_MOVK) {
+        *src1 = *dst;
+    }
 
     return;
 }
@@ -295,6 +309,18 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // Read from register file
     uint64_t val_a = 0, val_b = 0;
     regfile(src1, src2, W_out->dst, W_wval, W_out->W_sigs.w_enable, &out->val_a, &out->val_b);
+
+    if (op == OP_ADRP) {
+        out->val_a = in->multipurpose_val.adrp_val;
+    }
+
+    if (op == OP_MOVZ) {
+        out->val_a = 0;
+    }
+
+    if (op == OP_B_COND) {
+        out->cond = bitfield_u32(in->insnbits, 0, 4);
+    }
 
     /*call extract regs and after that call regfile using the 2 uint8_t parameters you passed in & set in the extract_regs call as the 
     first 2 parameters of regfile and &out->val_a / &out->val_b for val_a and val_b*/

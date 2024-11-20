@@ -49,7 +49,7 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     bool dmem_err = false;
 
     // Perform memory operations if needed
-    if (in->M_sigs.dmem_read || in->M_sigs.dmem_write) {
+    // if (in->M_sigs.dmem_read || in->M_sigs.dmem_write) {
         dmem(
             in->val_ex,           // Address to access
             in->val_b,            // Data to write
@@ -58,7 +58,7 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
             &dmem_rval,           // Data read from memory
             &dmem_err             // Error flag
         );
-    }
+    // }
 
     // Handle memory access errors
     if (dmem_err) {
