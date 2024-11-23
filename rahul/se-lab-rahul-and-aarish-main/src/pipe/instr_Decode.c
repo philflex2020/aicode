@@ -56,7 +56,7 @@ static comb_logic_t generate_DXMW_control(opcode_t op,
                         op == OP_ANDS_RR || op == OP_TST_RR || op == OP_MVN);
 
     X_sigs->set_flags = (op == OP_ADDS_RR || op == OP_SUBS_RR || op == OP_ANDS_RR || 
-                         op == OP_TST_RR || op == OP_CMN_RR);
+                         op == OP_TST_RR || op == OP_CMN_RR || op == OP_CMP_RR);
 
     M_sigs->dmem_read = (op == OP_LDUR);
     M_sigs->dmem_write = (op == OP_STUR);
@@ -95,11 +95,17 @@ static void extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
 
         case OP_ADD_RI:
         case OP_SUB_RI:
-        case OP_LSL:
-        case OP_LSR:
         case OP_UBFM:
-        case OP_ASR:
             *imm = bitfield_u32(insnbits, 10, 12);
+            break;
+
+        case OP_LSR:
+        case OP_ASR:
+            *imm = bitfield_u32(insnbits, 16, 6);
+            break;
+        
+        case OP_LSL:
+            *imm = 63 - bitfield_u32(insnbits, 10, 6);
             break;
 
         case OP_B:
@@ -209,10 +215,11 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
     if (op == OP_LDUR || op == OP_STUR || op == OP_RET || op == OP_ADD_RI || 
         op == OP_ADDS_RR || op == OP_CMN_RR || op == OP_SUB_RI || 
         op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_ORR_RR || 
-        op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_TST_RR || op == OP_MVN) {
+        op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_TST_RR || op == OP_LSL || op == OP_LSR) {
         *src1 = bitfield_u32(insnbits, 5, 5);
     } else {
         *src1 = XZR_NUM;
+        // printf("src1 = %d", *src1);
     }
 
 
@@ -241,7 +248,8 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
     *src2 = bitfield_u32(insnbits, 0, 5);
    }
 
-   if (*src1 == SP_NUM && !(op == OP_LDUR || op == OP_STUR || op == OP_ADD_RI || op == OP_SUB_RI || op == OP_MVN || op == OP_RET)) {
+   if (*src1 == SP_NUM && !(op == OP_LDUR || op == OP_STUR || op == OP_ADD_RI || op == OP_SUB_RI || op == OP_MVN || op == OP_RET ||
+        op == OP_LSL || op == OP_LSR)) {
     *src1 = XZR_NUM;
    }
 
@@ -251,6 +259,9 @@ comb_logic_t extract_regs(uint32_t insnbits, opcode_t op, uint8_t *src1,
 
    if (*dst == SP_NUM && !(op == OP_ADD_RI || op == OP_SUB_RI)) {
     *dst = XZR_NUM;
+   }
+   if (op == OP_BL) {
+    *dst = 30;
    }
 
    if (op == OP_MOVK) {
@@ -309,6 +320,16 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // Read from register file
     uint64_t val_a = 0, val_b = 0;
     regfile(src1, src2, W_out->dst, W_wval, W_out->W_sigs.w_enable, &out->val_a, &out->val_b);
+    if (dst == XZR_NUM) {
+        out->W_sigs.w_enable = false;
+    }
+    //Comment this call to forward_reg to get correctness for week 2
+    forward_reg(src1, src2, X_out->dst,
+                M_out->dst, W_out->dst, M_in->val_ex,
+                M_out->val_ex, W_in->val_mem,
+                W_out->val_ex, W_out->val_mem, M_out->W_sigs.wval_sel,
+                W_out->W_sigs.wval_sel, X_out->W_sigs.w_enable, M_out->W_sigs.w_enable, 
+                W_out->W_sigs.w_enable, &out->val_a, &out->val_b);
 
     if (op == OP_ADRP) {
         out->val_a = in->multipurpose_val.adrp_val;
@@ -316,6 +337,10 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
     if (op == OP_MOVZ) {
         out->val_a = 0;
+    }
+
+    if (op == OP_MOVK) {
+        out->val_a = out->val_a & (~(((uint64_t)0xFFFF) << out->val_hw));
     }
 
     if (op == OP_B_COND) {

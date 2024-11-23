@@ -94,6 +94,12 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
     return;
   }
 
+  if (op == OP_BL) {
+    int64_t offset = bitfield_s64(insnbits, 0, 26) << 2; // decode branch offset
+    *predicted_PC = current_PC + offset;
+    return;
+  }
+
   // Base case
   *predicted_PC = *seq_succ; // move to next PC
   
@@ -112,9 +118,9 @@ static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
   if (*op == OP_UBFM) {
     int32_t immr = bitfield_u32(insnbits, 16, 6);
     int32_t imms = bitfield_u32(insnbits, 10, 6);
-    if (imms == 31 && immr == 0) {
+    if (imms != 63) {//&& immr == 0) {
       *op = OP_LSL; // Alias for LSL
-    } else if (imms == 31 && immr != 0) {
+    } else if (imms == 63) { //&& immr != 0) {
       *op = OP_LSR; // Alias for LSR
     } else {
       assert(0); // Invalid UBFM usage

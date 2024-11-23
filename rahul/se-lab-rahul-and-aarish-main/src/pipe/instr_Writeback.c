@@ -40,9 +40,9 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     W_wval = in->W_sigs.wval_sel ? in->val_mem : in->val_ex;
 
     // Write back to register file if enabled and not writing to XZR
-    if (in->W_sigs.w_enable && in->dst != XZR_NUM) {
-        guest.proc->GPR[in->dst] = W_wval;
-    }
+    // if (in->W_sigs.w_enable && in->dst != XZR_NUM) {
+        // guest.proc->GPR[in->dst] = W_wval;
+    // }
 
     return;
 }

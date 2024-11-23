@@ -34,53 +34,42 @@ regfile(uint8_t src1, uint8_t src2, uint8_t dst, uint64_t val_w,
         bool w_enable,
         uint64_t *val_a, uint64_t *val_b)
 {
-    src1 &= 0x1F;
-    src2 &= 0x1F;
-    dst &= 0x1F;
+    // src1 &= 0x1F;
+    // src2 &= 0x1F;
+    // dst &= 0x1F;
 
     // Write operation
-    if (w_enable)
-    {
-        if (dst < NUM_GPRS && dst != XZR_NUM)
-        { // Prevent writing to XZR
+    if (w_enable) {
+        if (dst < 31) {
             guest.proc->GPR[dst] = val_w;
-        }
-        // Optionally, handle writes to XZR (no effect) or invalid registers
-        else if (dst >= NUM_GPRS)
-        {
-            fprintf(stderr, "Error: Invalid destination register X%d in regfile.\n", dst);
-            // Handle error as per your emulator's design
+        } else if (dst == 31) {
+            guest.proc->SP = val_w;
+            // fprintf(stderr, "Error: Invalid destination register X%d in regfile.\n", dst);
         }
     }
 
     // Read operations
     // Read src1
-    if (src1 >= NUM_GPRS)
-    {
-        *val_a = 0;
-        fprintf(stderr, "Warning: Invalid source register X%d. Treated as XZR.\n", src1);
-    }
-    else if (src1 == XZR_NUM)
-    {
+    // printf("src1 = %d", src1);
+    if (src1 == 31) {
+        *val_a = guest.proc->SP;
+        // fprintf(stderr, "Warning: Invalid source register X%d. Treated as XZR.\n", src1);
+    } else if (src1 >= 32) {
         *val_a = 0; // XZR always reads as zero
-    }
-    else
-    {
+    } else {
+        // printf("enetered else");
         *val_a = guest.proc->GPR[src1];
     }
 
     // Read src2
-    if (src2 >= NUM_GPRS)
-    {
+    if (src2 >= NUM_GPRS) {
         *val_b = 0;
         fprintf(stderr, "Warning: Invalid source register X%d. Treated as XZR.\n", src2);
     }
-    else if (src2 == XZR_NUM)
-    {
+    else if (src2 == XZR_NUM) {
         *val_b = 0; // XZR always reads as zero
     }
-    else
-    {
+    else {
         *val_b = guest.proc->GPR[src2];
     }
 }
@@ -94,8 +83,7 @@ cond_holds(cond_t cond, uint8_t ccval)
     bool C = (ccval & 0x2) != 0;
     bool V = (ccval & 0x1) != 0;
 
-    switch (cond)
-    {
+    switch (cond) {
     case C_EQ:
         return Z; // Equal
     case C_NE:
@@ -136,8 +124,7 @@ cond_holds(cond_t cond, uint8_t ccval)
 
 comb_logic_t
 alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw, alu_op_t ALUop, bool set_flags, cond_t cond,
-    uint64_t *val_e, bool *cond_val, uint8_t *nzcv)
-{
+    uint64_t *val_e, bool *cond_val, uint8_t *nzcv) {
     uint64_t res = 0xFEEDFACEDEADBEEF; // To make it easier to detect errors.
     // Student TODO: Handle arithmetic/logical operations here. Refer to the alu_op_t enum
     bool N = false, Z = false, C = false, V = false;
