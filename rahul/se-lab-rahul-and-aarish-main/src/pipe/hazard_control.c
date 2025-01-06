@@ -88,33 +88,50 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
   
     bool stall_fetch = false;
     bool stall_decode = false;
+    bool stall_memory = false;
     bool bubble_execute = false;
     bool bubble_decode = false;
 
-    if (W_out->status != STAT_AOK || W_out->status != STAT_BUB) {
+  if (D_out->status == STAT_INS ) {
+      stall_fetch = true;
+  } else if (W_out->status != STAT_AOK || W_out->status != STAT_BUB) {
+    //stall_decode = true;
+    //stall_fetch = true;
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
         pipe_control_stage(S_EXECUTE, false, true);
         pipe_control_stage(S_MEMORY, false, true);
-        pipe_control_stage(S_WBACK, false, true);
+        // pipe_control_stage(S_WBACK, false, true);
     } else if (M_out->status != STAT_AOK || M_out->status != STAT_BUB) {
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
         pipe_control_stage(S_EXECUTE, false, true);
-        pipe_control_stage(S_MEMORY, false, true);
-        pipe_control_stage(S_WBACK, false, true);
+        // pipe_control_stage(S_MEMORY, false, true);
+        // pipe_control_stage(S_WBACK, false, true);
     } else if (X_out->status != STAT_AOK || X_out->status != STAT_BUB) {
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
-        pipe_control_stage(S_EXECUTE, false, true);
-        pipe_control_stage(S_MEMORY, false, true);
-        pipe_control_stage(S_WBACK, false, true);
+        // pipe_control_stage(S_EXECUTE, false, true);
+        // pipe_control_stage(S_MEMORY, false, true);
+        // pipe_control_stage(S_WBACK, false, true);
     } else if (D_out->status != STAT_AOK || D_out->status != STAT_BUB) {
+      stall_fetch =  true;
+      stall_decode =  true;
         pipe_control_stage(S_FETCH, false, true);
+        // pipe_control_stage(S_DECODE, false, true);
+        // pipe_control_stage(S_EXECUTE, false, true);
+        // pipe_control_stage(S_MEMORY, false, true);
+        // pipe_control_stage(S_WBACK, false, true);
+    } else if (W_in->status == error) {
+      stall_fetch =  true;
+      stall_decode =  true;
+      stall_memory =  true;
+      //added this whole statement
+      pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
         pipe_control_stage(S_EXECUTE, false, true);
-        pipe_control_stage(S_MEMORY, false, true);
-        pipe_control_stage(S_WBACK, false, true);
+        pipe_control_stage(S_MEMORY, true, true);
+        // pipe_control_stage(S_WBACK, false, true);
     }
 
     if (check_load_use_hazard(D_opcode, D_src1, D_src2,
@@ -153,9 +170,9 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
 
     // Apply pipeline control
     pipe_control_stage(S_FETCH, false, stall_fetch);
-    pipe_control_stage(S_DECODE, bubble_decode, false);
+    pipe_control_stage(S_DECODE, bubble_decode, stall_decode);
     pipe_control_stage(S_EXECUTE, bubble_execute, false);
-    pipe_control_stage(S_MEMORY, false, false);
+    pipe_control_stage(S_MEMORY, false, stall_memory);
     pipe_control_stage(S_WBACK, false, false);
 
     return;

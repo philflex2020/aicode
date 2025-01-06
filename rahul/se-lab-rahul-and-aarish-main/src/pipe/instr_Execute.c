@@ -73,6 +73,10 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     out->dst = in->dst;
     out->status = in->status;
 
+    if (in->op == OP_BL) {
+        out->val_ex = out->seq_succ_PC;
+    }
+
     // Copy control signals to the next stage
     copy_m_ctl_sigs(&(out->M_sigs), &(in->M_sigs));
     copy_w_ctl_sigs(&(out->W_sigs), &(in->W_sigs));

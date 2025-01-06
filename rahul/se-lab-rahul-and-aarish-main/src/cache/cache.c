@@ -132,8 +132,24 @@ void free_cache(cache_t *cache) {
  * On hit, return the cache line holding the address
  * On miss, returns NULL
  */
+ #include <math.h>
 cache_line_t *get_line(cache_t *cache, uword_t addr) {
-    /* your implementation */
+    /* your implementation */ 
+    unsigned int S = cache->C / (cache->A * cache->B); // Number of sets
+    unsigned int b = log2(cache->B);                  // Block offset bits
+    unsigned int s = log2(S);                         // Set index bits
+
+    // Extract set index and tag from address
+    unsigned int set_index = (addr >> b) & ((1 << s) - 1); // Extract set index
+    unsigned int tag = addr >> (b + s);                    // Extract tag
+
+    // Search for the tag in the appropriate set
+    for (unsigned int j = 0; j < cache->A; j++) {
+        if (cache->sets[set_index].lines[j].valid && cache->sets[set_index].lines[j].tag == tag) {
+            return &cache->sets[set_index].lines[j]; // Return matching line
+        }
+    }
+
     return NULL;
 }
 
@@ -142,8 +158,28 @@ cache_line_t *get_line(cache_t *cache, uword_t addr) {
  * Return the cache line selected to filled in by addr
  */
 cache_line_t *select_line(cache_t *cache, uword_t addr) {
-    /* your implementation */
-    return NULL;
+    unsigned int S = cache->C / (cache->A * cache->B); // Number of sets
+    unsigned int b = log2(cache->B);                  // Block offset bits
+    unsigned int s = log2(S);                         // Set index bits
+    unsigned int set_index = (addr >> b) & ((1 << s) - 1); // Extract set index
+    unsigned int tag = addr >> (b + s);                    // Extract tag
+    int min_lru;
+    int min_lru_j;
+    for (unsigned int j = 0; j < cache->A; j++) {
+        if (j == 0 ) {
+            min_lru = cache->sets[set_index].lines[j].lru;
+            mun_lru_j = 0
+        }
+        if (!cache->sets[set_index].lines[j].valid ) {
+            return &cache->sets[set_index].lines[j];
+        }
+
+        if (cache->sets[set_index].lines[j].lru < min_lru) {
+            min_lru = cache->sets[set_index].lines[j].lru;
+            mun_lru_j = j
+        }
+    }
+    return cache->sets[set_index].lines[min_lru_j]
 }
 
 /*  STUDENT TO-DO:
@@ -151,6 +187,15 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  *  Return true if pos hits in the cache.
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
+    cache_t* cache_line = select_line(cache, addr);
+    if (cache_line) {
+        hit_count++;
+        if (operation == Write)
+            cache_line.dirty = true;
+        cache_line.lru++;
+        return true;
+    }
+    miss_count++;
     return false;
 }
 
@@ -158,11 +203,43 @@ bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
  *  Handles Misses, evicting from the cache if necessary.
  *  Fill out the evicted_line_t struct with info regarding the evicted line.
  */
+//  typedef struct {
+//     bool valid;
+//     bool dirty;
+//     uword_t addr;
+//     byte_t *data;
+// } evicted_line_t;
+// typedef struct cache_line {
+//     bool valid;
+//     uword_t tag;
+//     bool dirty;
+//     uword_t lru;
+//     byte_t *data;
+//} cache_line_t;
+
+
 evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation, byte_t *incoming_data) {
     evicted_line_t *evicted_line = malloc(sizeof(evicted_line_t));
     evicted_line->data = (byte_t *) calloc(cache->B, sizeof(byte_t));
+
+    unsigned int S = cache->C / (cache->A * cache->B); // Number of sets
+    unsigned int b = log2(cache->B);                  // Block offset bits
+    unsigned int s = log2(S);                         // Set index bits
+
+    // Extract set index and tag from address
+    unsigned int set_index = (addr >> b) & ((1 << s) - 1); // Extract set index
+    unsigned int tag = addr >> (b + s);                    // Extract tag
     /* your implementation */
-    
+    // use select_line to get the victim
+    // copy evicted line from selected line
+    evicted_line->valid =  selected_line->valid;
+    evicted_line->dirty =  selected_line->dirty;
+    evicted_line->addr =  // rebuild addr from tag and set_index;
+    // todo copy data
+   
+
+    ... etc
+    // setup the cache line tag, 
 
     return evicted_line;
 }
@@ -180,7 +257,11 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
  * Preconditon: addr is contained within the cache.
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
-    /* Your implementation */
+    cache_line_t* c = select_line(cache, addr);
+    memcpy (c->data, val, 8);
+    c->valid = true;
+    c->lru++;
+
 }
 
 /*

@@ -63,6 +63,9 @@ static comb_logic_t generate_DXMW_control(opcode_t op,
 
     W_sigs->dst_sel = (op == OP_BL);
     W_sigs->wval_sel = (op == OP_LDUR);
+    
+    //printf(" DXW OP = %d\n", op);
+
     W_sigs->w_enable = !(op == OP_NOP || op == OP_RET || op == OP_HLT || op == OP_B || op == OP_B_COND || op == OP_CMN_RR || op == OP_CMP_RR
                             || op == OP_TST_RR || op == OP_STUR || op == OP_ERROR);
 
