@@ -16,9 +16,12 @@ struct smObj {
     std::map<std::string, std::shared_ptr<smObj>> obj_map; // Child objects
     std::vector<std::shared_ptr<smObj>> obj_vec;     // Array of child objects
     std::string value;                                      // Stores the value if not an object or array
+    std::shared_ptr<smObj> child;
+    std::shared_ptr<smObj> parent;
+
 
     smObj(const std::string& name, const std::string& value = "")
-        : name(name), value(value) {}
+        : name(name), value(value), child(nullptr), parent(nullptr) {}
 
     // Convert this object to JSON
     json to_json() const {
