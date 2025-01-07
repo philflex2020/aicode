@@ -5,23 +5,61 @@
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <functional>
+#include <unordered_map>
+
 #include <nlohmann/json.hpp> // Include the JSON library
 
 //g++ -g -o smobj smobj3.cpp 
 
 using json = nlohmann::json;
+struct smObj;
+
+struct objExt {
+    // Parent and child references
+    std::shared_ptr<smObj> parent;
+    std::shared_ptr<smObj> child;
+
+
+    // Function registry with the updated signature
+    std::unordered_map<std::string, std::function<int(std::shared_ptr<smObj>, std::shared_ptr<smObj>, std::shared_ptr<smObj>)>> func_map;
+
+    // Register a named function
+    void register_func(const std::string& name, const std::function<int(std::shared_ptr<smObj>, std::shared_ptr<smObj>, std::shared_ptr<smObj>)>& func) {
+        func_map[name] = func;
+    }
+
+    // Call a registered function
+    int call_func(const std::string& name, std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs) {
+        if (func_map.find(name) != func_map.end()) {
+            return func_map[name](opdef, inputs, outputs);
+        } else {
+            throw std::runtime_error("Function '" + name + "' not found in objExt.");
+        }
+    }
+};
 
 struct smObj {
     std::string name;
     std::map<std::string, std::shared_ptr<smObj>> obj_map; // Child objects
     std::vector<std::shared_ptr<smObj>> obj_vec;     // Array of child objects
     std::string value;                                      // Stores the value if not an object or array
-    std::shared_ptr<smObj> child;
-    std::shared_ptr<smObj> parent;
+    std::shared_ptr<objExt> ext; // Optional extension
+    //std::shared_ptr<smObj> child;
+    //std::shared_ptr<smObj> parent;
 
 
     smObj(const std::string& name, const std::string& value = "")
-        : name(name), value(value), child(nullptr), parent(nullptr) {}
+        : name(name), value(value), ext(nullptr) {}
+
+
+    // Create or access the extension object
+    std::shared_ptr<objExt> get_ext() {
+        if (!ext) {
+            ext = std::make_shared<objExt>();
+        }
+        return ext;
+    }
 
     // Convert this object to JSON
     json to_json() const {
@@ -63,6 +101,54 @@ struct smObj {
         return j;
     }
 };
+
+int sequence_op_def(std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs) {
+    if (!opdef) {
+        std::cerr << "Error: opdef is null." << std::endl;
+        return -1;
+    }
+
+    std::cout << "Start running sequence [" << opdef->name << "]" << std::endl;
+
+    std::shared_ptr<smObj> last_op = nullptr;
+
+    for (const auto& input_op : opdef->obj_vec) { // Assuming obj_vec holds input operations
+        std::cout << "Running op [" << input_op->name << "]" << std::endl;
+
+        // Call another operation (mocked as an example)
+        last_op = std::make_shared<smObj>("last_op_result"); // Replace with actual call logic
+    }
+
+    if (last_op) {
+        // Propagate last operation's outputs to the sequence outputs
+        outputs->obj_map = last_op->obj_map;
+    }
+
+    std::cout << "End running sequence [" << opdef->name << "]" << std::endl;
+    return 0;
+}
+
+
+
+void register_sequence_op(std::shared_ptr<objExt> ext) {
+    ext->register_func("sequence_op", sequence_op_def);
+}
+void test_function()
+{
+    auto opdef = std::make_shared<smObj>("sequence_op");
+    auto inputs = std::make_shared<smObj>("inputs");
+    auto outputs = std::make_shared<smObj>("outputs");
+
+    auto ext = std::make_shared<objExt>();
+    register_sequence_op(ext);
+
+    try {
+        int result = ext->call_func("sequence_op", opdef, inputs, outputs);
+        std::cout << "Sequence operation result: " << result << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+}
 
 // Helper function to split paths
 std::vector<std::string> split_path(const std::string& path) {
@@ -245,6 +331,14 @@ void print_as_json(const std::shared_ptr<smObj>& obj) {
     std::cout << j.dump(4) << std::endl; // Pretty print with 4 spaces indentation
 }
 
+void test_child()
+{
+    auto root = std::make_shared<smObj>("root");
+    auto child = std::make_shared<smObj>("child");
+
+    root->get_ext()->child = child;
+    child->get_ext()->parent = root;
+}
 // Test the new functions
 int main() {
         std::string json_string = R"({
