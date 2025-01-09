@@ -447,6 +447,9 @@ int main() {
 
     print_as_json(smVar);
 
+    printf(" size of smObj %d\n", (int)sizeof(smObj));
+    
+
     return 0;
 }
 
