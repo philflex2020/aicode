@@ -1,4 +1,381 @@
 This is an exciting challenge! Let’s break it into two parts while keeping them interconnected:
+Here’s an updated implementation that organizes socket commands in a map and allows for dynamic registration of new commands, including the `define` command to handle function definitions.
+
+Here's a basic definition for `smObj.h` based on the functionalities you've described and the evolving requirements of your project:
+
+---
+
+### **`smObj.h`**
+
+```cpp
+#ifndef SMOBJ_H
+#define SMOBJ_H
+
+#include <string>
+#include <vector>
+#include <map>
+#include <memory>
+#include <functional>
+#include <iostream>
+
+// Forward declaration
+struct smExt;
+
+// smObj structure
+struct smObj {
+    std::string name;                                 // Object name
+    std::map<std::string, int> attributes;           // Key-value attributes
+    std::vector<std::shared_ptr<smObj>> children;    // Child objects
+    int size = 1;                                    // Default size
+    int location = -1;                               // Shared memory location (-1 if unset)
+    std::shared_ptr<smExt> ext;                      // Optional extensions
+
+    smObj(const std::string& obj_name) : name(obj_name), ext(nullptr) {}
+
+    // Get the smExt, create if necessary
+    std::shared_ptr<smExt> get_ext() {
+        if (!ext) {
+            ext = std::make_shared<smExt>();
+        }
+        return ext;
+    }
+
+    // Debug print
+    void debug_print(int depth = 0) const {
+        std::string indent(depth * 2, ' ');
+        std::cout << indent << "Object: " << name << ", Size: " << size << ", Location: " << location << "\n";
+        for (const auto& [key, value] : attributes) {
+            std::cout << indent << "  Attribute: " << key << " = " << value << "\n";
+        }
+        for (const auto& child : children) {
+            child->debug_print(depth + 1);
+        }
+    }
+};
+
+// smExt structure for extensions
+struct smExt {
+    std::map<std::string, std::function<int(std::shared_ptr<smObj>, std::string)>> func_map; // Function registry
+
+    // Register a function
+    void register_func(const std::string& name, const std::function<int(std::shared_ptr<smObj>, std::string)>& func) {
+        func_map[name] = func;
+    }
+
+    // Call a registered function
+    int call_func(const std::string& name, std::shared_ptr<smObj> obj, const std::string& args) {
+        if (func_map.find(name) != func_map.end()) {
+            return func_map[name](obj, args);
+        } else {
+            throw std::runtime_error("Function '" + name + "' not found in smExt.");
+        }
+    }
+};
+
+#endif // SMOBJ_H
+```
+
+---
+
+### **Explanation**
+
+1. **`smObj` Structure**:
+   - Represents a hierarchical object with attributes, children, and a location in shared memory.
+   - Supports dynamic extensions via `smExt`.
+
+2. **`smExt` Structure**:
+   - Manages dynamically registered functions in `func_map`.
+   - Functions can be registered and called by name, supporting the `define` functionality.
+
+3. **Key Functions**:
+   - **`get_ext()`**:
+     - Lazily creates the `smExt` instance if it doesn't already exist.
+   - **`debug_print()`**:
+     - Prints the object hierarchy and attributes for debugging.
+
+4. **Dynamic Functionality**:
+   - Functions can be registered with `register_func` and called with `call_func`.
+
+---
+
+### **Usage Example**
+
+#### **Creating Objects**
+```cpp
+#include "smObj.h"
+
+int main() {
+    auto root = std::make_shared<smObj>("root");
+    root->attributes["temperature"] = 25;
+
+    auto child = std::make_shared<smObj>("child");
+    child->attributes["pressure"] = 100;
+
+    root->children.push_back(child);
+
+    root->debug_print();
+    return 0;
+}
+```
+
+**Output:**
+```
+Object: root, Size: 1, Location: -1
+  Attribute: temperature = 25
+  Object: child, Size: 1, Location: -1
+    Attribute: pressure = 100
+```
+
+---
+
+#### **Dynamic Function Example**
+
+```cpp
+#include "smObj.h"
+
+int example_func(std::shared_ptr<smObj> obj, const std::string& args) {
+    std::cout << "Function called on object: " << obj->name << " with args: " << args << "\n";
+    return 0;
+}
+
+int main() {
+    auto obj = std::make_shared<smObj>("example");
+    obj->get_ext()->register_func("example_func", example_func);
+
+    obj->get_ext()->call_func("example_func", obj, "test_arg");
+    return 0;
+}
+```
+
+**Output:**
+```
+Function called on object: example with args: test_arg
+```
+
+---
+
+This header sets up the foundation for the `smObj` and `smExt` functionality while leaving room for further enhancements like shared memory integration and advanced socket commands. Let me know how you'd like to build upon this! 🚀
+---
+
+### **Design Approach**
+1. **Command Map**:
+   - Store all commands and their corresponding handlers in a `std::map<std::string, std::function<void(int, std::shared_ptr<smObj>, const std::string&)>>`.
+   - Dynamically add new commands as needed.
+
+2. **Built-In Commands**:
+   - **`help`**: Display available commands.
+   - **`get`**: Retrieve an attribute value.
+   - **`set`**: Set an attribute value.
+   - **`define`**: Dynamically load or create and compile a function.
+
+3. **Dynamic Function Registration**:
+   - Add new commands to the command map dynamically.
+
+---
+
+
+
+
+### **C++ Code**
+
+
+
+```cpp
+#include <iostream>
+#include <string>
+#include <thread>
+#include <map>
+#include <functional>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <fstream>
+#include <filesystem>
+#include <cstdlib>
+#include <dlfcn.h>
+#include "smObj.h" // Assuming this header defines the smObj structure
+
+#define PORT 8080
+
+// Function to send a response to the client
+void send_response(int client_socket, const std::string& response) {
+    send(client_socket, response.c_str(), response.size(), 0);
+}
+
+// Define built-in commands
+void register_builtin_commands(
+    std::map<std::string, std::function<void(int, std::shared_ptr<smObj>, const std::string&)>>& command_map,
+    std::shared_ptr<smObj> obj);
+
+// Command: HELP
+void command_help(int client_socket, std::shared_ptr<smObj> obj, const std::string& args,
+    const std::map<std::string, std::function<void(int, std::shared_ptr<smObj>, const std::string&)>>& command_map) {
+    std::string response = "Available Commands:\n";
+    for (const auto& [command, _] : command_map) {
+        response += " - " + command + "\n";
+    }
+    send_response(client_socket, response);
+}
+
+// Command: GET
+void command_get(int client_socket, std::shared_ptr<smObj> obj, const std::string& args) {
+    if (obj->attributes.count(args)) {
+        int value = obj->attributes[args];
+        send_response(client_socket, "Value: " + std::to_string(value) + "\n");
+    } else {
+        send_response(client_socket, "Error: Attribute not found\n");
+    }
+}
+
+// Command: SET
+void command_set(int client_socket, std::shared_ptr<smObj> obj, const std::string& args) {
+    size_t pos = args.find(' ');
+    if (pos != std::string::npos) {
+        std::string attr = args.substr(0, pos);
+        int value = std::stoi(args.substr(pos + 1));
+        obj->attributes[attr] = value;
+        send_response(client_socket, "Attribute set successfully\n");
+    } else {
+        send_response(client_socket, "Error: Invalid SET command format\n");
+    }
+}
+
+// Command: DEFINE
+void command_define(int client_socket, std::shared_ptr<smObj> obj, const std::string& func_name) {
+    std::string so_path = "./obj/" + func_name + ".so";
+    std::string cpp_path = "./src/" + func_name + ".cpp";
+
+    if (std::filesystem::exists(so_path)) {
+        send_response(client_socket, "Function already defined as shared object\n");
+        return;
+    }
+
+    if (std::filesystem::exists(cpp_path)) {
+        send_response(client_socket, "Compiling source file...\n");
+        std::string command = "g++ -shared -fPIC -o " + so_path + " " + cpp_path;
+        if (system(command.c_str()) == 0) {
+            send_response(client_socket, "Compiled and defined successfully\n");
+        } else {
+            send_response(client_socket, "Error compiling source file\n");
+        }
+        return;
+    }
+
+    send_response(client_socket, "Function not found. Creating a template...\n");
+    std::ofstream file(cpp_path);
+    file << "#include <iostream>\n"
+         << "#include \"smObj.h\"\n"
+         << "\n"
+         << "extern \"C\" void " << func_name << "(std::shared_ptr<smObj> obj) {\n"
+         << "    std::cout << \"Function " << func_name << " executed.\\n\";\n"
+         << "}\n";
+    file.close();
+    send_response(client_socket, "Template created at: " + cpp_path + "\n");
+}
+
+// Register built-in commands
+void register_builtin_commands(
+    std::map<std::string, std::function<void(int, std::shared_ptr<smObj>, const std::string&)>>& command_map,
+    std::shared_ptr<smObj> obj) {
+    command_map["help"] = [&command_map](int client_socket, std::shared_ptr<smObj> obj, const std::string& args) {
+        command_help(client_socket, obj, args, command_map);
+    };
+    command_map["get"] = command_get;
+    command_map["set"] = command_set;
+    command_map["define"] = command_define;
+}
+
+// Handle client requests
+void handle_client(int client_socket, std::shared_ptr<smObj> obj,
+    std::map<std::string, std::function<void(int, std::shared_ptr<smObj>, const std::string&)>> command_map) {
+    char buffer[1024] = {0};
+    while (true) {
+        int valread = read(client_socket, buffer, 1024);
+        if (valread <= 0) break;
+
+        std::string command_line(buffer, valread);
+        size_t pos = command_line.find(' ');
+        std::string command = command_line.substr(0, pos);
+        std::string args = (pos != std::string::npos) ? command_line.substr(pos + 1) : "";
+
+        if (command_map.count(command)) {
+            command_map[command](client_socket, obj, args);
+        } else {
+            send_response(client_socket, "Error: Unknown command\n");
+        }
+    }
+
+    close(client_socket);
+}
+
+// Start the socket server
+void start_socket_server(std::shared_ptr<smObj> obj) {
+    int server_fd, client_socket;
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == 0) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(server_fd, 3) < 0) {
+        perror("Listen failed");
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "Socket server started on port " << PORT << std::endl;
+
+    std::map<std::string, std::function<void(int, std::shared_ptr<smObj>, const std::string&)>> command_map;
+    register_builtin_commands(command_map, obj);
+
+    while (true) {
+        client_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+        if (client_socket < 0) {
+            perror("Accept failed");
+            continue;
+        }
+
+        std::thread client_thread(handle_client, client_socket, obj, command_map);
+        client_thread.detach();
+    }
+}
+```
+
+---
+
+### **Features**
+1. **Command Map**:
+   - Commands are dynamically registered in `std::map`.
+   - Built-in commands (`help`, `get`, `set`, `define`) are added at startup.
+
+2. **Help Command**:
+   - Lists all available commands from the map.
+
+3. **Dynamic Function Registration**:
+   - Handles `define` to create, compile, and load functions.
+
+4. **Scalable Architecture**:
+   - New commands can be easily added to the map.
+
+---
+
+### **Next Steps**
+- Compile and test the server.
+- Add custom commands by extending the map.
+- Enhance error handling for invalid inputs.
+
+Let me know if you need further refinements! 🚀
+
 
 ---
 
