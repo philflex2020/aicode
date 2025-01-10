@@ -344,7 +344,7 @@ void test_child()
     child->get_ext()->parent = root;
 }
 
-void add_item(std::shared_ptr<smObj> root, std::string group, std::string name, std::string json_string)
+void add_item(std::shared_ptr<smObj> root, const std::string& group, const std::string& name, const std::string& json_string)
 {
     auto j = json::parse(json_string);
     auto smVar = parse_object(j);
@@ -352,6 +352,41 @@ void add_item(std::shared_ptr<smObj> root, std::string group, std::string name, 
         root->obj_map[group] = std::make_shared<smObj>(group);
     root->obj_map[group]->obj_map[name] = smVar;//std::make_shared<smObj>("smVars");
 }
+
+
+int sequence_op_def(std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs) {
+    if (!opdef) {
+        std::cerr << "Error: opdef is null." << std::endl;
+        return -1;
+    }
+
+    std::cout << "Start running sequence [" << opdef->name << "]" << std::endl;
+
+    std::shared_ptr<smObj> last_op = nullptr;
+
+    for (const auto& input_op : opdef->children) { // Assuming obj_vec holds input operations
+        std::cout << "Running op [" << input_op->name << "]" << std::endl;
+
+        // Call another operation (mocked as an example)
+        last_op = std::make_shared<smObj>("last_op_result"); // Replace with actual call logic
+    }
+
+    if (last_op) {
+        // Propagate last operation's outputs to the sequence outputs
+        outputs->obj_map = last_op->obj_map;
+    }
+
+    std::cout << "End running sequence [" << opdef->name << "]" << std::endl;
+    return 0;
+}
+
+//void register_func(root, "sequence_op",    sequence_op_def); // run a sequence of operations
+void register_func(std::shared_ptr<smObj>root, const std::string& name,  const std::function<int(std::shared_ptr<smObj>, std::shared_ptr<smObj>, std::shared_ptr<smObj>)>& func) // run a sequence of operations
+{
+    auto ext = root->get_ext();
+    ext->register_func(name, func);
+}
+
 // Test the new functions
 int main() {
         std::string json_string = R"({
@@ -469,6 +504,8 @@ int main() {
         "inputs": [{"name": "MinSOC", "rack_idx":34,"sbms_idx":201}, {"name": "run_group_alarms"}, {"name": "transfer_group_alarms"}]})";
     add_item(root ,"opdefs", "collect_rack_status", json_string);
 
+    register_func(root, "sequence_op",    sequence_op_def); // run a sequence of operations
+  
 
     // j = json::parse(json_string);
     // auto smVar = parse_object(j);
