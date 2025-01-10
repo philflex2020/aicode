@@ -105,7 +105,7 @@ using json = nlohmann::json;
 
 #include "smObj.h"
 
-int sequence_op_def(std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs) {
+int sequence_op(std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs) {
     if (!opdef) {
         std::cerr << "Error: opdef is null." << std::endl;
         return -1;
@@ -134,7 +134,7 @@ int sequence_op_def(std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs,
 
 
 void register_sequence_op(std::shared_ptr<smExt> ext) {
-    ext->register_func("sequence_op", sequence_op_def);
+    ext->register_func("sequence_op", sequence_op);
 }
 
 void test_function()
@@ -343,6 +343,15 @@ void test_child()
     root->get_ext()->child = child;
     child->get_ext()->parent = root;
 }
+
+void add_item(std::shared_ptr<smObj> root, std::string group, std::string name, std::string json_string)
+{
+    auto j = json::parse(json_string);
+    auto smVar = parse_object(j);
+    if(root->obj_map.find(group) == root->obj_map.end())
+        root->obj_map[group] = std::make_shared<smObj>(group);
+    root->obj_map[group]->obj_map[name] = smVar;//std::make_shared<smObj>("smVars");
+}
 // Test the new functions
 int main() {
         std::string json_string = R"({
@@ -400,11 +409,77 @@ int main() {
         "min_alarms": [{"level1": -3000, "level2": -3200, "level3": -3400, "hist": 50}],
         "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
         })";
-    
-    j = json::parse(json_string);
-    auto smVar = parse_object(j);
+    add_item(root ,"smVars", "group_curr", json_string);
 
-    //auto root = std::make_shared<smObj>("root");
+    json_string = R"({
+        "name": "group_volt","source": "rack","reg_type": "mb_input","sm_name": "rack","offset": "0x1","latched": false,
+        "max_alarms": [{"level1": 13000, "level2": 13200, "level3": 13400, "hist": 100}],
+        "min_alarms": [{"level1": 12600, "level2": 12500, "level3": 12400, "hist": 100}],
+        "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
+        })";
+    add_item(root ,"smVars", "group_volt", json_string);
+
+    json_string = R"({
+        "name": "rack_curr","source": "rack","reg_type": "mb_input","sm_name": "rack","offset": "0x2","latched": false,
+        "max_alarms": [{"level1": 3000, "level2": 3200, "level3": 3400, "hist": 50}],
+        "min_alarms": [{"level1": -3000, "level2": -3200, "level3": -3400, "hist": 50}],
+        "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
+        })";
+    add_item(root ,"smVars", "rack_curr", json_string);
+
+    json_string = R"({
+        "name": "rack_volt","source": "rack","reg_type": "mb_input","sm_name": "rack","offset": "0x1","latched": false,
+        "max_alarms": [{"level1": 13000, "level2": 13200, "level3": 13400, "hist": 100}],
+        "min_alarms": [{"level1": 12600, "level2": 12500, "level3": 12400, "hist": 100}],
+        "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
+        })";
+    add_item(root ,"smVars", "rack_volt", json_string);
+
+    json_string = R"({
+     "name": "globals", 
+     "sys": {"enabled": true, "num_vars": 2, "lcl_rack_max":12 }
+    })";
+    add_item(root ,"opdefs", "globals", json_string);
+
+    json_string = R"({
+     "name": "run_agg", "func": "agg_op", 
+     "inputs": [{"name": "group_curr"}, {"name": "group_volt"}],
+     "outputs": [{"name": "result"}]
+    })";
+    add_item(root ,"opdefs", "run_agg", json_string);
+     // possibly we create a named data block called results to get to this data 
+    json_string = R"({"name": "run_group_alarms", "func": "group_alarm_op",
+         "inputs": [{"name": "group_curr"}, {"name": "group_volt"}]})";
+    add_item(root ,"opdefs", "run_group_alarm", json_string);
+
+     // final block to transfer run_group_alarms outputs to run_group_alarms  
+    json_string = R"({"name": "transfer_group_alarms", "func": "transfer_op",
+         "outputs": [{"name": "run_group_alarms"}, {"name": "run_alarm_seq"}]
+         })";
+
+    add_item(root ,"opdefs", "transfer_group_alarms", json_string);
+
+    // we may need global and individual enables on the sequence inputs
+    json_string = R"({"name": "run_alarm_seq", "func": "sequence_op", 
+        "inputs": [{"name": "run_agg"}, {"name": "run_group_alarms"}, {"name": "transfer_group_alarms"}]})";
+    add_item(root ,"opdefs", "run_alarm_seq", json_string);
+
+    // we may need global and individual enables on the sequence inputs
+    json_string = R"({"name": "collect_rack_status", "func": "rack_agg_op", 
+        "inputs": [{"name": "MinSOC", "rack_idx":34,"sbms_idx":201}, {"name": "run_group_alarms"}, {"name": "transfer_group_alarms"}]})";
+    add_item(root ,"opdefs", "collect_rack_status", json_string);
+
+
+    // j = json::parse(json_string);
+    // auto smVar = parse_object(j);
+
+
+    // //set_obj_value(root, "smVars.group_curr", smVar);
+
+    // //auto root = std::make_shared<smObj>("root");
+    // root->obj_map["smVars"] = std::make_shared<smObj>("smVars");
+    // root->obj_map["smVars"]->obj_map["group_curr"] = smVar;//std::make_shared<smObj>("smVars");
+
 
     // Set values
     set_obj_value(root, "args.arg4", "1234");
@@ -449,7 +524,7 @@ int main() {
 
     print_as_json(root);
 
-    print_as_json(smVar);
+    //print_as_json(smVar);
 
     printf(" size of smObj %d\n", (int)sizeof(smObj));
     
