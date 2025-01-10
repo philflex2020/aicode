@@ -11,7 +11,7 @@ int main() {
     auto child = std::make_shared<smObj>("child");
     child->attributes["pressure"] = 100;
 
-    root->children.push_back(child);./test
+    root->children.push_back(child);
 
     root->debug_print();
     return 0;
