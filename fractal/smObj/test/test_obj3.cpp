@@ -320,8 +320,12 @@ void dump_item_type(const json& item)
 // Parse the entire JSON object recursively into smObj
 std::shared_ptr<smObj> parse_object(const json& j, const std::string& name = "root") {
     auto obj = std::make_shared<smObj>(name);
-
-    if (j.is_object()) {
+    if (j.is_string()) {
+        std::string objstr = j.get<std::string>();
+        //std::cout << " with value: [" << objstr<<"]"<<std::endl;
+        obj = std::make_shared<smObj>(objstr,objstr);
+    }
+    else if (j.is_object()) {
         for (const auto& field : j.items()) {
             const std::string& key = field.key();
             const auto& value = field.value();
@@ -336,14 +340,14 @@ std::shared_ptr<smObj> parse_object(const json& j, const std::string& name = "ro
         for (const auto& item : j) {
             std::string objstr;
             //dump_item_type(item);
-            if (item.is_string()) {
-                objstr = item.get<std::string>();
-                std::cout << " with value: [" << objstr<<"]"<<std::endl;
-                auto newobj = std::make_shared<smObj>(objstr,objstr);
-                obj->children.push_back(newobj);
+            // if (item.is_string()) {
+            //     objstr = item.get<std::string>();
+            //     std::cout << " with value: [" << objstr<<"]"<<std::endl;
+            //     auto newobj = std::make_shared<smObj>(objstr,objstr);
+            //     obj->children.push_back(newobj);
 
-            }
-            else
+            // }
+            // else
             {
                 obj->children.push_back(parse_object(item, "new_array_item"));
             }
