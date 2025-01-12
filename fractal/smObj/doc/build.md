@@ -1,3 +1,5 @@
+TODO sort out the inc
+
 To automate the process of building shared libraries from source files in a `libs` directory and compiling target executables by linking these shared objects, you can implement a `build` function in C++. This function will:
 
 1. **Scan the `libs` Directory:** Identify all subdirectories, each representing a separate library.
@@ -47,7 +49,7 @@ void build() {
                 if (src_entry.path().extension() == ".cpp") {
                     std::string src_file = src_entry.path().string();
                     std::string so_file = lib_build_dir + "/lib" + lib_name + ".so";
-                    std::string compile_command = "g++ -shared -fPIC -o " + so_file + " " + src_file;
+                    std::string compile_command = "g++ -I inc -shared -fPIC -o " + so_file + " " + src_file;
                     std::cout << "Compiling: " << compile_command << std::endl;
                     if (system(compile_command.c_str()) == 0) {
                         shared_objects.push_back(so_file);

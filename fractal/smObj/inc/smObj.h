@@ -198,12 +198,25 @@ struct smExt {
     }
 
     // Call a registered function
-    int call_func(const std::string& name, std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs) {
-        if (func_map.find(name) != func_map.end()) {
-            return func_map[name](opdef, inputs, outputs);
-        } else {
-            throw std::runtime_error("Function '" + name + "' not found in smExt.");
+    int call_func(const std::string& name, std::shared_ptr<smObj> opdef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs) 
+    {
+        std::string fname = name;
+        if (fname.front() == '"' && fname.back() == '"') {
+            fname = fname.substr(1, fname.size() - 2); // Remove quotes
         }
+
+        if (func_map.find(fname) != func_map.end()) {
+            return func_map[fname](opdef, inputs, outputs);
+        } else {
+            std::cout << " function [" << fname << "] not found in "<< opdef->name << std::endl;
+            std::cout << " function keys:" << std::endl;
+            for ( auto [key, item]: func_map )
+            {
+                std:: cout << " key ["<< key <<"]" << std::endl;
+            }
+            //throw std::runtime_error("Function '" + name + "' not found in smExt.");
+        }
+        return 0;
     }
 
 
