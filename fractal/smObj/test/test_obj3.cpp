@@ -435,12 +435,22 @@ int inputs_main() {
     // Create a vector of shared_ptr to smObj
     std::vector<std::shared_ptr<smObj>> inputs;
 
+    std::vector<std::shared_ptr<smObj>> new_inputs;
+
     // Populate the vector with instances of mysmObj
-    inputs.push_back(std::make_shared<smVar>());
-    inputs.push_back(std::make_shared<smVar>());
+    inputs.push_back(std::make_shared<smObj>("var1"));
+    inputs.push_back(std::make_shared<smObj>("var2"));
 
     // Iterate over the vector and downcast to mysmObj
     for (auto& item : inputs) {
+
+        new_inputs.push_back(std::make_shared<smVar>(item->name));
+    }
+
+    //inputs.push_back(std::make_shared<smVar>());
+
+    // Iterate over the vector and downcast to mysmObj
+    for (auto& item : new_inputs) {
         // Attempt to downcast to shared_ptr<mysmObj>
         std::shared_ptr<smVar> smVarPtr = std::dynamic_pointer_cast<smVar>(item);
         if (smVarPtr) {

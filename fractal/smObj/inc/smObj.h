@@ -246,6 +246,7 @@ class smExt {
 class smVar : public smObj {
 public:
     int extra_int;
+    smVar(const std::string& n) : smObj(n), extra_int(0) {}
     // Additional members...
 };
 
