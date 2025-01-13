@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp> // Include the JSON library
 
 // cd test
+// cd work//aicode/fractal/smObj/test
 //g++ -g -o smobj -I ../inc test_obj3.cpp 
 
 using json = nlohmann::json;
@@ -1018,6 +1019,40 @@ void register_func(std::shared_ptr<smObj>root, const std::string& name,  const s
     ext->register_func(name, func);
 }
 
+
+int test_any() {
+    smExt ext;
+
+    // Set values of different types
+    ext.set_value("is_active", true);
+    ext.set_value("threshold", 42);
+    ext.set_value("factor", 3.14f);
+    ext.set_value("name", std::string("Battery"));
+    ext.set_value("obj1",std::make_shared<smObj>("obj1"));
+    // Query types
+    std::cout << "Type of 'is_active': " << ext.get_type("is_active") << std::endl;
+    std::cout << "Type of 'threshold': " << ext.get_type("threshold") << std::endl;
+    std::cout << "Type of 'factor': " << ext.get_type("factor") << std::endl;
+    std::cout << "Type of 'name': " << ext.get_type("name") << std::endl;
+    std::cout << "Type of 'obj1': " << ext.get_type("obj1") << std::endl;
+
+    // Get values
+    try {
+        bool is_active = ext.get_value<bool>("is_active");
+        int threshold = ext.get_value<int>("threshold");
+        float factor = ext.get_value<float>("factor");
+        std::string name = ext.get_value<std::string>("name");
+
+        std::cout << "is_active: " << is_active << std::endl;
+        std::cout << "threshold: " << threshold << std::endl;
+        std::cout << "factor: " << factor << std::endl;
+        std::cout << "name: " << name << std::endl;
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
 // Test the new functions
 int main() {
         std::string json_string = R"({
@@ -1201,7 +1236,7 @@ int main() {
     //do whatever the opdef run_agg wants to do
     // use default inputs and outputs
     run_opdef_name(root, "run_agg", nullptr, nullptr); 
-
+    test_any();
     
 
     return 0;
