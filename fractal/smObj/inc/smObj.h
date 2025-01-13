@@ -103,10 +103,11 @@ using json = nlohmann::json;
 
 
 // Forward declaration
-struct smExt;
+class smExt;
 
 // smObj structure
-struct smObj {
+class smObj {
+    public:
     std::string name;                                 // Object name
 
     std::map<std::string, int> attributes;           // Key-value attributes
@@ -122,6 +123,8 @@ struct smObj {
     //smObj(const std::string& obj_name) : name(obj_name), ext(nullptr) {}
     smObj(const std::string& name, const std::string& value = "")
          : name(name), value(value), ext(nullptr) {}
+    smObj(){};
+    virtual ~smObj() = default;
 
     // Get the smExt, create if necessary
     std::shared_ptr<smExt> get_ext() {
@@ -185,7 +188,8 @@ struct smObj {
 };
 
 // smExt structure for extensions
-struct smExt {
+class smExt {
+    public:
     std::shared_ptr<smObj> parent;
     std::shared_ptr<smObj> child;
 
@@ -236,5 +240,17 @@ struct smExt {
     //     }
     // }
 };
+
+
+// Derived class
+class smVar : public smObj {
+public:
+    int extra_int;
+    // Additional members...
+};
+
+void show_map_keys(std::shared_ptr<smObj> root);
+void show_array_names(std::shared_ptr<smObj>root);
+
 
 #endif // SMOBJ_H

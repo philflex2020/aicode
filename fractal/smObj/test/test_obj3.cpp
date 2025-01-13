@@ -285,6 +285,7 @@ std::shared_ptr<smObj> get_obj_value(const std::shared_ptr<smObj>& obj, const st
     return current;
 }
 
+// how to decode json
 void dump_item_type(const json& item)
 {
     // Determine the type of the item
@@ -309,7 +310,6 @@ void dump_item_type(const json& item)
     } else {
         item_type = "unknown";
     }
-
     // Print the item type for debugging
     std::cout << "Array item  is of type: " << item_type << std::endl;
     if (item.is_string()) {
@@ -318,7 +318,8 @@ void dump_item_type(const json& item)
 }
 
 // Parse the entire JSON object recursively into smObj
-std::shared_ptr<smObj> parse_object(const json& j, const std::string& name = "root") {
+// normally calues are dumped but we need some special cases here
+std::shared_ptr<smObj>parse_object(const json& j, const std::string& name = "root") {
     auto obj = std::make_shared<smObj>(name);
     if (j.is_string()) {
         std::string objstr = j.get<std::string>();
@@ -338,19 +339,7 @@ std::shared_ptr<smObj> parse_object(const json& j, const std::string& name = "ro
         }
     } else if (j.is_array()) {
         for (const auto& item : j) {
-            std::string objstr;
-            //dump_item_type(item);
-            // if (item.is_string()) {
-            //     objstr = item.get<std::string>();
-            //     std::cout << " with value: [" << objstr<<"]"<<std::endl;
-            //     auto newobj = std::make_shared<smObj>(objstr,objstr);
-            //     obj->children.push_back(newobj);
-
-            // }
-            // else
-            {
-                obj->children.push_back(parse_object(item, "new_array_item"));
-            }
+            obj->children.push_back(parse_object(item, ""));
         }
     } else {
         obj->value = j.dump();
@@ -359,6 +348,7 @@ std::shared_ptr<smObj> parse_object(const json& j, const std::string& name = "ro
     return obj;
 }
 
+// deep copy , values only
 std::shared_ptr<smObj> deep_copy(const std::shared_ptr<smObj>& source) {
     if (!source) {
         return nullptr;
@@ -386,6 +376,8 @@ void print_as_json(const std::shared_ptr<smObj>& obj) {
     std::cout << j.dump(4) << std::endl; // Pretty print with 4 spaces indentation
 }
 
+
+//reference code
 void test_child()
 {
     auto root = std::make_shared<smObj>("root");
@@ -395,7 +387,8 @@ void test_child()
     child->get_ext()->parent = root;
 }
 
-void add_item(std::shared_ptr<smObj> root, const std::string& group, const std::string& name, const std::string& json_string)
+
+void add_map_item(std::shared_ptr<smObj> root, const std::string& group, const std::string& name, const std::string& json_string)
 {
     auto j = json::parse(json_string);
     auto smVar = parse_object(j);
@@ -405,11 +398,21 @@ void add_item(std::shared_ptr<smObj> root, const std::string& group, const std::
     root->obj_map[group]->obj_map[name] = smVar;//std::make_shared<smObj>("smVars");
 }
 
-std::shared_ptr<smObj>find_item(std::shared_ptr<smObj> root, const std::string& group, const std::string& name)
+std::shared_ptr<smObj>find_map_item(std::shared_ptr<smObj> root, const std::string& group, const std::string& name="")
 {
-    if(root->obj_map.find(group) != root->obj_map.end())
-        if (root->obj_map[group]->obj_map.find(name) !=  root->obj_map[group]->obj_map.end())
-            return root->obj_map[group]->obj_map[name];
+    if(name.empty())
+    {
+        if(root->obj_map.find(group) != root->obj_map.end())
+        {
+            return root->obj_map[group]; 
+        }
+    }
+    else
+    {
+        if(root->obj_map.find(group) != root->obj_map.end())
+            if (root->obj_map[group]->obj_map.find(name) !=  root->obj_map[group]->obj_map.end())
+                return root->obj_map[group]->obj_map[name];
+    }
     return nullptr;
 }
 
@@ -420,18 +423,53 @@ std::shared_ptr<smObj>find_item(std::shared_ptr<smObj> root, const std::string& 
 // // todo this first time it runs it will "compile" stuff to resolve varaibles
 // //  (bcm_data->Evbcm_Sample_Data.group_curr + 16000);
 
-// 
+
+// // Derived class
+// class smVar : public smObj {
+// public:
+//     int extra_int;
+//     // Additional members...
+// };
+// I want to put smVars into a vector of smObjs  and then recast them to smVars
+int inputs_main() {
+    // Create a vector of shared_ptr to smObj
+    std::vector<std::shared_ptr<smObj>> inputs;
+
+    // Populate the vector with instances of mysmObj
+    inputs.push_back(std::make_shared<smVar>());
+    inputs.push_back(std::make_shared<smVar>());
+
+    // Iterate over the vector and downcast to mysmObj
+    for (auto& item : inputs) {
+        // Attempt to downcast to shared_ptr<mysmObj>
+        std::shared_ptr<smVar> smVarPtr = std::dynamic_pointer_cast<smVar>(item);
+        if (smVarPtr) {
+            // Downcast successful, access additional members
+            smVarPtr->extra_int = 1234;
+            std::cout << "extra_int set to " << smVarPtr->extra_int << std::endl;
+        } else {
+            // Downcast failed, handle accordingly
+            std::cout << "Downcast failed." << std::endl;
+        }
+    }
+
+    return 0;
+}
+
+//
+// this demonstrates getting a list of inputs
 int agg_op(std::shared_ptr<smObj>root, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs)
 {
-    // we have a definitipn of an input value 
-    // we have to accumlate that value into the var itself ( we dont use outputs here)
-    // todo get raxk_max from sys
-    // for each rackn
-    int my_rack_max=12;
+    int my_rack_max = 12;
+    // we have a definition of an input value TODO
     // if( get_opdef_map_int_name(my_rack_max, "globals", "lcl_rack_max") )
     // {
     //     std::cout << " my_rack_max  [" << (int)my_rack_max<< "]" ;
     // }
+
+    // we need a couple of maps for cpounts and totals
+    std::map<std::shared_ptr<smObj>, int> count_map;
+    std::map<std::shared_ptr<smObj>, int> total_map;
 
 
     std::cout << " agg_op running on " << my_rack_max << " racks" << std::endl;
@@ -440,22 +478,19 @@ int agg_op(std::shared_ptr<smObj>root, std::shared_ptr<smObj> inputs, std::share
         std::cout << " agg_op no inputs found " << std::endl;
         return 0;
     }
-    for (auto item: inputs->children)
-    {   
-        //smVar* input = find_smvar(item->name.c_str());
-        //if(!input)
-        //    continue;
-        
-        //smVar* smvarf = find_smvar(smvar->name);
-        //std::cout << " at start smvars ["<< j <<"]  name [" << smvar->name << "] sm_name [" << smvar->sm_name << "]" << std::endl;  
-        printf(" found input   [%s] \n", item->name.c_str());
-        // todo try to find the smvar of that name inside root
-        //in he group called smVars
-        //add_item(root ,"smVars", "group_curr", json_string);
-        auto smVar = find_item(root ,"smVars", item->name);
+    show_array_names(inputs);
 
-        //input->count = 0;
-        //input->total = 0;
+    for (auto item: inputs->children)
+    {
+        // the smVar has all the info on how to aggregate the variable 
+        // ie rack src ref aff dest ref etc   
+        auto smVar = find_map_item(root ,"smVars", item->name);
+        if(smVar)
+        {
+            std::cout << "    found smVar [" << item->name<< "]" << std::endl;
+            count_map[smVar] = 0;
+            total_map[smVar] = 0;
+        }
     }
 
 
@@ -468,52 +503,60 @@ int agg_op(std::shared_ptr<smObj>root, std::shared_ptr<smObj> inputs, std::share
 
         // if (my_rack->rack_online)
         // {
-        //     std::cout << " rack " << rack_num << " is online" << std::endl;
+            std::cout << " rack " << rack_num << " is online" << std::endl;
         //     use_rack_mem(rack_num, shm_rtos, rack_max, rtos_size);
-        //     //for each item
-        //     for (auto item: *inputs)
-        //     {   
-        //         smVar* input = find_smvar(item->name.c_str());
-        //         if(!input)
-        //         {
-        //             std::cout << "     input [" << item->name << "] not found, skipping it "  << std::endl;
-        //             continue;
-        //         }
-        //         smVar* output;
-        //         // agg works on just the input variables
-        //         output = input;
-        //         int value = lcl_get_mem_int_val_rack(input->sm_name, rack_num, input->reg_type, input->offset);
-        //         // add the value to the total
-
-        //         output->total += value;
-
-        //         if(output->count == 0)
-        //         {
-        //             output->min = value;
-        //             output->max = value;
-        //         }
-        //         else
-        //         {
-        //             if (value < output->min) 
-        //             {
-        //                 output->min = value;
-        //                 output->min_rack = rack_num;
-        //             }
-        //             if (value > output->max)
-        //             {
-        //                 output->max = value;
-        //                 output->max_rack = rack_num;
-        //             }
-        //         }
-        //         output->count++;
-        //     }
-        //     release_rack_mem();
-        // }
-        // else
-        // {
-        //     std::cout << " rack " << rack_num << " is offline" << std::endl;
-        // }
+             //for each input item
+            for (auto item: inputs->children)
+            {
+                auto smVar = find_map_item(root ,"smVars", item->name);
+                count_map[smVar]+=1;
+                int value = 1234;
+                total_map[smVar]+=value;
+            }
     }
+
+    // we should put the total and the count into the smVar
+    for (auto [key, item]: count_map)
+    {
+        std::cout << " Output name ["<< key->name <<" count :" << count_map[key] << " total :"<< total_map[key]<<std::endl; 
+    } 
+    
+
+    //     //         smVar* output;
+    //     //         // agg works on just the input variables
+    //     //         output = input;
+    //     //         int value = lcl_get_mem_int_val_rack(input->sm_name, rack_num, input->reg_type, input->offset);
+    //     //         // add the value to the total
+
+    //     //         output->total += value;
+
+    //     //         if(output->count == 0)
+    //     //         {
+    //     //             output->min = value;
+    //     //             output->max = value;
+    //     //         }
+    //     //         else
+    //     //         {
+    //     //             if (value < output->min) 
+    //     //             {
+    //     //                 output->min = value;
+    //     //                 output->min_rack = rack_num;
+    //     //             }
+    //     //             if (value > output->max)
+    //     //             {
+    //     //                 output->max = value;
+    //     //                 output->max_rack = rack_num;
+    //     //             }
+    //     //         }
+    //     //         output->count++;
+    //     //     }
+    //     //     release_rack_mem();
+    //     // }
+    //     // else
+    //     // {
+    //     //     std::cout << " rack " << rack_num << " is offline" << std::endl;
+    //     }
+    // }
     std::cout << " all racks finshed" << std::endl;
     return 0;
 }
@@ -527,10 +570,11 @@ int agg_op(std::shared_ptr<smObj>root, std::shared_ptr<smObj> inputs, std::share
 //     })";
 
 
-int run_op_def(std::shared_ptr<smObj>root, const std::string& name, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs)
+// not used 
+int run_named_op_def(std::shared_ptr<smObj>root, const std::string& name, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs)
 {
-    //add_item(root ,"opdefs", "run_agg", json_string);
-    auto opdef = find_item(root, "opdefs", "run_agg");
+    //add_map_item(root ,"opdefs", "run_agg", json_string);
+    auto opdef = find_map_item(root, "opdefs", "run_agg");
 
     // "name": "run_agg", "func": "agg_op", 
     //  "inputs": [{"name": "group_curr"}, {"name": "group_volt"}],
@@ -808,10 +852,17 @@ int run_op_def(std::shared_ptr<smObj>root, const std::string& name, std::shared_
 // run the function named in the opdef with its optional inpouts and outputs
 int run_opdef_func(std::shared_ptr<smObj>root, std::shared_ptr<smObj> opDef, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs)
 {
-    std::cout << " run_opdef_func root name  " << root->name << std::endl; 
-    std::cout << " opdef name  " << opDef->name << std::endl; 
+    //std::cout << " run_opdef_func root name  " << root->name << std::endl; 
+    //std::cout << " opdef name  " << opDef->name << std::endl; 
+    auto obj = find_map_item(opDef, "func");
+    if (!obj)
+    {
+        std::cout << " no function  in opDef  " << opDef->name << std::endl; 
+        return 0;
+
+    }
+    auto fname = obj->value;
     std::cout << " found func name [" << opDef->obj_map["func"]->value   << "] in opDef"<< std::endl;        
-    auto fname = opDef->obj_map["func"]->value;
 
     if (root->ext == nullptr)
     {
@@ -822,17 +873,17 @@ int run_opdef_func(std::shared_ptr<smObj>root, std::shared_ptr<smObj> opDef, std
 
     if (opDef->ext == nullptr)
     {
-        std::cout << " root name  " << root->name << std::endl; 
-        std::cout << " func name  " << root->name << std::endl; 
         std::cout << " no extensions in " << opDef->name << " use root ext instead " << std::endl; 
 
         root->ext->call_func(fname, root, inputs, outputs);
 
         return 0;
     }
-    
-    // TODO opDef->ext->call_func(root, opdef, inputs, outputs);
-    opDef->ext->call_func(fname, root, inputs, outputs);
+
+    // this runs the opdef in its own environement if needed
+    // note we have dropped root
+    // TODO maybe opDef->ext->call_func(root, opdef, inputs, outputs);
+    opDef->ext->call_func(fname, opDef, inputs, outputs);
     return 0;
 }
 
@@ -840,51 +891,75 @@ int run_opdef_func(std::shared_ptr<smObj>root, std::shared_ptr<smObj> opDef, std
 // find an opdef by name in root.opdefs
 // if we find it run it
 // it may have inputs and outputs and will have a func
+std::shared_ptr<smObj>find_opdef(std::shared_ptr<smObj> root, const std::string &name)
+{
+    return find_map_item(root, "opdefs", name);
+}
+
+void show_map_keys(std::shared_ptr<smObj> root)
+{
+    std::cout<< " map keys for obj ["<<root->name<<"]"<< std::endl;
+    for (auto [key , item]: root->obj_map) 
+    {
+        std::cout<< " -- ["<<key<<"]"<< std::endl;
+    } 
+}
+
+void show_array_names(std::shared_ptr<smObj>root) 
+{
+    std::cout << " Array items for ["<< root->name << "]"<<std::endl; 
+    for (auto item: root->children)
+    {   
+        std::cout << " -- ["<< item->name <<"]"<< std::endl;;
+    }
+}
+
+
 
 // thisone
 std::shared_ptr<smObj>run_opdef_name(std::shared_ptr<smObj> root, const std::string &name, std::shared_ptr<smObj> inputs, std::shared_ptr<smObj> outputs)
 {
-    if (root->obj_map.find("opdefs") == root->obj_map.end())
+
+    auto opDef = find_opdef(root, name);
+    if(!opDef)
     {
-        std::cout << " unable to find " <<"opdefs"  << " in root"<< std::endl;        
-        return nullptr;
-    }
-    auto opDef = root->obj_map["opdefs"];
-    if (!opDef)
-    {
-        std::cout << " unable to find " << name << " in root opdefs"<< std::endl;        
+        std::cout << " run_opdef_name >>> did not find root opDef ["<< name <<"]"<< std::endl;
         return nullptr;
     }
 
-    std::cout << " run_opdef_name >>> found root opDef"<< std::endl;        
+    //show_map_keys(opDef);
 
-    if(opDef->obj_map.find(name) != opDef->obj_map.end())
+    std::cout << " run_opdef_name >>> found root opDef ["<< name <<"]"<< std::endl;
+    auto obj = find_map_item(opDef, "inputs");
+    if (obj)
     {
-        std::cout << " found [" << name << "] in root opDef"<< std::endl;        
-        auto opdef = opDef->obj_map[name];
-        if(opdef->obj_map.find("inputs") != opdef->obj_map.end())
-        {
-            std::cout << " found opdef inputs " << std::endl;        
-            inputs = opdef->obj_map["inputs"];
-        }
-        if(opdef->obj_map.find("outputs") != opdef->obj_map.end())
-        {
-            std::cout << " found opdef outputs " << std::endl;        
-            outputs = opdef->obj_map["outputs"];
-        }
-        if(opdef->obj_map.find("func") != opdef->obj_map.end())
-        {
-            std::cout << " found func value [" << opdef->obj_map["func"]->value   << "] in opDef"<< std::endl;        
-            auto fname = opdef->obj_map["func"]->value;
-
-            run_opdef_func(root, opdef, inputs, outputs);
- 
-            return 0;
-        }
-        return 0;
-        run_opdef_func(root, opDef->obj_map[name], inputs, outputs);
-        return (opDef->obj_map[name]);
+        inputs = obj;
+        std::cout << " run_opdef_name >>> found  root opDef ["<< name <<"] inputs"<< std::endl;
     }
+    obj = find_map_item(opDef, "outputs");
+    if (obj)
+    {
+        outputs = obj;
+        std::cout << " run_opdef_name >>> found  root opDef ["<< name <<"] outputs"<< std::endl;
+    }
+
+    obj = find_map_item(opDef, "func");
+    if (obj)
+    {
+        //outputs = obj;
+        std::cout << " run_opdef_name >>> found  root opDef ["<< name <<"] func ["<< obj->value<<"]" << std::endl;
+    }
+
+    if(obj)
+    {
+        auto fname = obj->value;
+        std::cout << " found func value [" << fname   << "] in opDef"<< std::endl;        
+        // the function name was found in the opdef
+        // the functipn will be defined in the opDef extObj or the root extObj
+        run_opdef_func(root, opDef, inputs, outputs);
+        return opDef;
+    }
+
     return nullptr;
 
 
@@ -990,7 +1065,7 @@ int main() {
         "min_alarms": [{"level1": -3000, "level2": -3200, "level3": -3400, "hist": 50}],
         "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
         })";
-    add_item(root ,"smVars", "group_curr", json_string);
+    add_map_item(root ,"smVars", "group_curr", json_string);
 
     json_string = R"({
         "name": "group_volt","source": "rack","reg_type": "mb_input","sm_name": "rack","offset": "0x1","latched": false,
@@ -998,7 +1073,7 @@ int main() {
         "min_alarms": [{"level1": 12600, "level2": 12500, "level3": 12400, "hist": 100}],
         "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
         })";
-    add_item(root ,"smVars", "group_volt", json_string);
+    add_map_item(root ,"smVars", "group_volt", json_string);
 
     json_string = R"({
         "name": "rack_curr","source": "rack","reg_type": "mb_input","sm_name": "rack","offset": "0x2","latched": false,
@@ -1006,7 +1081,7 @@ int main() {
         "min_alarms": [{"level1": -3000, "level2": -3200, "level3": -3400, "hist": 50}],
         "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
         })";
-    add_item(root ,"smVars", "rack_curr", json_string);
+    add_map_item(root ,"smVars", "rack_curr", json_string);
 
     json_string = R"({
         "name": "rack_volt","source": "rack","reg_type": "mb_input","sm_name": "rack","offset": "0x1","latched": false,
@@ -1014,42 +1089,42 @@ int main() {
         "min_alarms": [{"level1": 12600, "level2": 12500, "level3": 12400, "hist": 100}],
         "stall_alarms": [{"level1": 1000, "level2": 1100, "level3": 1200, "hist": 30}]
         })";
-    add_item(root ,"smVars", "rack_volt", json_string);
+    add_map_item(root ,"smVars", "rack_volt", json_string);
 
     json_string = R"({
      "name": "globals", 
      "sys": {"enabled": true, "num_vars": 2, "lcl_rack_max":12 }
     })";
-    add_item(root ,"opdefs", "globals", json_string);
+    add_map_item(root ,"opdefs", "globals", json_string);
 
     json_string = R"({
      "name": "run_agg", "func": "agg_op", 
      "inputs": ["group_curr", "group_volt"],
      "outputs": [{"name": "result"}]
     })";
-    add_item(root ,"opdefs", "run_agg", json_string);
+    add_map_item(root ,"opdefs", "run_agg", json_string);
 
      // possibly we create a named data block called results to get to this data 
     json_string = R"({"name": "run_group_alarms", "func": "group_alarm_op",
          "inputs": [{"name": "group_curr"}, {"name": "group_volt"}]})";
-    add_item(root ,"opdefs", "run_group_alarm", json_string);
+    add_map_item(root ,"opdefs", "run_group_alarm", json_string);
 
      // final block to transfer run_group_alarms outputs to run_group_alarms  
     json_string = R"({"name": "transfer_group_alarms", "func": "transfer_op",
          "outputs": [{"name": "run_group_alarms"}, {"name": "run_alarm_seq"}]
          })";
 
-    add_item(root ,"opdefs", "transfer_group_alarms", json_string);
+    add_map_item(root ,"opdefs", "transfer_group_alarms", json_string);
 
     // we may need global and individual enables on the sequence inputs
     json_string = R"({"name": "run_alarm_seq", "func": "sequence_op", 
         "inputs": [{"name": "run_agg"}, {"name": "run_group_alarms"}, {"name": "transfer_group_alarms"}]})";
-    add_item(root ,"opdefs", "run_alarm_seq", json_string);
+    add_map_item(root ,"opdefs", "run_alarm_seq", json_string);
 
     // we may need global and individual enables on the sequence inputs
     json_string = R"({"name": "collect_rack_status", "func": "rack_agg_op", 
         "inputs": [{"name": "MinSOC", "rack_idx":34,"sbms_idx":201}, {"name": "run_group_alarms"}, {"name": "transfer_group_alarms"}]})";
-    add_item(root ,"opdefs", "collect_rack_status", json_string);
+    add_map_item(root ,"opdefs", "collect_rack_status", json_string);
 
     register_func(root, "sequence_op",    sequence_op_def); // run a sequence of operations
     register_func(root, "agg_op",         agg_op);  // run the aggregate function on all "online" racks
@@ -1113,6 +1188,8 @@ int main() {
 
     printf(" size of smObj %d\n", (int)sizeof(smObj));
 
+    //do whatever the opdef run_agg wants to do
+    // use default inputs and outputs
     run_opdef_name(root, "run_agg", nullptr, nullptr); 
 
     
