@@ -13,7 +13,7 @@
  */
 /* 
   system bms ( and rack bms) sequence handling 
-move the vardef types to a mask
+move the vardef types to a mask so a var can be many but we may need more than one offset ie mb offset and sm_offset 
 */
 
 #include <iostream>
@@ -3063,9 +3063,6 @@ int main(int argc , char* argv[])
     // stop_sequence("test_agg", -1);
 
 
-    print_global_vars();
-    print_local_vars();
-    print_modbus_vars();
 
     results.clear();
     for(int i = 0; i < 12; i++) 
@@ -3088,6 +3085,10 @@ int main(int argc , char* argv[])
     std::cout << "\n\n**************************************"<<std::endl;
     test_file_load();
     test_sequence();
+    std::cout << "\n\n**************************************"<<std::endl;
+    print_global_vars();
+    print_local_vars();
+    print_modbus_vars();
 
 
     std::cout << "\n\n**************************************"<<std::endl;
