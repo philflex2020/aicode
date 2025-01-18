@@ -1,0 +1,31 @@
+ {
+    "vars":[
+        {"src": "rinput:3", "oper": ">", "value": 300},
+        {"src": "bits:5", "oper": "=", "value": 1}
+    ],
+    "sequence_name": "test_rack_online",
+    "step": 0,
+    "steps": [
+        {"oper": "set",    "src": "bits:5", "dest": "bits:5", "value":1,                        "desc": "set system state on"},
+        {"oper": "set",                     "dest": "g_test_done", "value":0,                   "desc": "signal test not done"},
+        {"oper": "set",                     "dest": "g_rack_num", "value":0,                    "desc": "start with rack 0"},
+        {"oper": "set",                     "dest": "rinput:3",     "value":310,   "rnum":"g_rack_num", "inc":1, "desc": "set a given rack value and inc raack_num "},
+        {"oper": "jump_if", "cond":"<", "src":"g_rack_num", "value": 12, "jump_to":-1,           "desc":"Repeat on condition"},
+        {"oper": "set",    "src": "g_rack_num", "dest": "g_test_done", "value":1,               "desc": "signal test done"},
+
+
+        {"xoper": "minl",    "src": "rinput:1", "dest": "g_low_volt_1",  "limit":2400,          "xcond":"rack_online",          "desc": "test for low volt config item"},
+        {"xoper": "minl",    "src": "rinput:1", "dest": "g_low_volt_1", "limit":"g_volt_min",  "xcond":"rack_online",          "desc": "test for low volt config item"},
+        {"xoper": "minl",    "src": "rinput:1", "dest": "g_low_volt_2", "limit":"hold:12",     "xcond":"rack_online",          "desc": "test for low volt config item"}
+        ],
+    "xexit": [
+        {"oper": "set", "src": "g_rack_voltage_min",     "dest": "input:1",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_min_num", "dest": "input:2",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max",     "dest": "input:3",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max_num", "dest": "input:4",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min",     "dest": "input:5",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min_num", "dest": "input:6",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max",     "dest": "input:7",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max_num", "dest": "input:8",    "desc": "transfer to sbms modbus regs"}
+        ]
+    }

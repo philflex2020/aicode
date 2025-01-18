@@ -1,0 +1,12 @@
+{
+    "trigger_name": "test_trigger",
+    "aggregate": "each",
+    "src_ref": "bits:3",
+    "oper": "and",
+    "conditions": [
+        {"src": "rinput:3", "oper": ">", "value": 300},
+        {"src": "bits:5", "oper": "=", "value": 1}
+    ],
+    "run": "compound_sequence"
+}
+

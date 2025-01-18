@@ -1,0 +1,23 @@
+
+    {
+    "sequence_name": "max_min",
+    "step": 0,
+    "steps": [
+        {"oper": "maxl",    "src": "rinput:1", "dest": "g_high_volt_1", "limit":"g_volt_max", "xcond":"rack_online",       "desc": "test for high volt numerical limit"},
+        {"oper": "maxl",    "src": "rinput:1", "dest": "g_high_volt_2", "limit":"hold:11",    "xcond":"rack_online",          "desc": "test for high volt config item"},
+        {"oper": "minl",    "src": "rinput:1", "dest": "g_low_volt_1",  "limit":2400,          "xcond":"rack_online",          "desc": "test for low volt config item"},
+        {"oper": "minl",    "src": "rinput:1", "dest": "g_low_volt_1", "limit":"g_volt_min",  "xcond":"rack_online",          "desc": "test for low volt config item"},
+        {"oper": "minl",    "src": "rinput:1", "dest": "g_low_volt_2", "limit":"hold:12",     "xcond":"rack_online",          "desc": "test for low volt config item"}
+        ],
+    "xexit": [
+        {"oper": "set", "src": "g_rack_voltage_min",     "dest": "input:1",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_min_num", "dest": "input:2",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max",     "dest": "input:3",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max_num", "dest": "input:4",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min",     "dest": "input:5",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min_num", "dest": "input:6",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max",     "dest": "input:7",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max_num", "dest": "input:8",    "desc": "transfer to sbms modbus regs"}
+        ]
+    }
+
