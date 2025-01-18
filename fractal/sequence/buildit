@@ -1,0 +1,2 @@
+mkdir -p build
+g++ -g -o build/sequence  src/sequence.cpp

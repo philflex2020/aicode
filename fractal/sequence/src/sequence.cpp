@@ -13,6 +13,7 @@
  */
 /* 
   system bms ( and rack bms) sequence handling 
+move the vardef types to a mask
 */
 
 #include <iostream>
@@ -278,9 +279,9 @@ AssertManager assert_manager;
 
 #define myassert(condition, category, crash)                               \
     do {                                                                   \
-        bool result = (condition);                                         \
-        assert_manager.log_assertion(category, #condition, result);        \
-        if (!result) {                                                     \
+        bool _result = (condition);                                         \
+        assert_manager.log_assertion(category, #condition, _result);        \
+        if (!_result) {                                                     \
             std::cerr << "[ASSERT FAIL] Category: " << category            \
                       << " | Condition: " << #condition << std::endl;      \
             if (crash) {                                                   \
@@ -350,6 +351,10 @@ struct Sequence {
 
     // sm:<rack><name>:<offset>:<value>
     std::map<int, std::map<std::string, int>> sq_vals;
+
+    // sm:<rack><name>:<offset>:<value>
+    // going to move it all here
+    std::map<int, std::map<std::string, std::any>> sq_any;
 
     std::vector<Step> steps;           // List of steps in the sequence
     std::vector<Step> entry;           // List of entry steps in the sequence
@@ -528,10 +533,7 @@ int rack_max = 12;
 struct VarDef {
     VarType type;
     int offset;
-    // int int_value;
-    // double double_value;
     std::any value;
-
     std::string name; // Only used for named variables like global_var or local_var
 };
 
@@ -547,6 +549,7 @@ std::map<std::string, json>saved_triggers_map;
 // dynamic modbus registers
 // modbus:<type>:<offset>:<value>
 std::map<int, std::map<int, int>> mb_regs;
+
 // modbus:<rack><type>:<offset>:<value>
 std::map<int, std::map<int ,std::map<int, int>>> mb_rack_regs;
 // dynamic sm registers
@@ -588,6 +591,30 @@ bool evaluate_condition(const std::string& oper, int src_val, int value);
 int decode_var_type(VarDef &def, const std::string& var_ref);
 bool set_sequence_state(std::string name, int state, int step, int rack_num =-1);
 
+
+void initialize_memory() {
+    // Zero-initialize shm_rack_mem
+    for (int i = 0; i < MAX_RACK; ++i) {
+        std::fill(std::begin(shm_rack_mem[i]), std::end(shm_rack_mem[i]), 0);
+    }
+
+    // Zero-initialize shm_rtos_mem
+    for (int i = 0; i < MAX_RACK; ++i) {
+        std::fill(std::begin(shm_rtos_mem[i]), std::end(shm_rtos_mem[i]), 0);
+    }
+
+    // Zero-initialize mb_map_vals
+    for (int i = 0; i < MODBUS_MAX; ++i) {
+        std::fill(std::begin(mb_map_vals[i]), std::end(mb_map_vals[i]), 0);
+    }
+
+    // Zero-initialize mb_rack_vals
+    for (int rack = 0; rack < MAX_RACK; ++rack) {
+        for (int modbus = 0; modbus < MODBUS_MAX; ++modbus) {
+            std::fill(std::begin(mb_rack_vals[rack][modbus]), std::end(mb_rack_vals[rack][modbus]), 0);
+        }
+    }
+}
 
 std::string var_def_to_str(const VarDef& var_def) {
     std::ostringstream oss;
@@ -654,7 +681,7 @@ void set_modbus_vars() {
 
 
 void print_modbus_vars() {
-    return;
+    //return;
     std::cout << "Modbus Variables:" << std::endl;
 
     for (int fc = 0; fc < MODBUS_MAX; ++fc) {
@@ -834,7 +861,7 @@ int test_local_vars(bool crash) {
 
 // Function to print the entire global_var_vec
 void print_global_vars() {
-    return;
+    //return;
     std::cout << "Global Variables:" << std::endl;
     for (const auto& [name, index] : global_var_index) {
         std::cout << "Name: " << name << " [" << index << "]";
@@ -855,7 +882,7 @@ void print_global_vars() {
 }
 
 void print_local_vars() {
-    return;
+    //return;
     if (local_var_index.empty()) {
         std::cout << "No local variables defined." << std::endl;
         return;
@@ -1012,6 +1039,8 @@ T get_var(VarDef& var_def, int rack_number = -1) {
 //#### Improved `set_var`
 template <typename T>
 void set_var(VarDef& var_def, T value, int rack_number = -1) {
+    var_def.value = std::any(value);
+
     try {
         switch (var_def.type) {
             case VAR_MODBUS_INPUT:
@@ -1388,12 +1417,15 @@ void set_map_var(Step& step, int key, T value, int rack_number = -1) {
 // run steps based on keys better than decoding strings all the time
 void run_step_key(Sequence &sequence , Step& step, const std::string& name, int &current_step, int &rack_num)
 {
-    //std::cout << " getting oper_str"<< std::endl;
-    std::string oper_str = std::any_cast<std::string>(step.step_map[KEY_OPER_STR]);
-
-    //std::cout << " getting oper_key"<< std::endl;
-    int oper_key = std::any_cast<int>(step.step_map[KEY_OPER]);
-
+    int oper_key = KEY_OPER_NOOP;
+    std::string oper_str = "undefined";
+    if (step.step_map.find(KEY_OPER_STR) != step.step_map.end())
+    {
+        //std::cout << " getting oper_str"<< std::endl;
+        oper_str = std::any_cast<std::string>(step.step_map[KEY_OPER_STR]);
+        //std::cout << " getting oper_key"<< std::endl;
+        oper_key = std::any_cast<int>(step.step_map[KEY_OPER]);
+    }
     //std::cout << "Decoded Step Operation: [" << oper_str<< "] key [" << oper_key <<"]"  << std::endl;
     switch (oper_key) {
 
@@ -1433,7 +1465,7 @@ void run_step_key(Sequence &sequence , Step& step, const std::string& name, int 
                 if(test_var_map(step, KEY_INC))
                 {
                     var_inc = get_map_var<int>(step, KEY_INC, rack_num); 
-                    std::cout << "set got unc :" << var_inc <<std::endl;
+                    std::cout << "set got inc :" << var_inc <<std::endl;
                 }
 
                 if(test_var_map(step, KEY_DEST))
@@ -1463,6 +1495,8 @@ void run_step_key(Sequence &sequence , Step& step, const std::string& name, int 
                     if(test_step_map(step, KEY_RNUM_STR))
                     {
                         set_map_var<int>(step, KEY_RNUM, var_rnum+var_inc, rack_num); 
+                        var_rnum = get_map_var<int>(step, KEY_RNUM, rack_num); 
+                        std::cout << "set got modified rnum :" << var_rnum <<std::endl;
                     }
                     else
                     {
@@ -1556,8 +1590,11 @@ void run_step_key(Sequence &sequence , Step& step, const std::string& name, int 
                  << step.cond << "] targ_val ["
                  << step.value <<"] jump_to [" << step.jump_to << "]"<< std::endl;   
                 if (evaluate_condition(step.cond, src_val, step.value)) {
-                    current_step = step.jump_to;
-                    std::cout << " >>>>> execute eval jump_if src_val ["<< step.src << "] val ["<< src_val <<"] jump_to [" << step.jump_to << "]"<< std::endl;   
+                    current_step += step.jump_to;
+                    std::cout << " >>>>> execute eval jump_if src_val ["<< step.src << "] val ["<< src_val 
+                            <<"] jump_to [" << step.jump_to << "]"
+                            <<"] current_step [" << current_step << "]"
+                            << std::endl;   
                     sequence.sq_vals[rack_num]["current_step"] = current_step;
                 }
                 else
@@ -1850,6 +1887,7 @@ void run_step_key(Sequence &sequence , Step& step, const std::string& name, int 
         case KEY_OPER_NOOP:
         default:
             std::cout << "Unknown operation.[" << oper_str <<"]"<< std::endl;
+            current_step++;
             break;
     }
 }
@@ -2766,6 +2804,59 @@ int test_vec_sort() {
 }
 
 
+void test_sequence(void)
+{
+    
+    // look for the entry test/test_rack_online.json in  
+// Attempt to find and retrieve the JSON data
+    int rack_num = -1;
+    json tj;
+    bool json_found = find_json_map(tj, "tests", "test_rack_online.json");
+    myassert(json_found == true, " test json file found ", false);
+    if (json_found)
+    {
+        std::cout << "Found JSON: " << tj.dump(4) << std::endl;
+
+        std::cout << "\n\n******************************" << std::endl;
+        int res = setup_sequence(tj);
+        Sequence& sequence = sequence_map["test_rack_online"];
+
+        myassert(res == 0, " test rack sequence decoded", false);
+        start_sequence("test_rack_online", rack_num);
+        //set_sequence_state set_sequence_state(std::string name, int state, int step, int rack_num)
+
+        set_sequence_state("test_rack_online", 1, 0, rack_num);
+        show_sequence_state("test_rack_online", " step ", 0, rack_num);
+        for ( int j = 0 ; j < 60 ;j++)
+        {
+            res = execute_sequence_step("test_rack_online", rack_num);
+            show_sequence_state("test_rack_online", " step ", j,  rack_num);
+            {
+                int state = sequence.sq_vals[rack_num]["state"];
+                int step = sequence.sq_vals[rack_num]["current_step"];    
+                auto running = sequence.sq_vals[rack_num]["running"];
+                std::cout 
+                    << "local vals >>> cycle [" << j <<"]" 
+                    << " state [" << state <<"]" 
+                    <<  " step [" << step <<"]"
+                    <<  " running [" << running <<"]"
+                    << std::endl; 
+                if(!running) 
+                {
+                    std::cout 
+                        << "sequence stopped on cycle [" << j <<"]" 
+                        << std::endl; 
+                    break;
+                }
+            }
+
+        } 
+    }
+    
+    // now we need to decode that as a sequence
+}    
+
+
 int main(int argc , char* argv[])
 {
 
@@ -2773,6 +2864,7 @@ int main(int argc , char* argv[])
     bool crash = false;
     json j;
     std::string trigger_name;
+    initialize_memory();
     set_modbus_vars();
 
 
@@ -2995,34 +3087,8 @@ int main(int argc , char* argv[])
 
     std::cout << "\n\n**************************************"<<std::endl;
     test_file_load();
+    test_sequence();
 
-    
-    // look for the entry test/test_rack_online.json in  
-// Attempt to find and retrieve the JSON data
-    json tj;
-    bool json_found = find_json_map(tj, "tests", "test_rack_online.json");
-    myassert(json_found == true, " test json file found ", false);
-    if (json_found)
-    {
-        std::cout << "Found JSON: " << tj.dump(4) << std::endl;
-
-        std::cout << "\n\n******************************" << std::endl;
-        int res = setup_sequence(tj);
-        myassert(res == 0, " test rack sequence decoded", false);
-        start_sequence("test_rack_online", -1);
-        //set_sequence_state set_sequence_state(std::string name, int state, int step, int rack_num)
-
-        set_sequence_state("test_rack_online", 1, 0, -1);
-        show_sequence_state("test_rack_online", " step ", 0, -1);
-        for ( int j = 0 ; j < 10 ;j++)
-        {
-            res = execute_sequence_step("test_rack_online", -1);
-            show_sequence_state("test_rack_online", " step ", j,  -1);
-        } 
-    }
-    
-    // now we need to decode that as a sequence
-    
 
     std::cout << "\n\n**************************************"<<std::endl;
 
