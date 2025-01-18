@@ -1072,12 +1072,7 @@ void set_var(VarDef& var_def, T value, int rack_number = -1) {
                 local_var_vec[rack_number + 1][var_def.offset] = std::any(value);
                 break;
             case VAR_INT_VAR:
-                //var_def.int_value = static_cast<int>(value);
-                var_def.value = std::any(value);
-                break;
             case VAR_DOUBLE_VAR:
-                //var_def.double_value = static_cast<double>(value);
-                var_def.value = std::any(value);
                 break;
             default:
                 throw std::runtime_error("Invalid variable type.");

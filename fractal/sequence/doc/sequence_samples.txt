@@ -1,0 +1,180 @@
+
+
+
+
+
+Json configuration supported by built in functions.
+
+rack modbus registers
+
+rinput:offset
+rbits:offset
+rhold:offset
+rcoil:offset
+
+modbus registers
+
+input:offset
+bits:offset
+hold:offset
+coil:offset
+
+global (sbms) registers
+g_rack_voltage
+
+rack (rbms) registers need a rack number qualifier
+rack_voltage
+
+more mapping optio
+{
+    "desc":"combined function and config examples",
+    "steps":[
+    {"oper": "agg", "src": "rinput:1", "dest": "g_rack_voltage",      "desc": "Calculate max/min/total/count voltage"},
+    {"oper": "agg", "src": "rinput:2", "dest": "g_sbms_current",      "desc": "Calculate max/min/total/count current"},
+    {"oper": "maxl", "src": "rinput:1", "var": "rhold:2", "dest":"bits:12",    "desc": "Set level 1,2,3 max_alarm"},
+    {"oper": "minl", "src": "rinput:1", "var": "rhold:5", "dest":"bits:15",    "desc": "Set level 1,2,3 min_alarm"},
+    ],
+}
+
+{
+    "trigger_name": "all_racks_online",
+    "aggregate": "each",
+    "src_ref": "bits:3",
+    "oper": "and",
+    "conditions": [
+        {"src": "rinput:3", "oper": ">", "value": 300},
+        {"src": "bits:5", "oper": "=", "value": 1}
+    ],
+    "run": "rack_online_sequence"
+}
+
+{
+    "trigger_name": "single_rack_online",
+    "xaggregate": "each",
+    "src_ref": "bits:3",
+    "oper": "and",
+    "conditions": [
+        {"src": "rinput:3", "oper": ">", "value": 300},
+        {"src": "bits:5", "oper": "=", "value": 1}
+    ]
+}
+
+
+// complex  condition
+[
+    { "src_ref": "bits:8", "oper": "reset_run", "dest_reg": "cooling_sequence", "value": 0},
+    { "oper": "and",
+        "conditions": [
+            {"src_ref": "rinput", "src_reg": 20, "oper": "gt", "value": 80},
+            {"src_ref": "rinput", "src_reg": 25, "oper": "lt", "value": 50}
+        ],
+        "run_sequence": "cooling_sequence"
+    },
+    { "oper": "or",
+        "conditions": [
+            {"src_ref": "bits", "src_reg": 10, "value": 1},
+            {"src_ref": "bits", "src_reg": 11, "value": 1}
+        ],
+        "run_sequence": "emergency_shutdown"}
+]
+
+
+{
+    "sequence_name": "cooling_sequence",
+    "step": 0,
+    "steps": [
+        {"oper": "set", "value": 101, "dest": "rbits:1",            "desc": "Start fan 1"},
+        {"oper": "wait_reset", "counter": "lcl:wait1", "time": 100, "desc": "Wait 100 cycles"},
+        {"oper": "set", "value": 102, "dest": "rbits:2",            "desc": "Start fan 2"},
+        {"oper": "wait_reset", "counter": 0, "time": 100,           "desc": "Wait 100 cycles"},
+        {"oper": "set", "src": "bits:40", "dest": "rbits:1",        "desc": "Stop fan 1"},
+        {"oper": "set", "value": 0, "dest": "rbits":2,              "desc": " Stop fan 2"}
+    ]
+}
+
+// add oper while ( with time)
+// add prebuilt functions with args ( rack_num lvars valr)
+
+[
+    {
+    "sequence_name": "test_sequence",
+    "step": 0,
+    "steps": [
+        {"oper": "inc",         "src":"rhold:5",            "dest":"rhold:5",   "value": 10,    "desc":"inc a value by 10"},
+        {"oper": "set",         "src": "bits:4",            "dest": "rbits:5",                  "desc":"Send shutdown signal"},
+        {"oper": "wait_reset",  "counter": "lvar:count1",    "time": 3,                         "desc":"Wait for confirmation"},
+        {"oper": "set",         "value": 0,                  "dest": "rbits:5",                 "desc":"Clear shutdown signal"},
+        {"oper": "jump_if",    "cond":"<", "src":"rhold:5", "value": 10,      "jump_to":0,      "desc":"Repeat on condition"}
+        ]
+    },
+
+    {
+    "sequence_name": "emergency_shutdown",
+    "step": 0,
+    "steps": [
+        {"oper": "set", "value": 133,                       "dest":"rbits:5",  "desc":"Send shutdown signal"},
+        {"oper": "set", "src": "bits:4",                    "dest": "rbits:5",  "desc":"Send shutdown signal"},
+        {"oper": "wait_reset", "counter": "lvar:count1",    "time": 300,        "desc":"Wait for confirmation"},
+        {"oper": "set", "value": 0,                         "dest": "rbits:5",   "desc":"Clear shutdown signal"}
+        ]
+    },
+    {
+    "sequence_name": "cooling_sequence",
+    "step": 0,
+    "steps": [
+        {"oper": "set",        "value": 101,          "dest": "rbits:1",                 "desc":"Start fan 1"},
+        {"oper": "wait_reset",  "counter": "wait1",   "time": 100,                       "desc":"Wait 100 cycles"},
+        {"oper": "set",        "value": 102,          "dest": "rbits:2",                 "desc":"Start fan 2"},
+        {"oper": "wait_reset", "counter": "wait1",    "time": 100,                       "desc":"Wait 101 cycles"},
+        {"oper": "set",         "src": "bits:40",     "dest": "rbits:1",                 "desc":"Stop fan 1"},
+        {"oper": "set",         "value": 0,           "dest": "rbits:2",                 "desc":"Stop fan 2"}
+        ]
+    }
+]
+
+// aggregate all on line racks
+
+[
+    {
+    "sequence_name": "test_agg",
+    "step": 0,
+    "steps": [
+        {"oper": "agg", "src": "rinput:1", "dest": "g_rack_voltage", "xcond":"rack_online",       "desc": "Calculate max/min/total/count voltage"},
+        {"oper": "agg", "src": "rinput:2", "dest": "g_rack_current", "xcond":"rack_online",       "desc": "Calculate max/min/total/count current"},
+        {"oper": "agg", "src": "rinput:2", "dest": "g_online_current", "cond":"rack_online",      "desc": "Calculate max/min/total/count current"}
+        ],
+    "exit": [
+        {"oper": "set", "src": "g_rack_voltage_min",     "dest": "input:1",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_min_num", "dest": "input:2",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max",     "dest": "input:3",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max_num", "dest": "input:4",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min",     "dest": "input:5",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min_num", "dest": "input:6",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max",     "dest": "input:7",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max_num", "dest": "input:8",    "desc": "transfer to sbms modbus regs"}
+        ]
+    }
+]
+[
+    {
+    "sequence_name": "test_max",
+    "step": 0,
+    "steps": [
+        {"oper": "maxl",    "src": "rinput:1", "dest": "g_high_volt_1", "limit":"g_volt_max", "cond":"rack_discharge",          "desc": "test for high volt numerical limit"},
+        {"oper": "maxl",    "src": "rinput:1", "dest": "g_high_volt_2", "limit":"hold:11",    "cond":"rack_discharge",           "desc": "test for high volt config item"},
+        {"oper": "minl",    "src": "rinput:1", "dest": "g_low_volt_1",  "limit":2400,         "cond":"rack_online",          "desc": "test for low volt config item"},
+        {"oper": "minl",    "src": "rinput:1", "dest": "g_low_volt_1", "limit":"g_volt_min",  "cond":"rack_online",           "desc": "test for low volt config item"},
+        {"oper": "minl",    "src": "rinput:1", "dest": "g_low_volt_2", "limit":"hold:12",     "cond":"rack_online",           "desc": "test for low volt config item"}
+        ],
+    "xexit": [
+        {"oper": "set", "src": "g_rack_voltage_min",     "dest": "input:1",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_min_num", "dest": "input:2",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max",     "dest": "input:3",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_voltage_max_num", "dest": "input:4",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min",     "dest": "input:5",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_min_num", "dest": "input:6",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max",     "dest": "input:7",    "desc": "transfer to sbms modbus regs"},
+        {"oper": "set", "src": "g_rack_current_max_num", "dest": "input:8",    "desc": "transfer to sbms modbus regs"}
+        ]
+    }
+]
