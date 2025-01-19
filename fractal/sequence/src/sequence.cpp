@@ -16,6 +16,50 @@
 move the vardef types to a mask so a var can be many but we may need more than one offset ie mb offset and sm_offset 
 */
 
+
+/*
+// major rework
+ok we are going to create a step
+{"oper": "sum:3","value": 101, "src":"rinput:1", "dest": "input:1",            "desc": "Start fan 1"},
+that is going to find a func registered as sum  and run it with the seq and the step  and 3 as arguments
+the Step object will also have the parsed json for the step.
+
+// rework steps
+// 1 - save the json decode_step_from_json   also OperItem
+// 2 - auto create the oper map lets have a vector of oper types and a map of type to vector indexes 
+//          // the step calls its function like this
+//          // oper_vec[step.oper_idx].func(seq, step, nullptr); // Call the function
+// 3 tokenise all the items in the json  put the name index associaton into a local step vector
+
+//Values are read and set in the system using  the VarDef structure as reeferences
+
+//template <typename T>
+//T get_var(VarDef& var_def, int rack_number = -1);
+//template <typename T>
+//void set_var(VarDef& var_def, T value, int rack_number = -1);
+
+// these vardefs are stored under a central vector with a map to convert the vardef name into an index  .
+// question is it more efficient to make the set_var and get_var access the vardef through the index
+
+//template <typename T>
+//T get_var_idx(int idx, int rack_number = -1);
+// 
+//template <typename T>
+//void set_var_idx(int idx, T value, int rack_number = -1);
+
+// this means when the add function wants to  fetch the input vardef and add the value vardef and place the result into the dest vardef it can use the 
+// index vector to get the values defs efficeintly.
+// 
+// using name lookups the add function would be
+// input = vardef[js["src"]];  // json["src"] will give me "rinput:1" then I look up the VarDef index using that name   
+// value = vardef[js["value"]];set_val
+// dest = vardef[js["dest"]];
+// dest.<int>setVal(input<int>getVal() + value<int>getVal()) ;
+// the step will be decoded to hold an index of vardefs we can use that index directly to get the setVal and getVal operatipns to access the variable
+// when the step is first invoked it will look up 
+
+*/
+
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -315,7 +359,8 @@ struct Step {
     std::string dest;             // Destination reference (e.g., "rbits:5")
     std::string var;              // var used for add multiply  divide etc (e.g., "rbits:5")
     std::string cond;             // Condition for operations like "jump_if" (e.g., ">", "==")
-    int idx;
+    int idx;                      // index
+    int oper_idx;                 // index in the oper_map of pper definitions
     int value = 0;                // Integer value for operations
     int jump_to = -1;             // Target step index for jump operations
     int time = 0;                 // Time value in milliseconds for "wait_reset"
@@ -324,6 +369,8 @@ struct Step {
 
     std::map<int, std::any> step_map;
     std::map<int, std::any> var_map;
+    json js;
+    int data;   // decoded from the oper ie "sum:3" the 3 is passed as the data optipn to the sum function
 
 
     // Default Constructor
@@ -359,6 +406,14 @@ struct Sequence {
     std::vector<Step> steps;           // List of steps in the sequence
     std::vector<Step> entry;           // List of entry steps in the sequence
     std::vector<Step> exit;            // List of exit steps in the sequence
+};
+
+struct OperItem
+{
+    std::string name;
+    int idx;
+    void* data;
+    std::function<int(Sequence&, Step&, void*)> func;
 };
 
 enum MbRegs {
@@ -1035,6 +1090,7 @@ T get_var(VarDef& var_def, int rack_number = -1) {
         return T{}; // Return default value of T
     }
 }
+
 
 //#### Improved `set_var`
 template <typename T>
@@ -2033,10 +2089,100 @@ int get_trigger_val(const json& trigger_value, int rack_num = -1) {
     //throw std::invalid_argument("Invalid value type in trigger: " + trigger_value.dump());
 }
 
-// seq_config step.dest =
+
+
+std::map<std::string, int> oper_idx;
+std::vector<OperItem> oper_vec;
+
+
+int find_oper_idx(const std::string& name)
+{
+    if(oper_idx.find(name) == oper_idx.end())
+    {
+        int idx = oper_vec.size();
+        oper_idx[name] = idx;
+        OperItem oper;
+        oper_vec.push_back(oper);
+        oper.name = name;
+        oper.idx = idx;
+    }
+    return oper_idx[name];
+}
+
+// Function to add an operation with its corresponding function
+int add_oper_func(const std::string& name, std::function<int(Sequence&, Step&, void*)> func) {
+    int idx = find_oper_idx(name);
+    oper_vec[idx].func = func; // Assign the function to the operation
+    return idx;
+}
+
+int oper_add_func(Sequence &seq, Step & step, void*data)
+{
+    std::cout << "Executing 'add' operation\n";
+    return 0;
+}
+int oper_set_func(Sequence &seq, Step & step, void*data)
+{
+    std::cout << "Executing 'set' operation\n";
+    return 0;
+}
+
+// the step calls its function like this
+// oper_vec[step.oper_idx].func(seq, step, nullptr); // Call the function
+
+
+// Example usage
+int test_add_oper() {
+    Sequence seq;
+    Step step;
+
+    // Add the "add" operation
+    add_oper_func("add", oper_add_func);
+    add_oper_func("set", oper_set_func);
+
+    // Find and execute the "add" operation
+    int idx = find_oper_idx("set");
+    if (idx >= 0 && idx < oper_vec.size() && oper_vec[idx].func) {
+        oper_vec[idx].func(seq, step, nullptr); // Call the function
+    } else {
+        std::cerr << "Operation not found or function not assigned\n";
+    }
+    idx = find_oper_idx("add");
+    if (idx >= 0 && idx < oper_vec.size() && oper_vec[idx].func) {
+        oper_vec[idx].func(seq, step, nullptr); // Call the function
+    } else {
+        std::cerr << "Operation not found or function not assigned\n";
+    }
+    
+
+    return 0;
+}
+
 int decode_step_from_json(Step &step, json stepj)
 {
-    step.oper    = stepj.value("oper", "");;
+    auto oper = stepj.value("oper", "");
+
+ 
+    // if oper has  an index like sum:3 strip the :number  from the oper and save it as step.data 
+    // step.oper = the stripped value
+    // Extract numeric data from the operation (e.g., sum:3 -> sum and 3)
+    size_t colon_pos = oper.find(':');
+    std::string stripped_oper = oper;
+    int stripped_data = 0;
+
+    if (colon_pos != std::string::npos) {
+        stripped_oper = oper.substr(0, colon_pos);
+        try {
+            stripped_data = std::stoi(oper.substr(colon_pos + 1));
+        } catch (const std::exception& e) {
+            // Handle invalid numeric part
+            stripped_data = 0;
+        }
+    }
+
+    step.oper    = stripped_oper;
+    step.data    = stripped_data;
+    
     step. src    = stepj.value("src", "");
     step.dest    = stepj.value("dest", "");
     step.value   = stepj.value("value", 0);
@@ -2046,6 +2192,11 @@ int decode_step_from_json(Step &step, json stepj)
     step.cond    = stepj.value("cond", "");
     step.var     = stepj.value("var", "");
     decode_step_map(step, stepj);
+    // look up oper in oper_map
+    step.js      = stepj;
+
+    // find the stropped oper in the function list oper_vec
+    step.oper_idx = find_oper_idx(step.oper);
 
     return 0;
 }

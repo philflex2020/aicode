@@ -1,3 +1,7 @@
 mkdir -p build
-g++ -v -g -o build/sequence  src/sequence.cpp
-g++ -v -g -o build/scan_file src/scan_file.cpp
+echo build sequence 
+g++ -g -o build/sequence  src/sequence.cpp
+echo build scan
+g++ -g -o build/scan_file src/scan_file.cpp
+echo build compare
+g++ -g -o build/comp  src/compare_lookup.cpp

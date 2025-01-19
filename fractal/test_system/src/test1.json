@@ -1,0 +1,69 @@
+[
+    {
+        "wait":0,
+        "meth":"wscat",
+        "desc" :" check rack number",
+        "url" : "ws://192.168.86.209:9001",
+        "query": {"action": "get","seq": 126,"sm_name": "rtos_2","reg_type": "sm8","offset": 0,"num": 1},
+        "expected": {"seq": 126,"data": [234]},
+        "tolerance": 0
+      },
+    
+      {
+        "wait":0,
+        "meth":"wscat",
+        "desc" :" change rack number",
+        "url" : "ws://192.168.86.209:9001",
+        "query": {"action": "set","seq": 126,"sm_name": "rtos_2","reg_type": "sm8","offset": 0,"data": [0]},
+        "expected": {"seq": 126,"data": [0]},
+        "tolerance": 0
+      },
+      {
+        "wait":1,
+        "meth":"wscat",
+        "desc" :" check rack number again",
+        "url" : "ws://192.168.86.209:9001",
+        "query": {"action": "get","seq": 126,"sm_name": "rtos_2","reg_type": "sm8","offset": 0,"num": 1},
+        "expected": {"seq": 126,"data": [234]},
+        "tolerance": 0
+      },
+    
+    
+    {
+    "wait":0,
+    "meth":"wscat",
+    "desc" :" check rack online",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 126,"sm_name": "rack_2","reg_type": "sm16","offset": 26626,"num": 1},
+    "expected": {"seq": 126,"data": [1]},
+    "tolerance": 0
+  },
+  {
+    "wait":3,
+    "meth":"wscat",
+    "desc" :"  reboot rack",
+    "url" : "ws://192.168.86.209:9001",
+    "query":{"action":"set", "seq": 127, "sm_name": "rack_2", "reg_type": "rack_config", "offset":"8", "operation":33, "data":[0]},
+    "expected": {"seq": 127,"data": [0]},
+    "tolerance": 0
+  },
+  {
+    "wait":3,
+    "meth":"wscat",
+     "desc" :" check rack offline",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 128,"sm_name": "rack_2","reg_type": "sm16","offset": 26626,"num": 1},
+    "expected": {"seq": 128,"data": [0]},
+    "tolerance": 0
+},
+{
+    "wait" :15,
+    "meth":"wscat",
+    "desc" :"  check rack back on line",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 129,"sm_name": "rack_2","reg_type": "sm16","offset": 26626,"num": 1},
+    "expected": {"seq": 129,"data": [1]},
+    "tolerance": 0
+  }
+
+]
