@@ -1,2 +1,3 @@
 mkdir -p build
-g++ -g -o build/sequence  src/sequence.cpp
+g++ -v -g -o build/sequence  src/sequence.cpp
+g++ -v -g -o build/scan_file src/scan_file.cpp
