@@ -189,7 +189,7 @@ int main(int argc, char* argv[]) {
         for (int seq = 1; seq <= num_objects; ++seq) {
             std::ostringstream query;
             query << "{\"action\":\"get\", \"seq\":" << seq
-                  << ", \"sm_name\":\"rtos_0\", \"reg_type\":\"sm16\", "
+                  << ", \"sm_name\":\"rtos_0\", \"reg_type\":\"bits\", "
                   << "\"offset\":\"" << offset << "\", \"num\":" << data_size << "}";
 
             try {
