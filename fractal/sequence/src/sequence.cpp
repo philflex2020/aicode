@@ -77,6 +77,8 @@ the Step object will also have the parsed json for the step.
 
 #include <nlohmann/json.hpp>
 
+#include "fractal_assert.h"
+
 // Namespace shortcuts
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -281,59 +283,8 @@ std::string test_max = R"(
 )";
 
 
-class AssertManager {
-public:
-    struct AssertInfo {
-        std::string category;
-        std::string message;
-        bool passed;
-    };
-
-    std::vector<AssertInfo> assert_log;
-
-    // Log an assertion
-    void log_assertion(const std::string& category, const std::string& message, bool passed) {
-        assert_log.push_back({category, message, passed});
-    }
-
-    // Generate a summary
-    void generate_summary() const {
-        int total = assert_log.size();
-        int passed = 0;
-        for (const auto& assert : assert_log) {
-            if (assert.passed) passed++;
-        }
-        std::cout << "\n--- Test Summary ---\n";
-        std::cout << "Total: " << total << ", Passed: " << passed << ", Failed: " << (total - passed) << "\n";
-    }
-
-    // Generate a detailed report
-    void generate_report() const {
-        std::cout << "\n--- Detailed Test Report ---\n";
-        for (const auto& assert : assert_log) {
-            std::cout << "[" << (assert.passed ? "PASS" : "FAIL") << "] "
-                      << "Category: " << assert.category
-                      << " | Message: " << assert.message << "\n";
-        }
-    }
-};
-
-// Global instance for assertion management
-AssertManager assert_manager;
-
-#define myassert(condition, category, crash)                               \
-    do {                                                                   \
-        bool _result = (condition);                                         \
-        assert_manager.log_assertion(category, #condition, _result);        \
-        if (!_result) {                                                     \
-            std::cerr << "[ASSERT FAIL] Category: " << category            \
-                      << " | Condition: " << #condition << std::endl;      \
-            if (crash) {                                                   \
-                std::cerr << "Exiting due to failed assertion.\n";         \
-                std::terminate();                                          \
-            }                                                              \
-        }                                                                  \
-    } while (0)
+// class AssertManager {
+// moved to fractal_assert.h
 
 int run_asseert( bool crash) {
     int v1 = 20, v2 = 30;
@@ -586,13 +537,13 @@ bool find_json_map(json& result, const std::string& dir_name, const std::string&
 int rack_max = 12;
 
 struct VarDef {
-    VarType type;
+    VarType type;  // type can be extended to point to extended vardefs
     int offset;
     std::any value;
     std::string name; // Only used for named variables like global_var or local_var
+    std::vector<int>args;
 };
-
-
+// myassert
 // TODO move these to the sequence
 // we need rack local and sequence local perhaps
 std::map<std::string, int> local_vars;

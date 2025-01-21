@@ -1,6 +1,6 @@
 mkdir -p build
 echo build sequence 
-g++ -g -o build/sequence  src/sequence.cpp
+g++ -g -o build/sequence -I inc src/sequence.cpp
 echo build scan
 g++ -g -o build/scan_file src/scan_file.cpp
 echo build compare
