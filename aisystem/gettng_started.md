@@ -101,3 +101,6 @@ Absolutely! Your **256 GB, 52-core system** is a fantastic starting point to div
 3. Experiment with distributed computing and data preprocessing.
 
 This is a great opportunity to build foundational knowledge and skills. If you need help setting up or starting a specific project, let me know—I’d be happy to guide you! 🚀😊
+
+
+At SmartCow, we have several engineers interested in running and sharing experiments, not only during the training phase but also during the production phase. To centralise and share the results, we are using the well-known MLOps platform called Weights & Biases. This platform allows us to put together all the metrics, data and models versions in a “Team” so that we can quickly and easily fetch the information from a common platform. In this article, WandB experiment tracking feature is used for stats visualisation and sharing.
