@@ -543,6 +543,10 @@ struct VarDef {
     std::string name; // Only used for named variables like global_var or local_var
     std::vector<int>args;
 };
+
+// sbms.racks[].module[].cell[].volts
+// use cascaded vardefs to get to the end var
+
 // myassert
 // TODO move these to the sequence
 // we need rack local and sequence local perhaps

@@ -94,6 +94,7 @@ Record parseLine(const std::string& line) {
     return record;
 }
 
+
 // Function to read the file into a vector of records
 std::vector<Record> readFile(const std::string& filename) {
     std::vector<Record> records;
