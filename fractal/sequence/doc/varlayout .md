@@ -7,23 +7,23 @@
   - 01/18/2025: compact def.
 
 
-| **Source**  | **Operation**  | **Dest**      | **Description**       | **Notes** |
-|-------------|----------------|---------------|-----------------------|----------------------------------------------------|
-| rbits:201   | 3sum     |  bits:1        | total_undervoltage    | 3sum from rbms reg aggregates across online racks |
-| rbits:204   | 3sum     |  bits:4        | total_overvoltage     ||
-| rbits:207   | 3sum     |  bits:7        | total_overcurrent     ||
-| input:45    | 3sum     |  bits:10       | low_resistance        | 3sum from sbms reg does not aggregate across online racks | 
-| rinput:117  | 3sumhl   |  bits:13       | module_temp    | 6 vars (low/high @1, @2, @3)         |
-| rbits:213   | 3sum     |  bits:19       | cell overvoltage      |
-| rbits:210   | 3sum     | bits:22        | cell_undervoltage     |
-| rbits:231   | 3sum     | bits:25        | cell_diff_voltage     |
-| rbits:216   | 3sum     | bits:28        | cell_low_temp  |
-| rbits:219   | 3sum     |  bits:31       | cell_over_temp |
-| rbits:222   | 3sum     | bits:34        | cell_diff_temp |
-| rbits:222   | 3sum     | bits:37        | cell_low_SOC                                      |
-| rbits:225   | 3sum     | bits:40        | cell_high_SOC                                     |
-| rbits:228   | 3sum     | bits:43        | cell_low_SOH|
-| rbits:xxx   | 3sum     | bits:46        | cell_high_SOH                                     |
+| Source      | operation  | dest      | name      | notes                          |
+|-------------|----------- |-----------|-----------------------|----------------------------------------------------|
+| rbits:201   | sum:3     |  bits:1    | total_undervoltage    | sum:3 from rbms reg aggregates across online racks |
+| rbits:204   | sum:3     |  bits:4    | total_overvoltage     ||
+| rbits:207   | sum:3     |  bits:7        | total_overcurrent     ||
+| input:45    | sum:3     |  bits:10       | low_resistance        | sum:3 from sbms reg does not aggregate across online racks | 
+| rinput:117  | sum:6     |  bits:13       | module_temp    | 6 vars (low/high @1, @2, @3)         |
+| rbits:213   | sum:3     |  bits:19       | cell overvoltage      |
+| rbits:210   | sum:3     | bits:22        | cell_undervoltage     |
+| rbits:231   | sum:3     | bits:25        | cell_diff_voltage     |
+| rbits:216   | sum:3     | bits:28        | cell_low_temp  |
+| rbits:219   | sum:3     |  bits:31       | cell_over_temp |
+| rbits:222   | sum:3     | bits:34        | cell_diff_temp |
+| rbits:222   | sum:3     | bits:37        | cell_low_SOC                                      |
+| rbits:225   | sum:3     | bits:40        | cell_high_SOC                                     |
+| rbits:228   | sum:3     | bits:43        | cell_low_SOH|
+| rbits:xxx   | sum:3     | bits:46        | cell_high_SOH                                     |
 | rbits:200   | into     | bits:49        | esbcm_lost_communication                          |
 | rbits:237   | into     | bits:50        | esbmm_lost_communication                          |
 | rinput:115  | spread   | bits:51        | total_voltage_spread | (look for >20V spread)             |
@@ -31,12 +31,12 @@
 | rbits:xxx   | into     | bits:53        | abnormal_contactor_close                          |
 | rbits:xxx   | into     | bits:54        | charge_disabled   | Prohibited
 | rbits:xxx   | into     | bits:55        | discharge_disabled | Prohibited                              |
-| rbits:list1 | agg_bits | bits:56        | alarm_summary     | needs a list of alarms 
-| rbits:list2 | agg_bits | bits:57        | fault_summary     | needs a list of faults
-| rinput:107  | 4set     | bits:58        | input_in_         |Input IN0-IN3                                     |
-| rbits:227   | 3sum     | bits:70        | terminal_over_temperature | what is a terminal                |
-| rbits:280   | 3sum     | bits:73        | pack_overvoltage | what is a pack                                  |
-| rbits:283   | 3sum     | bits:76        | pack_undervoltage|                                 |
+| rbits:list1 | agg:bits | bits:56        | alarm_summary     | needs a list of alarms 
+| rbits:list2 | agg:bits | bits:57        | fault_summary     | needs a list of faults
+| rinput:107  | set:4     | bits:58        | input_in_         |Input IN0-IN3                                     |
+| rbits:227   | sum:3     | bits:70        | terminal_over_temperature | what is a terminal                |
+| rbits:280   | sum:3     | bits:73        | pack_overvoltage | what is a pack                                  |
+| rbits:283   | sum:3     | bits:76        | pack_undervoltage|                                 |
 | rbits:286   | into     | bits:79        | cell_voltage_acquisition_fault |                    |
 | rbits:287   | into     | bits:80        | cell_temp_acquisition_fault |                |
 | rinput:125  | min      | input:6        | min_pack_voltage |(cell-based)                    |
@@ -46,12 +46,12 @@
 | rinput:127  | maxn     | input:12       | max_battery temp                    | maxn also places the number is the designated number var|
 | rinput:128  | maxn     | input:13       | max_pack_temp                              |
 | rack_num    | max_num  | input:14       | max_battery_temperature | group                     |
-| rinput:139  | sum2     | input:18       | accumulated_charge_capacity |                     |
-| rinput:141  | sum2     | input:20       | accumulated_discharge_capacity |                   |
-| rinput:143  | pow2     | input:22       | single_cumulative_charge_power  |                 |
-| rinput:145  | pow2     | input:24       | single_cumulative_discharge_power |               |
-| rinput:139  | sum2     | input:26       | system_charge_capacity |                           |
-| rinput:141  | sum2     | input:28       | system_discharge_capacity |                        |
+| rinput:139  | sum:2     | input:18       | accumulated_charge_capacity |                     |
+| rinput:141  | sum:2     | input:20       | accumulated_discharge_capacity |                   |
+| rinput:143  | pow:2     | input:22       | single_cumulative_charge_power  |                 |
+| rinput:145  | pow:2     | input:24       | single_cumulative_discharge_power |               |
+| rinput:139  | sum:2     | input:26       | system_charge_capacity |                           |
+| rinput:141  | sum:2     | input:28       | system_discharge_capacity |                        |
 | rinput:141  | div      | input:30       | available_discharge_time |                         |
 | rinput:139  | div      | input:31       | available_charge_time   |                        |
 | rinput:101  | sum      | input:32       | max_discharge_power |                              |
@@ -60,8 +60,8 @@
 | rinput:105  | sum      | input:35       | max_charge_current  |                             |
 | rinput:-1   | count    | input:36       | number_of_daily_charges   | system must be charging for at least 5 minutes                          |
 | rinput:-1   | count    | input:37       | number_of_daily_discharges |                       |
-| rinput:1/2  | agg2p    | input:38       | total_daily_discharge   |                         |
-| rinput:1/2  | agg2n    | input:40       | total_daily_charge                               |
+| rinput:1/2  | agg:2p    | input:38       | total_daily_discharge   |                         |
+| rinput:1/2  | agg:2n    | input:40       | total_daily_charge                               |
 |             | calc    | input:42       | operating_temp       |                      |
 |             | calc    | input:43       | state                 |                            |
 |             | calc    | input:44       | charge_state           | |

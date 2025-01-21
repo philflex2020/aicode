@@ -64,6 +64,254 @@
     "query": {"action": "get","seq": 129,"sm_name": "rack_2","reg_type": "sm16","offset": 26626,"num": 1},
     "expected": {"seq": 129,"data": [1]},
     "tolerance": 0
+  },
+  {
+    "wait":0,
+    "meth":"wscat",
+    "desc" :" check rack number",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 130,"sm_name": "rtos_2","reg_type": "sm8","offset": 0,"num": 1},
+    "expected": {"seq": 130,"data": [234]},
+    "tolerance": 0
+  },
+  {
+    "wait":0,
+    "meth":"wscat",
+    "desc" :" set invalid rack number",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "set","seq": 131,"sm_name": "rtos_2","reg_type": "sm8","offset": 0,"data": [0]},
+    "expected": {"seq": 131,"data": [0]},
+    "tolerance": 0
+  },
+  {
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" check rack number restores",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 132,"sm_name": "rtos_2","reg_type": "sm8","offset": 0,"num": 1},
+    "expected": {"seq": 132,"data": [234]},
+    "tolerance": 0
+  },
+  {
+    "wait":0,
+    "meth":"wscat",
+    "desc" :" contactor start open hold 99 to 3",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "set","seq": 133,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 99,"num": 1, "data":[3]},
+    "expected": {"seq": 133,"data": [3]},
+    "tolerance": 0
+  },
+  {
+    "wait":0,
+    "meth":"wscat",
+    "desc" :" contactor start open hold 101 to 0",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "set","seq": 134,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 101,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [0]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #1",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #2",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #3",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+  "wait":0,
+  "meth":"wscat",
+  "desc" :" contactor start open hold 99 to 0",
+  "url" : "ws://192.168.86.209:9001",
+  "query": {"action": "set","seq": 135,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 99,"num": 1, "data":[0]},
+  "expected": {"seq": 135,"data": [0]},
+  "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #4",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #5",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #6",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "wait":0,
+    "meth":"wscat",
+    "desc" :" contactor start close hold 99 to 3",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "set","seq": 136,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 99,"num": 1, "data":[3]},
+    "expected": {"seq": 136,"data": [3]},
+    "tolerance": 0
+  },
+  {
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor close negative hold 101 to 4",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "set","seq": 137,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 101,"num": 1, "data":[4]},
+    "expected": {"seq": 137,"data": [4]},
+    "tolerance": 0
+  },
+  {
+  "wait":0,
+  "meth":"wscat",
+  "desc" :" close precharge hold 101 to 6",
+  "url" : "ws://192.168.86.209:9001",
+  "query": {"action": "set","seq": 138,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 101,"num": 1, "data":[6]},
+  "expected": {"seq": 138,"data": [6]},
+  "tolerance": 0
+  },
+  {
+    "wait":0,
+    "meth":"wscat",
+    "desc" :" contactor close positive hold 101 to 7",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "set","seq": 139,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 101,"num": 1, "data":[7]},
+    "expected": {"seq": 139,"data": [7]},
+    "tolerance": 0
+},
+{
+"wait":1,
+"meth":"wscat",
+"desc" :" open precharge hold 101 to 133",
+"url" : "ws://192.168.86.209:9001",
+"query": {"action": "set","seq": 140,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 101,"num": 1, "data":[133]},
+"expected": {"seq": 140,"data": [133]},
+"tolerance": 0
+},
+{
+"wait":0,
+"meth":"wscat",
+"desc" :" open precharge hold 99 to 0",
+"url" : "ws://192.168.86.209:9001",
+"query": {"action": "set","seq": 141,"sm_name": "rtos_2","reg_type": "mb_hold","offset": 99,"num": 1, "data":[0]},
+"expected": {"seq": 141,"data": [0]},
+"tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #100",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #101",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #102",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #103",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #104",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #105",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #106",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
+  },
+  {
+    "note":"mb_input volt 1 curr 2 soc 3 soh 4 insul_pos 5 insul neg 6 status 7 rack_cont 8 (0x25)",
+    "wait":1,
+    "meth":"wscat",
+    "desc" :" contactor test mb_input 8 #107",
+    "url" : "ws://192.168.86.209:9001",
+    "query": {"action": "get","seq": 134,"sm_name": "rtos_2","reg_type": "mb_input","offset": 8,"num": 1, "data":[0]},
+    "expected": {"seq": 134,"data": [10]},
+    "tolerance": 0
   }
-
-]
+  
+  ]
