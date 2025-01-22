@@ -538,12 +538,32 @@ int rack_max = 12;
 
 struct VarDef {
     VarType type;  // type can be extended to point to extended vardefs
-    int offset;
+    uint16_t offset;
     std::any value;
     std::string name; // Only used for named variables like global_var or local_var
-    std::vector<int>args;
+    std::vector<uint16_t>args;
+    std::vector<uint16_t>offsets;
+   std::vector<uint16_t>sizes;
 };
 
+// Adding these together:
+
+// VarType type: 4 bytes.
+// Padding after type for alignment: 4 bytes.
+// uint16_t offset: 2 bytes.
+// Padding after offset for alignment: 6 bytes.
+// std::any value: 32 bytes.
+// std::string name: 32 bytes.
+// std::vector<uint16_t> args: 24 bytes.
+// std::vector<uint16_t> offsets: 24 bytes.
+// std::vector<uint16_t> sizes: 24 bytes.
+// Subtotal: 176 bytes.
+
+// Alignment
+// The structure will likely be aligned to the largest alignment requirement of its members (typically 8 bytes on a 64-bit system). The total size will be rounded up to the nearest multiple of 8, which in this case is already aligned.
+
+// Final Size
+// 176 bytes on a 64-bit platfo
 // sbms.racks[].module[].cell[].volts
 // use cascaded vardefs to get to the end var
 
