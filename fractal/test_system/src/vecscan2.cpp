@@ -262,34 +262,63 @@ void xload_matches(const std::string& filename) {
 
     std::cout << "Matches loaded from " << filename << "\n";
 }
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <stdexcept>
+
+int str_to_offset(const std::string& offset_str) {
+    try {
+        // Check if the string starts with "0x" or "0X" for hexadecimal
+        if (offset_str.size() > 2 && (offset_str[0] == '0') && (offset_str[1] == 'x' || offset_str[1] == 'X')) {
+            return std::stoi(offset_str, nullptr, 16); // Parse as hexadecimal
+        } else {
+            return std::stoi(offset_str); // Parse as decimal
+        }
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Error: Invalid offset value: " << offset_str << std::endl;
+        throw;
+    } catch (const std::out_of_range& e) {
+        std::cerr << "Error: Offset value out of range: " << offset_str << std::endl;
+        throw;
+    }
+}
 // Main Function
 int main(int argc, char* argv[]) {
-    if (argc < 6) {
-        std::cerr << "Usage: " << argv[0] << " <url> <offset> <num_objects> <object_size> <num_runs>\n";
+    if (argc < 8) {
+        std::cerr << "Usage: " << argv[0] << " <url> <sm_name> <reg_type> <offset> <num_objects> <object_size> <num_runs>\n";
+        std::cerr << "Usage: " << argv[0] << " xxx rtos_0 mb_input 1 2 4 10  10 runs each getting 24 registers from rtos_0 type mb_input starting offset 1   num 2 , 4 times   (\n";
         return 1;
     }
 
     //std::string url = argv[1];
-    std::string url = "ws://192.168.86.209:9001";
+    std::string url = "ws://192.168.86.209:9003";
+    std::string sm_name = argv[2];
+    std::string reg_type = argv[3];
 
-    int offset = std::stoi(argv[2]);
-    int num_objects = std::stoi(argv[3]);
-    int data_size = std::stoi(argv[4]);
-    int num_runs = std::stoi(argv[5]);
+    std::string offset_str = argv[4];
+
+    int offset = str_to_offset(offset_str);
+    int num_objects = std::stoi(argv[5]);
+    int data_size = std::stoi(argv[6]);
+    int num_runs = std::stoi(argv[7]);
      // Generate filename for saving and loading matches
     std::ostringstream filename;
-    filename << "data/matches_offset_" << offset << "_num_" << num_objects << "_size_" << data_size << ".json";
+    filename << "data/matches_offset_" << sm_name <<"_"<<reg_type<<"_"<< offset << "_num_" << num_objects << "_size_" << data_size << ".json";
 
     // Load matches from file if any
     load_matches(filename.str());
 
 
     for (int run = 0; run < num_runs; ++run) {
+        int offset = str_to_offset(offset_str);
+
         for (int seq = 1; seq <= num_objects; ++seq) {
             std::ostringstream query;
             query << "{\"action\":\"get\", \"seq\":" << seq
-                  << ", \"sm_name\":\"rtos_0\", \"reg_type\":\"mb_input\", "
-                  << "\"offset\":\"" << offset << "\", \"num\":" << data_size << "}";
+                  << ", \"sm_name\":\""<< sm_name <<"\", \"debug\":true, \"reg_type\":\"mb_input\", "
+                  << "\"offset\":\"" << offset << "\", \"num\":" << data_size << ", \"data\":[0]}";
 
             try {
                 std::string response = run_wscat(url, query.str());

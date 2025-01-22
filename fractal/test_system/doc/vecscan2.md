@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
             std::ostringstream query;
             query << "{\"action\":\"get\", \"seq\":" << seq
                   << ", \"sm_name\":\"rtos_0\", \"reg_type\":\"mb_input\", "
-                  << "\"offset\":\"" << offset << "\", \"num\":" << data_size << "}";
+                  << "\"offset\":\"" << offset << "\", \"debug\":true, \"num\":" << data_size << "}";
 
             try {
                 std::string response = run_wscat(url, query.str());
