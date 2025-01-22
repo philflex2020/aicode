@@ -34,6 +34,9 @@ struct InputVector {
 
 struct MatchObject {
     std::vector<uint16_t> vector;
+    std::vector<uint16_t> bitmask;    // Mask for each element
+    std::vector<uint16_t> tolerance;  // Tolerance for each element
+    std::vector<uint16_t> weight;     // Weight for each element
     std::map<int, std::vector<int>> matches;
     std::string name;
 };
@@ -68,6 +71,69 @@ double ref_time_dbl() {
 void add_input_vector(int run, int offset, const std::vector<uint16_t>& data) {
     double timestamp = ref_time_dbl();
     inputVecs[run].push_back({offset, data, timestamp, -1});
+}
+
+
+// Function to calculate match score
+double calculate_match_score(const std::vector<uint16_t>& input,
+                             const MatchObject& match) {
+    double total_weight = 0.0;
+    double match_score = 0.0;
+
+    // Ensure vectors are of the same size
+    if (input.size() != match.vector.size()) {
+        return 0.0; // Not a valid match
+    }
+
+    for (size_t i = 0; i < input.size(); ++i) {
+        // Apply bitmask if it exists
+        uint16_t masked_input = input[i];
+        uint16_t masked_match = match.vector[i];
+        if (!match.bitmask.empty() && match.bitmask.size() == match.vector.size()) {
+            masked_input &= match.bitmask[i];
+            masked_match &= match.bitmask[i];
+        }
+
+        // Calculate absolute difference
+        uint16_t difference = std::abs(static_cast<int>(masked_input) - static_cast<int>(masked_match));
+
+        // Check if within tolerance if tolerance vector exists
+        bool within_tolerance = true;
+        if (!match.tolerance.empty() && match.tolerance.size() == match.vector.size()) {
+            within_tolerance = (difference <= match.tolerance[i]);
+        }
+
+        if (within_tolerance) {
+            // Add weighted score or default to 1 if weights are not defined
+            double weight = (!match.weight.empty() && match.weight.size() == match.vector.size())
+                                ? static_cast<double>(match.weight[i])
+                                : 1.0;
+            match_score += weight;
+            total_weight += weight;
+        }
+    }
+
+    // Normalize match score by total weight
+    return (total_weight > 0.0) ? (match_score / total_weight) : 0.0;
+}
+
+// Function to find the best match
+const MatchObject* find_best_match(const std::vector<uint16_t>& input,
+                                   const std::vector<MatchObject>& matches,
+                                   double threshold) {
+    const MatchObject* best_match = nullptr;
+    double best_score = 0.0;
+
+    for (const auto& match : matches) {
+        double score = calculate_match_score(input, match);
+
+        if (score > best_score && score >= threshold) {
+            best_score = score;
+            best_match = &match;
+        }
+    }
+
+    return best_match;
 }
 
 // Process Matches
@@ -462,6 +528,7 @@ void show_test_plan(json& testPlan)
     auto jmq = jmon["Query"];
     json jtests;
     json ctest; // current test
+    json ntest; // next test
     int when = 1000;
     int test_idx = -1;
     json jexpects; // list of timed expects
@@ -488,11 +555,11 @@ void show_test_plan(json& testPlan)
 
         if (!jtests.empty()) {
             test_idx = 0;
-            ctest = jtests[test_idx]; // Access first test safely
+            ntest = jtests[test_idx]; // Access first test safely
             std::cout << "First test: " << ctest.dump() << std::endl;
 
             // Get the "When" value or use a default
-            when = ctest.contains("when") ? ctest["when"].get<int>() : tim + 1;
+            when = ntest.contains("when") ? ntest["when"].get<int>() : tim + 1;
             std::cout << "First test When: " << when << std::endl;
         } else {
             std::cerr << "Tests array is empty." << std::endl;
@@ -561,12 +628,13 @@ void show_test_plan(json& testPlan)
         if (run >= when)
         {
             std::cout << "Sending test now " << run << " when " << when <<  std::endl;
+            ctest = ntest;
             // Check if test_idx is within the bounds of jtests
             when = tim+1;
             test_idx++;
             if (test_idx < jtests.size()) {
-                ctest = jtests[test_idx];
-                when = ctest.contains("When") ? ctest["When"].get<int>() : tim+1;
+                ntest = jtests[test_idx];
+                when = ntest.contains("when") ? ntest["when"].get<int>() : tim+1;
             } else {
                 std::cout << "No more tests to send. Test index out of bounds." << std::endl;
                 // Handle the case where no more tests are available
@@ -590,6 +658,60 @@ void show_test_plan(json& testPlan)
         {
             // collect matches for this run
             json match_json = json::array(); //
+            auto mval = find_best_match(data, matchObjects, 0.8);
+            if(!mval)
+            {
+                std::cout << " No match found here, create a new one"<<std::endl;
+
+            }
+            else 
+            {
+                std::cout << " Match found ["<<mval->name<<"]"<<std::endl;
+                
+                // Track active Expects and NotExpects
+                //std::map<std::string, int> active_expects;
+                //std::map<std::string, int> active_not_expects;
+                // Check against active Expects
+                if (active_expects.find(mval->name) != active_expects.end()) {
+                    std::cout << "Expected match [" << mval->name << "] detected. Test passed for this part." << std::endl;
+                    //active_expects[mval->name] -= 1; // Decrease count for this expect
+                    //if (active_expects[mval->name] == 0) {
+                        active_expects.erase(mval->name); // Remove when no longer expected
+                    //}
+                    if(ctest.contains("passes")) {
+                        ctest["passes"]+=1;
+                    }
+                    else 
+                    {
+                        ctest["passes"]=1;                        
+                    } 
+                    //inc the passes for the current test
+                }
+
+                // Check against active NotExpects
+                if (active_not_expects.find(mval->name) != active_not_expects.end()) {
+                    std::cerr << "Unexpected match [" << mval->name << "] detected. Test failed for this part." << std::endl;
+                    //active_not_expects[mval->name] -= 1; // Decrease count for this not-expect
+                    //if (active_not_expects[mval->name] == 0) {
+                        active_not_expects.erase(mval->name); // Remove when no longer relevant
+                        if(ctest.contains("fails")) {
+                            ctest["fails"]+=1;
+                        }
+                        else 
+                        {
+                            ctest["fails"]=1;                        
+                        } 
+
+                    //}
+                    //inc the fails for the current test
+                }
+
+                // check for the match name in the expected list
+                // if one is found we can assume that this part of the test is good
+                // check for the match name not  the not expected list
+                // if one is found we can assume that this part of the test failed
+                 
+            }
             test_json_matches(match_json, run);
             save_run_data(target, 0 , run, seq , data, match_json);
         }
