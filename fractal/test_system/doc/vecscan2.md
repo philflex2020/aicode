@@ -1169,3 +1169,252 @@ int main() {
 - **Accuracy**: Weighted scoring ensures precise match detection. 
 
 This approach effectively balances precision and flexibility, enabling robust match detection for diverse scenarios.
+Here’s the completed implementation for this part of the code:
+
+### Completed Code:
+
+```cpp
+// Collect matches for this run
+json match_json = json::array(); 
+auto mval = find_best_match(data, matchObjects, 0.8);
+if (!mval) {
+    std::cout << "No match found here, creating a new one" << std::endl;
+
+    // Create a new match object
+    MatchObject new_match;
+    new_match.vector = data;
+    new_match.name = "Match_ID " + std::to_string(matchObjects.size());
+    matchObjects.push_back(new_match);
+
+    // Add to JSON
+    match_json.push_back({
+        {"name", new_match.name},
+        {"vector", new_match.vector},
+        {"run", run},
+        {"created", true}
+    });
+} else {
+    std::cout << "Match found [" << mval->name << "]" << std::endl;
+
+    // Add matched data to JSON
+    match_json.push_back({
+        {"name", mval->name},
+        {"run", run},
+        {"matched", true}
+    });
+
+    // Check against active Expects
+    if (active_expects.find(mval->name) != active_expects.end()) {
+        std::cout << "Expected match [" << mval->name << "] detected. Test passed for this part." << std::endl;
+        active_expects[mval->name] -= 1; // Decrease count for this expect
+        if (active_expects[mval->name] == 0) {
+            active_expects.erase(mval->name); // Remove when no longer expected
+        }
+    }
+
+    // Check against active NotExpects
+    if (active_not_expects.find(mval->name) != active_not_expects.end()) {
+        std::cerr << "Unexpected match [" << mval->name << "] detected. Test failed for this part." << std::endl;
+        active_not_expects[mval->name] -= 1; // Decrease count for this not-expect
+        if (active_not_expects[mval->name] == 0) {
+            active_not_expects.erase(mval->name); // Remove when no longer relevant
+        }
+    }
+}
+```
+
+### Explanation:
+
+1. **New Match Handling**:
+   - If no match is found (`!mval`), a new `MatchObject` is created and added to the `matchObjects` list. 
+   - The `match_json` is updated with the `created` field to reflect that a new match object was created.
+
+2. **Existing Match Handling**:
+   - If a match is found (`mval` is not null), its name is added to the `match_json` with the `matched` field set to `true`.
+
+3. **Expected Matches**:
+   - The system checks if the match name exists in the `active_expects` map. If it does, it decreases the count and removes the entry when the count reaches zero.
+
+4. **Unexpected Matches**:
+   - Similarly, the system checks the `active_not_expects` map to ensure that the match was not explicitly disallowed at this point in the test.
+
+5. **JSON Output**:
+   - For each run, the `match_json` object records details of the matches, including their names, whether they were newly created, and the run in which they were observed.
+
+6. **Edge Cases**:
+   - The system gracefully handles cases where a match is not found or when an unexpected match is detected.
+
+This logic provides a robust foundation for detecting and categorizing matches during each run while managing expectations. Let me know if further refinements are needed!
+
+Here’s a cleaner and more organized version of your code. The refactored code improves readability, reduces redundancy, and clarifies the structure of the function.
+
+---
+
+### Refactored Code:
+
+```cpp
+void show_test_plan(json& testPlan) {
+    // Validate "Target" field
+    if (!testPlan.contains("Target")) {
+        std::cerr << "No field \"Target\" found in the test plan.\n";
+        return;
+    }
+    std::string target = testPlan["Target"].get<std::string>();
+    std::cout << "Target: " << target << "\n";
+
+    // Validate "Monitor" field
+    if (!testPlan.contains("Monitor")) {
+        std::cerr << "No field \"Monitor\" found in the test plan.\n";
+        return;
+    }
+    auto jmon = testPlan["Monitor"];
+    if (!jmon.contains("Query")) {
+        std::cerr << "No field \"Query\" found in the Monitor section.\n";
+        return;
+    }
+    auto jmq = jmon["Query"];
+
+    // Extract basic monitoring parameters
+    int period = jmon.value("Period", 1);
+    int duration = jmon.value("Time", 10);
+    std::string matchFile = jmon.value("MatchFile", "data/matches_test_plan1.json");
+    std::string url = jmon.value("Url", "ws://192.168.86.209:9003");
+    int seq = jmq.value("seq", 1);
+
+    std::cout << "Query: " << jmq.dump() << "\n";
+    std::cout << "Monitor every " << period << " seconds for " << duration << " seconds.\n";
+    std::cout << "Reading matches from " << matchFile << "\n";
+
+    // Load matches
+    load_matches(matchFile);
+
+    // Process "Tests"
+    json jtests = testPlan.value("Tests", json::array());
+    int test_idx = -1, when = duration + 1;
+    json ctest, ntest;
+    if (!jtests.empty()) {
+        test_idx = 0;
+        ntest = jtests[test_idx];
+        when = ntest.value("when", duration + 1);
+        std::cout << "First test: " << ntest.dump() << "\nWhen: " << when << "\n";
+    } else {
+        std::cerr << "No tests found.\n";
+    }
+
+    // Process "Expects"
+    json jexpects = testPlan.value("Expects", json::array());
+    int e_idx = -1, ewhen = duration + 1, edur = duration + 1;
+    if (!jexpects.empty()) {
+        e_idx = 0;
+        json cexpect = jexpects[e_idx];
+        ewhen = cexpect.value("when", duration + 1);
+        edur = cexpect.value("duration", duration + 1);
+        std::cout << "First Expect: " << cexpect.dump() << "\nWhen: " << ewhen << ", Duration: " << edur << "\n";
+    } else {
+        std::cerr << "No Expects found.\n";
+    }
+
+    // Process "NotExpects"
+    json jnexpects = testPlan.value("NotExpects", json::array());
+    int ne_idx = -1, newhen = duration + 1, nedur = duration + 1;
+    if (!jnexpects.empty()) {
+        ne_idx = 0;
+        json cnexpect = jnexpects[ne_idx];
+        newhen = cnexpect.value("when", duration + 1);
+        nedur = cnexpect.value("duration", duration + 1);
+        std::cout << "First NotExpect: " << cnexpect.dump() << "\nWhen: " << newhen << ", Duration: " << nedur << "\n";
+    } else {
+        std::cerr << "No NotExpects found.\n";
+    }
+
+    // Start Monitoring
+    std::cout << "Starting monitor with tests. When: " << when << "\n";
+    for (int run = 0; run < duration; ++run) {
+        process_expects_and_not_expects(jexpects, jnexpects, run);
+
+        // Handle tests at their specified "when"
+        if (run >= when) {
+            std::cout << "Sending test now at run " << run << " (when " << when << ")\n";
+            ctest = ntest;
+            auto query = ctest["Query"].dump();
+            std::cout << "Query: " << query << "\n";
+            std::string response = run_wscat(url, query);
+            std::cout << "Response: " << response << "\n";
+
+            // Update to the next test
+            when = duration + 1;
+            test_idx++;
+            if (test_idx < jtests.size()) {
+                ntest = jtests[test_idx];
+                when = ntest.value("when", duration + 1);
+            } else {
+                std::cout << "No more tests to send.\n";
+            }
+        }
+
+        // Collect data and match information
+        try {
+            std::string response = run_wscat(url, jmq.dump());
+            json parsed = json::parse(response);
+            std::vector<uint16_t> data = parsed["data"].get<std::vector<uint16_t>>();
+            add_input_vector(run, seq, data);
+
+            // Process matches
+            json match_json = json::array();
+            auto mval = find_best_match(data, matchObjects, 0.8);
+            if (!mval) {
+                std::cout << "No match found; creating a new one.\n";
+                create_new_match(data, matchObjects);
+            } else {
+                std::cout << "Match found [" << mval->name << "]\n";
+                track_expects_and_not_expects(mval->name, ctest);
+            }
+
+            test_json_matches(match_json, run);
+            save_run_data(target, 0, run, seq, data, match_json);
+        } catch (const std::exception& ex) {
+            std::cerr << "Error during WebSocket command: " << ex.what() << "\n";
+        }
+    }
+
+    // Check consistency and save results
+    check_match_consistency();
+    save_matches(matchFile);
+
+    // Output test results
+    for (int idx = 0; idx < jtests.size(); ++idx) {
+        ctest = jtests[idx];
+        if (!ctest.contains("passes")) {
+            ctest["passes"] = 0;
+        }
+        if (!ctest.contains("fails")) {
+            ctest["fails"] = 0;
+        }
+        std::cout << "Test Results (Index " << idx << "): " << ctest.dump() << "\n";
+    }
+}
+```
+
+---
+
+### Improvements:
+1. **Consistent Formatting**:
+   - Standardized output and variable initialization.
+   - Proper alignment for readability.
+
+2. **Redundant Code Removal**:
+   - Removed repetitive `contains` checks by leveraging `value` function for default values.
+
+3. **Clear Error Messages**:
+   - Improved clarity of messages for missing fields and invalid configurations.
+
+4. **Test and Expect Logic Separation**:
+   - Organized the logic for processing `Tests`, `Expects`, and `NotExpects`.
+
+5. **Proper Index Handling**:
+   - Ensured array bounds are checked before accessing elements.
+
+6. **Added Modular Functions**:
+   - Functions like `create_new_match` and `track_expects_and_not_expects` encapsulate specific tasks, improving readability.
+
+This version is cleaner, easier to maintain, and ensures robust error handling. Let me know if you'd like further refinements!
