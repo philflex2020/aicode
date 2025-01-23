@@ -629,6 +629,12 @@ void show_test_plan(json& testPlan)
         {
             std::cout << "Sending test now " << run << " when " << when <<  std::endl;
             ctest = ntest;
+            json jquery = ctest["Query"];
+            auto qstr = jquery.dump();
+            std::cout << " Query " << qstr <<  std::endl;
+            std::string response = run_wscat(url, qstr);
+            std::cout << "         -> response " << response <<  std::endl;
+
             // Check if test_idx is within the bounds of jtests
             when = tim+1;
             test_idx++;
@@ -676,7 +682,7 @@ void show_test_plan(json& testPlan)
                     std::cout << "Expected match [" << mval->name << "] detected. Test passed for this part." << std::endl;
                     //active_expects[mval->name] -= 1; // Decrease count for this expect
                     //if (active_expects[mval->name] == 0) {
-                        active_expects.erase(mval->name); // Remove when no longer expected
+                        //active_expects.erase(mval->name); // possibly Remove when no longer expected
                     //}
                     if(ctest.contains("passes")) {
                         ctest["passes"]+=1;
@@ -693,7 +699,7 @@ void show_test_plan(json& testPlan)
                     std::cerr << "Unexpected match [" << mval->name << "] detected. Test failed for this part." << std::endl;
                     //active_not_expects[mval->name] -= 1; // Decrease count for this not-expect
                     //if (active_not_expects[mval->name] == 0) {
-                        active_not_expects.erase(mval->name); // Remove when no longer relevant
+                        //active_not_expects.erase(mval->name); // possibly Remove when no longer relevant
                         if(ctest.contains("fails")) {
                             ctest["fails"]+=1;
                         }
@@ -719,6 +725,16 @@ void show_test_plan(json& testPlan)
     check_match_consistency();
     // Save matches to file
     save_matches(mfile);
+    test_idx = 0;
+
+    while (test_idx < jtests.size()) {
+        ctest = jtests[test_idx];
+        if(!ctest.contains("passes")) {
+            ctest["fails"]=1;                        
+        }
+        std::cout << " Test Results for index :"<<test_idx << " ->" << ctest.dump() << std::endl;
+        test_idx++;
+    }
 }
 
 
