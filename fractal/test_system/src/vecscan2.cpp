@@ -137,12 +137,15 @@ const MatchObject* find_best_match(const std::vector<uint16_t>& input,
 }
 
 // TODO start using this 
-void create_new_match(InputVector&current_vector, std::vector<uint16_t>&data)
+void create_new_match(int run, std::vector<uint16_t>&data)
 {
+    
+    auto current_vector = inputVecs[run];
+
     MatchObject new_match;//{current_vector.data};
     new_match.vector = data;
     int new_id = matchObjects.size();
-    current_vector.match_id = new_id;
+    //current_vector.match_id = new_id;
     new_match.name ="Match_ID " + std::to_string(new_id);
     matchObjects.push_back(new_match);
     //matchIndexMap[current_vector.data] = new_id;
@@ -677,7 +680,8 @@ void show_test_plan(json& testPlan)
             if(!mval)
             {
                 std::cout << " No match found here, create a new one"<<std::endl;
-
+                create_new_match(run, data);
+                //create_new_match(InputVector&current_vector, data);
             }
             else 
             {
