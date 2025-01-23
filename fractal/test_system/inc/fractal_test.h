@@ -22,7 +22,7 @@ struct InputVector {
 
 struct MatchObject {
     std::vector<uint16_t> vector;
-    std::vector<uint16_t> bitmask;    // Mask for each element
+    std::vector<uint16_t> mask;    // Mask for each element
     std::vector<uint16_t> tolerance;  // Tolerance for each element
     std::vector<uint16_t> weight;     // Weight for each element
     std::map<int, std::vector<int>> matches;

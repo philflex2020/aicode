@@ -77,7 +77,7 @@ bool debug = false;
 
 // struct MatchObject {
 //     std::vector<uint16_t> vector;
-//     std::vector<uint16_t> bitmask;    // Mask for each element
+//     std::vector<uint16_t> mask;    // Mask for each element
 //     std::vector<uint16_t> tolerance;  // Tolerance for each element
 //     std::vector<uint16_t> weight;     // Weight for each element
 //     std::map<int, std::vector<int>> matches;
@@ -96,7 +96,7 @@ bool debug = false;
 // };
 // struct MatchObject {
 //     std::vector<uint16_t> vector;
-//     std::vector<uint16_t> bitmask;    // Mask for each element
+//     std::vector<uint16_t> mask;    // Mask for each element
 //     std::vector<uint16_t> tolerance;  // Tolerance for each element
 //     std::vector<uint16_t> weight;     // Weight for each element
 //     std::map<int, std::vector<int>> matches;
@@ -115,6 +115,22 @@ std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
 std::map<std::string, int> active_expects;
 std::map<std::string, int> active_not_expects;
 
+int str_to_offset(const std::string& offset_str) {
+    try {
+        // Check if the string starts with "0x" or "0X" for hexadecimal
+        if (offset_str.size() > 2 && (offset_str[0] == '0') && (offset_str[1] == 'x' || offset_str[1] == 'X')) {
+            return std::stoi(offset_str, nullptr, 16); // Parse as hexadecimal
+        } else {
+            return std::stoi(offset_str); // Parse as decimal
+        }
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Error: Invalid offset value: " << offset_str << std::endl;
+        throw;
+    } catch (const std::out_of_range& e) {
+        std::cerr << "Error: Offset value out of range: " << offset_str << std::endl;
+        throw;
+    }
+}
 
 // Function to Get Current Time in Seconds
 double ref_time_dbl() {
@@ -122,6 +138,66 @@ double ref_time_dbl() {
     static auto ref_time = steady_clock::now();
     auto now = steady_clock::now();
     return duration_cast<duration<double>>(now - ref_time).count();
+}
+
+
+// Load the metadata from a JSON file
+json load_metadata(const std::string& filepath) {
+    json metadata;
+    std::ifstream file(filepath);
+    if (file.is_open()) {
+        file >> metadata;
+    } else {
+        std::cerr << "Failed to open metadata file.\n";
+    }
+    file.close();
+    return metadata;
+}
+
+// Save the updated metadata back to the JSON file
+void save_metadata(const std::string& filepath, const json& metadata) {
+    std::ofstream file(filepath);
+    if (file.is_open()) {
+        file << metadata.dump(4);  // Pretty printing with an indent of 4 spaces
+    } else {
+        std::cerr << "Failed to save metadata file.\n";
+    }
+    file.close();
+}
+
+// Handle the execution and logging of a test plan
+void handle_test_run(const std::string& test_name, const std::string& metadata_path) {
+    json metadata = load_metadata(metadata_path);
+    if (!metadata.contains(test_name)) {
+        metadata[test_name] = {{"runs", 0}, {"results", json::array()}};
+    }
+
+    // Increment the run count
+    metadata[test_name]["runs"] = metadata[test_name]["runs"].get<int>() + 1;
+    int current_run = metadata[test_name]["runs"];
+
+    // Simulate a test result
+    bool test_passed = true;  // Simulate test pass condition
+
+    // Record the result
+    json result = {{"run", current_run}, {"passed", test_passed}};
+    metadata[test_name]["results"].push_back(result);
+
+    // Save updated metadata
+    save_metadata(metadata_path, metadata);
+
+    // Create result directory
+    std::string result_dir = "results/" + test_name + "/" + std::to_string(current_run);
+    fs::create_directories(result_dir);
+
+    // Save individual test result
+    std::ofstream result_file(result_dir + "/result.json");
+    if (result_file.is_open()) {
+        result_file << result.dump(4);
+    } else {
+        std::cerr << "Failed to save result file.\n";
+    }
+    result_file.close();
 }
 
 // Add Input Vector
@@ -146,16 +222,22 @@ double calculate_match_score(const std::vector<uint16_t>& input,
 
     for (size_t i = 0; i < input.size(); ++i) {
         if(debug)std::cout << "calculate match and score item "<< i << " size " << input.size() << std::endl;
-        // Apply bitmask if it exists
+        // Apply mask if it exists
         uint16_t masked_input = input[i];
         uint16_t masked_match = match->vector[i];
         if(debug)std::cout << "calculate match and score item "<< i << " input " << masked_input << " match " << masked_match << std::endl;
 
-        if (!match->bitmask.empty() && match->bitmask.size() == match->vector.size()) {
-            masked_input &= match->bitmask[i];
-            masked_match &= match->bitmask[i];
+        if (!match->mask.empty() && match->mask.size() == match->vector.size()) {
+            // special case mymask 0 = 0xffff allow all bits
+            uint16_t mymask = match->mask[i];
+            if (mymask == 0)
+                mymask=  ~match->mask[i];
+
+            masked_input &= mymask;
+            masked_match &= mymask;
+
         }
-        if(debug)std::cout << "calculate match and score item after bitmap  "<< i << " size " << input.size() << std::endl;
+        if(debug)std::cout << "calculate match and score item after mask  "<< i << " size " << input.size() << std::endl;
 
         // Calculate absolute difference
         uint16_t difference = std::abs(static_cast<int>(masked_input) - static_cast<int>(masked_match));
@@ -203,6 +285,31 @@ double calculate_match_score(const std::vector<uint16_t>& input,
     // Normalize match score by total weight
     return (total_weight > 0.0) ? (match_score / total_weight) : 0.0;
 }
+// we may need to find all matches
+void find_all_matches(std::vector<std::string> & matches,int run, const std::vector<uint16_t>& input,
+                                   double threshold) {
+    int idx = 0;
+    if(debug)
+    {
+        std::cout << " Looking for best match; run " << run<< std::endl;
+        std::cout << "      matchObjects size "<< sharedMatchObjects.size()<< std::endl;
+    }
+
+    for (auto match : sharedMatchObjects) {
+        if(debug)
+            std::cout << "  checking  all matches   " << match->name << std::endl;
+        double score = calculate_match_score(input, match);
+        if(debug)
+            std::cout << " Calculated match score   " << score << std::endl;
+
+        if (score >= threshold) {
+            std::cout << "  added  best match   " << match->name << std::endl;
+            matches.push_back (match->name);
+        }
+    }
+
+    return;
+}
 
 // Function to find the best match
 const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<uint16_t>& input,
@@ -233,8 +340,8 @@ const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<ui
     return best_match;
 }
 
+// Create a new MatchObject wrapped in a std::shared_ptr
 std::shared_ptr<MatchObject> create_new_match(int run, const std::vector<uint16_t>& data) {
-    // Create a new MatchObject wrapped in a std::shared_ptr
     std::shared_ptr<MatchObject> new_match = std::make_shared<MatchObject>();
     new_match->vector = data;
     new_match->name = "Match_ID " + std::to_string(sharedMatchObjects.size() + 1);  // Assign ID based on the next index
@@ -265,12 +372,6 @@ void test_json_matches(json& matches, int run) {
     for (size_t match_id = 0; match_id < sharedMatchObjects.size(); ++match_id) {
         const auto match = sharedMatchObjects.at(match_id);
 
-        // std::cout << " Run " << run << " Match ID: " << match_id << "\nVector: ";
-        // for (const auto& val : match.vector) {
-        //     std::cout << val << " ";
-        // }
-
-        //std::cout << "Matched Indices for Run " << run << ": ";
         if (match->matches.count(run)) {
 
             std::vector<std::string>match_str_vec;
@@ -281,16 +382,8 @@ void test_json_matches(json& matches, int run) {
 
                 match_str_vec.push_back(name);
             }
-
-            //std::cout << std::endl;
-
             match_json["match_idx"]= match_str_vec;
-
-        } else {
-            //match_json["match_idx"] = json::array();
-//            std::cout << "No matches xxx.";
         }
-        //std::cout << "\n";
         matches.push_back(match_json);
     }
 }
@@ -298,28 +391,6 @@ void test_json_matches(json& matches, int run) {
 // Check Match Consistency
 void check_match_consistency(int base_run = 0) {
     return;    
-    // if (inputVecs.find(base_run) == inputVecs.end()) {
-    //     std::cerr << "Invalid base run specified.\n";
-    //     return;
-    // }
-
-    // const auto& base_vectors = inputVecs[base_run];
-    // for (size_t idx = 0; idx < base_vectors.size(); ++idx) {
-    //     int base_match_id = base_vectors[idx].match_id;
-
-    //     for (const auto& [run, vectors] : inputVecs) {
-    //         if (run == base_run || idx >= vectors.size()) continue;
-
-    //         if (vectors[idx].match_id != base_match_id) {
-    //             std::cout << "Mismatch detected:\n"
-    //                       << "Base Run: " << base_run << ", Index: " << idx
-    //                       << ", Match ID: " << base_match_id << " changed to  match " << vectors[idx].match_id
-    //                       << " on Run: " << run 
-    //                       << "\n";
-    //                       base_match_id = vectors[idx].match_id;
-    //         }
-    //     }
-    // }
 }
 
 // Run WebSocket Command
@@ -338,28 +409,34 @@ std::string run_wscat(const std::string& url, const std::string& query_str) {
 }
 
 
-void load_test_plan(json& testPlan, const std::string& filePath) 
-{
-    std::ifstream inputFile(filePath);
+void load_test_plan(json& testPlan, const std::string& testName) 
+{ 
+    std::ostringstream filePath;
+    filePath << "json/"<< testName<<".json";
+
+
+    std::ifstream inputFile(filePath.str());
     if (!inputFile.is_open()) {
-        std::cerr << "Failed to open file: " << filePath << std::endl;
+        std::cerr << "Failed to open file: " << filePath.str() << std::endl;
         return;
     }
-
     try {
         inputFile >> testPlan; // Parse the JSON file
     } catch (const std::exception& e) {
         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
         return;
     }
-    std::cout << "TestPlan opened from file: " << filePath << std::endl;
+    std::cout << "TestPlan opened from file: " << filePath.str() << std::endl;
 }
 
-//std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
 
-void save_matches(const std::string& filename) {
+void save_matches(const std::string& matchName) {
+
+    std::ostringstream filePath;
+    filePath << "json/matches_"<< matchName<<".json";
+
     // Load existing matches if the file exists
-    std::ifstream inputFile(filename);
+    std::ifstream inputFile(filePath.str());
     json existingMatches = json::array();
     if (inputFile.is_open()) {
         try {
@@ -385,15 +462,20 @@ void save_matches(const std::string& filename) {
             json newMatch;
             newMatch["name"] = match->name;
             newMatch["vector"] = match->vector;
+            if(!match->tolerance.empty())
+                newMatch["tolerance"] = match->tolerance;
+            if(!match->weight.empty())
+                newMatch["weight"] = match->weight;
             //newMatch["matches"] = match.matches;
             existingMatches.push_back(newMatch);
         }
     }
-    std::string outfile = filename;
+
+    //std::string outfile = filename;
     // Save the combined matches back to the file
-    std::ofstream outputFile(outfile);
+    std::ofstream outputFile(filePath.str());
     if (!outputFile.is_open()) {
-        std::cerr << "Error: Unable to open file for saving matches.\n";
+        std::cerr << "Error: Unable to open file [" << filePath.str() <<"] for saving matches.\n";
         return;
     }
 
@@ -407,25 +489,42 @@ void save_matches(const std::string& filename) {
             first = false;
             outputFile << "\n";
         }
-        else
+        else 
         {
             outputFile << ",\n";
         }
         outputFile << "{ \"name\": "<< m["name"].dump(); // Save with pretty-print
-        outputFile <<", \"vector\":"<< m["vector"].dump(); // Save with pretty-print
+            outputFile <<",\n            \"vector\":"<< m["vector"].dump(); // Save with pretty-print
+        if(m.contains("tolerance"))
+        {
+            outputFile <<",\n            \"tolerance\":"<< m["tolerance"].dump(); // Save with pretty-print
+        }
+        if(m.contains("weight"))
+        {
+            outputFile <<",\n            \"weight\":"<< m["weight"].dump(); // Save with pretty-print
+        }
+        if(m.contains("mask"))
+        {
+            outputFile <<",\n            \"mask\":  "<< m["mask"].dump(); // Save with pretty-print
+        }
         outputFile << "}"; 
     }
-        outputFile << "\n]\n"; 
+    outputFile << "\n]\n"; 
 
     outputFile.close();
 
-    std::cout << "Matches saved to " << outfile << "\n";
+    std::cout << "Matches saved to " << filePath.str() << "\n";
 }
 
-void load_matches(const std::string& filePath) {
-    std::ifstream inputFile(filePath);
+void load_matches(const std::string& matchName) {
+
+    std::ostringstream filePath;
+    filePath << "json/matches_"<< matchName<<".json";
+
+
+    std::ifstream inputFile(filePath.str());
     if (!inputFile.is_open()) {
-        std::cerr << "Failed to open file: " << filePath << std::endl;
+        std::cerr << "Failed to open file: " << filePath.str() << std::endl;
         return;
     }
 
@@ -443,75 +542,38 @@ void load_matches(const std::string& filePath) {
     for (const auto& match : matchData) {
         std::string name = match.value("name", "Unnamed");
         auto data = match.value("vector", std::vector<uint16_t>{});
-        
         std::cout << "Loaded match '" << name << "' with data vector of size: " << data.size() << std::endl;
         
         auto new_match = create_new_match(-1, data);
+        if(match.contains("tolerance"))
+        {
+            new_match->tolerance = match.value("tolerance", std::vector<uint16_t>{});
+        }
+        if(match.contains("weight"))
+        {
+            new_match->weight = match.value("weight", std::vector<uint16_t>{});
+        }
+        if(match.contains("mask"))
+        {
+            new_match->mask = match.value("mask", std::vector<uint16_t>{});
+        }
         new_match->name = name;
     }
 }
 
 
-// void load_matches(const std::string& filePath) {
-//     std::ifstream inputFile(filePath);
-//     if (!inputFile.is_open()) {
-//         std::cerr << "Failed to open file: " << filePath << std::endl;
-//         return;
-//     }
 
-//     json matchData;
-//     try {
-//         inputFile >> matchData; // Parse the JSON file
-//     } catch (const std::exception& e) {
-//         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
-//         return;
-//     }
-
-//     for (const auto& match : matchData) {
-//         std::string name = match.contains("name") ? match["name"].get<std::string>() : "Unnamed";
-//         auto data = match.contains("vector") ? match["vector"].get<std::vector<uint16_t>>() : std::vector<uint16_t>{};
-//         //auto matches = match.contains("matches") ? match["matches"] : json::object();
-
-//         std::cout << "Name: " << name << "\nVector: ";
-//         for (const auto& val : data) {
-//             std::cout << val << " ";
-//         }
-
-//         auto new_match = create_new_match(-1, data);
-//         new_match->name = name;
-// //        auto weight = match.contains("weight") ? match["weight"].get<std::vector<uint16_t>>() : std::vector<uint16_t>{};
-
-//     }
-// }
-
-
-int str_to_offset(const std::string& offset_str) {
-    try {
-        // Check if the string starts with "0x" or "0X" for hexadecimal
-        if (offset_str.size() > 2 && (offset_str[0] == '0') && (offset_str[1] == 'x' || offset_str[1] == 'X')) {
-            return std::stoi(offset_str, nullptr, 16); // Parse as hexadecimal
-        } else {
-            return std::stoi(offset_str); // Parse as decimal
-        }
-    } catch (const std::invalid_argument& e) {
-        std::cerr << "Error: Invalid offset value: " << offset_str << std::endl;
-        throw;
-    } catch (const std::out_of_range& e) {
-        std::cerr << "Error: Offset value out of range: " << offset_str << std::endl;
-        throw;
-    }
-}
 
 // append the data to a file in the data dir as a json object 
 void save_run_data(std::string&target, int test_run, int run , int seq, std::vector<uint16_t>data, json& matches)
 {
 
-    std::string data_dir =  "data";
+    std::string data_dir =  "data/"+target + "/"+ std::to_string(test_run)+"/";
     fs::create_directories(data_dir);
 
     // Build the file name
     std::ostringstream file_path;
-    file_path << data_dir << "/" << target << "_run_" << test_run << ".json";
+    file_path << data_dir << "data_file.json";
     std::cout << " save data to " <<file_path.str() << " run " << run << std::endl;
 
     // Prepare the JSON object to be appended
@@ -616,13 +678,17 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
 // testplan will have a monitor section
 // this will scan the 
 // std::string name = match.contains("name") ? match["name"].get<std::string>() : "Unnamed";
-void run_test_plan(json& testPlan) 
+void run_test_plan(json& testPlan, std::string& testName) 
 {
-    log_delete("log/log.txt");
-    log_open("log/log.txt");
+    std::string logname = "log/"+testName+"_log.txt";
+    //log_delete("log/log.txt");
+    //log_open("log/log.txt");
+    log_delete(logname);
+    log_open(logname);
     if(!testPlan.contains("Target"))
     {
         std::cout << " No field \"Target\" found in test plan" << std::endl;
+        log_msg << " No field \"Target\" found in test plan" << std::endl;
         return ;
     }
     std::string target = testPlan["Target"].get<std::string>();
@@ -630,16 +696,26 @@ void run_test_plan(json& testPlan)
     if(!testPlan.contains("Monitor"))
     {
         std::cout << " No field \"Monitor\" found in test plan" << std::endl;
+        log_msg << " No field \"Monitor\" found in test plan" << std::endl;
         return ;
     }
     auto jmon = testPlan["Monitor"];
-    if(!jmon.contains("Query"))
+    if(!(jmon.contains("Query")||jmon.contains("QArray")))
     {
         std::cout << " No field \"Query\" found in Monitor section" << std::endl;
+        log_msg << " No field \"Query\" found in Monitor section" << std::endl;
         return ;
     }
 
-    auto jmq = jmon["Query"];
+    json jmqa, jmq;
+    if(jmon.contains("Query"))
+        jmq = jmon["Query"];
+    if(jmon.contains("QArray"))
+    {
+        jmqa = jmon["QArray"];
+        log_msg << "we got a query array " << std::endl;
+    }
+
     json jtests, ctest, ntest; // next test
     int when = 1000;
     int test_idx = -1;
@@ -655,11 +731,11 @@ void run_test_plan(json& testPlan)
     int nedur = 1000;
     int ne_idx = -1;
 
-    std::cout << " Query :" << jmq.dump()<<std::endl;
+    //std::cout << " Query :" << jmq.dump()<<std::endl;
     int  per = jmon.contains("Period") ? jmon["Period"].get<int>():1;
     int  tim = jmon.contains("Time") ? jmon["Time"].get<int>():10;
     std::string mfile = jmon.contains("MatchFile") ? jmon["MatchFile"].get<std::string>():"test_plan_matches";
-    mfile = "json/" + mfile+ ".json";
+    //mfile = "json/" + mfile+ ".json";
 
     std::string url = jmon.contains("Url") ? jmon["Url"].get<std::string>():"ws://192.168.86.209:9003";
     int seq = jmq.contains("sec") ? jmq["sec"].get<int>():1;
@@ -774,9 +850,36 @@ void run_test_plan(json& testPlan)
         //log_msg << " Monitor Query " << query <<  std::endl;
 
         try {
-            std::string response = run_wscat(url, query);
-            json parsed = json::parse(response);
-            data = parsed["data"].get<std::vector<uint16_t>>();
+            std::vector<std::string> qstrings;
+
+            if ( !jmqa.empty() )
+            {
+                for ( auto qmaItem : jmqa)
+                {
+                    qstrings.push_back(qmaItem.dump());
+                    log_msg << " Test  QArray at [" << run << "] " << qmaItem.dump() <<  std::endl;
+
+                }
+            }
+            else
+            {
+                qstrings.push_back(jmq.dump());
+            }
+            // for each query string in qstrings run_wscat and append the result to data
+
+            for (const auto& query : qstrings) {
+                std::string response = run_wscat(url, query);  // Run the query
+                try {
+                    json parsed = json::parse(response);        // Parse the JSON response
+                    auto newData = parsed["data"].get<std::vector<uint16_t>>();  // Extract data
+                    data.insert(data.end(), newData.begin(), newData.end());  // Append new data to the main vector
+                } catch (const std::exception& e) {
+                    std::cerr << "Failed to parse JSON or run query: " << e.what() << std::endl;
+                }
+            }
+            // std::string response = run_wscat(url, query);
+            // json parsed = json::parse(response);
+            // data = parsed["data"].get<std::vector<uint16_t>>();
 
             add_input_vector(run, seq, data);
             //save_run_data(target, run , seq , data);
@@ -856,12 +959,12 @@ void run_test_plan(json& testPlan)
 
             test_json_matches(match_json, run);
         }
-        save_run_data(target, 0 , run, seq , data, match_json);
+        save_run_data(testName, 0 , run, seq , data, match_json);
         if(debug)std::cout <<" Run completed " << run << std::endl;
     }
     json jdummy;
     std::vector<uint16_t>dummy_data;
-    save_run_data(target, 0 , -1, 0 , dummy_data, jdummy);
+    save_run_data(testName, 0 , -1, 0 , dummy_data, jdummy);
  
     check_match_consistency();
     // Save matches to file
@@ -883,66 +986,20 @@ void run_test_plan(json& testPlan)
 // Main Function
 int main(int argc, char* argv[]) {
     std::ostringstream filename;
-    filename << "json/test_plan1.json";
-
-    json testPlan;
-    load_test_plan(testPlan, filename.str()) ;
-    run_test_plan(testPlan);
-
-
-    if (argc < 8) {
-        std::cerr << "Usage: " << argv[0] << " <url> <sm_name> <reg_type> <offset> <num_objects> <object_size> <num_runs>\n";
-        std::cerr << "Usage: " << argv[0] << " xxx rtos_0 mb_input 1 2 4 10  10 runs each getting 24 registers from rtos_0 type mb_input starting offset 1   num 2 , 4 times   (\n";
+  
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <test_plan>\n";
         return 1;
     }
 
-
-    //std::string url = argv[1];
+    std::string testname = argv[1];
     std::string url = "ws://192.168.86.209:9003";
-    std::string sm_name = argv[2];
-    std::string reg_type = argv[3];
 
-    std::string offset_str = argv[4];
+    filename << "json/"<< testname<<".json";
 
-    int offset = str_to_offset(offset_str);
-    int num_objects = std::stoi(argv[5]);
-    int data_size = std::stoi(argv[6]);
-    int num_runs = std::stoi(argv[7]);
-     // Generate filename for saving and loading matches
+    json testPlan;
+    load_test_plan(testPlan, testname);//filename.str()) ;
+    run_test_plan(testPlan, testname);
 
-    filename << "data/matches_offset_" << sm_name <<"_"<<reg_type<<"_"<< offset << "_num_" << num_objects << "_size_" << data_size << ".json";
-    std::string match_file = filename.str();
-
-    // Load matches from file if any
-    load_matches(match_file);
-
-
-    for (int run = 0; run < num_runs; ++run) {
-        int offset = str_to_offset(offset_str);
-
-        for (int seq = 1; seq <= num_objects; ++seq) {
-            std::ostringstream query;
-            query << "{\"action\":\"get\", \"seq\":" << seq
-                  << ", \"sm_name\":\""<< sm_name <<"\", \"debug\":true, \"reg_type\":\"mb_input\", "
-                  << "\"offset\":\"" << offset << "\", \"num\":" << data_size << ", \"data\":[0]}";
-
-            try {
-                std::string response = run_wscat(url, query.str());
-                json parsed = json::parse(response);
-                std::vector<uint16_t> data = parsed["data"].get<std::vector<uint16_t>>();
-                add_input_vector(run, seq, data);
-                offset += data_size*2; //uint16_t 
-            } catch (const std::exception& ex) {
-                std::cerr << "Error during WebSocket command: " << ex.what() << "\n";
-            }
-        }
-        //test_matches(run);
-    }
-
-    check_match_consistency();
-
-    // Save matches to file
-    save_matches(match_file);
-
-    return 0;
+    return 0;  
 }
