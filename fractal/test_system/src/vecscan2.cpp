@@ -136,6 +136,17 @@ const MatchObject* find_best_match(const std::vector<uint16_t>& input,
     return best_match;
 }
 
+// TODO start using this 
+void create_new_match(InputVector&current_vector, std::vector<uint16_t>&data)
+{
+    MatchObject new_match;//{current_vector.data};
+    new_match.vector = data;
+    int new_id = matchObjects.size();
+    current_vector.match_id = new_id;
+    new_match.name ="Match_ID " + std::to_string(new_id);
+    matchObjects.push_back(new_match);
+    //matchIndexMap[current_vector.data] = new_id;
+}
 // Process Matches
 // aum may have more than one input vector
 void process_matches(int run, std::vector<InputVector>& inputVectors) {
@@ -526,9 +537,7 @@ void show_test_plan(json& testPlan)
     }
 
     auto jmq = jmon["Query"];
-    json jtests;
-    json ctest; // current test
-    json ntest; // next test
+    json jtests, ctest, ntest; // next test
     int when = 1000;
     int test_idx = -1;
     json jexpects; // list of timed expects
@@ -655,13 +664,13 @@ void show_test_plan(json& testPlan)
             std::string response = run_wscat(url, query);
             json parsed = json::parse(response);
             data = parsed["data"].get<std::vector<uint16_t>>();
+
             add_input_vector(run, seq, data);
             //save_run_data(target, run , seq , data);
             //offset += data_size*2; //uint16_t 
         } catch (const std::exception& ex) {
             std::cerr << "Error during WebSocket command: " << ex.what() << "\n";
         }
-        {
             // collect matches for this run
             json match_json = json::array(); //
             auto mval = find_best_match(data, matchObjects, 0.8);
@@ -717,7 +726,6 @@ void show_test_plan(json& testPlan)
                 // check for the match name not  the not expected list
                 // if one is found we can assume that this part of the test failed
                  
-            }
             test_json_matches(match_json, run);
             save_run_data(target, 0 , run, seq , data, match_json);
         }
@@ -736,6 +744,148 @@ void show_test_plan(json& testPlan)
         test_idx++;
     }
 }
+
+
+// void xshow_test_plan(json& testPlan) {
+//     // Validate "Target" field
+//     if (!testPlan.contains("Target")) {
+//         std::cerr << "No field \"Target\" found in the test plan.\n";
+//         return;
+//     }
+//     std::string target = testPlan["Target"].get<std::string>();
+//     std::cout << "Target: " << target << "\n";
+
+//     // Validate "Monitor" field
+//     if (!testPlan.contains("Monitor")) {
+//         std::cerr << "No field \"Monitor\" found in the test plan.\n";
+//         return;
+//     }
+//     auto jmon = testPlan["Monitor"];
+//     if (!jmon.contains("Query")) {
+//         std::cerr << "No field \"Query\" found in the Monitor section.\n";
+//         return;
+//     }
+//     auto jmq = jmon["Query"];
+
+//     // Extract basic monitoring parameters
+//     int period = jmon.value("Period", 1);
+//     int duration = jmon.value("Time", 10);
+//     std::string matchFile = jmon.value("MatchFile", "data/matches_test_plan1.json");
+//     std::string url = jmon.value("Url", "ws://192.168.86.209:9003");
+//     int seq = jmq.value("seq", 1);
+
+//     std::cout << "Query: " << jmq.dump() << "\n";
+//     std::cout << "Monitor every " << period << " seconds for " << duration << " seconds.\n";
+//     std::cout << "Reading matches from " << matchFile << "\n";
+
+//     // Load matches
+//     load_matches(matchFile);
+
+//     // Process "Tests"
+//     json jtests = testPlan.value("Tests", json::array());
+//     int test_idx = -1, when = duration + 1;
+//     json ctest, ntest;
+//     if (!jtests.empty()) {
+//         test_idx = 0;
+//         ntest = jtests[test_idx];
+//         when = ntest.value("when", duration + 1);
+//         std::cout << "First test: " << ntest.dump() << "\nWhen: " << when << "\n";
+//     } else {
+//         std::cerr << "No tests found.\n";
+//     }
+
+//     // Process "Expects"
+//     json jexpects = testPlan.value("Expects", json::array());
+//     int e_idx = -1, ewhen = duration + 1, edur = duration + 1;
+//     if (!jexpects.empty()) {
+//         e_idx = 0;
+//         json cexpect = jexpects[e_idx];
+//         ewhen = cexpect.value("when", duration + 1);
+//         edur = cexpect.value("duration", duration + 1);
+//         std::cout << "First Expect: " << cexpect.dump() << "\nWhen: " << ewhen << ", Duration: " << edur << "\n";
+//     } else {
+//         std::cerr << "No Expects found.\n";
+//     }
+
+//     // Process "NotExpects"
+//     json jnexpects = testPlan.value("NotExpects", json::array());
+//     int ne_idx = -1, newhen = duration + 1, nedur = duration + 1;
+//     if (!jnexpects.empty()) {
+//         ne_idx = 0;
+//         json cnexpect = jnexpects[ne_idx];
+//         newhen = cnexpect.value("when", duration + 1);
+//         nedur = cnexpect.value("duration", duration + 1);
+//         std::cout << "First NotExpect: " << cnexpect.dump() << "\nWhen: " << newhen << ", Duration: " << nedur << "\n";
+//     } else {
+//         std::cerr << "No NotExpects found.\n";
+//     }
+
+//     // Start Monitoring
+//     std::cout << "Starting monitor with tests. When: " << when << "\n";
+//     for (int run = 0; run < duration; ++run) {
+//         process_expects_and_not_expects(jexpects, jnexpects, run);
+
+//         // Handle tests at their specified "when"
+//         if (run >= when) {
+//             std::cout << "Sending test now at run " << run << " (when " << when << ")\n";
+//             ctest = ntest;
+//             auto query = ctest["Query"].dump();
+//             std::cout << "Query: " << query << "\n";
+//             std::string response = run_wscat(url, query);
+//             std::cout << "Response: " << response << "\n";
+
+//             // Update to the next test
+//             when = duration + 1;
+//             test_idx++;
+//             if (test_idx < jtests.size()) {
+//                 ntest = jtests[test_idx];
+//                 when = ntest.value("when", duration + 1);
+//             } else {
+//                 std::cout << "No more tests to send.\n";
+//             }
+//         }
+
+//         // Collect data and match information
+//         try {
+//             std::string response = run_wscat(url, jmq.dump());
+//             json parsed = json::parse(response);
+//             std::vector<uint16_t> data = parsed["data"].get<std::vector<uint16_t>>();
+//             add_input_vector(run, seq, data);
+
+//             // Process matches
+//             json match_json = json::array();
+//             auto mval = find_best_match(data, matchObjects, 0.8);
+//             if (!mval) {
+//                 std::cout << "No match found; creating a new one.\n";
+//                 create_new_match(data, matchObjects);
+//             } else {
+//                 std::cout << "Match found [" << mval->name << "]\n";
+//                 track_expects_and_not_expects(mval->name, ctest);
+//             }
+
+//             test_json_matches(match_json, run);
+//             save_run_data(target, 0, run, seq, data, match_json);
+//         } catch (const std::exception& ex) {
+//             std::cerr << "Error during WebSocket command: " << ex.what() << "\n";
+//         }
+//     }
+
+//     // Check consistency and save results
+//     check_match_consistency();
+//     save_matches(matchFile);
+
+//     // Output test results
+//     for (int idx = 0; idx < jtests.size(); ++idx) {
+//         ctest = jtests[idx];
+//         if (!ctest.contains("passes")) {
+//             ctest["passes"] = 0;
+//         }
+//         if (!ctest.contains("fails")) {
+//             ctest["fails"] = 0;
+//         }
+//         std::cout << "Test Results (Index " << idx << "): " << ctest.dump() << "\n";
+//     }
+// }
 
 
 // Main Function
