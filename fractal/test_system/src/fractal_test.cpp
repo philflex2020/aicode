@@ -75,12 +75,23 @@ bool debug = false;
 //         return hash;
 //     }
 // };
+// struct MatchObject {
+//     std::vector<uint16_t> vector;
+//     std::vector<uint16_t> bitmask;    // Mask for each element
+//     std::vector<uint16_t> tolerance;  // Tolerance for each element
+//     std::vector<uint16_t> weight;     // Weight for each element
+//     std::map<int, std::vector<int>> matches;
+//     std::string name;
+// };
 
 
 // Global Variables
 std::map<int, std::vector<InputVector>> inputVecs;
 std::unordered_map<std::vector<uint16_t>, int, VectorHash> matchIndexMap;
-std::vector<MatchObject> matchObjects;
+//std::vector<MatchObject> matchObjects;
+// TODO start using this 
+std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
+
 
 
 // Function to Get Current Time in Seconds
@@ -100,13 +111,13 @@ void add_input_vector(int run, int offset, const std::vector<uint16_t>& data) {
 
 // Function to calculate match score
 double calculate_match_score(const std::vector<uint16_t>& input,
-                             MatchObject& match) {
+                             std::shared_ptr<MatchObject> match) {
     if(debug)std::cout << "calculate match and score" << std::endl;
     double total_weight = 0.0;
     double match_score = 0.0;
 
     // Ensure vectors are of the same size
-    if (input.size() != match.vector.size()) {
+    if (input.size() != match->vector.size()) {
         return 0.0; // Not a valid match
     }
     if(debug)std::cout << "calculate match and score 1" << std::endl;
@@ -115,45 +126,56 @@ double calculate_match_score(const std::vector<uint16_t>& input,
         if(debug)std::cout << "calculate match and score item "<< i << " size " << input.size() << std::endl;
         // Apply bitmask if it exists
         uint16_t masked_input = input[i];
-        uint16_t masked_match = match.vector[i];
-        if(debug)std::cout << "calculate match and score item "<< i << " input " << masked_input << " match " << masked_match << std::endl;
+        uint16_t masked_match = match->vector[i];
+        //if(debug)
+        std::cout << "calculate match and score item "<< i << " input " << masked_input << " match " << masked_match << std::endl;
 
-        if (!match.bitmask.empty() && match.bitmask.size() == match.vector.size()) {
-            masked_input &= match.bitmask[i];
-            masked_match &= match.bitmask[i];
+        if (!match->bitmask.empty() && match->bitmask.size() == match->vector.size()) {
+            masked_input &= match->bitmask[i];
+            masked_match &= match->bitmask[i];
         }
         if(debug)std::cout << "calculate match and score item after bitmap  "<< i << " size " << input.size() << std::endl;
 
         // Calculate absolute difference
         uint16_t difference = std::abs(static_cast<int>(masked_input) - static_cast<int>(masked_match));
-        if(debug)std::cout << "calculate match and score item after bitmap  "<< i << " doff " << difference << std::endl;
+        //if(debug)
+        std::cout << "calculate match and score item after bitmap  "<< i << " doff " << difference << std::endl;
 
         // Check if within tolerance if tolerance vector exists
-        bool within_tolerance = true;
+        bool within_tolerance = false;
+        if (difference == 0)
+        {
+            within_tolerance = true;
+        }
 
-        if (!match.tolerance.empty() && match.tolerance.size() == match.vector.size()) {
+        if (!match->tolerance.empty() && match->tolerance.size() == match->vector.size()) {
 
-            uint16_t tolerance = match.tolerance[i];
-            if (match.tolerance[i] > 0x8000) {
-                tolerance = match.tolerance[i] - 0x8000;
+            uint16_t tolerance = match->tolerance[i];
+            if (match->tolerance[i] > 0x8000) {
+                tolerance = match->tolerance[i] - 0x8000;
             }
 
-            within_tolerance = (difference <= match.tolerance[i]);
+            within_tolerance = (difference <= tolerance);
             if (within_tolerance) {
                 // delta tolerance // update match
-                if (match.tolerance[i] > 0x8000) {
-                    match.vector[i] = input[i];
+                if (match->tolerance[i] > 0x8000) {
+                    match->vector[i] = input[i];
                 }
             }
+
         }
 
         if (within_tolerance) {
             // Add weighted score or default to 1 if weights are not defined
-            double weight = (!match.weight.empty() && match.weight.size() == match.vector.size())
-                                ? static_cast<double>(match.weight[i])
+            double weight = (!match->weight.empty() && match->weight.size() == match->vector.size())
+                                ? static_cast<double>(match->weight[i])
                                 : 1.0;
             match_score += weight;
             total_weight += weight;
+        }
+        else
+        {
+            return 0;
         }
     }
     if(debug)std::cout << "calculate match and score 10" << std::endl;
@@ -163,21 +185,26 @@ double calculate_match_score(const std::vector<uint16_t>& input,
 }
 
 // Function to find the best match
-const MatchObject* find_best_match(const std::vector<uint16_t>& input,
-                                   std::vector<MatchObject>& matches,
+const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<uint16_t>& input,
                                    double threshold) {
-    const MatchObject* best_match = nullptr;
+    std::shared_ptr<MatchObject> best_match;
     double best_score = 0.0;
     int idx = 0;
-    if(debug)std::cout << " Looking for best match " << std::endl;
-    for (auto& match : matches) {
-        if(debug)std::cout << " Looking for best match idx  " << idx << std::endl;
+    //if(debug)
+    std::cout << " Looking for best match; run " << run<< std::endl;
+    std::cout << "      matchObjects size "<< sharedMatchObjects.size()<< std::endl;
+
+    for (auto match : sharedMatchObjects) {
+        //if(debug)
+        std::cout << "  checking  best match   " << match->name << std::endl;
         double score = calculate_match_score(input, match);
-        if(debug)std::cout << " Calculate match and score   " << idx++ << std::endl;
+        //if(debug)
+        std::cout << " Calculated match score   " << score << std::endl;
 
         if (score > best_score && score >= threshold) {
+            std::cout << "  set  best match   " << match->name << std::endl;
             best_score = score;
-            best_match = &match;
+            best_match = match;
         }
     }
 
@@ -185,43 +212,62 @@ const MatchObject* find_best_match(const std::vector<uint16_t>& input,
 }
 
 // TODO start using this 
-void create_new_match(int run, std::vector<uint16_t>&data)
-{
-    auto current_vector = inputVecs[run];
+//std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
 
-    MatchObject new_match;//{current_vector.data};
-    new_match.vector = data;
-    int new_id = matchObjects.size();
-    new_match.name ="Match_ID " + std::to_string(new_id);
-    matchObjects.push_back(new_match);
-    if(debug)std::cout << " created a new one" <<std::endl; 
+std::shared_ptr<MatchObject> create_new_match(int run, const std::vector<uint16_t>& data) {
+    // Create a new MatchObject wrapped in a std::shared_ptr
+    std::shared_ptr<MatchObject> new_match = std::make_shared<MatchObject>();
+    new_match->vector = data;
+    new_match->name = "Match_ID " + std::to_string(sharedMatchObjects.size() + 1);  // Assign ID based on the next index
+
+    // Add the new match to the vector
+    sharedMatchObjects.push_back(new_match);
+
+    if (debug) {
+        std::cout << "Created a new match object: " << new_match->name << std::endl;
+    }
+
+    return new_match;
 }
+
+
+// std::shared_ptr<MatchObject>create_new_match(int run, std::vector<uint16_t>&data)
+// {
+//     auto& new_match = sharedMatchObjects.emplace_back();
+//     //auto & new_match std::shared_ptr<MatchObject>;//{current_vector.data};
+//     new_match->vector = data;
+//     int new_id = sharedMatchObjects.size();
+//     new_match->name ="Match_ID " + std::to_string(new_id);
+//     //matchObjects->push_back(new_match);
+//     if(debug)std::cout << " created a new one" <<std::endl; 
+//     return new_match;
+// }
 
 // Process Matches
 // do we need this ??
-void process_matches(int run, std::vector<InputVector>& inputVectors) {
-    for (size_t i = 0; i < inputVectors.size(); ++i) {
-        auto& current_vector = inputVectors[i];
-        bool match_found = false;
+// void process_matches(int run, std::vector<InputVector>& inputVectors) {
+//     for (size_t i = 0; i < inputVectors.size(); ++i) {
+//         auto& current_vector = inputVectors[i];
+//         bool match_found = false;
 
-        auto it = matchIndexMap.find(current_vector.data);
-        if (it != matchIndexMap.end()) {
-            int match_id = it->second;
-            //current_vector.match_id = match_id;
-            matchObjects[match_id].matches[run].push_back(i);
-            match_found = true;
-        }
+//         auto it = matchIndexMap.find(current_vector.data);
+//         if (it != matchIndexMap.end()) {
+//             int match_id = it->second;
+//             //current_vector.match_id = match_id;
+//             matchObjects[match_id].matches[run].push_back(i);
+//             match_found = true;
+//         }
 
-        if (!match_found) {
-            MatchObject new_match{current_vector.data};
-            new_match.matches[run].push_back(i);
-            int new_id = matchObjects.size();
-            new_match.name ="Match_ID " + std::to_string(new_id);
-            matchObjects.push_back(new_match);
-            matchIndexMap[current_vector.data] = new_id;
-        }
-    }
-}
+//         if (!match_found) {
+//             MatchObject new_match{current_vector.data};
+//             new_match.matches[run].push_back(i);
+//             int new_id = matchObjects.size();
+//             new_match.name ="Match_ID " + std::to_string(new_id);
+//             matchObjects.push_back(new_match);
+//             matchIndexMap[current_vector.data] = new_id;
+//         }
+//     }
+// }
 
 
   
@@ -234,14 +280,14 @@ void test_json_matches(json& matches, int run) {
         return;
     }
 
-    process_matches(run, inputVecs[run]);
+    //process_matches(run, inputVecs[run]);
 
     // 
     json match_json;
     match_json["match_idx"] = json::array();
 
-    for (size_t match_id = 0; match_id < matchObjects.size(); ++match_id) {
-        const auto& match = matchObjects[match_id];
+    for (size_t match_id = 0; match_id < sharedMatchObjects.size(); ++match_id) {
+        const auto match = sharedMatchObjects.at(match_id);
 
         // std::cout << " Run " << run << " Match ID: " << match_id << "\nVector: ";
         // for (const auto& val : match.vector) {
@@ -249,12 +295,12 @@ void test_json_matches(json& matches, int run) {
         // }
 
         //std::cout << "Matched Indices for Run " << run << ": ";
-        if (match.matches.count(run)) {
+        if (match->matches.count(run)) {
 
             std::vector<std::string>match_str_vec;
-            for (auto idx : match.matches.at(run)) {
+            for (auto idx : match->matches.at(run)) {
                 //std::cout << idx << " ";
-                auto name = matchObjects[idx].name;
+                auto name = sharedMatchObjects.at(idx)->name;
                 //std::cout << name  << " \n";
 
                 match_str_vec.push_back(name);
@@ -333,6 +379,8 @@ void load_test_plan(json& testPlan, const std::string& filePath)
     std::cout << "TestPlan opened from file: " << filePath << std::endl;
 }
 
+//std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
+
 void save_matches(const std::string& filename) {
     // Load existing matches if the file exists
     std::ifstream inputFile(filename);
@@ -356,12 +404,12 @@ void save_matches(const std::string& filename) {
     }
 
     // Add new matches
-    for (const auto& match : matchObjects) {
-        if (existingNames.find(match.name) == existingNames.end()) {
+    for (const auto& match : sharedMatchObjects) {
+        if (existingNames.find(match->name) == existingNames.end()) {
             json newMatch;
-            newMatch["name"] = match.name;
-            newMatch["vector"] = match.vector;
-            newMatch["matches"] = match.matches;
+            newMatch["name"] = match->name;
+            newMatch["vector"] = match->vector;
+            //newMatch["matches"] = match.matches;
             existingMatches.push_back(newMatch);
         }
     }
@@ -398,7 +446,6 @@ void save_matches(const std::string& filename) {
     std::cout << "Matches saved to " << outfile << "\n";
 }
 
-
 void load_matches(const std::string& filePath) {
     std::ifstream inputFile(filePath);
     if (!inputFile.is_open()) {
@@ -408,35 +455,58 @@ void load_matches(const std::string& filePath) {
 
     json matchData;
     try {
-        inputFile >> matchData; // Parse the JSON file
-    } catch (const std::exception& e) {
-        std::cerr << "Error parsing JSON: " << e.what() << std::endl;
+        inputFile >> matchData;  // Parse the JSON file
+    } catch (const json::parse_error& e) {
+        std::cerr << "JSON parsing error at byte " << e.byte << ": " << e.what() << std::endl;
+        inputFile.close();
         return;
     }
 
+    inputFile.close();
+
     for (const auto& match : matchData) {
-        std::string name = match.contains("name") ? match["name"].get<std::string>() : "Unnamed";
-        auto vector = match.contains("vector") ? match["vector"].get<std::vector<uint16_t>>() : std::vector<uint16_t>{};
-        //auto matches = match.contains("matches") ? match["matches"] : json::object();
-
-        std::cout << "Name: " << name << "\nVector: ";
-        for (const auto& val : vector) {
-            std::cout << val << " ";
-        }
+        std::string name = match.value("name", "Unnamed");
+        auto data = match.value("vector", std::vector<uint16_t>{});
         
+        std::cout << "Loaded match '" << name << "' with data vector of size: " << data.size() << std::endl;
         
-        //std::cout << "\nMatches:\n";
-
-        // for (auto& [run, indices] : matches.items()) {
-        //     std::cout << "  Run " << run << ": ";
-        //     for (const auto& idx : indices) {
-        //         std::cout << idx << " ";
-        //     }
-        //     std::cout << "\n";
-        // }
-        std::cout << "------------------\n";
+        auto new_match = create_new_match(-1, data);
+        new_match->name = name;
     }
 }
+
+
+// void load_matches(const std::string& filePath) {
+//     std::ifstream inputFile(filePath);
+//     if (!inputFile.is_open()) {
+//         std::cerr << "Failed to open file: " << filePath << std::endl;
+//         return;
+//     }
+
+//     json matchData;
+//     try {
+//         inputFile >> matchData; // Parse the JSON file
+//     } catch (const std::exception& e) {
+//         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
+//         return;
+//     }
+
+//     for (const auto& match : matchData) {
+//         std::string name = match.contains("name") ? match["name"].get<std::string>() : "Unnamed";
+//         auto data = match.contains("vector") ? match["vector"].get<std::vector<uint16_t>>() : std::vector<uint16_t>{};
+//         //auto matches = match.contains("matches") ? match["matches"] : json::object();
+
+//         std::cout << "Name: " << name << "\nVector: ";
+//         for (const auto& val : data) {
+//             std::cout << val << " ";
+//         }
+
+//         auto new_match = create_new_match(-1, data);
+//         new_match->name = name;
+// //        auto weight = match.contains("weight") ? match["weight"].get<std::vector<uint16_t>>() : std::vector<uint16_t>{};
+
+//     }
+// }
 
 
 int str_to_offset(const std::string& offset_str) {
@@ -482,13 +552,13 @@ void save_run_data(std::string&target, int test_run, int run , int seq, std::vec
         if (std::filesystem::exists(file_path.str())) {
             std::filesystem::remove(file_path.str());
         }
-        std::ofstream out_file2(file_path.str(), std::ios::trunc);
-        if (!out_file2) {
+        std::ofstream out_file(file_path.str(), std::ios::trunc);
+        if (!out_file) {
             std::cout << "Failed to create new file: " << file_path.str() << "\n";
             return;
         }
-        out_file2 << "[\n"; // Start the JSON array
-        out_file2.close();
+        out_file << "[\n"; // Start the JSON array
+        out_file.close();
     }
 
     std::ofstream out_file(file_path.str(), std::ios::app);
@@ -500,11 +570,6 @@ void save_run_data(std::string&target, int test_run, int run , int seq, std::vec
     {
         out_file << ",\n";
     }
-    // else 
-    // {
-    //     out_file << "\n";
-    // }
-
 
     out_file << json_data.dump();// << "\n"; // Write the JSON object as a single line
     out_file.close();
@@ -618,7 +683,9 @@ void show_test_plan(json& testPlan)
     std::cout << " Query :" << jmq.dump()<<std::endl;
     int  per = jmon.contains("Period") ? jmon["Period"].get<int>():1;
     int  tim = jmon.contains("Time") ? jmon["Time"].get<int>():10;
-    std::string mfile = jmon.contains("MatchFile") ? jmon["MatchFile"].get<std::string>():"data/matches_test_plan1.json";
+    std::string mfile = jmon.contains("MatchFile") ? jmon["MatchFile"].get<std::string>():"test_plan_matches";
+    mfile = "json/" + mfile+ ".json";
+
     std::string url = jmon.contains("Url") ? jmon["Url"].get<std::string>():"ws://192.168.86.209:9003";
     int seq = jmq.contains("sec") ? jmq["sec"].get<int>():1;
     if (testPlan.contains("Tests") && testPlan["Tests"].is_array()) {   
@@ -695,7 +762,8 @@ void show_test_plan(json& testPlan)
 
     for (int run = 0; run < tim ; ++run)
     {
-        if(debug)std::cout << " Process expects " << run << " when "<< when<< std::endl;
+        //if(debug)
+        std::cout << " Start run  " << run << " next test at  "<< when<< std::endl;
         process_expects_and_not_expects(jexpects, jnexpects, run);
         if(debug)std::cout << " Process expects done " << run << " when "<< when<< std::endl;
 
@@ -737,19 +805,20 @@ void show_test_plan(json& testPlan)
         } catch (const std::exception& ex) {
             std::cerr << "Error during WebSocket command: " << ex.what() << "\n";
         }
-        if(debug)std::cout << "collect matches for this run " << run << std::endl;
+        //if(debug)
+        std::cout << "collect matches for this run " << run << std::endl;
 
         json match_json = json::array(); //
-        auto mval = find_best_match(data, matchObjects, 0.8);
+        auto mval = find_best_match(run, data,  0.8);
         if(debug)std::cout << "collect matches for this run done " << run << std::endl;
         if(!mval)
         {
             std::cout << " No match found here, create a new one"<<std::endl;
-            create_new_match(run, data);
+            mval  = create_new_match(run, data);
             if(debug)std::cout << " Match created"<<std::endl;
             //create_new_match(InputVector&current_vector, data);
         }
-        else 
+        if(mval)
         {
             std::cout << " Match found ["<<mval->name<<"]"<<std::endl;
             
