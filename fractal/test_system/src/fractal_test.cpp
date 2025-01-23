@@ -36,6 +36,25 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
+// Global ofstream for logging
+std::ofstream log_file;
+
+// Macro to open log file
+#define log_open(path) do { log_file.open(path, std::ios::out | std::ios::app); if (!log_file.is_open()) std::cerr << "Failed to open log file: " << path << std::endl; } while (0)
+
+// Macro to log messages
+#define log_msg if (!log_file) std::cerr << "Log file is not open!" << std::endl; else log_file
+
+// Macro to close log file
+#define log_close() if (log_file.is_open()) log_file.close()
+
+// Macro to delete log file
+#define log_delete(path) do { \
+    if (std::filesystem::exists(path)) { \
+        std::filesystem::remove(path); \
+    } \
+} while (0)
+
 //g++ -std=c++17 -o ftest -I ./inc src/fractal_test.cpp
 // ./ftest xxx 0x100 64  128 10
 
@@ -92,6 +111,9 @@ std::unordered_map<std::vector<uint16_t>, int, VectorHash> matchIndexMap;
 // TODO start using this 
 std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
 
+// Track active Expects and NotExpects
+std::map<std::string, int> active_expects;
+std::map<std::string, int> active_not_expects;
 
 
 // Function to Get Current Time in Seconds
@@ -127,8 +149,7 @@ double calculate_match_score(const std::vector<uint16_t>& input,
         // Apply bitmask if it exists
         uint16_t masked_input = input[i];
         uint16_t masked_match = match->vector[i];
-        //if(debug)
-        std::cout << "calculate match and score item "<< i << " input " << masked_input << " match " << masked_match << std::endl;
+        if(debug)std::cout << "calculate match and score item "<< i << " input " << masked_input << " match " << masked_match << std::endl;
 
         if (!match->bitmask.empty() && match->bitmask.size() == match->vector.size()) {
             masked_input &= match->bitmask[i];
@@ -138,8 +159,7 @@ double calculate_match_score(const std::vector<uint16_t>& input,
 
         // Calculate absolute difference
         uint16_t difference = std::abs(static_cast<int>(masked_input) - static_cast<int>(masked_match));
-        //if(debug)
-        std::cout << "calculate match and score item after bitmap  "<< i << " doff " << difference << std::endl;
+        if(debug) std::cout << "calculate match and score item after bitmap  "<< i << " doff " << difference << std::endl;
 
         // Check if within tolerance if tolerance vector exists
         bool within_tolerance = false;
@@ -178,7 +198,7 @@ double calculate_match_score(const std::vector<uint16_t>& input,
             return 0;
         }
     }
-    if(debug)std::cout << "calculate match and score 10" << std::endl;
+    if(debug) std::cout << "calculate match and score done" << std::endl;
 
     // Normalize match score by total weight
     return (total_weight > 0.0) ? (match_score / total_weight) : 0.0;
@@ -190,16 +210,18 @@ const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<ui
     std::shared_ptr<MatchObject> best_match;
     double best_score = 0.0;
     int idx = 0;
-    //if(debug)
-    std::cout << " Looking for best match; run " << run<< std::endl;
-    std::cout << "      matchObjects size "<< sharedMatchObjects.size()<< std::endl;
+    if(debug)
+    {
+        std::cout << " Looking for best match; run " << run<< std::endl;
+        std::cout << "      matchObjects size "<< sharedMatchObjects.size()<< std::endl;
+    }
 
     for (auto match : sharedMatchObjects) {
-        //if(debug)
-        std::cout << "  checking  best match   " << match->name << std::endl;
+        if(debug)
+            std::cout << "  checking  best match   " << match->name << std::endl;
         double score = calculate_match_score(input, match);
-        //if(debug)
-        std::cout << " Calculated match score   " << score << std::endl;
+        if(debug)
+            std::cout << " Calculated match score   " << score << std::endl;
 
         if (score > best_score && score >= threshold) {
             std::cout << "  set  best match   " << match->name << std::endl;
@@ -210,9 +232,6 @@ const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<ui
 
     return best_match;
 }
-
-// TODO start using this 
-//std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
 
 std::shared_ptr<MatchObject> create_new_match(int run, const std::vector<uint16_t>& data) {
     // Create a new MatchObject wrapped in a std::shared_ptr
@@ -230,46 +249,6 @@ std::shared_ptr<MatchObject> create_new_match(int run, const std::vector<uint16_
     return new_match;
 }
 
-
-// std::shared_ptr<MatchObject>create_new_match(int run, std::vector<uint16_t>&data)
-// {
-//     auto& new_match = sharedMatchObjects.emplace_back();
-//     //auto & new_match std::shared_ptr<MatchObject>;//{current_vector.data};
-//     new_match->vector = data;
-//     int new_id = sharedMatchObjects.size();
-//     new_match->name ="Match_ID " + std::to_string(new_id);
-//     //matchObjects->push_back(new_match);
-//     if(debug)std::cout << " created a new one" <<std::endl; 
-//     return new_match;
-// }
-
-// Process Matches
-// do we need this ??
-// void process_matches(int run, std::vector<InputVector>& inputVectors) {
-//     for (size_t i = 0; i < inputVectors.size(); ++i) {
-//         auto& current_vector = inputVectors[i];
-//         bool match_found = false;
-
-//         auto it = matchIndexMap.find(current_vector.data);
-//         if (it != matchIndexMap.end()) {
-//             int match_id = it->second;
-//             //current_vector.match_id = match_id;
-//             matchObjects[match_id].matches[run].push_back(i);
-//             match_found = true;
-//         }
-
-//         if (!match_found) {
-//             MatchObject new_match{current_vector.data};
-//             new_match.matches[run].push_back(i);
-//             int new_id = matchObjects.size();
-//             new_match.name ="Match_ID " + std::to_string(new_id);
-//             matchObjects.push_back(new_match);
-//             matchIndexMap[current_vector.data] = new_id;
-//         }
-//     }
-// }
-
-
   
 // Test Matches for a Run
 void test_json_matches(json& matches, int run) {
@@ -279,9 +258,6 @@ void test_json_matches(json& matches, int run) {
         std::cerr << "No input vectors for run " << run << ".\n";
         return;
     }
-
-    //process_matches(run, inputVecs[run]);
-
     // 
     json match_json;
     match_json["match_idx"] = json::array();
@@ -590,9 +566,6 @@ void save_run_data(std::string&target, int test_run, int run , int seq, std::vec
     std::cout << "Data saved to " << file_path.str() << "\n";
 }
 
-// Track active Expects and NotExpects
-std::map<std::string, int> active_expects;
-std::map<std::string, int> active_not_expects;
 
 // Process Expects and NotExpects for a given time
 void process_expects_and_not_expects(const json& expects_json, const json& not_expects_json, int run) {
@@ -603,7 +576,7 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
             std::string match_name = expect["match_name"].get<std::string>();
             int duration = expect.contains("duration") ? expect["duration"].get<int>() : 0;
             active_expects[match_name] = duration;
-            std::cout << "Added Expect: " << match_name << " (Duration: " << duration << ")\n";
+            log_msg << "          Added Expect: " << match_name << " (Duration: " << duration << ")\n";
         }
     }
 
@@ -614,14 +587,14 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
             std::string match_name = not_expect["match_name"].get<std::string>();
             int duration = not_expect.contains("duration") ? not_expect["duration"].get<int>() : 0;
             active_not_expects[match_name] = duration;
-            std::cout << "Added NotExpect: " << match_name << " (Duration: " << duration << ")\n";
+            log_msg << "          Added NotExpect: " << match_name << " (Duration: " << duration << ")\n";
         }
     }
 
     // Update durations and remove expired Expects
     for (auto it = active_expects.begin(); it != active_expects.end();) {
         if (it->second == 0) {
-            std::cout << "Removing Expired Expect: " << it->first << "\n";
+            log_msg << "         Removing Expired Expect: " << it->first << "\n";
             it = active_expects.erase(it);
         } else {
             if (it->second > 0) --it->second; // Decrease duration if greater than 0
@@ -632,7 +605,7 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
     // Update durations and remove expired NotExpects
     for (auto it = active_not_expects.begin(); it != active_not_expects.end();) {
         if (it->second == 0) {
-            std::cout << "Removing Expired NotExpect: " << it->first << "\n";
+            log_msg<< "         Removing Expired NotExpect: " << it->first << "\n";
             it = active_not_expects.erase(it);
         } else {
             if (it->second > 0) --it->second; // Decrease duration if greater than 0
@@ -643,15 +616,17 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
 // testplan will have a monitor section
 // this will scan the 
 // std::string name = match.contains("name") ? match["name"].get<std::string>() : "Unnamed";
-void show_test_plan(json& testPlan) 
+void run_test_plan(json& testPlan) 
 {
+    log_delete("log/log.txt");
+    log_open("log/log.txt");
     if(!testPlan.contains("Target"))
     {
         std::cout << " No field \"Target\" found in test plan" << std::endl;
         return ;
     }
     std::string target = testPlan["Target"].get<std::string>();
-    std::cout << " Target :" << target<<std::endl;
+    log_msg  << " Test Target :" << target << std::endl;
     if(!testPlan.contains("Monitor"))
     {
         std::cout << " No field \"Monitor\" found in test plan" << std::endl;
@@ -763,7 +738,7 @@ void show_test_plan(json& testPlan)
     for (int run = 0; run < tim ; ++run)
     {
         //if(debug)
-        std::cout << " Start run  " << run << " next test at  "<< when<< std::endl;
+        log_msg << "\n ***** Start run  " << run << " monitor "<< query << std::endl;
         process_expects_and_not_expects(jexpects, jnexpects, run);
         if(debug)std::cout << " Process expects done " << run << " when "<< when<< std::endl;
 
@@ -771,12 +746,14 @@ void show_test_plan(json& testPlan)
         {
             std::cout << "Sending test now " << run << " when " << when <<  std::endl;
             ctest = ntest;
-            json jquery = ctest["Query"];
-            auto qstr = jquery.dump();
-            std::cout << " Query " << qstr <<  std::endl;
-            std::string response = run_wscat(url, qstr);
-            std::cout << "         -> response " << response <<  std::endl;
-
+            if(ctest.contains("Query"))
+            {
+                json jquery = ctest["Query"];
+                auto qstr = jquery.dump();
+                log_msg << " Test :" << test_idx <<" Query at [" << run << "] " << qstr <<  std::endl;
+                std::string response = run_wscat(url, qstr);
+                log_msg << "            -> response " << response <<  std::endl;
+            }
             // Check if test_idx is within the bounds of jtests
             when = tim+1;
             test_idx++;
@@ -794,6 +771,8 @@ void show_test_plan(json& testPlan)
         if(debug)std::cout << " Getting data run " << run <<  std::endl;
 
         std::vector<uint16_t> data;
+        //log_msg << " Monitor Query " << query <<  std::endl;
+
         try {
             std::string response = run_wscat(url, query);
             json parsed = json::parse(response);
@@ -820,51 +799,60 @@ void show_test_plan(json& testPlan)
         }
         if(mval)
         {
-            std::cout << " Match found ["<<mval->name<<"]"<<std::endl;
+            log_msg << "            Match found ["<<mval->name<<"]"<<std::endl;
             
             // Track active Expects and NotExpects
             //std::map<std::string, int> active_expects;
             //std::map<std::string, int> active_not_expects;
             // Check against active Expects
             if (active_expects.find(mval->name) != active_expects.end()) {
-                std::cout << "Expected match [" << mval->name << "] detected. Test passed for this part." << std::endl;
+                log_msg << "              Expected match [" << mval->name << "] detected. Test " << test_idx << " passed for this part." << std::endl;
                 //active_expects[mval->name] -= 1; // Decrease count for this expect
                 //if (active_expects[mval->name] == 0) {
                     //active_expects.erase(mval->name); // possibly Remove when no longer expected
                 //}
-                if(ctest.contains("passes")) {
-                    ctest["passes"]+=1;
+                int t_idx =  test_idx-1;
+                std::cout << " Test Results for index :" << t_idx << std::endl;
+                
+                if (t_idx >= 0 && t_idx < jtests.size()) {
+                    // Directly modify the element in the array
+                    if(jtests[t_idx].contains("passes")) {
+                        std::cout << " Incrementing passes  :" << t_idx << std::endl;
+                        int  passes = jtests[t_idx]["passes"].get<int>(); 
+                        passes  += 1; // Set fails to 1 if passes is not found
+                        jtests[t_idx]["passes"] = passes;
+                        std::cout << " done Incrementing passes  :" << t_idx << std::endl;
+                    }
+                    else
+                    {
+                        jtests[t_idx]["passes"]  = 1; // Set fails to 1 if passes is not found
+                    }
                 }
-                else 
-                {
-                    ctest["passes"]=1;                        
-                } 
+                std::cout << " Test Results for index :" << t_idx << " ->" << jtests[t_idx].dump() << std::endl;
                 //inc the passes for the current test
             }
 
             // Check against active NotExpects
             if (active_not_expects.find(mval->name) != active_not_expects.end()) {
-                std::cerr << "Unexpected match [" << mval->name << "] detected. Test failed for this part." << std::endl;
+                log_msg << "               Unexpected match [" << mval->name << "] detected. Test failed for this part." << std::endl;
                 //active_not_expects[mval->name] -= 1; // Decrease count for this not-expect
                 //if (active_not_expects[mval->name] == 0) {
                     //active_not_expects.erase(mval->name); // possibly Remove when no longer relevant
-                    if(ctest.contains("fails")) {
-                        ctest["fails"]+=1;
+                int t_idx =  test_idx-1;
+                if (t_idx >= 0 && t_idx < jtests.size()) {
+                    // Directly modify the element in the array
+                    if(jtests[t_idx].contains("fails")) {
+                        int  fails = jtests[t_idx]["fails"].get<int>(); 
+                        fails  += 1; // Set fails to 1 if passes is not found
+                        jtests[t_idx]["fails"] = fails;
                     }
-                    else 
+                    else
                     {
-                        ctest["fails"]=1;                        
-                    } 
-
-                //}
-                //inc the fails for the current test
+                        jtests[t_idx]["fails"]  =1; // Set fails to 1 if passes is not found
+                    }
+                }
+ 
             }
-
-            // check for the match name in the expected list
-            // if one is found we can assume that this part of the test is good
-            // check for the match name not  the not expected list
-            // if one is found we can assume that this part of the test failed
-
 
             test_json_matches(match_json, run);
         }
@@ -881,156 +869,15 @@ void show_test_plan(json& testPlan)
     test_idx = 0;
 
     while (test_idx < jtests.size()) {
-        ctest = jtests[test_idx];
-        if(!ctest.contains("passes")) {
-            ctest["fails"]=1;                        
+        // Directly modify the element in the array
+        if(!jtests[test_idx].contains("passes")) {
+            jtests[test_idx]["fails"] = 1; // Set fails to 1 if passes is not found
         }
-        std::cout << " Test Results for index :"<<test_idx << " ->" << ctest.dump() << std::endl;
+        std::cout << " Test Results for index :" << test_idx << " ->" << jtests[test_idx].dump() << std::endl;
         test_idx++;
     }
+    log_close();
 }
-
-
-// void xshow_test_plan(json& testPlan) {
-//     // Validate "Target" field
-//     if (!testPlan.contains("Target")) {
-//         std::cerr << "No field \"Target\" found in the test plan.\n";
-//         return;
-//     }
-//     std::string target = testPlan["Target"].get<std::string>();
-//     std::cout << "Target: " << target << "\n";
-
-//     // Validate "Monitor" field
-//     if (!testPlan.contains("Monitor")) {
-//         std::cerr << "No field \"Monitor\" found in the test plan.\n";
-//         return;
-//     }
-//     auto jmon = testPlan["Monitor"];
-//     if (!jmon.contains("Query")) {
-//         std::cerr << "No field \"Query\" found in the Monitor section.\n";
-//         return;
-//     }
-//     auto jmq = jmon["Query"];
-
-//     // Extract basic monitoring parameters
-//     int period = jmon.value("Period", 1);
-//     int duration = jmon.value("Time", 10);
-//     std::string matchFile = jmon.value("MatchFile", "data/matches_test_plan1.json");
-//     std::string url = jmon.value("Url", "ws://192.168.86.209:9003");
-//     int seq = jmq.value("seq", 1);
-
-//     std::cout << "Query: " << jmq.dump() << "\n";
-//     std::cout << "Monitor every " << period << " seconds for " << duration << " seconds.\n";
-//     std::cout << "Reading matches from " << matchFile << "\n";
-
-//     // Load matches
-//     load_matches(matchFile);
-
-//     // Process "Tests"
-//     json jtests = testPlan.value("Tests", json::array());
-//     int test_idx = -1, when = duration + 1;
-//     json ctest, ntest;
-//     if (!jtests.empty()) {
-//         test_idx = 0;
-//         ntest = jtests[test_idx];
-//         when = ntest.value("when", duration + 1);
-//         std::cout << "First test: " << ntest.dump() << "\nWhen: " << when << "\n";
-//     } else {
-//         std::cerr << "No tests found.\n";
-//     }
-
-//     // Process "Expects"
-//     json jexpects = testPlan.value("Expects", json::array());
-//     int e_idx = -1, ewhen = duration + 1, edur = duration + 1;
-//     if (!jexpects.empty()) {
-//         e_idx = 0;
-//         json cexpect = jexpects[e_idx];
-//         ewhen = cexpect.value("when", duration + 1);
-//         edur = cexpect.value("duration", duration + 1);
-//         std::cout << "First Expect: " << cexpect.dump() << "\nWhen: " << ewhen << ", Duration: " << edur << "\n";
-//     } else {
-//         std::cerr << "No Expects found.\n";
-//     }
-
-//     // Process "NotExpects"
-//     json jnexpects = testPlan.value("NotExpects", json::array());
-//     int ne_idx = -1, newhen = duration + 1, nedur = duration + 1;
-//     if (!jnexpects.empty()) {
-//         ne_idx = 0;
-//         json cnexpect = jnexpects[ne_idx];
-//         newhen = cnexpect.value("when", duration + 1);
-//         nedur = cnexpect.value("duration", duration + 1);
-//         std::cout << "First NotExpect: " << cnexpect.dump() << "\nWhen: " << newhen << ", Duration: " << nedur << "\n";
-//     } else {
-//         std::cerr << "No NotExpects found.\n";
-//     }
-
-//     // Start Monitoring
-//     std::cout << "Starting monitor with tests. When: " << when << "\n";
-//     for (int run = 0; run < duration; ++run) {
-//         process_expects_and_not_expects(jexpects, jnexpects, run);
-
-//         // Handle tests at their specified "when"
-//         if (run >= when) {
-//             std::cout << "Sending test now at run " << run << " (when " << when << ")\n";
-//             ctest = ntest;
-//             auto query = ctest["Query"].dump();
-//             std::cout << "Query: " << query << "\n";
-//             std::string response = run_wscat(url, query);
-//             std::cout << "Response: " << response << "\n";
-
-//             // Update to the next test
-//             when = duration + 1;
-//             test_idx++;
-//             if (test_idx < jtests.size()) {
-//                 ntest = jtests[test_idx];
-//                 when = ntest.value("when", duration + 1);
-//             } else {
-//                 std::cout << "No more tests to send.\n";
-//             }
-//         }
-
-//         // Collect data and match information
-//         try {
-//             std::string response = run_wscat(url, jmq.dump());
-//             json parsed = json::parse(response);
-//             std::vector<uint16_t> data = parsed["data"].get<std::vector<uint16_t>>();
-//             add_input_vector(run, seq, data);
-
-//             // Process matches
-//             json match_json = json::array();
-//             auto mval = find_best_match(data, matchObjects, 0.8);
-//             if (!mval) {
-//                 std::cout << "No match found; creating a new one.\n";
-//                 create_new_match(data, matchObjects);
-//             } else {
-//                 std::cout << "Match found [" << mval->name << "]\n";
-//                 track_expects_and_not_expects(mval->name, ctest);
-//             }
-
-//             test_json_matches(match_json, run);
-//             save_run_data(target, 0, run, seq, data, match_json);
-//         } catch (const std::exception& ex) {
-//             std::cerr << "Error during WebSocket command: " << ex.what() << "\n";
-//         }
-//     }
-
-//     // Check consistency and save results
-//     check_match_consistency();
-//     save_matches(matchFile);
-
-//     // Output test results
-//     for (int idx = 0; idx < jtests.size(); ++idx) {
-//         ctest = jtests[idx];
-//         if (!ctest.contains("passes")) {
-//             ctest["passes"] = 0;
-//         }
-//         if (!ctest.contains("fails")) {
-//             ctest["fails"] = 0;
-//         }
-//         std::cout << "Test Results (Index " << idx << "): " << ctest.dump() << "\n";
-//     }
-// }
 
 
 // Main Function
@@ -1040,7 +887,7 @@ int main(int argc, char* argv[]) {
 
     json testPlan;
     load_test_plan(testPlan, filename.str()) ;
-    show_test_plan(testPlan);
+    run_test_plan(testPlan);
 
 
     if (argc < 8) {
