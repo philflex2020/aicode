@@ -37,7 +37,7 @@ using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 //g++ -std=c++17 -o ftest -I ./inc src/fractal_test.cpp
-// ./ftest xxx 0x100 64  128 10
+// ./ftest tyest_plan1
 
 bool debug = false;
 
@@ -46,12 +46,12 @@ bool debug = false;
 // system clean up  on the way
 // sequence file output
 // Qarray on test sets
-// Test code for match detectipion
-// set up test file as args
+// Test code for match detection
 // allow -ve tolerance == delta from last  coded but we need to convert uint16_t to int16
-// test number json/test_defs.json
 //
 // DONE
+// test number json/test_defs.json
+// set up test file as args  done
 // default duration tim+1  done
 // combine multiple gets into a single match vector done
 // allow match tweaks done
