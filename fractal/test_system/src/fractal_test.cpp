@@ -409,10 +409,18 @@ std::string run_wscat(const std::string& url, const std::string& query_str) {
     std::string result;
 
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
-    if (!pipe) throw std::runtime_error("Failed to run command: " + command);
+    if (!pipe) {
+        throw std::runtime_error("Failed to run command: " + command);
+        log_msg << " Unable to process message "<< std::endl; 
+        result = "Failed";
+    }
+    else
+    {
+        while (fgets(buffer.data(), buffer.size(), pipe.get())) {
+            result += buffer.data();
+        }
+        log_msg << " wscat response ["<< result <<"]"<< std::endl; 
 
-    while (fgets(buffer.data(), buffer.size(), pipe.get())) {
-        result += buffer.data();
     }
     return result;
 }
@@ -708,9 +716,53 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
         }
     }
 }
+
+void setup_matches(json& jexp, json& cexpect, json& testPlan, std::string key , int& e_idx, int& ewhen, int& edur, int tim) 
+{
+    if (testPlan.contains(key) && testPlan[key].is_array()) {   
+        jexp = testPlan[key];
+        std::cout << key << "  found" << std::endl;
+
+        if (!jexp.empty()) {
+            e_idx = 0;
+            cexpect = jexp[e_idx]; // Access first test safely
+            std::cout << "First " << key << " : " << cexpect.dump() << std::endl;
+
+            // Get the "When" value or use a default
+            ewhen = cexpect.contains("when") ? cexpect["when"].get<int>() : tim + 1;
+            std::cout << "First Expect when: " << ewhen << std::endl;
+            // Get the Duration value or use a default
+            edur = cexpect.contains("duration") ? cexpect["duration"].get<int>() : tim + 1;
+            std::cout << "First Expect duration: " << ewhen << " duration" << edur<< std::endl;
+
+        } else {
+            std::cerr << "Expect array is empty." << std::endl;
+        }
+    } else {
+        std::cerr << "Expect field is missing or not an array." << std::endl;
+    }
+}
 // testplan will have a monitor section
 // this will scan the 
 // std::string name = match.contains("name") ? match["name"].get<std::string>() : "Unnamed";
+void printCurrentDateTime() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm now_tm = *std::localtime(&now_c);
+
+    std::cout << std::put_time(&now_tm, "%Y-%m-%d %H:%M:%S") << std::endl;
+}
+
+std::string getCurrentDateTime() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm now_tm = *std::localtime(&now_c);
+
+    std::ostringstream oss;
+    oss << std::put_time(&now_tm, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
 void run_test_plan(json& testPlan, std::string& testName, int test_run) 
 {
     std::string logname = "log/"+testName+"_log.txt";
@@ -732,6 +784,20 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
         log_msg << " No field \"Monitor\" found in test plan" << std::endl;
         return ;
     }
+    if(!testPlan.contains("Desc"))
+    {
+        testPlan["Desc"]="Demo test";
+    }
+    std::string desc = testPlan["Desc"].get<std::string>();
+    if(!testPlan.contains("Release"))
+    {
+        testPlan["Release"]="version: test";
+    }
+    std::string release = testPlan["Release"].get<std::string>();
+    // desc
+    // release
+    // target
+
     auto jmon = testPlan["Monitor"];
     if(!(jmon.contains("Query")||jmon.contains("QArray")))
     {
@@ -746,7 +812,7 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     if(jmon.contains("QArray"))
     {
         jmqa = jmon["QArray"];
-        log_msg << "we got a query array " << std::endl;
+        //log_msg << "we got a query array " << std::endl;
     }
 
     json jtests, ctest, ntest; // next test
@@ -790,51 +856,54 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     } else {
         std::cerr << "Tests field is missing or not an array." << std::endl;
     }
-    if (testPlan.contains("Expects") && testPlan["Expects"].is_array()) {   
-        jexpects = testPlan["Expects"];
-        std::cout << "Expects found" << std::endl;
 
-        if (!jexpects.empty()) {
-            e_idx = 0;
-            cexpect = jexpects[e_idx]; // Access first test safely
-            std::cout << "First Expect: " << cexpect.dump() << std::endl;
+    setup_matches(jexpects, cexpect, testPlan, "Expects", e_idx, ewhen, edur, tim);
+    // if (testPlan.contains("Expects") && testPlan["Expects"].is_array()) {   
+    //     jexpects = testPlan["Expects"];
+    //     std::cout << "Expects found" << std::endl;
 
-            // Get the "When" value or use a default
-            ewhen = cexpect.contains("when") ? cexpect["when"].get<int>() : tim + 1;
-            std::cout << "First Expect when: " << when << std::endl;
-            // Get the Duration value or use a default
-            edur = cexpect.contains("duration") ? cexpect["duration"].get<int>() : tim + 1;
-            std::cout << "First Expect duration: " << ewhen << " duration" << edur<< std::endl;
+    //     if (!jexpects.empty()) {
+    //         e_idx = 0;
+    //         cexpect = jexpects[e_idx]; // Access first test safely
+    //         std::cout << "First Expect: " << cexpect.dump() << std::endl;
 
-        } else {
-            std::cerr << "Expect array is empty." << std::endl;
-        }
-    } else {
-        std::cerr << "Expect field is missing or not an array." << std::endl;
-    }
+    //         // Get the "When" value or use a default
+    //         ewhen = cexpect.contains("when") ? cexpect["when"].get<int>() : tim + 1;
+    //         std::cout << "First Expect when: " << when << std::endl;
+    //         // Get the Duration value or use a default
+    //         edur = cexpect.contains("duration") ? cexpect["duration"].get<int>() : tim + 1;
+    //         std::cout << "First Expect duration: " << ewhen << " duration" << edur<< std::endl;
 
-    if (testPlan.contains("NotExpects") && testPlan["NotExpects"].is_array()) {   
-        jnexpects = testPlan["NotExpects"];
-        std::cout << "NotExpects found" << std::endl;
+    //     } else {
+    //         std::cerr << "Expect array is empty." << std::endl;
+    //     }
+    // } else {
+    //     std::cerr << "Expect field is missing or not an array." << std::endl;
+    // }
 
-        if (!jnexpects.empty()) {
-            ne_idx = 0;
-            cnexpect = jexpects[ne_idx]; // Access first test safely
-            std::cout << "First NotExpect: " << cnexpect.dump() << std::endl;
+    setup_matches(jnexpects, cnexpect, testPlan, "NotExpects", ne_idx, newhen, nedur, tim);
+    // if (testPlan.contains("NotExpects") && testPlan["NotExpects"].is_array()) {   
+    //     jnexpects = testPlan["NotExpects"];
+    //     std::cout << "NotExpects found" << std::endl;
 
-            // Get the "When" value or use a default
-            newhen = cnexpect.contains("when") ? cnexpect["when"].get<int>() : tim + 1;
-            std::cout << "First NotExpect when: " << newhen << std::endl;
-            // Get the Duration value or use a default
-            nedur = cnexpect.contains("duration") ? cnexpect["duration"].get<int>() : tim + 1;
-            std::cout << "First NotExpect duration: " << newhen << " duration" << nedur<< std::endl;
+    //     if (!jnexpects.empty()) {
+    //         ne_idx = 0;
+    //         cnexpect = jexpects[ne_idx]; // Access first test safely
+    //         std::cout << "First NotExpect: " << cnexpect.dump() << std::endl;
 
-        } else {
-            std::cerr << "NotExpect array is empty." << std::endl;
-        }
-    } else {
-        std::cerr << "NotExpect field is missing or not an array." << std::endl;
-    }
+    //         // Get the "When" value or use a default
+    //         newhen = cnexpect.contains("when") ? cnexpect["when"].get<int>() : tim + 1;
+    //         std::cout << "First NotExpect when: " << newhen << std::endl;
+    //         // Get the Duration value or use a default
+    //         nedur = cnexpect.contains("duration") ? cnexpect["duration"].get<int>() : tim + 1;
+    //         std::cout << "First NotExpect duration: " << newhen << " duration" << nedur<< std::endl;
+
+    //     } else {
+    //         std::cerr << "NotExpect array is empty." << std::endl;
+    //     }
+    // } else {
+    //     std::cerr << "NotExpect field is missing or not an array." << std::endl;
+    // }
 
     std::cout << " read matches from " << mfile<<std::endl;
     load_matches(mfile);
@@ -847,7 +916,7 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     for (int run = 0; run < tim ; ++run)
     {
         //if(debug)
-        log_msg << "\n ***** Start run  " << run << " monitor "<< query << std::endl;
+        log_msg << "\n ***** Start run  " << run << std::endl;
         process_expects_and_not_expects(jexpects, jnexpects, run, tim);
         if(debug)std::cout << " Process expects done " << run << " when "<< when<< std::endl;
 
@@ -855,13 +924,41 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
         {
             std::cout << "Sending test now " << run << " when " << when <<  std::endl;
             ctest = ntest;
-            if(ctest.contains("Query"))
+
+            std::vector<std::string> qstrings;
+
+//            if ( !jmqa.empty() )
+            if(ctest.contains("QArray"))
             {
-                json jquery = ctest["Query"];
-                auto qstr = jquery.dump();
-                log_msg << " Test :" << test_idx <<" Query at [" << run << "] " << qstr <<  std::endl;
-                std::string response = run_wscat(url, qstr);
-                log_msg << "            -> response " << response <<  std::endl;
+                for ( auto qmaItem : ctest["QArray"])
+                {
+                    qstrings.push_back(qmaItem.dump());
+                    //log_msg << " Test QArray for run [" << run << "] " << qmaItem.dump() <<  std::endl;
+ 
+                }
+            }
+            else if (ctest.contains("Query"))
+            {
+                qstrings.push_back(ctest["Query"].dump());
+                //log_msg << " Test Query for run [" << run << "] " << ctest["Query"].dump() <<  std::endl;
+            }
+
+            //if(ctest.contains("Query"))
+            if(!qstrings.empty())
+            {
+                int qidx = 0;
+                for (const auto& query : qstrings) {
+                    json jquery = ctest["Query"];
+                    auto qstr = jquery.dump();
+                    log_msg << " Test :" << test_idx <<" run [" << run << "]  idx [" << qidx++<< "]" << qstr <<  std::endl;
+                    std::string response = run_wscat(url, qstr);
+                    //log_msg << "            -> response " << response <<  std::endl;
+                    if ( response.empty() || response == "Failed")
+                    {
+                        run = tim+1;
+                        break;
+                    }
+                }
             }
             // Check if test_idx is within the bounds of jtests
             when = tim+1;
@@ -890,7 +987,7 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
                 for ( auto qmaItem : jmqa)
                 {
                     qstrings.push_back(qmaItem.dump());
-                    log_msg << " Test  QArray at [" << run << "] " << qmaItem.dump() <<  std::endl;
+                    //log_msg << " Monitor QArray at [" << run << "] " << qmaItem.dump() <<  std::endl;
 
                 }
             }
@@ -899,9 +996,17 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
                 qstrings.push_back(jmq.dump());
             }
             // for each query string in qstrings run_wscat and append the result to data
-
+            int qidx = 0;
             for (const auto& query : qstrings) {
+                if(run == 0)
+                    log_msg << "  Monitor  run [" << run << "] " << " query ["<<qidx++<<"] " << query <<  std::endl;
                 std::string response = run_wscat(url, query);  // Run the query
+                if ( response.empty() || response == "Failed")
+                {
+                    run = tim+1;
+                    break;
+                }
+
                 try {
                     json parsed = json::parse(response);        // Parse the JSON response
                     auto newData = parsed["data"].get<std::vector<uint16_t>>();  // Extract data
@@ -913,7 +1018,12 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
             // std::string response = run_wscat(url, query);
             // json parsed = json::parse(response);
             // data = parsed["data"].get<std::vector<uint16_t>>();
-
+            if ( data.empty())
+            {
+                run = tim+1;
+                log_msg << " No Data  quitting" << std::endl;
+                break;
+            }
             add_input_vector(run, seq, data);
             //save_run_data(target, run , seq , data);
             //offset += data_size*2; //uint16_t 
@@ -923,6 +1033,12 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
         //if(debug)
         std::cout << "collect matches for this run " << run << std::endl;
 
+        if ( data.empty() )
+        {
+            run = tim+1;
+            log_msg << " No Data  quitting" << std::endl;
+            break;
+        }
         json match_json = json::array(); //
         auto mval = find_best_match(run, data,  0.8);
         if(debug)std::cout << "collect matches for this run done " << run << std::endl;
@@ -1004,14 +1120,46 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     save_matches(mfile);
     test_idx = 0;
 
+    int total_passes = 0;
+    int total_fails = 0;
     while (test_idx < jtests.size()) {
         // Directly modify the element in the array
         if(!jtests[test_idx].contains("passes")) {
             jtests[test_idx]["fails"] = 1; // Set fails to 1 if passes is not found
+            jtests[test_idx]["passes"] = 0; // Set fails to 1 if passes is not found
         }
-        std::cout << " Test Results for index :" << test_idx << " ->" << jtests[test_idx].dump() << std::endl;
+        if(!jtests[test_idx].contains("fails")) {
+            jtests[test_idx]["fails"] = 0; // Set fails to 1 if passes is not found
+        }
+        total_passes += jtests[test_idx]["passes"].get<int>();
+        total_fails += jtests[test_idx]["fails"].get<int>();
         test_idx++;
     }
+    // desc
+    // release
+    // target
+    log_msg <<"\n\n\n*************************************************";
+    
+    log_msg << "\nTest: "<< testName 
+            << "\n     Description: " << desc;
+    log_msg << "\n     Target: "<< target;
+    log_msg << "\n     Release: "<< release;
+    log_msg << "\n     Tested on: " << getCurrentDateTime();
+    log_msg << "\n\n     results :-" <<std::endl;
+    log_msg <<"                         Total Passes  "<< total_passes <<std::endl;
+    log_msg <<"                         Total Fails  "<< total_fails <<std::endl;
+    test_idx = 0;
+
+    log_msg << "\n\n  Test Details :-" <<std::endl;
+
+    while (test_idx < jtests.size()) {
+        std::cout << "          Results for item :" << test_idx << " ->" << jtests[test_idx].dump() << std::endl;
+        log_msg << "Test item  :"<< jtests[test_idx]["Desc:"].dump() << std::endl;
+        log_msg << "                        Passes :"<<     jtests[test_idx]["passes"].dump() << std::endl;
+        log_msg << "                        Fails :"<<     jtests[test_idx]["fails"].dump() << std::endl;
+        test_idx++;
+    }
+    log_msg <<"*************************************************"<<std::endl;
     log_close();
 }
 
