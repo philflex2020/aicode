@@ -603,7 +603,8 @@ void save_run_data(std::string&target, int test_run, int run , int seq, std::vec
     // Prepare the JSON object to be appended
     json json_data = {
         {"run", run},
-        {"data", data}
+        {"data", data},
+        {"matches", matches}
     };
 //            {"matches", matches}
 //       {"seq", seq},
@@ -1049,8 +1050,10 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
             if(debug)std::cout << " Match created"<<std::endl;
             //create_new_match(InputVector&current_vector, data);
         }
+        std::vector<std::string> match_vec; 
         if(mval)
         {
+            match_vec.push_back(mval->name);
             log_msg << "            Match found ["<<mval->name<<"]"<<std::endl;
             
             // Track active Expects and NotExpects
@@ -1108,7 +1111,8 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 
             test_json_matches(match_json, run);
         }
-        save_run_data(testName, test_run , run, seq , data, match_json);
+        json jmvec = match_vec; 
+        save_run_data(testName, test_run, run, seq, data, jmvec);
         if(debug)std::cout <<" Run completed " << run << std::endl;
     }
     json jdummy;
