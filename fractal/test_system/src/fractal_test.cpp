@@ -36,37 +36,26 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
-// Global ofstream for logging
-std::ofstream log_file;
-
-// Macro to open log file
-#define log_open(path) do { log_file.open(path, std::ios::out | std::ios::app); if (!log_file.is_open()) std::cerr << "Failed to open log file: " << path << std::endl; } while (0)
-
-// Macro to log messages
-#define log_msg if (!log_file) std::cerr << "Log file is not open!" << std::endl; else log_file
-
-// Macro to close log file
-#define log_close() if (log_file.is_open()) log_file.close()
-
-// Macro to delete log file
-#define log_delete(path) do { \
-    if (std::filesystem::exists(path)) { \
-        std::filesystem::remove(path); \
-    } \
-} while (0)
-
 //g++ -std=c++17 -o ftest -I ./inc src/fractal_test.cpp
 // ./ftest xxx 0x100 64  128 10
 
 bool debug = false;
 
 //TODO 
-// system clean up
+// bug on no connect  remember we are using 9003
+// system clean up  on the way
 // sequence file output
+// Qarray on test sets
+// Test code for match detectipion
 // set up test file as args
-// combine multiple gets into a single match vector
 // allow -ve tolerance == delta from last  coded but we need to convert uint16_t to int16
-// allow match tweaks 
+// test number json/test_defs.json
+//
+// DONE
+// default duration tim+1  done
+// combine multiple gets into a single match vector done
+// allow match tweaks done
+
 
 // // Structs
 // struct InputVector {
@@ -164,6 +153,26 @@ void save_metadata(const std::string& filepath, const json& metadata) {
     }
     file.close();
 }
+
+// Handle the execution and logging of a test plan
+int get_test_run(const std::string& test_name )
+{
+    const std::string metadata_path = "./json/test_meta.json";
+
+    json metadata = load_metadata(metadata_path);
+    if (!metadata.contains(test_name)) {
+        metadata[test_name] = {{"runs", 0}, {"results", json::array()}};
+    }
+
+    // Increment the run count
+    metadata[test_name]["runs"] = metadata[test_name]["runs"].get<int>() + 1;
+    int current_run = metadata[test_name]["runs"];
+
+    // Save updated metadata
+    save_metadata(metadata_path, metadata);
+    return current_run;
+}
+
 
 // Handle the execution and logging of a test plan
 void handle_test_run(const std::string& test_name, const std::string& metadata_path) {
@@ -564,17 +573,24 @@ void load_matches(const std::string& matchName) {
 
 
 
-// append the data to a file in the data dir as a json object 
+// the data to a file in the data dir as a json object 
+// also save in a base_dir
 void save_run_data(std::string&target, int test_run, int run , int seq, std::vector<uint16_t>data, json& matches)
 {
 
-    std::string data_dir =  "data/"+target + "/"+ std::to_string(test_run)+"/";
+    std::string data_dir =  "data/" + target + "/"+ std::to_string(test_run)+"/";
     fs::create_directories(data_dir);
+
+    std::string base_dir =  "data/" + target + "/";
+    fs::create_directories(base_dir);
 
     // Build the file name
     std::ostringstream file_path;
     file_path << data_dir << "data_file.json";
     std::cout << " save data to " <<file_path.str() << " run " << run << std::endl;
+
+    std::ostringstream base_path;
+    base_path << base_dir << "data_file.json";
 
     // Prepare the JSON object to be appended
     json json_data = {
@@ -590,13 +606,23 @@ void save_run_data(std::string&target, int test_run, int run , int seq, std::vec
         if (std::filesystem::exists(file_path.str())) {
             std::filesystem::remove(file_path.str());
         }
+        if (std::filesystem::exists(base_path.str())) {
+            std::filesystem::remove(base_path.str());
+        }
         std::ofstream out_file(file_path.str(), std::ios::trunc);
         if (!out_file) {
-            std::cout << "Failed to create new file: " << file_path.str() << "\n";
+            std::cout << "Failed to create new test file: " << file_path.str() << "\n";
+            return;
+        }
+        std::ofstream base_file(base_path.str(), std::ios::trunc);
+        if (!base_file) {
+            std::cout << "Failed to create new base file: " << base_path.str() << "\n";
             return;
         }
         out_file << "[\n"; // Start the JSON array
         out_file.close();
+        base_file << "[\n"; // Start the JSON array
+        base_file.close();
     }
 
     std::ofstream out_file(file_path.str(), std::ios::app);
@@ -604,25 +630,31 @@ void save_run_data(std::string&target, int test_run, int run , int seq, std::vec
         std::cerr << "Failed to open file: " << file_path.str() << "\n";
         return;
     }
+    std::ofstream base_file(base_path.str(), std::ios::app);
+    if (!out_file) {
+        std::cerr << "Failed to open file: " << base_path.str() << "\n";
+        return;
+    }
     if (run > 0)
     {
         out_file << ",\n";
+        base_file << ",\n";
     }
 
     out_file << json_data.dump();// << "\n"; // Write the JSON object as a single line
     out_file.close();
+    base_file << json_data.dump();// << "\n"; // Write the JSON object as a single line
+    base_file.close();
 
     // For run 0, close the JSON array at the end of the program or when appropriate
     }
     if (run == -1) { // Special case for finalizing the file
-        // std::ofstream out_file(file_path.str(), std::ios::app);
-        // out_file << "]\n";
-        // out_file.close();
-
-        std::ofstream finalize_file(file_path.str(), std::ios::app);
-        if (finalize_file) {
-            finalize_file << "\n]";
-        }
+        std::ofstream out_file(file_path.str(), std::ios::app);
+        out_file << "\n]\n";
+        out_file.close();
+        std::ofstream base_file(base_path.str(), std::ios::app);
+        base_file << "\n]\n";
+        base_file.close();
     }
 
     std::cout << "Data saved to " << file_path.str() << "\n";
@@ -630,13 +662,14 @@ void save_run_data(std::string&target, int test_run, int run , int seq, std::vec
 
 
 // Process Expects and NotExpects for a given time
-void process_expects_and_not_expects(const json& expects_json, const json& not_expects_json, int run) {
+void process_expects_and_not_expects(const json& expects_json, const json& not_expects_json, int run, int tim) {
     // Add new Expects
     for (const auto& expect : expects_json) {
         int when = expect["when"].get<int>();
         if (when == run) {
+
             std::string match_name = expect["match_name"].get<std::string>();
-            int duration = expect.contains("duration") ? expect["duration"].get<int>() : 0;
+            int duration = expect.contains("duration") ? expect["duration"].get<int>() : tim+1;
             active_expects[match_name] = duration;
             log_msg << "          Added Expect: " << match_name << " (Duration: " << duration << ")\n";
         }
@@ -647,7 +680,7 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
         int when = not_expect["when"].get<int>();
         if (when == run) {
             std::string match_name = not_expect["match_name"].get<std::string>();
-            int duration = not_expect.contains("duration") ? not_expect["duration"].get<int>() : 0;
+            int duration = not_expect.contains("duration") ? not_expect["duration"].get<int>() : tim+1;
             active_not_expects[match_name] = duration;
             log_msg << "          Added NotExpect: " << match_name << " (Duration: " << duration << ")\n";
         }
@@ -678,7 +711,7 @@ void process_expects_and_not_expects(const json& expects_json, const json& not_e
 // testplan will have a monitor section
 // this will scan the 
 // std::string name = match.contains("name") ? match["name"].get<std::string>() : "Unnamed";
-void run_test_plan(json& testPlan, std::string& testName) 
+void run_test_plan(json& testPlan, std::string& testName, int test_run) 
 {
     std::string logname = "log/"+testName+"_log.txt";
     //log_delete("log/log.txt");
@@ -815,7 +848,7 @@ void run_test_plan(json& testPlan, std::string& testName)
     {
         //if(debug)
         log_msg << "\n ***** Start run  " << run << " monitor "<< query << std::endl;
-        process_expects_and_not_expects(jexpects, jnexpects, run);
+        process_expects_and_not_expects(jexpects, jnexpects, run, tim);
         if(debug)std::cout << " Process expects done " << run << " when "<< when<< std::endl;
 
         if (run >= when)
@@ -959,12 +992,12 @@ void run_test_plan(json& testPlan, std::string& testName)
 
             test_json_matches(match_json, run);
         }
-        save_run_data(testName, 0 , run, seq , data, match_json);
+        save_run_data(testName, test_run , run, seq , data, match_json);
         if(debug)std::cout <<" Run completed " << run << std::endl;
     }
     json jdummy;
     std::vector<uint16_t>dummy_data;
-    save_run_data(testName, 0 , -1, 0 , dummy_data, jdummy);
+    save_run_data(testName, test_run , -1, 0 , dummy_data, jdummy);
  
     check_match_consistency();
     // Save matches to file
@@ -993,13 +1026,16 @@ int main(int argc, char* argv[]) {
     }
 
     std::string testname = argv[1];
+
+    auto test_run = get_test_run(testname);
+
     std::string url = "ws://192.168.86.209:9003";
 
     filename << "json/"<< testname<<".json";
 
     json testPlan;
     load_test_plan(testPlan, testname);//filename.str()) ;
-    run_test_plan(testPlan, testname);
+    run_test_plan(testPlan, testname, test_run);
 
     return 0;  
 }

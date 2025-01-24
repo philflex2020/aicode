@@ -40,5 +40,24 @@ struct VectorHash {
     }
 };
 
+// Global ofstream for logging
+std::ofstream log_file;
+
+// Macro to open log file
+#define log_open(path) do { log_file.open(path, std::ios::out | std::ios::app); if (!log_file.is_open()) std::cerr << "Failed to open log file: " << path << std::endl; } while (0)
+
+// Macro to log messages
+#define log_msg if (!log_file) std::cerr << "Log file is not open!" << std::endl; else log_file
+
+// Macro to close log file
+#define log_close() if (log_file.is_open()) log_file.close()
+
+// Macro to delete log file
+#define log_delete(path) do { \
+    if (std::filesystem::exists(path)) { \
+        std::filesystem::remove(path); \
+    } \
+} while (0)
+
 
 #endif
