@@ -931,10 +931,10 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 //            if ( !jmqa.empty() )
             if(ctest.contains("QArray"))
             {
-                for ( auto qmaItem : ctest["QArray"])
+                for (auto qmaItem : ctest["QArray"])
                 {
                     qstrings.push_back(qmaItem.dump());
-                    //log_msg << " Test QArray for run [" << run << "] " << qmaItem.dump() <<  std::endl;
+                    log_msg << " Test QArray for run [" << run << "] " << qmaItem.dump() <<  std::endl;
  
                 }
             }
@@ -949,10 +949,10 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
             {
                 int qidx = 0;
                 for (const auto& query : qstrings) {
-                    json jquery = ctest["Query"];
-                    auto qstr = jquery.dump();
-                    log_msg << " Test :" << test_idx <<" run [" << run << "]  idx [" << qidx++<< "]" << qstr <<  std::endl;
-                    std::string response = run_wscat(url, qstr);
+                    //json jquery = ctest["Query"];
+                    //auto qstr = jquery.dump();
+                    log_msg << " Test :" << test_idx <<" run [" << run << "]  idx [" << qidx++<< "]" << query <<  std::endl;
+                    std::string response = run_wscat(url, query);
                     //log_msg << "            -> response " << response <<  std::endl;
                     if ( response.empty() || response == "Failed")
                     {
