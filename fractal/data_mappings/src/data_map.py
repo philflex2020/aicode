@@ -325,13 +325,31 @@ def generate_modbus_json(records, output_dir):
     output_file = Path(output_dir) / "modbus_registers.json"
     with open(output_file, 'w') as f:
         f.write("[\n")  # Add a newline after each JSON object
-        f_step = True
-        for modbus_type in modbus_data.items()
-            if not f_step:
+        f_type = True
+        for modbus_type in modbus_data.items():
+            if not f_type:
                 f.write(",\n")  # Add a newline after each JSON object
-            f_step = False
-            json.dump(modbus_type, f)
+            f_type = False
+            f_reg = True
+            for modbus_reg in modbus_type:
+                if not f_reg:
+                    f.write(",\n")  # Add a newline after each JSON object
+                f_reg = False
+                f_idx = True
+                json.dump(modbus_reg, f)
+               
+                # for modbus_idx in modbus_reg.items():
+                #     if not f_idx:
+                #         f.write(",\n")  # Add a newline after each JSON object
+                #     f_idx = False
+                #     json.dump(modbus_idx, f)
         f.write("\n]\n")  # Add a newline after each JSON object
+        for modbus_type in modbus_data.items():
+            print(f'"{modbus_type[0]}":[')
+            for modbus_reg in modbus_type[1].items():
+                print(json.dumps(modbus_reg))
+            print(f']')
+
     print(f"Modbus Mappings sent to  {output_file}")
 
     #     f.write("# Modbus Registers\n\n")
@@ -520,7 +538,7 @@ def generate_sequence_steps(records, output_dir):
 def main():
     if len(sys.argv) < 3:
         print("Usage: python data_map.py <input_file> <report_type> [<output_dir>]")
-        sys.exit(1)
+        #sys.exit(1)
 
     input_file = sys.argv[1] if len(sys.argv) > 1 else "./data/data_map.txt"
     report_type = sys.argv[2] if len(sys.argv) > 2 else "mj"

@@ -25,16 +25,16 @@ changelog:
 | rbits:222   | sum:3     | bits:37        | cell_low_SOC                                      |
 | rbits:225   | sum:3     | bits:40        | cell_high_SOC                                     |
 | rbits:228   | sum:3     | bits:43        | cell_low_SOH|
-| rbits:xxx   | sum:3     | bits:46        | cell_high_SOH                                     |
+| rbits:-1   | sum:3     | bits:46        | cell_high_SOH                                     |
 | rbits:200   | into     | bits:49        | esbcm_lost_communication                          |
 | rbits:237   | into     | bits:50        | esbmm_lost_communication                          |
 | rinput:115  | spread   | bits:51        | total_voltage_spread | (look for >20V spread)             |
-| rbits:xxx   | into     | bits:52        | abnormal_contactor_open                           |
-| rbits:xxx   | into     | bits:53        | abnormal_contactor_close                          |
-| rbits:xxx   | into     | bits:54        | charge_disabled   | Prohibited
-| rbits:xxx   | into     | bits:55        | discharge_disabled | Prohibited                              |
-| rbits:list1 | agg_bits | bits:56        | alarm_summary     | needs a list of alarms 
-| rbits:list2 | agg_bits | bits:57        | fault_summary     | needs a list of faults
+| rbits:-2   | into     | bits:52        | abnormal_contactor_open                           |
+| rbits:-3   | into     | bits:53        | abnormal_contactor_close                          |
+| rbits:-4   | into     | bits:54        | charge_disabled   | Prohibited
+| rbits:-5   | into     | bits:55        | discharge_disabled | Prohibited                              |
+| rbits:-6 | agg_bits | bits:56        | alarm_summary     | needs a list of alarms 
+| rbits:-7 | agg_bits | bits:57        | fault_summary     | needs a list of faults |
 | rinput:107  | set:4     | bits:58        | input_in_         |Input IN0-IN3                                     |
 | rbits:227   | sum:3     | bits:70        | terminal_over_temperature | what is a terminal                |
 | rbits:280   | sum:3     | bits:73        | pack_overvoltage | what is a pack                                  |
@@ -52,16 +52,16 @@ changelog:
 | rinput:141  | sum:2     | input:20       | accumulated_discharge_capacity |                   |
 | rinput:143  | pow:2     | input:22       | single_cumulative_charge_power  |                 |
 | rinput:145  | pow:2     | input:24       | single_cumulative_discharge_power |               |
-| rinput:139  | sum:2     | input:26       | system_charge_capacity |                           |
-| rinput:141  | sum:2     | input:28       | system_discharge_capacity |                        |
-| rinput:141  | div      | input:30       | available_discharge_time |                         |
-| rinput:139  | div      | input:31       | available_charge_time   |                        |
+| rinput:1391  | sum:2     | input:26       | system_charge_capacity |                           |
+| rinput:1411  | sum:2     | input:28       | system_discharge_capacity |                        |
+| rinput:1412  | div      | input:30       | available_discharge_time |                         |
+| rinput:1392  | div      | input:31       | available_charge_time   |                        |
 | rinput:101  | sum      | input:32       | max_discharge_power |                              |
 | rinput:102  | sum      | input:33       | max_charge_power |                                 |
 | rinput:106  | sum      | input:34       | max_discharge_current|                            |
 | rinput:105  | sum      | input:35       | max_charge_current  |                             |
-| rinput:-1   | count    | input:36       | number_of_daily_charges   | system must be charging for at least 5 minutes                          |
-| rinput:-1   | count    | input:37       | number_of_daily_discharges |                       |
+| rinput:-8   | count    | input:36       | number_of_daily_charges   | system must be charging for at least 5 minutes                          |
+| rinput:-9   | count    | input:37       | number_of_daily_discharges |                       |
 | rinput:1:2  | agg:2p    | input:38       | total_daily_discharge   |                         |
 | rinput:2:2  | agg:2n    | input:40       | total_daily_charge                               |
 | rinput:1001 | calc    | input:42       | operating_temp       |                      |
