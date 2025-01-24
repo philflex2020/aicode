@@ -340,7 +340,7 @@ const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<ui
             std::cout << " Calculated match score   " << score << std::endl;
 
         if (score > best_score && score >= threshold) {
-            std::cout << "  set  best match   " << match->name << std::endl;
+            std::cout << "  set best match   " << match->name << std::endl;
             best_score = score;
             best_match = match;
         }
@@ -1079,8 +1079,8 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
                     {
                         jtests[t_idx]["passes"]  = 1; // Set fails to 1 if passes is not found
                     }
+                    std::cout << " Test Results for index :" << t_idx << " ->" << jtests[t_idx].dump() << std::endl;
                 }
-                std::cout << " Test Results for index :" << t_idx << " ->" << jtests[t_idx].dump() << std::endl;
                 //inc the passes for the current test
             }
 
