@@ -97,18 +97,6 @@ bool debug = false;
 //     std::string name;
 // };
 
-
-// Global Variables
-std::map<int, std::vector<InputVector>> inputVecs;
-std::unordered_map<std::vector<uint16_t>, int, VectorHash> matchIndexMap;
-//std::vector<MatchObject> matchObjects;
-// TODO start using this 
-std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
-
-// Track active Expects and NotExpects
-std::map<std::string, int> active_expects;
-std::map<std::string, int> active_not_expects;
-
 int str_to_offset(const std::string& offset_str) {
     try {
         // Check if the string starts with "0x" or "0X" for hexadecimal
@@ -144,6 +132,18 @@ double ref_time_dbl() {
 
 
 
+// Global Variables
+std::map<int, std::vector<InputVector>> inputVecs;
+std::unordered_map<std::vector<uint16_t>, int, VectorHash> matchIndexMap;
+//std::vector<MatchObject> matchObjects;
+// TODO start using this 
+std::vector<std::shared_ptr<MatchObject>> sharedMatchObjects;
+
+// Track active Expects and NotExpects
+std::map<std::string, int> active_expects;
+std::map<std::string, int> active_not_expects;
+
+
 // Using nested maps to store configurations
 typedef std::map<int, ConfigItem> OffsetMap;
 typedef std::map<std::string, ConfigItem> ConfigMap;
@@ -153,6 +153,79 @@ typedef std::map<std::string, std::string> ReverseMap;
 SystemMap systems;
 ReverseMap reverseMap;
 TypeMap typeMap;
+
+
+
+// Using shared pointers for ConfigItems
+// typedef std::map<int, std::shared_ptr<ConfigItem>> OffsetMap;
+// typedef std::map<std::string, std::shared_ptr<ConfigItem>> ConfigMap;
+// typedef std::map<std::string, ConfigMap> SystemMap;
+// typedef std::map<std::string, std::shared_ptr<ConfigItem>> TypeMap;
+// typedef std::map<std::string, std::string> ReverseMap;
+// Parse the configuration file using shared pointers
+// void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& reverseMap) {
+//     std::ifstream file(filename);
+//     std::string line;
+//     std::string currentSystem, currentType;
+//     int currentOffset;
+
+//     if (!file.is_open()) {
+//         std::cerr << "Failed to open file: " << filename << std::endl;
+//         return;
+//     }
+//     std::cout << "Opened file: " << filename << std::endl;
+
+//     while (getline(file, line)) {
+//         line = trim(line);
+//         if (line.empty() || line[0] == '#') continue; // Skip empty lines and comments
+
+//         if (line[0] == '[') { // New system configuration
+//             std::cout << "Found group: " << line << std::endl;
+//             line.erase(0, 1); // Remove leading '['
+//             line.pop_back();  // Remove trailing ']'
+//             std::istringstream iss(line);
+//             std::string part;
+//             std::vector<std::string> parts;
+//             while (getline(iss, part, ':')) {
+//                 parts.push_back(trim(part));
+//             }
+//             if (parts.size() >= 3) {
+//                 currentSystem = parts[0];
+//                 currentType = parts[1];
+//                 currentOffset = std::stoi(parts[2]);
+//             }
+//         } else { // Data item within the system
+//             std::istringstream iss(line);
+//             std::string part, name;
+//             int offset, size = 1;
+//             std::vector<std::string> parts;
+//             while (getline(iss, part, ':')) {
+//                 parts.push_back(trim(part));
+//             }
+//             if (parts.size() > 1) {
+//                 name = parts[0];
+//                 offset = std::stoi(parts[1]);
+//             }            
+//             if (parts.size() > 2) {
+//                 size = std::stoi(parts[2]);
+//             }
+//             std::cout << "Found name: " << name << std::endl;
+
+//             // Store configuration using shared_ptr
+//             auto item = std::make_shared<ConfigItem>(ConfigItem{name, currentSystem, currentType, currentOffset + offset, size});
+//             systems[currentSystem][name] = item;
+
+//             // Update typeMap and reverseMap
+//             std::ostringstream tname, osname, oss;
+//             tname << currentSystem << ":" << currentType << ":" << (currentOffset + offset);
+//             typeMap[tname.str()] = item;
+//             osname << currentSystem << ":" << name;
+//             oss << currentType << "|" << (currentOffset + offset) << (size > 1 ? ":" + std::to_string(size) : "");
+//             reverseMap[osname.str()] = oss.str();
+//         }
+//     }
+// }
+
 
 // Parse the configuration file
 void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& reverseMap) {
