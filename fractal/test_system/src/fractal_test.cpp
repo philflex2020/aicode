@@ -42,12 +42,9 @@ namespace fs = std::filesystem;
 bool debug = false;
 
 //TODO 
-// bug on no connect  remember we are using 9003
-// system clean up  on the way
-// sequence file output
-// Qarray on test sets
 // Test code for match detection
 // allow -ve tolerance == delta from last  coded but we need to convert uint16_t to int16
+// mask_defs   x:y:z    offset:value:count -1 for all of them mask_defs, tolerance_defs, weight_defs  
 //
 // DONE
 // test number json/test_defs.json
@@ -55,6 +52,10 @@ bool debug = false;
 // default duration tim+1  done
 // combine multiple gets into a single match vector done
 // allow match tweaks done
+// bug on no connect  remember we are using 9003
+// system clean up 
+// sequence file output
+// Qarray on test sets
 
 
 // // Structs
@@ -121,12 +122,154 @@ int str_to_offset(const std::string& offset_str) {
     }
 }
 
+// Function to trim whitespace from both ends of a string
+std::string trim(const std::string& str) {
+    size_t first = str.find_first_not_of(' ');
+    if (first == std::string::npos) return "";
+    size_t last = str.find_last_not_of(' ');
+    return str.substr(first, (last - first + 1));
+}
+
 // Function to Get Current Time in Seconds
 double ref_time_dbl() {
     using namespace std::chrono;
     static auto ref_time = steady_clock::now();
     auto now = steady_clock::now();
     return duration_cast<duration<double>>(now - ref_time).count();
+}
+
+
+
+// Using nested maps to store configurations
+typedef std::map<int, ConfigItem> OffsetMap;
+typedef std::map<std::string, ConfigItem> ConfigMap;
+typedef std::map<std::string, ConfigMap> SystemMap;
+typedef std::map<std::string, ConfigItem> TypeMap;
+typedef std::map<std::string, std::string> ReverseMap;
+SystemMap systems;
+ReverseMap reverseMap;
+TypeMap typeMap;
+
+// Parse the configuration file
+void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& reverseMap) {
+    std::ifstream file(filename);
+    std::string line;
+    std::string currentSystem, currentType;
+    int currentOffset;
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return;
+    }
+    std::cout << "Opened file: " << filename << std::endl;
+
+    while (getline(file, line)) {
+        line = trim(line);
+        if (line.empty() || line[0] == '#') continue; // Skip empty lines and comments
+
+        if (line[0] == '[') { // New system configuration
+            std::cout << "found group " << line << std::endl;
+            line.erase(0, 1); // Remove leading '['
+            line.pop_back();  // Remove trailing ']'
+            std::istringstream iss(line);
+            std::string part;
+            std::vector<std::string> parts;
+            while (getline(iss, part, ':')) {
+                parts.push_back(trim(part));
+            }
+            if (parts.size() >= 3) {
+                currentSystem = parts[0];
+                currentType = parts[1];
+                currentOffset = std::stoi(parts[2]);
+            }
+        } else { // Data item within the system
+            std::istringstream iss(line);
+            //std::cout << "found line  " << line << std::endl;
+            std::string part;
+            std::string name;
+            int offset, size = 1;
+            std::vector<std::string> parts;
+            while (getline(iss, part, ':')) {
+                parts.push_back(trim(part));
+            }
+            if (parts.size() > 1) {
+                name = parts[0];
+                offset = std::stoi(parts[1]);
+            }            
+            if (parts.size() > 2) {
+                size = std::stoi(parts[2]);
+            }
+            std::cout << "found name  " << name << std::endl;
+
+            // Store configuration
+            ConfigItem item{name, currentSystem, currentType, currentOffset + offset, size};
+            systems[currentSystem][name] = item;
+            //typeMap[currentType][currentOffset + offset] = item;
+
+            std::ostringstream tname;
+            tname << currentSystem << ":" << currentType <<":" << (currentOffset + offset);
+            typeMap[tname.str()] = item;
+
+            // Store reverse mapping
+            std::ostringstream osname;
+            osname << currentSystem << ":" << name;
+            std::ostringstream oss;
+            oss << currentType << "|"
+                << (currentOffset + offset) << (size > 1 ? ":" + std::to_string(size) : "");
+            reverseMap[osname.str()] = oss.str();
+        }
+    }
+}
+
+
+//doc/test_sbmu_mapping.txt
+
+int test_data_map(std::string& fileName) {
+
+    load_data_map(fileName, systems, reverseMap);
+    return 0;
+}
+
+// TODO shared pointer
+ConfigItem* find_type(std::string sm_name, std::string reg_type, int offset)
+{
+    std::ostringstream tname;
+    tname << sm_name << ":" << reg_type <<":" << offset;
+    if(typeMap.find(tname.str()) != typeMap.end())
+    {
+        return &typeMap[tname.str()];
+    }
+    return nullptr;
+}
+
+int show_data_map() {
+
+    // Example usage
+    for (const auto& system : systems) {
+        std::cout << "System: " << system.first << std::endl;
+        for (const auto& item : system.second) {
+            std::cout << "  Item: " << item.first << " Type: " << item.second.type
+                      << " Offset: " << item.second.offset << " Size: " << item.second.size << std::endl;
+        }
+    }
+
+    // Display reverse map 
+    std::cout << "\nReverse Map:" << std::endl;
+    for (const auto& entry : reverseMap) {
+        std::cout << "Name: " << entry.first << " Path: " << entry.second << std::endl;
+    }
+    // Display offset map
+    std::cout << "\nType Map:" << std::endl;
+    for (const auto& entry : typeMap) {
+            std::cout << "Type: " << entry.first <<  " Name: " << entry.second.name << std::endl;
+    }
+    ConfigItem* item =find_type("rtos", "input", 3);
+    if (item)
+    {
+        std::cout << " Found name: " << item->name << std::endl;
+    }
+
+    return 0;
 }
 
 
@@ -483,6 +626,8 @@ void save_matches(const std::string& matchName) {
                 newMatch["tolerance"] = match->tolerance;
             if(!match->weight.empty())
                 newMatch["weight"] = match->weight;
+            if(!match->mask.empty())
+                newMatch["mask"] = match->mask;
             //newMatch["matches"] = match.matches;
             existingMatches.push_back(newMatch);
         }
@@ -524,6 +669,24 @@ void save_matches(const std::string& matchName) {
         {
             outputFile <<",\n            \"mask\":  "<< m["mask"].dump(); // Save with pretty-print
         }
+                if(m.contains("tolerance"))
+        {
+            outputFile <<",\n            \"tolerance\":"<< m["tolerance"].dump(); // Save with pretty-print
+        }
+        // these are all consumed on load , you never see them
+        // if(m.contains("mask_defs"))
+        // {
+        //     outputFile <<",\n            \"mask_defs\":  "<< m["mask_defs"].dump(); // Save with pretty-print
+        // }
+        // if(m.contains("weight_defs"))
+        // {
+        //     outputFile <<",\n            \"weight_defs\":"<< m["weight_defs"].dump(); // Save with pretty-print
+        // }
+        // if(m.contains("tolerance_defs"))
+        // {
+        //     outputFile <<",\n            \"tolerance_defs\":  "<< m["tolerance_defs"].dump(); // Save with pretty-print
+        // }
+
         outputFile << "}"; 
     }
     outputFile << "\n]\n"; 
@@ -531,6 +694,37 @@ void save_matches(const std::string& matchName) {
     outputFile.close();
 
     std::cout << "Matches saved to " << filePath.str() << "\n";
+}
+
+// Function to parse tolerance definitions and apply them to a MatchObject
+void applyMatchDefs(std::shared_ptr<MatchObject>match, std::vector<uint16_t>&matchItem, const std::vector<std::string>& defs) {
+    for (const auto& def : defs) {
+        std::istringstream ss(def);
+        std::string token;
+        int offset = 0;
+        uint16_t value = 0;
+        int count = 1;
+
+        // Get the offset part
+        std::getline(ss, token, ':');
+        offset = std::stoi(token);
+
+        // Get the value part
+        if (std::getline(ss, token, ':')) {
+            value = static_cast<uint16_t>(std::stoi(token));
+        }
+        auto vec_size = match->vector.size();
+
+        // Optional: Get the count part
+        if (std::getline(ss, token, ':')) {
+            count = std::stoi(token);
+        }
+        matchItem.resize(vec_size);
+        // Apply tolerance values starting from offset up to the specified count or the end of the vector
+        for (int i = offset; i < offset + count && i < vec_size; ++i) {
+            matchItem[i] = value;
+        }
+    }
 }
 
 void load_matches(const std::string& matchName) {
@@ -574,6 +768,32 @@ void load_matches(const std::string& matchName) {
         {
             new_match->mask = match.value("mask", std::vector<uint16_t>{});
         }
+        if(match.contains("tolerance_defs"))
+        {
+            auto defs = match.value("tolerance_defs", std::vector<std::string>{});
+            applyMatchDefs(new_match, new_match->tolerance, defs);
+
+            // decode eack the defs  string
+            // "offset:value[:count]""
+            // first check if the tolerance has any values 
+            // then set (or overwrite) the value at the offset (plus count up to the size of the match->input vector) 
+
+
+        }
+        if(match.contains("weight_defs"))
+        {
+            //new_match->weight_defs = match.value("weight_defs", std::vector<std::string>{});
+            auto defs = match.value("tolerance_defs", std::vector<std::string>{});
+            applyMatchDefs(new_match, new_match->weight, defs);
+   
+        }
+        if(match.contains("mask_defs"))
+        {
+            //new_match->mask_defs = match.value("mask_defs", std::vector<std::string>{});
+            auto defs = match.value("tolerance_defs", std::vector<std::string>{});
+            applyMatchDefs(new_match, new_match->mask, defs);
+        }
+
         new_match->name = name;
     }
 }
@@ -928,13 +1148,12 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 
             std::vector<std::string> qstrings;
 
-//            if ( !jmqa.empty() )
             if(ctest.contains("QArray"))
             {
                 for (auto qmaItem : ctest["QArray"])
                 {
                     qstrings.push_back(qmaItem.dump());
-                    log_msg << " Test QArray for run [" << run << "] " << qmaItem.dump() <<  std::endl;
+                    //log_msg << " Test QArray for run [" << run << "] " << qmaItem.dump() <<  std::endl;
  
                 }
             }
@@ -944,14 +1163,11 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
                 //log_msg << " Test Query for run [" << run << "] " << ctest["Query"].dump() <<  std::endl;
             }
 
-            //if(ctest.contains("Query"))
             if(!qstrings.empty())
             {
                 int qidx = 0;
                 for (const auto& query : qstrings) {
-                    //json jquery = ctest["Query"];
-                    //auto qstr = jquery.dump();
-                    log_msg << " Test :" << test_idx <<" run [" << run << "]  idx [" << qidx++<< "]" << query <<  std::endl;
+                    //log_msg << " Test :" << test_idx <<" run [" << run << "]  idx [" << qidx++<< "]" << query <<  std::endl;
                     std::string response = run_wscat(url, query);
                     //log_msg << "            -> response " << response <<  std::endl;
                     if ( response.empty() || response == "Failed")
@@ -1171,11 +1387,21 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 // Main Function
 int main(int argc, char* argv[]) {
     std::ostringstream filename;
+
   
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <test_plan>\n";
         return 1;
     }
+    
+    if (argc > 2) {
+
+        std::string dataMap = argv[2];
+        dataMap="doc/test_sbmu_mapping.txt";
+        test_data_map(dataMap);
+        show_data_map();
+        return 0;
+    } 
 
     std::string testname = argv[1];
 

@@ -25,8 +25,21 @@ struct MatchObject {
     std::vector<uint16_t> mask;    // Mask for each element
     std::vector<uint16_t> tolerance;  // Tolerance for each element
     std::vector<uint16_t> weight;     // Weight for each element
+    // std::vector<std::string> mask_defs;    // Mask  defs  "offset:value:count"  all strings , if we have no count then match all the remaining items
+    // std::vector<std::string> tolerance_defs;    // tolerance  defs  "offset:value:count"  all strings , if we have no count then match all the remaining items
+    // std::vector<std::string> weight_defs;    // weight  defs  "offset:value:count"  all strings , if we have no count then match all the remaining items
+  
     std::map<int, std::vector<int>> matches;
     std::string name;
+};
+
+// map of variables
+struct ConfigItem {
+    std::string name;
+    std::string system;
+    std::string type;
+    int offset;
+    int size;
 };
 
 // Hash Function for Vectors
