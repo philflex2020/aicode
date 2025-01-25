@@ -145,86 +145,92 @@ std::map<std::string, int> active_not_expects;
 
 
 // Using nested maps to store configurations
-typedef std::map<int, ConfigItem> OffsetMap;
-typedef std::map<std::string, ConfigItem> ConfigMap;
+// typedef std::map<int, ConfigItem> OffsetMap;
+// typedef std::map<std::string, ConfigItem> ConfigMap;
+// typedef std::map<std::string, ConfigMap> SystemMap;
+// typedef std::map<std::string, ConfigItem> TypeMap;
+// typedef std::map<std::string, std::string> ReverseMap;
+
+// Using shared pointers for ConfigItems
+typedef std::map<int, std::shared_ptr<ConfigItem>> OffsetMap;
+typedef std::map<std::string, std::shared_ptr<ConfigItem>> ConfigMap;
 typedef std::map<std::string, ConfigMap> SystemMap;
-typedef std::map<std::string, ConfigItem> TypeMap;
+typedef std::map<std::string, std::shared_ptr<ConfigItem>> TypeMap;
 typedef std::map<std::string, std::string> ReverseMap;
+typedef std::pair<std::shared_ptr<ConfigItem>, int> ConfigDataPair;
+typedef std::vector<ConfigDataPair> ConfigDataList;
+
+
+
 SystemMap systems;
 ReverseMap reverseMap;
 TypeMap typeMap;
 
 
 
-// Using shared pointers for ConfigItems
-// typedef std::map<int, std::shared_ptr<ConfigItem>> OffsetMap;
-// typedef std::map<std::string, std::shared_ptr<ConfigItem>> ConfigMap;
-// typedef std::map<std::string, ConfigMap> SystemMap;
-// typedef std::map<std::string, std::shared_ptr<ConfigItem>> TypeMap;
-// typedef std::map<std::string, std::string> ReverseMap;
 // Parse the configuration file using shared pointers
-// void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& reverseMap) {
-//     std::ifstream file(filename);
-//     std::string line;
-//     std::string currentSystem, currentType;
-//     int currentOffset;
+void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& reverseMap) {
+    std::ifstream file(filename);
+    std::string line;
+    std::string currentSystem, currentType;
+    int currentOffset;
 
-//     if (!file.is_open()) {
-//         std::cerr << "Failed to open file: " << filename << std::endl;
-//         return;
-//     }
-//     std::cout << "Opened file: " << filename << std::endl;
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return;
+    }
+    std::cout << "Opened file: " << filename << std::endl;
 
-//     while (getline(file, line)) {
-//         line = trim(line);
-//         if (line.empty() || line[0] == '#') continue; // Skip empty lines and comments
+    while (getline(file, line)) {
+        line = trim(line);
+        if (line.empty() || line[0] == '#') continue; // Skip empty lines and comments
 
-//         if (line[0] == '[') { // New system configuration
-//             std::cout << "Found group: " << line << std::endl;
-//             line.erase(0, 1); // Remove leading '['
-//             line.pop_back();  // Remove trailing ']'
-//             std::istringstream iss(line);
-//             std::string part;
-//             std::vector<std::string> parts;
-//             while (getline(iss, part, ':')) {
-//                 parts.push_back(trim(part));
-//             }
-//             if (parts.size() >= 3) {
-//                 currentSystem = parts[0];
-//                 currentType = parts[1];
-//                 currentOffset = std::stoi(parts[2]);
-//             }
-//         } else { // Data item within the system
-//             std::istringstream iss(line);
-//             std::string part, name;
-//             int offset, size = 1;
-//             std::vector<std::string> parts;
-//             while (getline(iss, part, ':')) {
-//                 parts.push_back(trim(part));
-//             }
-//             if (parts.size() > 1) {
-//                 name = parts[0];
-//                 offset = std::stoi(parts[1]);
-//             }            
-//             if (parts.size() > 2) {
-//                 size = std::stoi(parts[2]);
-//             }
-//             std::cout << "Found name: " << name << std::endl;
+        if (line[0] == '[') { // New system configuration
+            std::cout << "Found group: " << line << std::endl;
+            line.erase(0, 1); // Remove leading '['
+            line.pop_back();  // Remove trailing ']'
+            std::istringstream iss(line);
+            std::string part;
+            std::vector<std::string> parts;
+            while (getline(iss, part, ':')) {
+                parts.push_back(trim(part));
+            }
+            if (parts.size() >= 3) {
+                currentSystem = parts[0];
+                currentType = parts[1];
+                currentOffset = std::stoi(parts[2]);
+            }
+        } else { // Data item within the system
+            std::istringstream iss(line);
+            std::string part, name;
+            int offset, size = 1;
+            std::vector<std::string> parts;
+            while (getline(iss, part, ':')) {
+                parts.push_back(trim(part));
+            }
+            if (parts.size() > 1) {
+                name = parts[0];
+                offset = std::stoi(parts[1]);
+            }            
+            if (parts.size() > 2) {
+                size = std::stoi(parts[2]);
+            }
+            std::cout << "Found name: " << name << std::endl;
 
-//             // Store configuration using shared_ptr
-//             auto item = std::make_shared<ConfigItem>(ConfigItem{name, currentSystem, currentType, currentOffset + offset, size});
-//             systems[currentSystem][name] = item;
+            // Store configuration using shared_ptr
+            auto item = std::make_shared<ConfigItem>(ConfigItem{name, currentSystem, currentType, currentOffset + offset, size});
+            systems[currentSystem][name] = item;
 
-//             // Update typeMap and reverseMap
-//             std::ostringstream tname, osname, oss;
-//             tname << currentSystem << ":" << currentType << ":" << (currentOffset + offset);
-//             typeMap[tname.str()] = item;
-//             osname << currentSystem << ":" << name;
-//             oss << currentType << "|" << (currentOffset + offset) << (size > 1 ? ":" + std::to_string(size) : "");
-//             reverseMap[osname.str()] = oss.str();
-//         }
-//     }
-// }
+            // Update typeMap and reverseMap
+            std::ostringstream tname, osname, oss;
+            tname << currentSystem << ":" << currentType << ":" << (currentOffset + offset);
+            typeMap[tname.str()] = item;
+            osname << currentSystem << ":" << name;
+            oss << currentType << "|" << (currentOffset + offset) << (size > 1 ? ":" + std::to_string(size) : "");
+            reverseMap[osname.str()] = oss.str();
+        }
+    }
+}
 
 // // Function to generate query strings from the configuration map
 // void generate_query_strings(const SystemMap& systems) {
@@ -264,31 +270,31 @@ TypeMap typeMap;
 // typedef std::vector<ConfigDataPair> ConfigDataList;
 
 // // Custom comparison function for sorting
-// bool compareConfigDataPairs(const ConfigDataPair& a, const ConfigDataPair& b) {
-//     // Primary sort by system
-//     if (a.first->system != b.first->system)
-//         return a.first->system < b.first->system;
-//     // Secondary sort by type
-//     if (a.first->type != b.first->type)
-//         return a.first->type < b.first->type;
-//     // Tertiary sort by offset
-//     return a.first->offset < b.first->offset;
-// }
+bool compareConfigDataPairs(const ConfigDataPair& a, const ConfigDataPair& b) {
+    // Primary sort by system
+    if (a.first->system != b.first->system)
+        return a.first->system < b.first->system;
+    // Secondary sort by type
+    if (a.first->type != b.first->type)
+        return a.first->type < b.first->type;
+    // Tertiary sort by offset
+    return a.first->offset < b.first->offset;
+}
 
-// // Function to generate and display sorted config data pairs
-// void displaySortedConfigData(const ConfigDataList& data) {
-//     // Create a copy of the data to sort
-//     ConfigDataList sortedData = data;
-//     std::sort(sortedData.begin(), sortedData.end(), compareConfigDataPairs);
+// Function to generate and display sorted config data pairs
+void displaySortedConfigData(const ConfigDataList& data) {
+    // Create a copy of the data to sort
+    ConfigDataList sortedData = data;
+    std::sort(sortedData.begin(), sortedData.end(), compareConfigDataPairs);
 
-//     // Display sorted data
-//     for (const auto& item : sortedData) {
-//         std::cout << "System: " << item.first->system
-//                   << ", Type: " << item.first->type
-//                   << ", Offset: " << item.first->offset
-//                   << ", Data: " << item.second << std::endl;
-//     }
-// }
+    // Display sorted data
+    for (const auto& item : sortedData) {
+        std::cout << "System: " << item.first->system
+                  << ", Type: " << item.first->type
+                  << ", Offset: " << item.first->offset
+                  << ", Data: " << item.second << std::endl;
+    }
+}
 
 // int main() {
 //     // Example setup of the list with dummy data values
@@ -307,56 +313,56 @@ TypeMap typeMap;
 
 
 // Generate query string for a group of ConfigDataPairs
-// std::string generateQuery(const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
-//     std::ostringstream query;
-//     query << "{\"action\":\"get\", \"sm_name\":\"" << system
-//           << "\", \"reg_type\":\"" << type
-//           << "\", \"offset\":\"" << startOffset
-//           << "\", \"num\":" << group.size()
-//           << ", \"data\":[";
-//     for (size_t i = 0; i < group.size(); ++i) {
-//         if (i > 0) query << ", ";
-//         query << group[i].second;
-//     }
-//     query << "]}";
-//     return query.str();
-// }
+std::string generateQuery(const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
+    std::ostringstream query;
+    query << "{\"action\":\"get\", \"sm_name\":\"" << system
+          << "\", \"reg_type\":\"" << type
+          << "\", \"offset\":\"" << startOffset
+          << "\", \"num\":" << group.size()
+          << ", \"data\":[";
+    for (size_t i = 0; i < group.size(); ++i) {
+        if (i > 0) query << ", ";
+        query << group[i].second;
+    }
+    query << "]}";
+    return query.str();
+}
 
-// // Function to group and generate queries
-// void groupAndGenerateQueries(const ConfigDataList& data) {
-//     if (data.empty()) return;
+// Function to group and generate queries
+void groupAndGenerateQueries(const ConfigDataList& data) {
+    if (data.empty()) return;
 
-//     ConfigDataList sortedData = data;
-//     std::sort(sortedData.begin(), sortedData.end(), compareConfigDataPairs);
+    ConfigDataList sortedData = data;
+    std::sort(sortedData.begin(), sortedData.end(), compareConfigDataPairs);
 
-//     ConfigDataList currentGroup;
-//     std::string currentSystem = sortedData[0].first->system;
-//     std::string currentType = sortedData[0].first->type;
-//     int startOffset = sortedData[0].first->offset;
+    ConfigDataList currentGroup;
+    std::string currentSystem = sortedData[0].first->system;
+    std::string currentType = sortedData[0].first->type;
+    int startOffset = sortedData[0].first->offset;
 
-//     for (const auto& item : sortedData) {
-//         if (item.first->system == currentSystem && item.first->type == currentType &&
-//             (item.first->offset == startOffset + currentGroup.size())) {
-//             currentGroup.push_back(item);
-//         } else {
-//             if (!currentGroup.empty()) {
-//                 std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
-//                 std::cout << query << std::endl;
-//             }
-//             currentGroup.clear();
-//             currentGroup.push_back(item);
-//             currentSystem = item.first->system;
-//             currentType = item.first->type;
-//             startOffset = item.first->offset;
-//         }
-//     }
+    for (const auto& item : sortedData) {
+        if (item.first->system == currentSystem && item.first->type == currentType &&
+            (item.first->offset == startOffset + currentGroup.size())) {
+            currentGroup.push_back(item);
+        } else {
+            if (!currentGroup.empty()) {
+                std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
+                std::cout << query << std::endl;
+            }
+            currentGroup.clear();
+            currentGroup.push_back(item);
+            currentSystem = item.first->system;
+            currentType = item.first->type;
+            startOffset = item.first->offset;
+        }
+    }
 
-//     // Handle the last group
-//     if (!currentGroup.empty()) {
-//         std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
-//         std::cout << query << std::endl;
-//     }
-// }
+    // Handle the last group
+    if (!currentGroup.empty()) {
+        std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
+        std::cout << query << std::endl;
+    }
+}
 
 // int main() {
 //     ConfigDataList configData = {
@@ -370,76 +376,6 @@ TypeMap typeMap;
 //     return 0;
 // }
 
-// Parse the configuration file
-void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& reverseMap) {
-    std::ifstream file(filename);
-    std::string line;
-    std::string currentSystem, currentType;
-    int currentOffset;
-
-    if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << filename << std::endl;
-        return;
-    }
-    std::cout << "Opened file: " << filename << std::endl;
-
-    while (getline(file, line)) {
-        line = trim(line);
-        if (line.empty() || line[0] == '#') continue; // Skip empty lines and comments
-
-        if (line[0] == '[') { // New system configuration
-            std::cout << "found group " << line << std::endl;
-            line.erase(0, 1); // Remove leading '['
-            line.pop_back();  // Remove trailing ']'
-            std::istringstream iss(line);
-            std::string part;
-            std::vector<std::string> parts;
-            while (getline(iss, part, ':')) {
-                parts.push_back(trim(part));
-            }
-            if (parts.size() >= 3) {
-                currentSystem = parts[0];
-                currentType = parts[1];
-                currentOffset = std::stoi(parts[2]);
-            }
-        } else { // Data item within the system
-            std::istringstream iss(line);
-            //std::cout << "found line  " << line << std::endl;
-            std::string part;
-            std::string name;
-            int offset, size = 1;
-            std::vector<std::string> parts;
-            while (getline(iss, part, ':')) {
-                parts.push_back(trim(part));
-            }
-            if (parts.size() > 1) {
-                name = parts[0];
-                offset = std::stoi(parts[1]);
-            }            
-            if (parts.size() > 2) {
-                size = std::stoi(parts[2]);
-            }
-            std::cout << "found name  " << name << std::endl;
-
-            // Store configuration
-            ConfigItem item{name, currentSystem, currentType, currentOffset + offset, size};
-            systems[currentSystem][name] = item;
-            //typeMap[currentType][currentOffset + offset] = item;
-
-            std::ostringstream tname;
-            tname << currentSystem << ":" << currentType <<":" << (currentOffset + offset);
-            typeMap[tname.str()] = item;
-
-            // Store reverse mapping
-            std::ostringstream osname;
-            osname << currentSystem << ":" << name;
-            std::ostringstream oss;
-            oss << currentType << "|"
-                << (currentOffset + offset) << (size > 1 ? ":" + std::to_string(size) : "");
-            reverseMap[osname.str()] = oss.str();
-        }
-    }
-}
 
 
 //doc/test_sbmu_mapping.txt
@@ -450,18 +386,44 @@ int test_data_map(std::string& fileName) {
     return 0;
 }
 
-// TODO shared pointer
-ConfigItem* find_type(std::string sm_name, std::string reg_type, int offset)
+std::shared_ptr<ConfigItem>find_type(std::string sm_name, std::string reg_type, int offset)
 {
     std::ostringstream tname;
     tname << sm_name << ":" << reg_type <<":" << offset;
     if(typeMap.find(tname.str()) != typeMap.end())
     {
-        return &typeMap[tname.str()];
+        return typeMap[tname.str()];
     }
     return nullptr;
 }
 
+std::shared_ptr<ConfigItem>find_name(const std::string& sm_name, const std::string& name)
+{
+    std::ostringstream tname;
+    tname << sm_name << ":" << name;
+    if(systems.find(sm_name) != systems.end())
+    {
+        auto slist = systems[sm_name];
+        if(slist.find(name) != slist.end())
+        {
+            return slist[name];
+        }
+    }
+    return nullptr;
+}
+
+void test_data_list(ConfigDataList&configData)
+{
+    configData.emplace_back(find_name("rtos","min_soc"), 0);
+    configData.emplace_back(find_name("rtos","max_soc"), 0);
+    configData.emplace_back(find_name("rtos","min_soc_num"), 0);
+    configData.emplace_back(find_name("rtos","max_voltage_num"), 0);
+    configData.emplace_back(find_name("rtos","min_voltage"), 0);
+    configData.emplace_back(find_name("rtos","max_voltage"), 0);
+    configData.emplace_back(find_name("rtos","alarms"), 0);
+    groupAndGenerateQueries(configData);
+    
+}
 
 // Comparator for sorting
 bool configItemComparator(const std::shared_ptr<ConfigItem>& a, const std::shared_ptr<ConfigItem>& b) {
@@ -529,14 +491,16 @@ void splitIntoGroups(const std::vector<std::shared_ptr<ConfigItem>>& sortedItems
         }
     }
 }
+
+
+// show the whole thing
 int show_data_map() {
 
-    // Example usage
     for (const auto& system : systems) {
         std::cout << "System: " << system.first << std::endl;
         for (const auto& item : system.second) {
-            std::cout << "  Item: " << item.first << " Type: " << item.second.type
-                      << " Offset: " << item.second.offset << " Size: " << item.second.size << std::endl;
+            std::cout << "  Item: " << item.first << " Type: " << item.second->type
+                      << " Offset: " << item.second->offset << " Size: " << item.second->size << std::endl;
         }
     }
 
@@ -548,9 +512,10 @@ int show_data_map() {
     // Display offset map
     std::cout << "\nType Map:" << std::endl;
     for (const auto& entry : typeMap) {
-            std::cout << "Type: " << entry.first <<  " Name: " << entry.second.name << std::endl;
+            std::cout << "Type: " << entry.first <<  " Name: " << entry.second->name << std::endl;
     }
-    ConfigItem* item =find_type("rtos", "input", 3);
+    //ConfigItem*
+    auto item = find_type("rtos", "input", 3);
     if (item)
     {
         std::cout << " Found name: " << item->name << std::endl;
@@ -1687,6 +1652,9 @@ int main(int argc, char* argv[]) {
         dataMap="doc/test_sbmu_mapping.txt";
         test_data_map(dataMap);
         show_data_map();
+        ConfigDataList configData;
+
+        test_data_list(configData);
         return 0;
     } 
 
