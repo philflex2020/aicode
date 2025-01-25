@@ -29,6 +29,10 @@
 #include <stdexcept>
 #include <filesystem>
 
+#include <algorithm>
+#include <list>
+
+
 #include <nlohmann/json.hpp>
 
 #include <fractal_test.h>
@@ -242,6 +246,73 @@ ConfigItem* find_type(std::string sm_name, std::string reg_type, int offset)
     return nullptr;
 }
 
+
+// Comparator for sorting
+bool configItemComparator(const std::shared_ptr<ConfigItem>& a, const std::shared_ptr<ConfigItem>& b) {
+    if (a->system != b->system)
+        return a->system < b->system;
+    if (a->type != b->type)
+        return a->type < b->type;
+    return a->offset < b->offset;
+}
+
+int test_item_sort() {
+    // Example data
+    std::vector<std::shared_ptr<ConfigItem>> items;
+     //ConfigItem item{name, currentSystem, currentType, currentOffset + offset, size};
+    items.push_back(std::make_shared<ConfigItem>("Item1", "SystemA", "Type1", 100, 1));
+    items.push_back(std::make_shared<ConfigItem>("Item2", "SystemA", "Type2", 95, 1));
+    items.push_back(std::make_shared<ConfigItem>("Item3", "SystemA", "Type1", 90, 1));
+    items.push_back(std::make_shared<ConfigItem>("Item4", "SystemB", "Type1", 110, 1));
+    items.push_back(std::make_shared<ConfigItem>("Item5", "SystemA", "Type1", 85, 1));
+
+    // Sorting
+    std::sort(items.begin(), items.end(), configItemComparator);
+
+    // Output sorted items
+    for (const auto& item : items) {
+        std::cout << "System: " << item->system << ", Type: " << item->type
+                  << ", Offset: " << item->offset << ", Name: " << item->name << std::endl;
+    }
+
+    return 0;
+}
+
+void splitIntoGroups(const std::vector<std::shared_ptr<ConfigItem>>& sortedItems) {
+    std::list<std::vector<std::shared_ptr<ConfigItem>>> groups;
+    std::vector<std::shared_ptr<ConfigItem>> currentGroup;
+
+    if (!sortedItems.empty()) {
+        auto currentOffset = sortedItems[0]->offset;
+        for (const auto& item : sortedItems) {
+            // Check if current item continues the sequence
+            if (item->offset == currentOffset) {
+                currentGroup.push_back(item);
+            } else {
+                // Start a new group
+                groups.push_back(currentGroup);
+                currentGroup.clear();
+                currentGroup.push_back(item);
+            }
+            currentOffset = item->offset + item->size;  // update currentOffset to expect the next sequence
+        }
+
+        // Add the last group
+        if (!currentGroup.empty()) {
+            groups.push_back(currentGroup);
+        }
+    }
+
+    // Output groups for demonstration
+    int groupNumber = 1;
+    for (const auto& group : groups) {
+        std::cout << "Group " << groupNumber++ << ":" << std::endl;
+        for (const auto& item : group) {
+            std::cout << "  System: " << item->system << ", Type: " << item->type
+                      << ", Offset: " << item->offset << ", Name: " << item->name << std::endl;
+        }
+    }
+}
 int show_data_map() {
 
     // Example usage

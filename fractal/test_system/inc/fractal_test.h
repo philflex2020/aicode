@@ -13,6 +13,12 @@
  */
 #ifndef __FRACTAL_TEST_H
 #define __FRACTAL_TEST_H
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <algorithm>
+
 // Structs
 struct InputVector {
     int offset;
@@ -33,6 +39,7 @@ struct MatchObject {
     std::string name;
 };
 
+
 // map of variables
 struct ConfigItem {
     std::string name;
@@ -40,7 +47,13 @@ struct ConfigItem {
     std::string type;
     int offset;
     int size;
+// ConfigItem item{name, currentSystem, currentType, currentOffset + offset, size};
+    // Constructor for convenience
+    ConfigItem(const std::string& n, const std::string& s, const std::string& t, int o, int sz)
+         : name(n), system(s), type(t), offset(o), size(sz) {}
+    ConfigItem(){};
 };
+
 
 // Hash Function for Vectors
 struct VectorHash {
