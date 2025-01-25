@@ -226,6 +226,149 @@ TypeMap typeMap;
 //     }
 // }
 
+// // Function to generate query strings from the configuration map
+// void generate_query_strings(const SystemMap& systems) {
+//     for (const auto& systemPair : systems) {
+//         const auto& systemName = systemPair.first;
+//         const auto& configs = systemPair.second;
+//         for (const auto& configPair : configs) {
+//             const auto& configItem = configPair.second;
+//             std::ostringstream queryString;
+
+//             queryString << "{";
+//             queryString << "\"action\":\"get\", ";
+//             queryString << "\"sm_name\":\"" << configItem->system << "\", ";
+//             queryString << "\"reg_type\":\"" << configItem->type << "\", ";
+//             queryString << "\"offset\":\"" << configItem->offset << "\", ";
+//             queryString << "\"num\":" << configItem->size << ", ";
+//             queryString << "\"data\":[0], "; // Placeholder for data
+//             queryString << "\"note\":\"" << configItem->name << "\"";
+//             queryString << "}";
+
+//             std::cout << queryString.str() << std::endl;
+//         }
+//     }
+// }
+// int main() {
+//     // Example of setting up the map
+//     auto item = std::make_shared<ConfigItem>(ConfigItem{"online", "rack", "sm16", 26626, 1});
+//     systems["rack"]["online"] = item;
+
+//     // Now generate query strings
+//     generate_query_strings(systems);
+
+//     return 0;
+// }
+// Define a type for the pair of ConfigItem and corresponding data
+// typedef std::pair<std::shared_ptr<ConfigItem>, int> ConfigDataPair;
+// typedef std::vector<ConfigDataPair> ConfigDataList;
+
+// // Custom comparison function for sorting
+// bool compareConfigDataPairs(const ConfigDataPair& a, const ConfigDataPair& b) {
+//     // Primary sort by system
+//     if (a.first->system != b.first->system)
+//         return a.first->system < b.first->system;
+//     // Secondary sort by type
+//     if (a.first->type != b.first->type)
+//         return a.first->type < b.first->type;
+//     // Tertiary sort by offset
+//     return a.first->offset < b.first->offset;
+// }
+
+// // Function to generate and display sorted config data pairs
+// void displaySortedConfigData(const ConfigDataList& data) {
+//     // Create a copy of the data to sort
+//     ConfigDataList sortedData = data;
+//     std::sort(sortedData.begin(), sortedData.end(), compareConfigDataPairs);
+
+//     // Display sorted data
+//     for (const auto& item : sortedData) {
+//         std::cout << "System: " << item.first->system
+//                   << ", Type: " << item.first->type
+//                   << ", Offset: " << item.first->offset
+//                   << ", Data: " << item.second << std::endl;
+//     }
+// }
+
+// int main() {
+//     // Example setup of the list with dummy data values
+//     ConfigDataList configData;
+//     configData.push_back({std::make_shared<ConfigItem>("status", "rack", "sm16", 26626, 1), 100});
+//     configData.push_back({std::make_shared<ConfigItem>("voltage", "rack", "sm16", 26627, 1), 50});
+//     configData.push_back({std::make_shared<ConfigItem>("current", "sbms", "sm16", 1000, 1), 75});
+
+//     // Display sorted config data
+//     displaySortedConfigData(configData);
+
+//     return 0;
+
+// }
+
+
+
+// Generate query string for a group of ConfigDataPairs
+// std::string generateQuery(const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
+//     std::ostringstream query;
+//     query << "{\"action\":\"get\", \"sm_name\":\"" << system
+//           << "\", \"reg_type\":\"" << type
+//           << "\", \"offset\":\"" << startOffset
+//           << "\", \"num\":" << group.size()
+//           << ", \"data\":[";
+//     for (size_t i = 0; i < group.size(); ++i) {
+//         if (i > 0) query << ", ";
+//         query << group[i].second;
+//     }
+//     query << "]}";
+//     return query.str();
+// }
+
+// // Function to group and generate queries
+// void groupAndGenerateQueries(const ConfigDataList& data) {
+//     if (data.empty()) return;
+
+//     ConfigDataList sortedData = data;
+//     std::sort(sortedData.begin(), sortedData.end(), compareConfigDataPairs);
+
+//     ConfigDataList currentGroup;
+//     std::string currentSystem = sortedData[0].first->system;
+//     std::string currentType = sortedData[0].first->type;
+//     int startOffset = sortedData[0].first->offset;
+
+//     for (const auto& item : sortedData) {
+//         if (item.first->system == currentSystem && item.first->type == currentType &&
+//             (item.first->offset == startOffset + currentGroup.size())) {
+//             currentGroup.push_back(item);
+//         } else {
+//             if (!currentGroup.empty()) {
+//                 std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
+//                 std::cout << query << std::endl;
+//             }
+//             currentGroup.clear();
+//             currentGroup.push_back(item);
+//             currentSystem = item.first->system;
+//             currentType = item.first->type;
+//             startOffset = item.first->offset;
+//         }
+//     }
+
+//     // Handle the last group
+//     if (!currentGroup.empty()) {
+//         std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
+//         std::cout << query << std::endl;
+//     }
+// }
+
+// int main() {
+//     ConfigDataList configData = {
+//         {std::make_shared<ConfigItem>("status", "rack", "sm16", 26626, 1), 100},
+//         {std::make_shared<ConfigItem>("voltage", "rack", "sm16", 26627, 1), 50},
+//         {std::make_shared<ConfigItem>("current", "rack", "sm16", 26628, 1), 75},
+//         {std::make_shared<ConfigItem>("temperature", "rack", "sm16", 26629, 1), 60}
+//     };
+
+//     groupAndGenerateQueries(configData);
+//     return 0;
+// }
 
 // Parse the configuration file
 void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& reverseMap) {
