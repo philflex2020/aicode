@@ -313,9 +313,9 @@ void displaySortedConfigData(const ConfigDataList& data) {
 
 
 // Generate query string for a group of ConfigDataPairs
-std::string generateQuery(const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
+std::string generateQuery(const std::string& action, int seq, const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
     std::ostringstream query;
-    query << "{\"action\":\"get\", \"sm_name\":\"" << system
+    query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< "\", \"sm_name\":\"" << system
           << "\", \"reg_type\":\"" << type
           << "\", \"offset\":\"" << startOffset
           << "\", \"num\":" << group.size()
@@ -327,13 +327,20 @@ std::string generateQuery(const ConfigDataList& group, const std::string& system
     query << "]}";
     return query.str();
 }
+// Function to take the adhoc data list and sort it, this will be the index of the query data
+void groupQueries(ConfigDataList& sorted, const ConfigDataList& data) {
+    if (data.empty()) return;
+    sorted = data;
+    std::sort(sorted.begin(), sorted.end(), compareConfigDataPairs);
+}
 
 // Function to group and generate queries
-void groupAndGenerateQueries(const ConfigDataList& data) {
+//void groupQueries(ConfigDataList& sorted, const ConfigDataList& data) {
+void GenerateQueries(const std::string& action, int seq, std::vector<std::string> &queries, const ConfigDataList& data) {
     if (data.empty()) return;
 
-    ConfigDataList sortedData = data;
-    std::sort(sortedData.begin(), sortedData.end(), compareConfigDataPairs);
+    ConfigDataList sortedData;
+    groupQueries(sortedData, data);
 
     ConfigDataList currentGroup;
     std::string currentSystem = sortedData[0].first->system;
@@ -346,8 +353,9 @@ void groupAndGenerateQueries(const ConfigDataList& data) {
             currentGroup.push_back(item);
         } else {
             if (!currentGroup.empty()) {
-                std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
+                std::string query = generateQuery(action, seq, currentGroup, currentSystem, currentType, startOffset);
                 std::cout << query << std::endl;
+                queries.emplace_back(query);
             }
             currentGroup.clear();
             currentGroup.push_back(item);
@@ -359,22 +367,31 @@ void groupAndGenerateQueries(const ConfigDataList& data) {
 
     // Handle the last group
     if (!currentGroup.empty()) {
-        std::string query = generateQuery(currentGroup, currentSystem, currentType, startOffset);
+        std::string query = generateQuery(action, seq, currentGroup, currentSystem, currentType, startOffset);
+        std::cout << query << std::endl;
+        queries.emplace_back(query);
+    }
+}
+// Function to group and generate queries
+//void groupQueries(ConfigDataList& sorted, const ConfigDataList& data) {
+void ShowConfigDataList(const ConfigDataList& data) {
+    if (data.empty()) return;
+    //std::string currentSystem = sortedData[0].first->system;
+    //std::string currentType = sortedData[0].first->type;
+    //int startOffset = sortedData[0].first->offset;
+    ConfigDataList currentGroup;
+
+    for (const auto& item : data) {
+        std::string currentSystem = item.first->system;
+        std::string currentType =item.first->type;
+        int offset = item.first->offset;
+        currentGroup.push_back(item);
+        std::string query = generateQuery("get", 22, currentGroup, currentSystem, currentType, offset);
+        currentGroup.clear();
+        
         std::cout << query << std::endl;
     }
 }
-
-// int main() {
-//     ConfigDataList configData = {
-//         {std::make_shared<ConfigItem>("status", "rack", "sm16", 26626, 1), 100},
-//         {std::make_shared<ConfigItem>("voltage", "rack", "sm16", 26627, 1), 50},
-//         {std::make_shared<ConfigItem>("current", "rack", "sm16", 26628, 1), 75},
-//         {std::make_shared<ConfigItem>("temperature", "rack", "sm16", 26629, 1), 60}
-//     };
-
-//     groupAndGenerateQueries(configData);
-//     return 0;
-// }
 
 
 
@@ -421,9 +438,21 @@ void test_data_list(ConfigDataList&configData)
     configData.emplace_back(find_name("rtos","min_voltage"), 0);
     configData.emplace_back(find_name("rtos","max_voltage"), 0);
     configData.emplace_back(find_name("rtos","alarms"), 0);
-    groupAndGenerateQueries(configData);
-    
-}
+    ConfigDataList sorted;
+    std::vector<std::string>queries;
+
+    std::cout <<" Unsorted list :" << std::endl;
+    ShowConfigDataList(configData);
+
+
+    std::cout <<" Sorted list :" << std::endl;
+    groupQueries(sorted, configData);
+    ShowConfigDataList(sorted);
+
+    std::cout <<" Queries :" << std::endl;
+    GenerateQueries("set", 2, queries, sorted);
+
+    }
 
 // Comparator for sorting
 bool configItemComparator(const std::shared_ptr<ConfigItem>& a, const std::shared_ptr<ConfigItem>& b) {
