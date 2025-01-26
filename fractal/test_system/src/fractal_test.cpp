@@ -45,6 +45,39 @@ namespace fs = std::filesystem;
 
 bool debug = false;
 
+// use data lists to create queries for Matches and Tests
+
+
+//void test_data_list(ConfigDataList&configData)
+
+// after reading in the data list ypu can use the following to create a query list and an index to the returned data items
+//    load_data_map(fileName, systems, reverseMap);
+
+// specify the list of data items
+    // configData.emplace_back(find_name("rtos","min_soc"), 0);
+    // configData.emplace_back(find_name("rtos","max_soc"), 0);
+    // configData.emplace_back(find_name("rtos","min_soc_num"), 0);
+    // configData.emplace_back(find_name("rtos","max_voltage_num"), 0);
+    // configData.emplace_back(find_name("rtos","min_voltage"), 0);
+    // configData.emplace_back(find_name("rtos","max_voltage"), 0);
+    // configData.emplace_back(find_name("rtos","alarms"), 0);
+
+
+//    produce the index of the data values returned  this can be used to understand the monitor data vector in the query  response
+//    groupQueries(sorted, configData);
+
+//    ShowConfigDataList(sorted);
+
+//    produce a list of set / get queries
+//    GenerateQueries("set", 2, queries, sorted);
+
+//     // Display sorted config data
+//     displaySortedConfigData(configData);
+
+//     return 0;
+
+// }
+
 //TODO 
 // Test code for match detection
 // allow -ve tolerance == delta from last  coded but we need to convert uint16_t to int16
@@ -296,19 +329,6 @@ void displaySortedConfigData(const ConfigDataList& data) {
     }
 }
 
-// int main() {
-//     // Example setup of the list with dummy data values
-//     ConfigDataList configData;
-//     configData.push_back({std::make_shared<ConfigItem>("status", "rack", "sm16", 26626, 1), 100});
-//     configData.push_back({std::make_shared<ConfigItem>("voltage", "rack", "sm16", 26627, 1), 50});
-//     configData.push_back({std::make_shared<ConfigItem>("current", "sbms", "sm16", 1000, 1), 75});
-
-//     // Display sorted config data
-//     displaySortedConfigData(configData);
-
-//     return 0;
-
-// }
 
 
 
