@@ -46,11 +46,10 @@ namespace fs = std::filesystem;
 
 bool debug = false;
 
+
+// notes 
 // use data lists to create queries for Matches and Tests
-
-
 //void test_data_list(ConfigDataList&configData)
-
 // after reading in the data list ypu can use the following to create a query list and an index to the returned data items
 //    load_data_map(fileName, systems, reverseMap);
 
@@ -79,6 +78,8 @@ bool debug = false;
 
 // }
 
+
+// Add Rack Number to generateQueries
 //TODO 
 // Test code for match detection
 // allow -ve tolerance == delta from last  coded but we need to convert uint16_t to int16
@@ -417,9 +418,16 @@ void displaySortedConfigData(const ConfigDataList& data) {
 
 
 // Generate query string for a group of ConfigDataPairs
-std::string generateQuery(const std::string& action, int seq, const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
+std::string generateQuery(const std::string& action, int seq, int rack, const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
     std::ostringstream query;
-    query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< "\", \"sm_name\":\"" << system
+    std::ostringstream os_name;
+    os_name << system;
+    if (rack>=0)
+    {
+        os_name << "_" << rack;
+    }
+
+    query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< "\", \"sm_name\":\"" << os_name.str()
           << "\", \"reg_type\":\"" << type
           << "\", \"offset\":\"" << startOffset
           << "\", \"num\":" << group.size()
@@ -431,6 +439,7 @@ std::string generateQuery(const std::string& action, int seq, const ConfigDataLi
     query << "]}";
     return query.str();
 }
+
 // Function to take the adhoc data list and sort it, this will be the index of the query data
 void groupQueries(ConfigDataList& sorted, const ConfigDataList& data) {
     if (data.empty()) return;
@@ -440,7 +449,7 @@ void groupQueries(ConfigDataList& sorted, const ConfigDataList& data) {
 
 // Function to group and generate queries
 //void groupQueries(ConfigDataList& sorted, const ConfigDataList& data) {
-void GenerateQueries(const std::string& action, int seq, std::vector<std::string> &queries, const ConfigDataList& data) {
+void GenerateQueries(const std::string& action, int seq, int rack, std::vector<std::string> &queries, const ConfigDataList& data) {
     if (data.empty()) return;
 
     ConfigDataList sortedData;
@@ -457,7 +466,7 @@ void GenerateQueries(const std::string& action, int seq, std::vector<std::string
             currentGroup.push_back(item);
         } else {
             if (!currentGroup.empty()) {
-                std::string query = generateQuery(action, seq, currentGroup, currentSystem, currentType, startOffset);
+                std::string query = generateQuery(action, seq, rack, currentGroup, currentSystem, currentType, startOffset);
                 std::cout << query << std::endl;
                 queries.emplace_back(query);
             }
@@ -471,7 +480,7 @@ void GenerateQueries(const std::string& action, int seq, std::vector<std::string
 
     // Handle the last group
     if (!currentGroup.empty()) {
-        std::string query = generateQuery(action, seq, currentGroup, currentSystem, currentType, startOffset);
+        std::string query = generateQuery(action, seq, rack, currentGroup, currentSystem, currentType, startOffset);
         std::cout << query << std::endl;
         queries.emplace_back(query);
     }
@@ -490,7 +499,7 @@ void ShowConfigDataList(const ConfigDataList& data) {
         std::string currentType =item.first->type;
         int offset = item.first->offset;
         currentGroup.push_back(item);
-        std::string query = generateQuery("get", 22, currentGroup, currentSystem, currentType, offset);
+        std::string query = generateQuery("get", 22, 1, currentGroup, currentSystem, currentType, offset);
         currentGroup.clear();
         
         std::cout << query << std::endl;
@@ -554,7 +563,8 @@ void test_data_list(ConfigDataList&configData)
     ShowConfigDataList(sorted);
 
     std::cout <<" Queries :" << std::endl;
-    GenerateQueries("set", 2, queries, sorted);
+    // rack 0
+    GenerateQueries("set", 2, 0, queries, sorted);
 
     }
 
