@@ -36,6 +36,7 @@
 #include <nlohmann/json.hpp>
 
 #include <fractal_test.h>
+#include <fractal_assert.h>
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -131,12 +132,22 @@ bool debug = false;
 // };
 
 int str_to_offset(const std::string& offset_str) {
+    int neg = 1;
+    size_t start_idx = 0;
+
+    // Check if the number is negative
+    if (offset_str[0] == '-') {
+        neg = -1;
+        start_idx = 1; // Start checking after the minus sign
+    }
+
     try {
-        // Check if the string starts with "0x" or "0X" for hexadecimal
-        if (offset_str.size() > 2 && (offset_str[0] == '0') && (offset_str[1] == 'x' || offset_str[1] == 'X')) {
-            return std::stoi(offset_str, nullptr, 16); // Parse as hexadecimal
+        // Adjust start index for hexadecimal notation, which may follow a negative sign
+        if (offset_str.size() > start_idx + 2 && (offset_str[start_idx] == '0') && 
+            (offset_str[start_idx + 1] == 'x' || offset_str[start_idx + 1] == 'X')) {
+            return neg * std::stoi(offset_str.substr(start_idx), nullptr, 16); // Parse as hexadecimal
         } else {
-            return std::stoi(offset_str); // Parse as decimal
+            return neg * std::stoi(offset_str.substr(start_idx)); // Parse as decimal
         }
     } catch (const std::invalid_argument& e) {
         std::cerr << "Error: Invalid offset value: " << offset_str << std::endl;
@@ -146,7 +157,80 @@ int str_to_offset(const std::string& offset_str) {
         throw;
     }
 }
+// int str_to_offset(const std::string& offset_str) {
+//     int neg = 1;
+//     if(offset_str.size() > 2 && (offset_str[0] == '-'))
+//     {
+//         neg = -1;
+//     }
 
+//     try {
+//         // Check if the string starts with "0x" or "0X" for hexadecimal
+//         if (offset_str.size() > 2 && (offset_str[0] == '0') && (offset_str[1] == 'x' || offset_str[1] == 'X')) {
+//             return std::stoi(offset_str, nullptr, 16); // Parse as hexadecimal
+//         } else {
+//             return std::stoi(offset_str); // Parse as decimal
+//         }
+//     } catch (const std::invalid_argument& e) {
+//         std::cerr << "Error: Invalid offset value: " << offset_str << std::endl;
+//         throw;
+//     } catch (const std::out_of_range& e) {
+//         std::cerr << "Error: Offset value out of range: " << offset_str << std::endl;
+//         throw;
+//     }
+// }
+    // myassert(v1 > 24, "object.vars.set_value_with_rack", crash);
+    // myassert(v2 == 30, "object.vars.check_initial_value", crash);
+    // myassert(v1 + v2 > 50, "object.vars.sum_check", crash);
+    // myassert(v1 < v2, "object.vars.compare_values", crash);
+
+    // // Generate reports
+    // assert_manager.generate_summary();
+    // assert_manager.generate_report();
+
+void test_str_to_offset() {
+    bool crash = false;
+    // Test valid decimal input
+    myassert(str_to_offset("123") == 123,"str_to_offset_integer", crash);
+
+    // Test valid hexadecimal input
+    myassert(str_to_offset("0x1A3") == 419,"str_to_offset_hex_1", crash);
+
+    // Test another valid hexadecimal input
+    myassert(str_to_offset("0X1a3") == 419,"str_to_offset_hex_2", crash);
+
+    // Test valid hexadecimal with capital letters
+    myassert(str_to_offset("0XABC") == 2748,"str_to_offset_hex_3", crash);
+
+    // Test valid negative decimal
+    myassert(str_to_offset("-10") == -10,"str_to_offset_neg", crash);
+
+    // Test valid negative hexadecimal
+    myassert(str_to_offset("-0x1A") == -26,"str_to_offset_neg_hex", crash);
+
+    // Test edge case of minimal non-zero integers
+    myassert(str_to_offset("1") == 1,"str_to_offset_one", crash);
+    myassert(str_to_offset("0x1") == 1,"str_to_offset_hex_one", crash);
+
+    // Test zero
+    myassert(str_to_offset("0") == 0,"str_to_offset_zero", crash);
+    myassert(str_to_offset("0x0") == 0,"str_to_offset_hex_zero", crash);
+
+    // // Test invalid inputs
+    // try {
+    //     str_to_offset("hello");
+    //     myassert(false && "str_to_offset should have thrown an exception for 'hello'");
+    // } catch (const std::exception&) {
+    //     // Expected path
+    // }
+
+    // try {
+    //     str_to_offset("0x1G");
+    //     myassert(false && "str_to_offset should have thrown an exception for '0x1G'");
+    // } catch (const std::exception&) {
+    //     // Expected path
+    // }
+}
 // Function to trim whitespace from both ends of a string
 std::string trim(const std::string& str) {
     size_t first = str.find_first_not_of(' ');
@@ -1704,6 +1788,20 @@ int main(int argc, char* argv[]) {
         ConfigDataList configData;
 
         test_data_list(configData);
+            // // Generate reports
+
+        test_str_to_offset();
+        std::cout << "\n\n**************************************"<<std::endl;
+        assert_manager.generate_report();
+
+        std::cout << "\n\n**************************************"<<std::endl;
+        assert_manager.generate_summary();
+        std::cout << "\n\n**************************************"<<std::endl;
+
+
+        // assert_manager.generate_summary();
+        // assert_manager.generate_report();
+
         return 0;
     } 
 
