@@ -917,10 +917,10 @@ bool is_modbus_query(const std::string& query_str) {
 // Run Query Command via ws or modbus
 std::string run_query(const std::string& url, ModbusClient& mb_client, const std::string& query_str) {
      
-    // if mb_client.is_connected()  and  query string field reg_type is hold, bits, input or coil then run the mb_client
-    //    return client.run_mb(query_str); 
-    // else 
-
+    if (mb_client.is_connected() && is_modbus_query(query_str))
+     //and  query string field reg_type is hold, bits, input or coil then run the mb_client
+        return mb_client.run_mb(query_str); 
+    else 
         return run_wscat(url, query_str);
 }
 
