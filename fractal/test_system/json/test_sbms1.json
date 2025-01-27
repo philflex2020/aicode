@@ -1,0 +1,73 @@
+{
+    "name":"test_sbms_1",
+    "file":"test_sbms1.json",
+    "author":"Phil Wilshire",
+    "Release":"version 1.0",
+    "Target":"sbmu",
+    "Date":"01_24_2025",
+    "Url":"ws://192.168.86.209:9003",
+
+    "Monitor":{
+        "Notes":" Monitor these values every second and save the data  matches in the match file, run for Time seconds",
+        "Notes1":" The QArray will send multiple queries to any system managed by the Url",
+        "Notes1.1":" allow repeat _n:0:7",
+        "QArray":[
+            {"action":"get", "seq":2, "sm_name":"rack_7", "debug":true, "reg_type":"sm16",     "offset":"26626",  "num":1,  "data":[0], "note":"online"},
+            {"action":"get", "seq":2, "sm_name":"rtos_7", "debug":true, "reg_type":"sm16",     "offset":"0xc800", "num":16, "data":[0], "note":"rack_data"}
+        ],
+
+        "Notes1.2":"get variables by name and rack number  or all for all racks, can also specify an output variable",
+        "Get":[
+                {"seq":2, "rack": 0 ,     "var_name":"rtos:voltage", "debug":true, "output":"rack:input_voltage"},
+                {"seq":2, "rack": "all" , "var_name":"rtos:current", "debug":true,"output":"rack:input_current"}
+        ],
+        "Notes2":" Time is currenty in seconds",
+        "Period":1.0,
+        "Time":20.0,
+        "MatchFile":"test_sbms_1"
+    },
+    "Notes3":"  Specify tests to occur at spcific times after the start of the test",
+    "Notes3.1":"  disable by setting time out of range ",
+    "Tests" : [
+        {
+            "Desc:": "Init ",
+            "when":0,
+            "Query":{"action":"set",   "seq":2, "sm_name":"rtos_7", "debug":true, "reg_type":"sm16", "offset":"0xc800", "data":[0 ,0, 0, 0, 0, 0]},
+            "Set":[
+                {"seq":2, "rack": 0 , "var_name":"rack:voltage", "debug":true, "data":[1234]},
+                {"seq":2, "rack": 0 , "var_name":"rack:current", "debug":true, "data":[34]}
+            ]
+        },
+        {
+            "Desc:": "Power On",
+            "when":2,
+            "QArray":[
+                {"action":"set",   "seq":2, "sm_name":"rtos_7", "debug":true, "reg_type":"sm16",    "offset":"0xc800", "data":[100 ,200, 300]},
+                {"action":"set",   "seq":2, "sm_name":"rtos_7", "debug":true, "reg_type":"sm16",    "offset":"0xc806", "data":[100 ,200, 300]}                
+            ]
+        },
+        {
+            "Desc:": "Close Contactors ",
+            "when":7,
+            "Query":{"action":"set",   "seq":2, "sm_name":"rtos_7", "debug":true, "reg_type":"sm16", "offset":"0xc800", "data":[1000 ,2000, 3000]}
+        }
+    ],
+    "Notes4":" These are states defined by the named matches,  the system can be in several states at any one time",
+    "Notes5":" These are states defined by the named matches from decoding  the system monitor data",
+    "Notes6":" One of these matches must be found during the defined time to allow the current test to pass ",
+    "Expects" : [
+        {"match_name": "AlarmReset",                 "when": 0, "duration": 12},
+        {"match_name": "PrechargeRelayActive",       "when": 3, "duration": 2},
+        {"match_name": "ContactorClosed",            "when": 5, "duration": 2 },
+        {"match_name": "PrechargeRelayInactive",     "when": 6, "duration": 1}
+    ],
+    "Notes7":" An alarm or fault state can span across the whole test period causing any tests diring that period to fail ",
+    "Notes8":" Entering any one of these states during the defined time indicates thet the current test has failed ",
+    "NotExpects" : [
+        {"match_name": "RelayAlarm",               "when": 0},
+        {"match_name": "ContactorAlarm",           "when": 3,   "duration": 2},
+        {"match_name": "PrechargeError",           "when": 6, "duration":4}
+    ]
+
+
+}
