@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <list>
+#include <regex>
 
 
 #include <nlohmann/json.hpp>
@@ -79,8 +80,10 @@ bool debug = false;
 // }
 
 
-// Add Rack Number to generateQueries
+
 //TODO 
+// Integrate test Queries
+// Integrate Match Queries
 // Test code for match detection
 // allow -ve tolerance == delta from last  coded but we need to convert uint16_t to int16
 // mask_defs   x:y:z    offset:value:count -1 for all of them mask_defs, tolerance_defs, weight_defs  
@@ -95,6 +98,7 @@ bool debug = false;
 // system clean up 
 // sequence file output
 // Qarray on test sets
+// Added Rack Number to generateQueries
 
 
 // // Structs
@@ -131,7 +135,7 @@ bool debug = false;
 //     std::map<int, std::vector<int>> matches;
 //     std::string name;
 // };
-
+// tested
 int str_to_offset(const std::string& offset_str) {
     int neg = 1;
     size_t start_idx = 0;
@@ -158,36 +162,6 @@ int str_to_offset(const std::string& offset_str) {
         throw;
     }
 }
-// int str_to_offset(const std::string& offset_str) {
-//     int neg = 1;
-//     if(offset_str.size() > 2 && (offset_str[0] == '-'))
-//     {
-//         neg = -1;
-//     }
-
-//     try {
-//         // Check if the string starts with "0x" or "0X" for hexadecimal
-//         if (offset_str.size() > 2 && (offset_str[0] == '0') && (offset_str[1] == 'x' || offset_str[1] == 'X')) {
-//             return std::stoi(offset_str, nullptr, 16); // Parse as hexadecimal
-//         } else {
-//             return std::stoi(offset_str); // Parse as decimal
-//         }
-//     } catch (const std::invalid_argument& e) {
-//         std::cerr << "Error: Invalid offset value: " << offset_str << std::endl;
-//         throw;
-//     } catch (const std::out_of_range& e) {
-//         std::cerr << "Error: Offset value out of range: " << offset_str << std::endl;
-//         throw;
-//     }
-// }
-    // myassert(v1 > 24, "object.vars.set_value_with_rack", crash);
-    // myassert(v2 == 30, "object.vars.check_initial_value", crash);
-    // myassert(v1 + v2 > 50, "object.vars.sum_check", crash);
-    // myassert(v1 < v2, "object.vars.compare_values", crash);
-
-    // // Generate reports
-    // assert_manager.generate_summary();
-    // assert_manager.generate_report();
 
 // Function to trim whitespace from both ends of a string
 std::string trim(const std::string& str) {
@@ -220,11 +194,6 @@ std::map<std::string, int> active_not_expects;
 
 
 // Using nested maps to store configurations
-// typedef std::map<int, ConfigItem> OffsetMap;
-// typedef std::map<std::string, ConfigItem> ConfigMap;
-// typedef std::map<std::string, ConfigMap> SystemMap;
-// typedef std::map<std::string, ConfigItem> TypeMap;
-// typedef std::map<std::string, std::string> ReverseMap;
 
 // Using shared pointers for ConfigItems
 typedef std::map<int, std::shared_ptr<ConfigItem>> OffsetMap;
@@ -234,6 +203,7 @@ typedef std::map<std::string, std::shared_ptr<ConfigItem>> TypeMap;
 typedef std::map<std::string, std::string> ReverseMap;
 typedef std::pair<std::shared_ptr<ConfigItem>, int> ConfigDataPair;
 typedef std::vector<ConfigDataPair> ConfigDataList;
+
 
 
 
@@ -308,38 +278,6 @@ void load_data_map(const std::string& filename, SystemMap& systems, ReverseMap& 
 }
 
 // // Function to generate query strings from the configuration map
-// void generate_query_strings(const SystemMap& systems) {
-//     for (const auto& systemPair : systems) {
-//         const auto& systemName = systemPair.first;
-//         const auto& configs = systemPair.second;
-//         for (const auto& configPair : configs) {
-//             const auto& configItem = configPair.second;
-//             std::ostringstream queryString;
-
-//             queryString << "{";
-//             queryString << "\"action\":\"get\", ";
-//             queryString << "\"sm_name\":\"" << configItem->system << "\", ";
-//             queryString << "\"reg_type\":\"" << configItem->type << "\", ";
-//             queryString << "\"offset\":\"" << configItem->offset << "\", ";
-//             queryString << "\"num\":" << configItem->size << ", ";
-//             queryString << "\"data\":[0], "; // Placeholder for data
-//             queryString << "\"note\":\"" << configItem->name << "\"";
-//             queryString << "}";
-
-//             std::cout << queryString.str() << std::endl;
-//         }
-//     }
-// }
-// int main() {
-//     // Example of setting up the map
-//     auto item = std::make_shared<ConfigItem>(ConfigItem{"online", "rack", "sm16", 26626, 1});
-//     systems["rack"]["online"] = item;
-
-//     // Now generate query strings
-//     generate_query_strings(systems);
-
-//     return 0;
-// }
 // Define a type for the pair of ConfigItem and corresponding data
 // typedef std::pair<std::shared_ptr<ConfigItem>, int> ConfigDataPair;
 // typedef std::vector<ConfigDataPair> ConfigDataList;
@@ -497,6 +435,40 @@ std::shared_ptr<ConfigItem>find_name(const std::string& sm_name, const std::stri
         }
     }
     return nullptr;
+}
+
+// "rtos:min_soc[2]"
+void decode_name(std::string &sm_name, std::string &item, int &index, const std::string &input) {
+    // Regex to match the format "sm_name:item[:[index]]"
+    std::regex pattern(R"(([^:]+):([^:\[\]]+)(?:\[(\d+)\])?)");
+    std::smatch matches;
+
+    // Default index to -1 if not found
+    index = -1;
+
+    if (std::regex_match(input, matches, pattern)) {
+        if (matches.size() > 1) {
+            sm_name = matches[1].str();
+            item = matches[2].str();
+            if (matches.size() == 4 && matches[3].matched) {
+                index = std::stoi(matches[3].str());
+            }
+        }
+    } else {
+        std::cerr << "Input string does not match the expected format." << std::endl;
+        sm_name = "";
+        item = "";
+    }
+}
+
+
+std::shared_ptr<ConfigItem>find_name(const std::string& item_name)
+{
+    // split 
+    std::string sm_name, item;
+    int index;
+    decode_name(sm_name, item, index, item_name);
+    return find_name(sm_name, item);
 }
 
 void test_data_list(ConfigDataList&configData)
@@ -717,10 +689,12 @@ double calculate_match_score(const std::vector<uint16_t>& input,
     if(debug)std::cout << "calculate match and score" << std::endl;
     double total_weight = 0.0;
     double match_score = 0.0;
+    double result = 0.0;
 
     // Ensure vectors are of the same size
     if (input.size() != match->vector.size()) {
-        return 0.0; // Not a valid match
+        std::cout << "calculate match error in sizes input " << input.size() << " match " << match->vector.size()<<std::endl;
+        return result; // Not a valid match
     }
     if(debug)std::cout << "calculate match and score 1" << std::endl;
 
@@ -729,16 +703,19 @@ double calculate_match_score(const std::vector<uint16_t>& input,
         // Apply mask if it exists
         uint16_t masked_input = input[i];
         uint16_t masked_match = match->vector[i];
-        if(debug)std::cout << "calculate match and score item "<< i << " input " << masked_input << " match " << masked_match << std::endl;
+        if(debug)
+            std::cout << "calculate match and score item before mask "<< i << " input " << masked_input << " match " << masked_match << std::endl;
 
         if (!match->mask.empty() && match->mask.size() == match->vector.size()) {
             // special case mymask 0 = 0xffff allow all bits
             uint16_t mymask = match->mask[i];
-            if (mymask == 0)
-                mymask=  ~match->mask[i];
+            // if (mymask == 0)
+            //     mymask=  ~match->mask[i];
 
             masked_input &= mymask;
             masked_match &= mymask;
+            if(debug)
+                std::cout << "calculate match and score item after mask "<< i << " input " << masked_input << " match " << masked_match << std::endl;
 
         }
         if(debug)std::cout << "calculate match and score item after mask  "<< i << " size " << input.size() << std::endl;
@@ -771,23 +748,28 @@ double calculate_match_score(const std::vector<uint16_t>& input,
 
         }
 
+        double weight = (!match->weight.empty() && match->weight.size() == match->vector.size())
+                                ? static_cast<double>(match->weight[i])
+                                : 100.0;
+        total_weight += 100;
         if (within_tolerance) {
             // Add weighted score or default to 1 if weights are not defined
-            double weight = (!match->weight.empty() && match->weight.size() == match->vector.size())
-                                ? static_cast<double>(match->weight[i])
-                                : 1.0;
             match_score += weight;
-            total_weight += weight;
         }
         else
         {
-            return 0;
+            if(debug) 
+                std::cout << "calculate match and score done  #2 result " << result << std::endl;
+            if(match->weight.empty())
+                return result;
         }
     }
-    if(debug) std::cout << "calculate match and score done" << std::endl;
+    result = (total_weight > 0.0) ? (match_score / total_weight) : 0.0;
+    if(debug) 
+        std::cout << "calculate match and score done #3 result " << result << std::endl;
 
     // Normalize match score by total weight
-    return (total_weight > 0.0) ? (match_score / total_weight) : 0.0;
+    return result;
 }
 // we may need to find all matches
 void find_all_matches(std::vector<std::string> & matches,int run, const std::vector<uint16_t>& input,
@@ -816,7 +798,7 @@ void find_all_matches(std::vector<std::string> & matches,int run, const std::vec
 }
 
 // Function to find the best match
-const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<uint16_t>& input,
+const std::shared_ptr<MatchObject>find_best_match(int run, const std::vector<uint16_t>& input,
                                    double threshold) {
     std::shared_ptr<MatchObject> best_match;
     double best_score = 0.0;
@@ -845,7 +827,7 @@ const std::shared_ptr<MatchObject> find_best_match(int run, const std::vector<ui
 }
 
 // Create a new MatchObject wrapped in a std::shared_ptr
-std::shared_ptr<MatchObject> create_new_match(int run, const std::vector<uint16_t>& data) {
+std::shared_ptr<MatchObject>create_new_match(int run, const std::vector<uint16_t>& data) {
     std::shared_ptr<MatchObject> new_match = std::make_shared<MatchObject>();
     new_match->vector = data;
     new_match->name = "Match_ID " + std::to_string(sharedMatchObjects.size() + 1);  // Assign ID based on the next index
@@ -1025,19 +1007,6 @@ void save_matches(const std::string& matchName) {
         {
             outputFile <<",\n            \"tolerance\":"<< m["tolerance"].dump(); // Save with pretty-print
         }
-        // these are all consumed on load , you never see them
-        // if(m.contains("mask_defs"))
-        // {
-        //     outputFile <<",\n            \"mask_defs\":  "<< m["mask_defs"].dump(); // Save with pretty-print
-        // }
-        // if(m.contains("weight_defs"))
-        // {
-        //     outputFile <<",\n            \"weight_defs\":"<< m["weight_defs"].dump(); // Save with pretty-print
-        // }
-        // if(m.contains("tolerance_defs"))
-        // {
-        //     outputFile <<",\n            \"tolerance_defs\":  "<< m["tolerance_defs"].dump(); // Save with pretty-print
-        // }
 
         outputFile << "}"; 
     }
@@ -1431,53 +1400,8 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     }
 
     setup_matches(jexpects, cexpect, testPlan, "Expects", e_idx, ewhen, edur, tim);
-    // if (testPlan.contains("Expects") && testPlan["Expects"].is_array()) {   
-    //     jexpects = testPlan["Expects"];
-    //     std::cout << "Expects found" << std::endl;
-
-    //     if (!jexpects.empty()) {
-    //         e_idx = 0;
-    //         cexpect = jexpects[e_idx]; // Access first test safely
-    //         std::cout << "First Expect: " << cexpect.dump() << std::endl;
-
-    //         // Get the "When" value or use a default
-    //         ewhen = cexpect.contains("when") ? cexpect["when"].get<int>() : tim + 1;
-    //         std::cout << "First Expect when: " << when << std::endl;
-    //         // Get the Duration value or use a default
-    //         edur = cexpect.contains("duration") ? cexpect["duration"].get<int>() : tim + 1;
-    //         std::cout << "First Expect duration: " << ewhen << " duration" << edur<< std::endl;
-
-    //     } else {
-    //         std::cerr << "Expect array is empty." << std::endl;
-    //     }
-    // } else {
-    //     std::cerr << "Expect field is missing or not an array." << std::endl;
-    // }
 
     setup_matches(jnexpects, cnexpect, testPlan, "NotExpects", ne_idx, newhen, nedur, tim);
-    // if (testPlan.contains("NotExpects") && testPlan["NotExpects"].is_array()) {   
-    //     jnexpects = testPlan["NotExpects"];
-    //     std::cout << "NotExpects found" << std::endl;
-
-    //     if (!jnexpects.empty()) {
-    //         ne_idx = 0;
-    //         cnexpect = jexpects[ne_idx]; // Access first test safely
-    //         std::cout << "First NotExpect: " << cnexpect.dump() << std::endl;
-
-    //         // Get the "When" value or use a default
-    //         newhen = cnexpect.contains("when") ? cnexpect["when"].get<int>() : tim + 1;
-    //         std::cout << "First NotExpect when: " << newhen << std::endl;
-    //         // Get the Duration value or use a default
-    //         nedur = cnexpect.contains("duration") ? cnexpect["duration"].get<int>() : tim + 1;
-    //         std::cout << "First NotExpect duration: " << newhen << " duration" << nedur<< std::endl;
-
-    //     } else {
-    //         std::cerr << "NotExpect array is empty." << std::endl;
-    //     }
-    // } else {
-    //     std::cerr << "NotExpect field is missing or not an array." << std::endl;
-    // }
-
     std::cout << " read matches from " << mfile<<std::endl;
     load_matches(mfile);
     std::string query =  jmq.dump();
@@ -1674,9 +1598,7 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
                         jtests[t_idx]["fails"]  =1; // Set fails to 1 if passes is not found
                     }
                 }
- 
             }
-
             test_json_matches(match_json, run);
         }
         json jmvec = match_vec; 
@@ -1736,6 +1658,9 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 }
 
 void test_str_to_offset();
+void test_decode_name();
+void test_match_system();
+
 #include <fractal_test_unit_test.cpp>
 
 // Main Function
@@ -1760,6 +1685,8 @@ int main(int argc, char* argv[]) {
             // // Generate reports
 
         test_str_to_offset();
+        test_decode_name();
+        test_match_system();
         std::cout << "\n\n**************************************"<<std::endl;
         assert_manager.generate_report();
 
