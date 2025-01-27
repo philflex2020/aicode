@@ -127,3 +127,37 @@ void test_match_system() {
 
 }
 
+// nmap -v -sT localhost
+int test_modbus(const std::string& ip, int port) {
+    int mb_status = -2;
+    try {
+        ModbusClient client(ip.c_str(), port); // Example IP and port
+
+        // Add a sample query in JSON format
+        json query = {
+            {"action", "get"},
+            {"seq", 2},
+            {"sm_name", "sbmu"},
+            {"debug", true},
+            {"reg_type", "input"},
+            {"offset", 100},
+            {"num", 10}
+        };
+
+        auto [status, data] = client.addQuery(query);
+        mb_status = status;
+        if (status == 0) {
+            std::cout << "Data read successfully: ";
+            for (int value : data) {
+                std::cout << value << " ";
+            }
+            std::cout << std::endl;
+        } else {
+            std::cout << "Error occurred during query processing." << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+    myassert(mb_status == 0, "test_modbus|basic read test", false);
+    return 0;
+}

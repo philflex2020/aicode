@@ -902,6 +902,28 @@ std::string run_wscat(const std::string& url, const std::string& query_str) {
     return result;
 }
 
+// Determine if the query is for Modbus based on register type
+bool is_modbus_query(const std::string& query_str) {
+    try {
+        auto query_json = json::parse(query_str);
+        std::string reg_type = query_json.value("reg_type", "");
+//        std::string sm_name = query_json.value("sm_name", "");
+        return (reg_type == "hold" || reg_type == "bits" || reg_type == "input" || reg_type == "coil");
+    } catch (...) {
+        return false;
+    }
+}
+
+// Run Query Command via ws or modbus
+std::string run_query(const std::string& url, ModbusClient& mb_client, const std::string& query_str) {
+     
+    // if mb_client.is_connected()  and  query string field reg_type is hold, bits, input or coil then run the mb_client
+    //    return client.run_mb(query_str); 
+    // else 
+
+        return run_wscat(url, query_str);
+}
+
 
 void load_test_plan(json& testPlan, const std::string& testName) 
 { 
@@ -1310,6 +1332,8 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     std::string logname = "log/"+testName+"_log.txt";
     //log_delete("log/log.txt");
     //log_open("log/log.txt");
+    ModbusClient mb_client; // Example IP and port
+
     log_delete(logname);
     log_open(logname);
     if(!testPlan.contains("Target"))
@@ -1339,6 +1363,21 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     // desc
     // release
     // target
+    std::string mb_ctx;
+    bool mb_ok = false;
+    if (testPlan.contains("Modbus"))
+    {
+        mb_ctx = testPlan["Modbus"].get<std::string>();
+        mb_ok = mb_client.connect(mb_ctx);
+        if (mb_ok)
+            log_msg << " Connected to Modbus " << mb_ctx << std::endl;
+        else 
+            log_msg << " Not connected to Modbus " << mb_ctx << std::endl;
+    }
+    else
+    {
+        log_msg << " No Modbus Connection detected " << std::endl;
+    }
 
     auto jmon = testPlan["Monitor"];
     if(!(jmon.contains("Query")||jmon.contains("QArray")))
@@ -1379,6 +1418,8 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     //mfile = "json/" + mfile+ ".json";
 
     std::string url = jmon.contains("Url") ? jmon["Url"].get<std::string>():"ws://192.168.86.209:9003";
+
+
     int seq = jmq.contains("sec") ? jmq["sec"].get<int>():1;
     if (testPlan.contains("Tests") && testPlan["Tests"].is_array()) {   
         jtests = testPlan["Tests"];
@@ -1400,10 +1441,12 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     }
 
     setup_matches(jexpects, cexpect, testPlan, "Expects", e_idx, ewhen, edur, tim);
-
     setup_matches(jnexpects, cnexpect, testPlan, "NotExpects", ne_idx, newhen, nedur, tim);
-    std::cout << " read matches from " << mfile<<std::endl;
+    std::cout << " read matches from " << mfile<<std::endl;  
     load_matches(mfile);
+
+    // TODO config_matches
+
     std::string query =  jmq.dump();
     std::cout << "now running query every " << per <<" seconds  for " << tim << " seconds "<<std::endl; 
 
@@ -1660,6 +1703,7 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 void test_str_to_offset();
 void test_decode_name();
 void test_match_system();
+int test_modbus(const std::string& ip, int port );
 
 #include <fractal_test_unit_test.cpp>
 
@@ -1687,6 +1731,10 @@ int main(int argc, char* argv[]) {
         test_str_to_offset();
         test_decode_name();
         test_match_system();
+
+        std::cout << "testing modbus ..." << std::endl;
+        test_modbus("192.168.86.209", 5000);
+
         std::cout << "\n\n**************************************"<<std::endl;
         assert_manager.generate_report();
 
