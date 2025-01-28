@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic Data Table</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Data Table</h1>
+    <div id="table-container"></div>
+
+    <script>
+        // Specify the URL of your JSON data file
+        const dataUrl = 'data';
+        const dataUrl2 = '/work/webtest/data2.json';
+        function fetchData2() {
+            fetch(dataUrl)
+            .then(response => response.json())
+            .then(jsonData => {
+                createTable(jsonData);
+            })
+            .catch(error => console.error('Error loading the data:', error));
+        }
+        function fetchData() {
+            fetch(dataUrl)
+            .then(response => {
+            //console.log(response);
+            return response.json();
+            })
+            .then(jsonData => {
+                //console.log(jsonData);
+                createTable(jsonData);
+            })
+            .catch(error => console.error('Error loading the data:', error));
+        }
+
+        function createTable(data) {
+            const container = document.getElementById('table-container');
+            container.innerHTML = ''; // Clear previous table
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+            const headerRow = document.createElement('tr');
+            console.log(data);
+            // Assuming data is non-empty and structure is consistent
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                Object.values(item).forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = value;
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Refresh data every 10 seconds
+        fetchData();
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>

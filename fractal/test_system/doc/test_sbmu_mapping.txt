@@ -1,0 +1,62 @@
+#I want to scan this file into a series of nested maps in C++
+#I want to also reverse map to from names to sbms|rack|rtos input|hold|bits|sm16|sm8 offset
+##Each [ ] break line defines a group of data items with the memory area  reg_type and offset [:size if > 1] with an optipnal count ( this count does not really matter
+#the data items follow with a relative offset from the break line   
+
+
+[sbms:sm16:3456]
+ status:0
+ alarms:2
+[rtos:bits:1]
+  alarms:1:80
+
+[rack:sm16:26626:1]
+  rack_online:0
+
+[rtos:input:1:40]
+  rack_voltage:0
+  rack_current:1
+  soc:2 
+  soh:3 
+  insulation_res_pos:5
+  insulation_res_neg:6
+  status:7 
+  rack_contactors:8 
+  max_temp:11 
+  max_temp_num:13
+  min_temp:14
+  min_temp_num:16
+  avg_temp:17
+  avg_voltage:19
+  max_voltage:20
+  max_voltage_num:22
+  min_voltage:23
+  min_voltage_num:25
+  max_soc:27
+  max_soc_num:29
+  min_soc:30
+  min_soc_num:32
+  max_soh:34
+  max_soh_num:36
+  min_soh:37
+  min_soh_num:39
+
+[rtos:input:59:21]
+ total_charge_cap:0:2
+ total_discharge_cap:2:2
+ single_charge_cap:4
+ single_discharge_cap:5
+ 
+[rtos:input:150:22]
+ chargeable_current:0
+ dischargeable_current:1
+ chargeable_power:2
+ dischargeable_power:3
+ daily_charge_cap:14:2
+ daily_discharge_cap:16:2
+ adc1:18
+ adc2:19
+ adc3:20
+ adc4:21
+ 
+
