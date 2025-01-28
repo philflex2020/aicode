@@ -1,14 +1,81 @@
-#I want to scan this file into a series of nested maps in C++
-#I want to also reverse map to from names to sbms|rack|rtos input|hold|bits|sm16|sm8 offset
-##Each [ ] break line defines a group of data items with the memory area  reg_type and offset [:size if > 1] with an optipnal count ( this count does not really matter
-#the data items follow with a relative offset from the break line   
+def parse_definitions(data):
+    import re
+    tables = {}
+    current_table = None
+    current_offset = 0
 
-# we need 
-# sbmu discrete inputs (bits) sbmu side and rack map
-# sbmu input (input) sbmu side and rack map
-# sbmu holding (hold) sbmu side and rack map
-#
-[sbmu:bits:1]
+    lines = data.strip().split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Detect new table
+        if line.startswith('['):
+            match = re.match(r'\[(.+?):(.+?):(\d+)\]', line)
+            if match:
+                system, reg_type, base_offset = match.groups()
+                current_table = f"{system}:{reg_type}"
+                current_offset = int(base_offset)
+                tables[current_table] = {'base_offset': current_offset, 'items': [], 'calculated_size': 0}
+            continue
+        
+        # Parse data items within a table
+        parts = line.split(':')
+        if len(parts) < 2:
+            continue
+
+        name = parts[0].strip()
+        offset = int(parts[1].strip())
+        size = int(parts[2].strip()) if len(parts) > 2 else 1
+        
+        # Validate the offset sequence
+        expected_offset = tables[current_table]['base_offset'] + tables[current_table]['calculated_size']
+        if offset != expected_offset:
+            raise ValueError(f"Offset mismatch in {current_table} for {name}, expected {expected_offset}, found {offset}")
+        
+        # Update the table entry
+        tables[current_table]['items'].append({'name': name, 'offset': offset, 'size': size})
+        tables[current_table]['calculated_size'] += size
+
+    return tables
+
+def verify_offsets(data_definition):
+    """
+    Verify that each data entry in the provided data definition has an offset that
+    follows sequentially from the previous entry's offset plus its size.
+    
+    Args:
+    data_definition (str): Multiline string containing data definitions in the format:
+                           <name>:<offset>[:<size>], where <size> defaults to 1 if not specified.
+
+    Returns:
+    bool: True if all offsets are sequential and correctly calculated, False otherwise.
+    str: Message indicating success or the point of failure.
+    """
+    lines = data_definition.strip().split('\n')
+    last_offset = -1  # Initialize to -1 to handle the first offset check correctly.
+    
+    for line in lines:
+        #print(line)
+        parts = line.split(':')
+        name = parts[0]
+        offset = int(parts[1])
+        size = int(parts[2]) if len(parts) > 2 else 1
+        
+        if last_offset != -1 and offset != last_offset + 1:
+            print(f"Error in data definition: {name} at offset {offset} does not follow {last_offset + 1}")
+            gap = offset - (last_offset+1)
+            print(f" offset gap {gap}")
+            return False, f"Error in data definition: {name} at offset {offset} does not follow {last_offset + 1}"
+        
+        last_offset = offset + size - 1  # Update last_offset to the last used position by this entry
+    print("All offsets are sequentially correct.")
+    return True, "All offsets are sequentially correct."
+
+# Example usage:
+data_definition = """
+[sbmu:bits_1:0]
  summary_total_undervoltage:0:3
  summary_total_overvoltage:3:3
  summary_overcurrent:6:3
@@ -45,8 +112,7 @@
  cell_voltage_acquisition_fault:79:1
  cell_temp_acquisition_fault:80:1
 
-# rack data (via map) is placed here with rack_0 at 200 rack_1 at 300 etc 
-[sbmu:bits:200]
+[sbmu:bits_200:0]
  esbcm_lost_comms:0:1
  total_undervoltage:1:3
  total_overvoltage:4:3
@@ -67,8 +133,7 @@
  cell_voltage_acquisition_fault:52:1
  cell_temp_acquisition_fault:53:1
 
-# this is the rack mapping for its discrete inputs
-[rtos:bits:1]
+[rtos:bits:0]
  terminal_overvoltage:0:3
  terminal_undervoltage:3:3
  discharge_overcurrent:6:3
@@ -143,11 +208,8 @@
  gap3:318:682
  bmm_lost_status:1000:60
 
-
-# sbmu inputs 
-# sbmu rack inputs
-# rack inputs
-[sbmu:input:0:52]
+[sbmu:input_1:0]
+  dummy:0
  system_circuit_breaker:1:1
  system_total_voltage:2:1
  system_current:3:1
@@ -189,10 +251,7 @@
  ems_bms_communication_failure:47:1
  pile_cumulative_charging_time:48:2
  pile_cumulative_discharging_time:50:2
-
-# these are mapped to variables in rack:input but we need to use the mapping table to link registers to the corresponding rtos:input
-# rack_0 mapped  to 100 , rack_1 mapped  to 3100 etc  
-[sbmu:input:100]
+[sbmu:input_100:0]
  State:0:1
  Max_Allowed_Charge_Power:1:1
  Max_Allowed_Discharge_Power:2:1
@@ -244,9 +303,9 @@
  cell_SOC:1491:700
  cell_SOH:2191:700
 
-# rtos (rack) inputs
 [rtos:input:0]
-  rack_voltage:1
+ dummy:0
+ rack_voltage:1
   rack_current:2
   soc:3 
   soh:4 
@@ -374,10 +433,15 @@ dummy4:218:282
 pole_temp:500:100
 dummy5:600:400
 battery_volts:1000:480
+gap1:1480:520
 battery_temp:2000:480
+gap2:2480:520
 battery_soc:3000:480
+gap3:3480:520
 battery_soh:4000:480
+gap3:4480:1520
 battery_res:6000:480
+gap4:6480:520
 battery_balance_sts:7000:60
 battery_volt_wire_lost_sts:7060:30
 battery_temp_wire_lost_sts:7090:30
@@ -387,10 +451,22 @@ dummy8:7630:370
 fault_record:8000:900
 dummy9:8900:1100
 version:10000:600
- 
 
-#using the rack number (500) this data reflects the rack holding from address 0
-[sbmu:hold:1000]
+[sbmu:hold_500:0]
+ rack_num:0:1
+ system_fault_reset:1:1
+ main_circuit_breaker:2:1
+ system_power_control:3:1
+ maintenance_mode:4:20
+ year:24:1
+ month:25:1
+ day:26:1
+ hour:27:1
+ minute:28:1
+ second:29:1
+ heartbeat:30:1
+
+[sbmu:hold_1000:0]
  dummy:0:1
  at_total_v_over:1:4
  at_total_v_under:5:4
@@ -574,78 +650,17 @@ version:10000:600
  Cluster_Discharge_Cell_Temperature_Difference_Value.End_Value_Start_10;:533:1
  Cluster_Discharge_Cell_Temperature_Difference_Value.End_Value_Over_10;:534:1
 
-[xxxsbmu:hold:1000]
- system_circuit_breaker:1:1
- system_total_voltage:2:1
- system_current:3:1
- system_SOC:4:1
- system_SOH:5:1
-  max_battery_volt:6
-  max_battery_voltage_number:7:1
-  max_battery_voltage_group:8:1
-  min_battery_volt:9
-  min_battery_voltage_number:10:1
-  min_battery_voltage_group:11:1
- max_battery_temperature:12:1
- max_battery_temperature_pack_number:13:1
- max_battery_temperature_group:14:1
- min_battery_temperature:15:1
- min_battery_temperature_pack_number:16:1
- min_battery_temperature_group:17:1
- accumulated_charging_capacity:18:2
- accumulated_discharging_capacity:20:2
- single_cumulative_charge_power:22:2
- single_cumulative_discharge_power:24:2
-system_charge_capacity:26:2
- system_discharge_capacity:28:2
- available_discharge_time:30:1
- available_charge_time:31:1
- max_discharge_power:32:1
- max_charge_power:33:1
- max_discharge_current:34:1
- max_charge_current:35:1
- num_daily_charges:36:1
- num_daily_discharges:37:1
- total_daily_discharge:38:2
- total_daily_charge:40:2
- operating_temperature:42:1
- state:43:1
- charge_state:44:1
- insulation_resistance:45:1
- pcs_bms_communication_failure:46:1
- ems_bms_communication_failure:47:1
- pile_cumulative_charging_time:48:2
- pile_cumulative_discharging_time:50:2
- 
- max_battery_temperature:12:1
- max_battery_temperature_pack_number:13:1
- max_battery_temperature_group:14:1
- max_discharge_current:34:1
- max_charge_current:35:1
-
-[sbmu:hold:500]
- rack_num:0:1
- system_fault_reset:1:1
- main_circuit_breaker:2:1
- system_power_control:3:1
- maintenance_mode:4:20
- year:24:1
- month:25:1
- day:26:1
- hour:27:1
- minute:28:1
- second:29:1
- heartbeat:30:1
+"""
 
 
 
-[sbms:sm16:3456]
- status:0
- alarms:2
-[rtos:bits:1]
-  alarms:1:80
-
-[rack:sm16:26626:1]
-  rack_online:0
-
-
+# Parse and print the table definitions and check offset correctness
+table_definitions = parse_definitions(data_definition)
+for table, info in table_definitions.items():
+    print(f"Table {table} starting at offset {info['base_offset']}")
+    total_size  = 0
+    for item in info['items']:
+        total_size += item['size']
+    #    print(f"  {item['name']} at offset {item['offset']} size {item['size']}")
+    print(f"total size for table {table} is {total_size}")
+#verify_offsets(data_definition)
