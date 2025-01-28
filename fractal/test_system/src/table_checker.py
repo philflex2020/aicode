@@ -1,198 +1,121 @@
-#I want to scan this file into a series of nested maps in C++
-#I want to also reverse map to from names to sbms|rack|rtos input|hold|bits|sm16|sm8 offset
-##Each [ ] break line defines a group of data items with the memory area  reg_type and offset [:size if > 1] with an optipnal count ( this count does not really matter
-#the data items follow with a relative offset from the break line   
+# table_checker.py
+def parse_table(data):
+    """ Parse the table data into two dictionaries: by address and by name. """
+    address_dict = {}
+    name_dict = {}
+    lines = data.strip().split('\n')
+    for line in lines:
+        parts = line.strip().split(':')
+        if len(parts) < 3:
+            parts.append('1')  # Default size is 1 if not specified
+        name, address, size = parts[0], int(parts[1]), int(parts[2])
+        address_dict[address] = {'name': name, 'size': size}
+        name_dict[name] = {'address': address, 'size': size}
+    return address_dict, name_dict
 
-# we need 
-# sbmu discrete inputs (bits) sbmu side and rack map
-# sbmu input (input) sbmu side and rack map
-# sbmu holding (hold) sbmu side and rack map
-#
-[sbmu:bits:1]
- summary_total_undervoltage:0:3
- summary_total_overvoltage:3:3
- summary_overcurrent:6:3
- summary_low_resistance:9:3
- summary_module_low_temp:12:3
- summary_module_over_temp:15:3
- summary_cell_over_voltage:18:3
- summary_cell_under_voltage:21:3
- summary_cell_diff_voltage:24:3
- summary_cell_low_temp:27:3
- summary_cell_over_temp:30:3
- summary_cell_diff_temp:33:3
- summary_cell_low_SOC:36:3
- summary_cell_high_SOC:39:3
- summary_cell_low_SOH:42:3
- summary_cell_high_SOH:45:3
- ESBCM_lost_communication:48:1
- ESBMM_lost_communication:49:1
- Abnormal_total_voltage_diff:50:1
- Abnormal_contactor_open:51:1
- Abnormal_contactor_close:52:1
- Charge_prohibited:53:1
- Discharge_prohibited:54:1
- summary_BMS_system_alarms:55:1
- summary_BMS_system_faults:56:1
- input_IN0:57:1
- input_IN1:58:1
- input_IN2:59:1
- input_IN3:60:1
- gap:61:9
- summary_terminal_over_temp:70:3
- summary_pack_over_voltage:73:3
- summary_pack_under_voltage:76:3
- cell_voltage_acquisition_fault:79:1
- cell_temp_acquisition_fault:80:1
+def compare_tables(table1_data, table2_data, name_mappings):
+    """ Compare two tables based on provided name mappings using name dictionaries. """
+    address_dict1, name_dict1 = parse_table(table1_data)
+    address_dict2, name_dict2 = parse_table(table2_data)
 
-# rack data (via map) is placed here with rack_0 at 200 rack_1 at 300 etc 
-[sbmu:bits:200]
- esbcm_lost_comms:0:1
- total_undervoltage:1:3
- total_overvoltage:4:3
- overcurrent:7:3
- cell_under_voltage:10:3
- cell_over_voltage:13:3
- cell_low_temp:16:3
- cell_over_temp:19:3
- cell_low_SOC:22:3
- cell_high_SOC:25:3
- cell_low_SOH:28:3
- cell_voltage_diff:31:3
- cell_temp_diff:34:3
- bmm_lost_comms:37:6
- terminal_high_temp:43:3
- pack_over_voltage:46:3
- pack_under_voltage:49:3
- cell_voltage_acquisition_fault:52:1
- cell_temp_acquisition_fault:53:1
+    for name1, mapping in name_mappings.items():
+        if name1 in name_dict1:
+            entry1 = name_dict1[name1]
+            if mapping in name_dict2:
+                entry2 = name_dict2[mapping]
+                print(f"Mapping match notice for '{name1}' to '{mapping}':")
+                print(f"    Table 1 - Address: {entry1['address']}, Size: {entry1['size']}")
+                print(f"    Table 2 - Address: {entry2['address']}, Size: {entry2['size']}")
+            else:
+                print(f"Name '{name1}' mapped to '{mapping}' which does not exist in Table 2.")
+        else:
+            print(f"Name '{name1}' from mapping does not exist in Table 1.")
 
-# this is the rack mapping for its discrete inputs
-[rtos:bits:1]
- terminal_overvoltage:0:3
- terminal_undervoltage:3:3
- discharge_overcurrent:6:3
- fastcharge_overcurrent:9:3
- insulation_low:12:3
- single_charge_overtemp:15:3
- single_charge_lowtemp:18:3
- single_overvoltage:21:3
- single_undervoltage:24:3
- single_voltage_diff:27:3
- single_temp_diff:30:3
- soc_low:33:3
- terminal_overtemp:36:3
- module_overvoltage:39:3
- module_undervoltage:42:3
- di1mcerror:45:1
- di2mcerror:46:1
- di3mcerror:47:1
- di4mcerror:48:1
- di5mcerror:49:1
- di6mcerror:50:1
- di7mcerror:51:1
- di8mcerror:52:1
- can0error:53:1
- vol_lost:54:1
- temp_lost:55:1
- bg_system_alarm_error:56:1
- group_voltdiff:57:1
- jump_instruction:58:1
- battery_extreme_error:59:1
- project_version_diff:60:1
- pcs_comms_lost:61:1
- pcs_debug_mode:62:1
- can_hall_sensor_error:63:1
- can_hall_comm_lost:64:1
- pcb_check_error:65:1
- svol_harness_error:66:1
- eq_error:67:1
- ems_comm_error:68:1
- bms_comm_error:69:1
- single_discharge_overtemp:70:3
- single_discharge_lowtemp:73:3
- soc_over:76:3
- gap:79:47
- zero1:126:1
- bmm_charge_vol_d_value:127:3
- cell_discharge_temp_d_value:130:3
- cell_charge_temp_d_value:133:3
- bmm_discharge_vol_d_value:136:3
- cluster_circulation_warning:139:1
- zero2:140:1
- hv_sample_volt_diff:141:1
- gap2:142:158
- cell_charge_vol:300:1
- cell_discharge_vol:301:1
- cell_charge_vol:302:1
- module_discharge_vol:303:1
- module_vol_d_charge:304:1
- module_vol_d_discharge:305:1
- cluster_charge_vol:306:1
- cluster_discharge_vol:307:1
- cluster_charge_cell_range_vol:308:1
- cluster_discharge_cell_range_vol:309:1
- cluster_charge_module_range_vol:310:1
- cluster_discharge_module_range_vol:311:1
- cluster_charge_curr:312:1
- cluster_discharge_curr:313:1
- cutoff_cell_high_temp:314:1
- cutoff_cell_low_temp:315:1
- cutoff_cluster_charge_cell_temp_d:316:1
- cutoff_cluster_discharge_cell_temp_d:317:1
- gap3:318:682
- bmm_lost_status:1000:60
+# # Example usage
+# table1_data = """
+# State:0:1
+# Power:4:2
+# """
+# table2_data = """
+# status:0:1
+# battery_power:4:2
+# """
+# name_mappings = {
+#     'State': 'status',  # Mapping from Table 1 name to Table 2 name
+#     'Power': 'battery_power'
+# }
 
 
-# sbmu inputs 
-# sbmu rack inputs
-# rack inputs
-[sbmu:input:0:52]
- system_circuit_breaker:1:1
- system_total_voltage:2:1
- system_current:3:1
- system_SOC:4:1
- system_SOH:5:1
- min_pack_voltage:6:1
- max_pack_voltage:7:1
- min_battery_voltage:8:1
- max_battery_voltage:9:1
- min_battery_voltage_number:10:1
- min_battery_voltage_group:11:1
- max_battery_temperature:12:1
- max_battery_temperature_pack_number:13:1
- max_battery_temperature_group:14:1
- min_battery_temperature:15:1
- min_battery_temperature_pack_number:16:1
- min_battery_temperature_group:17:1
- accumulated_charging_capacity:18:2
- accumulated_discharging_capacity:20:2
- single_cumulative_charge_power:22:2
- single_cumulative_discharge_power:24:2
- system_charge_capacity:26:2
- system_discharge_capacity:28:2
- available_discharge_time:30:1
- available_charge_time:31:1
- max_discharge_power:32:1
- max_charge_power:33:1
- max_discharge_current:34:1
- max_charge_current:35:1
- num_daily_charges:36:1
- num_daily_discharges:37:1
- total_daily_discharge:38:2
- total_daily_charge:40:2
- operating_temperature:42:1
- state:43:1
- charge_state:44:1
- insulation_resistance:45:1
- pcs_bms_communication_failure:46:1
- ems_bms_communication_failure:47:1
- pile_cumulative_charging_time:48:2
- pile_cumulative_discharging_time:50:2
+# def parse_table(data):
+#     """ Parse the table data into a dictionary. """
+#     table_dict = {}
+#     lines = data.strip().split('\n')
+#     for line in lines:
+#         #print(line)
+#         parts = line.split(':')
+#         if len(parts) < 3:
+#             parts.append('1')
 
-# these are mapped to variables in rack:input but we need to use the mapping table to link registers to the corresponding rtos:input
-# rack_0 mapped  to 100 , rack_1 mapped  to 3100 etc  
-[sbmu:input:100]
+#         name, address, size = parts[0], int(parts[1]), int(parts[2])
+#         table_dict[address] = {'name': name, 'size': size}
+#     return table_dict
+
+# def compare_tables(table1, table2, name_mappings):
+#     """ Compare two tables and output differences or mappings. """
+#     # table1 = parse_table(table1_data)
+#     # table2 = parse_table(table2_data)
+
+#     # Iterate over both tables to find differences or mappings
+#     all_addresses = set(table1.keys()) | set(table2.keys())
+#     for address in sorted(all_addresses):
+#         entry1 = table1.get(address, {})
+#         entry2 = table2.get(address, {})
+#         if address in table1 and address in table2:
+#             name1 = entry1.get('name')
+#             name2 = entry2.get('name')
+#             if name1 in name_mappings and name_mappings[name1] == name2:
+#                 print(f"Map match notice: {name1} to {name2}, Addresses and sizes: {address}, Sizes: {entry1['size']}, {entry2['size']}")
+#             else:
+#                 print(f"Address {address}:")
+#                 print(f"    Table 1: {entry1}")
+#                 print(f"    Table 2: {entry2}")
+#         elif address in table1:
+#             print(f"Address {address}:")
+#             print(f"    Table 1: {entry1}")
+#             print(f"    Table 2: None")
+#         elif address in table2:
+#             print(f"Address {address}:")
+#             print(f"    Table 1: None")
+#             print(f"    Table 2: {entry2}")
+
+
+def old_compare_tables(table1, table2):
+    """ Compare two dictionaries and print differences. """
+    keys_table1 = set(table1.keys())
+    keys_table2 = set(table2.keys())
+    all_keys = keys_table1.union(keys_table2)
+    
+    differences = []
+
+    for key in sorted(all_keys):
+        entry1 = table1.get(key)
+        entry2 = table2.get(key)
+
+        if entry1 and entry2:
+            # Both tables have an entry at this address
+            if entry1 != entry2:
+                differences.append((key, entry1, entry2))
+        elif entry1:
+            # Only table 1 has an entry at this address
+            differences.append((key, entry1, None))
+        elif entry2:
+            # Only table 2 has an entry at this address
+            differences.append((key, None, entry2))
+
+    return differences
+
+# Example data
+table1_sbmu_rack_input = """
  State:0:1
  Max_Allowed_Charge_Power:1:1
  Max_Allowed_Discharge_Power:2:1
@@ -243,58 +166,121 @@
  cell_temperature:791:700
  cell_SOC:1491:700
  cell_SOH:2191:700
+"""
 
 # rtos (rack) inputs
-[rtos:input:1:40]
-  rack_voltage:0
-  rack_current:1
-  soc:2 
-  soh:3 
-  insulation_res_pos:5
-  insulation_res_neg:6
-  status:7 
-  rack_contactors:8 
-  max_temp:11 
-  max_temp_num:13
-  min_temp:14
-  min_temp_num:16
-  avg_temp:17
-  avg_voltage:19
-  max_voltage:20
-  max_voltage_num:22
-  min_voltage:23
-  min_voltage_num:25
-  max_soc:27
+#[rtos:input:1:40]
+table2_sbmu_rtos_input = """
+  rack_voltage:0:1
+  rack_current:1:1
+  soc:2:1 
+  soh:3:1 
+  insulation_res_pos:5:1
+  insulation_res_neg:6:1
+  status:7:1 
+  rack_contactors:8:1 
+  max_temp:11:1 
+  max_temp_num:13:1
+  min_temp:14:1
+  min_temp_num:16:1
+  avg_temp:17:1
+  avg_voltage:19:1
+  max_voltage:20:2
+  max_voltage_num:22:1
+  min_voltage:23:1
+  min_voltage_num:25:2
+  max_soc:27:2
   max_soc_num:29
-  min_soc:30
-  min_soc_num:32
-  max_soh:34
-  max_soh_num:36
-  min_soh:37
-  min_soh_num:39
+  min_soc:30:2
+  min_soc_num:32:2
+  max_soh:34:2
+  max_soh_num:36:1
+  min_soh:37:2
+  min_soh_num:39:1 
+dummy1:40:20
+ total_charge_cap:59:2
+ total_discharge_cap:61:2
+ single_charge_cap:63:1
+ single_discharge_cap:64:1
+dummy2:65:85 
+ chargeable_current:150:1
+ dischargeable_current:151:1
+ chargeable_power:152:1
+ dischargeable_power:153:1
+ daily_charge_cap:154:2
+ daily_discharge_cap:156:2
+ adc1:158:1
+ adc2:159:1
+ adc3:160:1
+ adc4:161:1
+"""
 
-[rtos:input:59:21]
- total_charge_cap:0:2
- total_discharge_cap:2:2
- single_charge_cap:4
- single_discharge_cap:5
- 
-[rtos:input:150:22]
- chargeable_current:0
- dischargeable_current:1
- chargeable_power:2
- dischargeable_power:3
- daily_charge_cap:14:2
- daily_discharge_cap:16:2
- adc1:18
- adc2:19
- adc3:20
- adc4:21
- 
+#  Total_Voltage:15:1
+#  Total_Current:16:1
+#  Module_Temperature:17:1
+#  Insulation_Resistance:20:1
+#  Max_cell_SOH:35:1
+#  Max_cell_SOH_number:36:1
+#  Min_cell_SOH:37:1
+#  Min_cell_SOH_number:38:1
+#  Accumulated_single_charge_capacity:43:2
+#  Accumulated_single_discharge_capacity:45:2
+#  Recharge_capacity:47:2
+#  Dischargeable_capacity:49:2
+#  Pack_SOC:51:40
+#  cell_voltage:91:700
+#  cell_temperature:791:700
+#  cell_SOC:1491:700
+#  cell_SOH:2191:700
 
-#using the rack number (500) this data reflects the rack holding from address 0
-[sbmu:hold:1000]
- dummy:0:1
+
+name_mappings = {
+    'State': 'status',
+    'Max_Allowed_Charge_Power': 'chargeable_power',
+    'Max_Allowed_Discharge_Power':'dischargeable_power',
+
+    'Max_Charge_Voltage':'chargeable_volt',
+    'Max_Discharge_Voltage':'dischargeable_volt',
+
+    'Max_Charge_Current':'chargeable_current',
+    'Max_Discharge_Current':'dischargeable_current',
+
+    'DI1':"di1",
+    'DI2':"di2",
+    'DI3':"di3",
+    'DI4':"di4",
+    'DI5':"di5",
+    'DI6':"di6",
+    'DI7':"di7",
+    'DI8':"di8",
+
+    'Max_cell_voltage':'max_voltage',
+    'Max_cell_voltage_number':'max_voltage_num',
+    'Min_cell_voltage':'min_voltage',
+    'Min_cell_voltage_number':'min_voltage_num',
+    'Max_cell_temperature': 'max_temp',
+    'Max_cell_temperature_number':'max_temp_num',
+    'Min_cell_temperature': 'min_temp',
+    'Min_cell_temperature_number':'min_temp_num',
+    'Max_cell_SOC':'max_soc',
+    'Max_cell_SOC_number':'max_soc_num',
+    'Min_cell_SOC':'min_soc',
+    'Min_cell_SOC_number':'min_soc_num',
+    'SOC':'soc',
+    'SOH':'soh',
+    'Average_cell_voltage':'avg_voltage',
+    'Average_cell_temperature':'avg_temp',
+
+    'Accumulated_charge_capacity':'total_charge_cap',
+    'Accumulated_discharge_capacity':'total_discharge_cap'
+
+}
+
+
+table1_data = table1_sbmu_rack_input
+table2_data = table2_sbmu_rtos_input
+
+table1_sbmu_1000_hold = """
  at_total_v_over:1:4
  at_total_v_under:5:4
  at_discharge_curr_over:9:4
@@ -384,9 +370,11 @@
  Cluster_Charge_Cell_Temperature_Difference_Value.End_Value_Over_10;:532:1
  Cluster_Discharge_Cell_Temperature_Difference_Value.End_Value_Start_10;:533:1
  Cluster_Discharge_Cell_Temperature_Difference_Value.End_Value_Over_10;:534:1
+"""
 
-[rtos:hold:0]
- dummy:0:1
+#[rtos:hold:0]
+# dummy:0:1
+table2_sbmu_rack_hold = """
  at_total_v_over:1:4
  at_total_v_under:5:4
  at_discharge_curr_over:9:4
@@ -476,79 +464,28 @@
  Cluster_Charge_Cell_Temperature_Difference_Value.End_Value_Over_10;:532:1
  Cluster_Discharge_Cell_Temperature_Difference_Value.End_Value_Start_10;:533:1
  Cluster_Discharge_Cell_Temperature_Difference_Value.End_Value_Over_10;:534:1
+"""
 
-[xxxsbmu:hold:1000]
- system_circuit_breaker:1:1
- system_total_voltage:2:1
- system_current:3:1
- system_SOC:4:1
- system_SOH:5:1
-  max_battery_volt:6
-  max_battery_voltage_number:7:1
-  max_battery_voltage_group:8:1
-  min_battery_volt:9
-  min_battery_voltage_number:10:1
-  min_battery_voltage_group:11:1
- max_battery_temperature:12:1
- max_battery_temperature_pack_number:13:1
- max_battery_temperature_group:14:1
- min_battery_temperature:15:1
- min_battery_temperature_pack_number:16:1
- min_battery_temperature_group:17:1
- accumulated_charging_capacity:18:2
- accumulated_discharging_capacity:20:2
- single_cumulative_charge_power:22:2
- single_cumulative_discharge_power:24:2
-system_charge_capacity:26:2
- system_discharge_capacity:28:2
- available_discharge_time:30:1
- available_charge_time:31:1
- max_discharge_power:32:1
- max_charge_power:33:1
- max_discharge_current:34:1
- max_charge_current:35:1
- num_daily_charges:36:1
- num_daily_discharges:37:1
- total_daily_discharge:38:2
- total_daily_charge:40:2
- operating_temperature:42:1
- state:43:1
- charge_state:44:1
- insulation_resistance:45:1
- pcs_bms_communication_failure:46:1
- ems_bms_communication_failure:47:1
- pile_cumulative_charging_time:48:2
- pile_cumulative_discharging_time:50:2
- 
- max_battery_temperature:12:1
- max_battery_temperature_pack_number:13:1
- max_battery_temperature_group:14:1
- max_discharge_current:34:1
- max_charge_current:35:1
-
-[sbmu:hold:500]
- rack_num:0:1
- system_fault_reset:1:1
- main_circuit_breaker:2:1
- system_power_control:3:1
- maintenance_mode:4:20
- year:24:1
- month:25:1
- day:26:1
- hour:27:1
- minute:28:1
- second:29:1
- heartbeat:30:1
+# table2_data = """
+# at_total_v_over:1:4
+# at_total_v_under:5:4
+# at_discharge_curr_over:9:4
+# at_fast_charge_curr_over:13:4
+# at_insulation_resistance_under:17:4
+# at_single_charge_temp_under:21:4
+# """
 
 
+compare_tables(table1_data, table2_data, name_mappings)
 
-[sbms:sm16:3456]
- status:0
- alarms:2
-[rtos:bits:1]
-  alarms:1:80
+# # Parse the tables
+# table1 = parse_table(table1_data)
+# table2 = parse_table(table2_data)
 
-[rack:sm16:26626:1]
-  rack_online:0
-
-
+# # Compare the tables
+# differences = compare_tables(table1, table2, name_mappings)
+# for diff in differences:
+#     address, data1, data2 = diff
+#     print(f'Address {address}:')
+#     print(f'    Table 1: {data1}')
+#     print(f'    Table 2: {data2}')

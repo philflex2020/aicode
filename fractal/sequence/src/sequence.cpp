@@ -3213,7 +3213,6 @@ int main(int argc , char* argv[])
 
 
     std::cout << "\n\n**************************************"<<std::endl;
-
     assert_manager.generate_report();
 
     std::cout << "\n\n**************************************"<<std::endl;
