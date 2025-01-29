@@ -33,6 +33,10 @@
 #include <list>
 #include <regex>
 
+#include <cstring> // for memset
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h> // for close
 
 #include <nlohmann/json.hpp>
 
@@ -79,6 +83,7 @@ bool debug = false;
 
 // }
 
+std::map<std::string, DataTable> data_tables;
 
 
 //TODO 
@@ -163,12 +168,36 @@ int str_to_offset(const std::string& offset_str) {
     }
 }
 
-// Function to trim whitespace from both ends of a string
+// // Function to trim whitespace from both ends of a string
+// std::string trim(const std::string& str) {
+//     size_t first = str.find_first_not_of(' ');
+//     if (first == std::string::npos) return "";
+
+//     size_t last;
+    
+//     last = str.find_last_not_of('\n');
+//     str.substr(first, (last - first + 1));
+
+//     last = str.find_last_not_of('\r');
+//     str.substr(first, (last - first + 1));
+
+//     last = str.find_last_not_of('\a');
+//     str.substr(first, (last - first + 1));
+
+//     last = str.find_last_not_of(' ');
+//     return str.substr(first, (last - first + 1));
+// }
+// Function to trim whitespace and specific control characters from both ends of a string
 std::string trim(const std::string& str) {
-    size_t first = str.find_first_not_of(' ');
-    if (first == std::string::npos) return "";
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
+    auto is_not_trim_char = [](char c) {
+        return !std::isspace(c) && c != '\a'; // Check for space and bell character
+    };
+
+    size_t first = std::find_if(str.begin(), str.end(), is_not_trim_char) - str.begin();
+    if (first == str.size()) return ""; // All characters are trimmable
+
+    size_t last = std::find_if(str.rbegin(), str.rend(), is_not_trim_char).base() - str.begin();
+    return str.substr(first, last - first);
 }
 
 // Function to Get Current Time in Seconds
@@ -1700,6 +1729,289 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     log_close();
 }
 
+std::map<std::string, DataTable> parse_definitions(const std::string& filename) {
+    std::map<std::string, DataTable> tables;
+    std::ifstream file(filename);
+    std::string line;
+    std::regex table_pattern(R"(\[(.+?):(.+?):(\d+)\])");
+    std::smatch match;
+    std::string current_table;
+    int current_offset = 0;
+
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + filename);
+    }
+
+    while (std::getline(file, line)) {
+        std::string trimmed = std::regex_replace(line, std::regex("^ +| +$|( ) +"), "$1"); // trim and reduce spaces
+        if (trimmed.empty() || trimmed[0] == '#') continue; // Skip comments and empty lines
+
+        if (std::regex_search(trimmed, match, table_pattern)) {
+            current_table = match[1].str() + ":" + match[2].str();
+            current_offset = std::stoi(match[3].str());
+            tables[current_table] = {current_offset, {}, 0};
+            continue;
+        }
+
+        size_t colon_pos = trimmed.find(':');
+        if (colon_pos == std::string::npos) continue;
+        
+        std::string name = trimmed.substr(0, colon_pos);
+        int offset = std::stoi(trimmed.substr(colon_pos + 1));
+        int size = 1; // default size
+        size_t second_colon_pos = trimmed.find(':', colon_pos + 1);
+        if (second_colon_pos != std::string::npos) {
+            size = std::stoi(trimmed.substr(second_colon_pos + 1));
+        }
+
+        if (!tables[current_table].items.empty()) {
+            int expected_offset = tables[current_table].base_offset + tables[current_table].calculated_size;
+            if (offset != expected_offset) {
+                throw std::runtime_error("Offset mismatch for " + name + " in table " + current_table);
+            }
+        }
+
+        tables[current_table].items.push_back({name, offset, size});
+        tables[current_table].calculated_size += size;
+    }
+
+    return tables;
+}
+
+bool verify_offsets(const std::map<std::string, DataTable>& tables) {
+    bool all_correct = true;
+    for (const auto& table_pair : tables) {
+        const auto& table = table_pair.second;
+        int expected_offset = table.base_offset;
+        
+        for (const auto& item : table.items) {
+            if (item.offset != expected_offset) {
+                std::cerr << "Offset error in table " << table_pair.first << ": "
+                          << "Item " << item.name << " should start at " << expected_offset
+                          << " but starts at " << item.offset << std::endl;
+                all_correct = false;
+            }
+            expected_offset += item.size;
+        }
+    }
+    return all_correct;
+}
+
+std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables) {
+    std::string query = trim(qustr);
+    std::istringstream iss(query);
+    std::vector<std::string> parts;
+    std::string part;
+
+    while (std::getline(iss, part, ':')) {
+        parts.push_back(part);
+    }
+
+    std::cout << " Query ["<<query<<"] parts size :"<<parts.size() << std::endl;
+    if ( parts[0] == "help")
+    {
+        return " basic help \n";
+    }
+    else if ( parts[0] == "tables")
+    {
+        std::ostringstream oss;
+
+        for (const auto& table_pair : data_tables) {
+                oss << table_pair.first << std::endl;
+        }
+        return oss.str();
+    }
+
+    if (parts.size() < 2) {
+        return "Invalid query format. Use 'table:query' format.\n";
+    }
+
+    std::string table_key = parts[0];
+    std::string identifier = parts[1];
+    std::string item;
+    table_key += ":";
+
+    if (parts.size() > 2) {
+        table_key += parts[1];
+        item = parts[2];
+    }
+    else
+    {
+        std::istringstream iss2(identifier);
+        parts.clear();
+        while (std::getline(iss2, part, ' ')) {
+            parts.push_back(part);
+        
+        }
+        table_key += parts[0];
+        item = parts[1];
+    }
+    identifier = item;
+    
+    if (data_tables.find(table_key) == data_tables.end()) {
+        return "Table not found.\n";
+    }
+
+    const auto& items = data_tables.at(table_key).items;
+
+    if (identifier.find('*') != std::string::npos) {  // Pattern match query
+        std::string pattern = identifier.replace(identifier.find('*'), 1, "");
+        std::vector<std::string> results;
+        for (const auto& item : items) {
+            if (item.name.find(pattern) != std::string::npos) {
+                results.push_back(item.name + " at offset " + std::to_string(item.offset) + "\n");
+            }
+        }
+        return !results.empty() ? std::accumulate(results.begin(), results.end(), std::string("")) : "No items found matching the pattern.\n";
+    } else if (identifier.find('-') != std::string::npos) {  // Range query
+        size_t dash_pos = identifier.find('-');
+        int start = std::stoi(identifier.substr(0, dash_pos));
+        int end = std::stoi(identifier.substr(dash_pos + 1));
+        std::vector<std::string> results;
+        for (const auto& item : items) {
+            if (item.offset >= start && item.offset <= end) {
+                results.push_back(item.name + " at offset " + std::to_string(item.offset)+ "\n");
+            }
+        }
+        return !results.empty() ? std::accumulate(results.begin(), results.end(), std::string("")) : "No items found in the specified range.\n";
+    } else if (std::isdigit(identifier[0])) {  // Offset query
+        int offset = std::stoi(identifier);
+        for (const auto& item : items) {
+            if (item.offset == offset) {
+                return item.name + " at offset " + std::to_string(item.offset) + "\n";
+            }
+        }
+        return "Item not found at the specified offset.\n";
+    } else {  // Name query
+        for (const auto& item : items) {
+            if (item.name == identifier) {
+                return item.name + " at offset " + std::to_string(item.offset) + "\n";
+            }
+        }
+        return "Item not found with the specified name.\n";
+    }
+}
+
+// Define a function pointer type for handling queries
+typedef std::string (*QueryHandler)(const std::string&, const std::map<std::string, DataTable>&);
+
+void start_server(int port, QueryHandler query_handler, std::map<std::string, DataTable>& data_tables) {
+    int server_fd, new_socket;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
+
+    // Creating socket file descriptor
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Forcefully attaching socket to the port
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    // Bind the socket to the address
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Start listening for client connections
+    if (listen(server_fd, 10) < 0) { // Can handle 10 clients in waiting queue
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "Server started on port " << port << std::endl;
+
+    // Accept clients and handle them concurrently
+    while (true) {
+        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
+            perror("accept");
+            continue;
+        }
+
+        // Create a new thread for each client
+        std::thread([new_socket, &data_tables, query_handler]() {
+            char buffer[1024];
+            while (true) {
+                memset(buffer, 0, sizeof(buffer));
+                int bytes_received = recv(new_socket, buffer, sizeof(buffer) - 1, 0);
+                if (bytes_received <= 0) {
+                    std::cout << "Client disconnected or error occurred.\n";
+                    break;
+                }
+
+                std::string query(buffer);
+                std::string response = query_handler(query, data_tables);
+                send(new_socket, response.c_str(), response.size(), 0);
+            }
+
+            close(new_socket);
+        }).detach(); // Detach thread to handle client independently
+    }
+
+    close(server_fd);
+}
+
+int test_server(std::map<std::string, DataTable>) {
+    int port = 9999;
+    start_server(port, handle_query, data_tables);
+    return 0;
+}
+
+
+
+int test_parse() {
+    try {
+        // if (argc < 2) {
+        //     std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
+        //     return 1;
+        // }
+        auto data_file = "src/data_definition.txt";
+        data_tables = parse_definitions(data_file);
+        for (const auto& table_pair : data_tables) {
+            const auto& table = table_pair.second;
+            std::cout << "Table " << table_pair.first << " starts at offset " << table.base_offset << std::endl;
+            std::cout << "Total calculated size: " << table.calculated_size << std::endl;
+            for (const auto& item : table.items) {
+                //std::cout << "  " << item.name << " at offset " << item.offset << " size " << item.size << std::endl;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return 1;
+    }
+    if (verify_offsets(data_tables)) {
+        std::cout << "All offsets are sequentially correct." << std::endl;
+    } else {
+        std::cout << "There are errors in the data offsets." << std::endl;
+    }
+
+    // Example queries
+    std::cout << handle_query("tables",                  data_tables) << std::endl;
+    std::cout << handle_query("rtos:input rack_voltage", data_tables) << std::endl;
+    std::cout << handle_query("rtos:input:rack_voltage", data_tables) << std::endl;
+    std::cout << handle_query("rtos:input rack*",        data_tables) << std::endl;
+    std::cout << handle_query("rtos:input 26", data_tables) << std::endl;
+    std::cout << handle_query("rtos:input:26", data_tables) << std::endl;
+    std::cout << handle_query("sbmu:bits 200-205",       data_tables) << std::endl;
+    test_server(data_tables);
+    return 0;
+}
+
+
+
+
+
+
 void test_str_to_offset();
 void test_decode_name();
 void test_match_system();
@@ -1725,7 +2037,7 @@ int main(int argc, char* argv[]) {
         show_data_map();
         ConfigDataList configData;
 
-        test_data_list(configData);
+        //test_data_list(configData);
             // // Generate reports
 
         test_str_to_offset();
@@ -1742,6 +2054,7 @@ int main(int argc, char* argv[]) {
         assert_manager.generate_summary();
         std::cout << "\n\n**************************************"<<std::endl;
 
+        test_parse() ;
 
         // assert_manager.generate_summary();
         // assert_manager.generate_report();

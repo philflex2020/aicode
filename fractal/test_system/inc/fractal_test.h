@@ -25,6 +25,23 @@
 
 using json = nlohmann::json;
 
+struct DataItem {
+    std::string name;
+    int offset;
+    int size;
+};
+// struct DataItem {
+//     std::string name;
+//     int offset;
+// }
+struct DataTable {
+    int base_offset;
+    std::vector<DataItem> items;
+    int calculated_size;
+};
+
+typedef std::map<std::string, DataTable> DataTables;
+
 // Structs
 struct InputVector {
     int offset;
