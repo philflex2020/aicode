@@ -53,11 +53,31 @@ def verify_offsets(data_definition):
     bool: True if all offsets are sequential and correctly calculated, False otherwise.
     str: Message indicating success or the point of failure.
     """
+    import re
+    tables = {}
+    current_table = None
+    current_offset = 0
+
     lines = data_definition.strip().split('\n')
     last_offset = -1  # Initialize to -1 to handle the first offset check correctly.
     
     for line in lines:
         print(line)
+                # Detect new table
+        if line.startswith('['):
+            match = re.match(r'\[(.+?):(.+?):(\d+)\]', line)
+            if match:
+                system, reg_type, base_offset = match.groups()
+                current_table = f"{system}:{reg_type}"
+                print(current_table)
+                if current_table not in tables:
+                    current_offset = int(base_offset)
+                    tables[current_table] = {'base_offset': current_offset, 'items': [], 'calculated_size': 0}
+                    last_offset = int(base_offset) -1
+                else:
+                    last_offset = int(base_offset) -1
+            continue
+
         parts = line.split(':')
         name = parts[0]
         if len(parts) < 2:
@@ -66,7 +86,7 @@ def verify_offsets(data_definition):
         size = int(parts[2]) if len(parts) > 2 else 1
         
         if last_offset != -1 and offset != last_offset + 1:
-            print(f"Error in data definition: {name} at offset {offset} does not follow {last_offset + 1}")
+            print(f"Verify offsets : Error in data definition: {name} at offset {offset} does not follow {last_offset + 1}")
             gap = offset - (last_offset+1)
             print(f" offset gap {gap}")
             return False, f"Error in data definition: {name} at offset {offset} does not follow {last_offset + 1}"

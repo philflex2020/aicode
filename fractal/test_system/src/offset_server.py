@@ -8,6 +8,7 @@ import parse_definitions
 def parse_and_validate(data_definitions):
     # Parse the data definitions using the imported module
     data_tables = parse_definitions.parse_definitions(data_definitions)
+    parse_definitions.verify_offsets(data_definitions)
 
     # Your existing code to parse and check offsets
     return data_tables
@@ -28,98 +29,92 @@ def client_handler(connection, address, data_tables):
 
 # Function to process queries
 def handle_query(query, data_tables):
-    # Example query "table:name" or "table:offset"
     try:
         parts = query.split(':')
+
+        if parts[0] == "help":
+            return "Available commands:\n - tables: List all tables\n - table:offset: Query by offset\n - table:name: Query by name\n - table *pattern*: Query by name pattern\n - table:x-y: Query by offset range\n"
+        elif parts[0] == "tables":
+            return "Known tables:\n" + "\n".join(data_tables.keys()) + "\n"
+        if len(parts) < 2:
+            return "Invalid query format. Use 'table:query' format.\n"
+
         table, identifier = parts[0], parts[1]
-        if identifier.isdigit():
-            # Find by offset
-            result = next((item for item in data_tables[table] if item['offset'] == int(identifier)), None)
-        else:
-            # Find by name
-            result = data_tables.get(table, {}).get(identifier, None)
-        if result:
-            return f"{result}\n"
-        else:
-            return "Item not found\n"
+        #table_key = f"{table}:"
+        parts = identifier.split(' ')
+        table_key=f"{table}:{parts[0]}"
+
+        #print(parts)
+        if '-' in parts[1]:  # Range query
+            start, end = map(int, parts[1].split('-'))
+            results = []
+            for item in data_tables.get(table_key, {}).get('items', []):
+                if start <= item["offset"] <= end:
+                    results.append(f"{item['name']} at offset {item['offset']}")
+            if results:
+                return "\n".join(results) + "\n"
+            else:
+                return "No items found in the specified range.\n"
+
+        elif '*' in parts[1]:  # Pattern match query
+            pattern = parts[1].replace('*', '')
+            results = []
+            for item in data_tables.get(table_key, {}).get('items', []):
+                if pattern in item['name']:
+                    results.append(f"{item['name']} at offset {item['offset']}")
+            if results:
+                return "\n".join(results) + "\n"
+            else:
+                return "No items found matching the pattern.\n"
+
+        elif parts[1].isdigit():  # Offset query
+            offset = int(parts[1])
+            for item in data_tables.get(table_key, {}).get('items', []):
+                if item["offset"] == offset:
+                    return f"{item['name']} at offset {item['offset']}\n"
+            return "Item not found at the specified offset.\n"
+        
+        else:  # Name query
+            for item in data_tables.get(table_key, {}).get('items', []):
+                if item['name'] == parts[1]:
+                    return f"{item['name']} at offset {item['offset']}\n"
+            return "Item not found with the specified name.\n"
+
     except Exception as e:
         return f"Error processing query: {str(e)}\n"
 
+# # Function to process queries
+# def handle_query(query, data_tables):
+#     # Example query "table:name" or "table:offset"
+#     try:
+#         parts = query.split(':')
+#         if parts[0] == "help":
+#             return " There is no help\n"
+#         elif parts[0] == "tables":
+#             resp = " known tables\n"
+#             for table in data_tables:
+#                 resp += f"{table}\n"
+#             return resp
+#         table, identifier = parts[0], parts[1]
+#         parts = identifier.split(' ')
+#         tab=f"{table}:{parts[0]}"
 
-# def parse_definitions(data):
-#     import re
-#     tables = {}
-#     current_table = None
-#     current_offset = 0
+#         if parts[1].isdigit():
+#             for item in data_tables[tab]['items']:
+#                 if item["offset"] == int(parts[1]):
+#                     print(f" name {item['name']}\n")
+#                     result = f"item['name']\n"                
+#                     return result
+#         else:
+#             # Find by name
+#             result = data_tables.get(tab, {}).get(identifier, None)
+#         if result:
+#             return f"{result}\n"
+#         else:
+#             return "Item not found\n"
+#     except Exception as e:
+#         return f"Error processing query: {str(e)}\n"
 
-#     lines = data.strip().split('\n')
-#     for line in lines:
-#         line = line.strip()
-#         if not line:
-#             continue
-        
-#         # Detect new table
-#         if line.startswith('['):
-#             match = re.match(r'\[(.+?):(.+?):(\d+)\]', line)
-#             if match:
-#                 system, reg_type, base_offset = match.groups()
-#                 current_table = f"{system}:{reg_type}"
-#                 current_offset = int(base_offset)
-#                 tables[current_table] = {'base_offset': current_offset, 'items': [], 'calculated_size': 0}
-#             continue
-        
-#         # Parse data items within a table
-#         parts = line.split(':')
-#         if len(parts) < 2:
-#             continue
-
-#         name = parts[0].strip()
-#         offset = int(parts[1].strip())
-#         size = int(parts[2].strip()) if len(parts) > 2 else 1
-        
-#         # Validate the offset sequence
-#         expected_offset = tables[current_table]['base_offset'] + tables[current_table]['calculated_size']
-#         if offset != expected_offset:
-#             raise ValueError(f"Offset mismatch in {current_table} for {name}, expected {expected_offset}, found {offset}")
-        
-#         # Update the table entry
-#         tables[current_table]['items'].append({'name': name, 'offset': offset, 'size': size})
-#         tables[current_table]['calculated_size'] += size
-
-#     return tables
-
-# def verify_offsets(data_definition):
-#     """
-#     Verify that each data entry in the provided data definition has an offset that
-#     follows sequentially from the previous entry's offset plus its size.
-    
-#     Args:
-#     data_definition (str): Multiline string containing data definitions in the format:
-#                            <name>:<offset>[:<size>], where <size> defaults to 1 if not specified.
-
-#     Returns:
-#     bool: True if all offsets are sequential and correctly calculated, False otherwise.
-#     str: Message indicating success or the point of failure.
-#     """
-#     lines = data_definition.strip().split('\n')
-#     last_offset = -1  # Initialize to -1 to handle the first offset check correctly.
-    
-#     for line in lines:
-#         #print(line)
-#         parts = line.split(':')
-#         name = parts[0]
-#         offset = int(parts[1])
-#         size = int(parts[2]) if len(parts) > 2 else 1
-        
-#         if last_offset != -1 and offset != last_offset + 1:
-#             print(f"Error in data definition: {name} at offset {offset} does not follow {last_offset + 1}")
-#             gap = offset - (last_offset+1)
-#             print(f" offset gap {gap}")
-#             return False, f"Error in data definition: {name} at offset {offset} does not follow {last_offset + 1}"
-        
-#         last_offset = offset + size - 1  # Update last_offset to the last used position by this entry
-#     print("All offsets are sequentially correct.")
-#     return True, "All offsets are sequentially correct."
 
 # Example usage:
 
@@ -128,6 +123,12 @@ def start_server(port, data_definition):
     host = 'localhost'
     port = port
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Set SO_REUSEADDR to 1 to reuse the socket
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    # Optionally set SO_REUSEPORT to 1 to reuse the port (necessary for some platforms)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+
     server_socket.bind((host, port))
     server_socket.listen()
 
