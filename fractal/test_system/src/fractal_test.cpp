@@ -51,6 +51,14 @@ namespace fs = std::filesystem;
 
 bool debug = false;
 
+// using data keys. we compress sbmu:bits:234[:num] into a var key 
+//    sm_name 4 bits
+//    reg_type 4 bits
+//    zone 8 bits ( rack num perhaps)
+//    offset  16 bits
+// this is all encoded into the DataItem key
+// uint32_t key;
+// this will give us the concept of compressed set_key and get_key options
 
 // notes 
 // use data lists to create queries for Matches and Tests
@@ -140,6 +148,184 @@ std::map<std::string, DataTable> data_tables;
 //     std::map<int, std::vector<int>> matches;
 //     std::string name;
 // };
+
+RegType get_key_reg_type(uint32_t key)
+{
+    return (RegType)((key & 0x0F000000) >> 24);
+}
+
+System get_key_sm_name(uint32_t key)
+{
+    return (System)((key&0xf000000)>>28);    
+    
+}
+
+uint16_t get_key_offset(uint32_t key)
+{
+    return key&0xffff;    
+}
+
+uint16_t get_key_zone(uint32_t key)
+{
+    return key&0xFF0000>>16;    
+}
+
+#define RACK_MEM_SIZE (32*1024)
+#define RTOS_MEM_SIZE (64*1024)
+uint8_t* sbmu_mem  = nullptr;
+uint8_t* rack_mem  = nullptr;
+uint8_t* rtos_mem  = nullptr;
+
+uint8_t* get_shm_mem(System sm_name, int rack_num)
+{
+    if(sm_name == System::SBMU)
+        return sbmu_mem;
+    else if(sm_name == System::RACK)
+    {
+        uint32_t offset = RACK_MEM_SIZE * rack_num;
+        return &rack_mem[offset];
+    }
+    else if(sm_name == System::RTOS)
+    {
+        uint32_t offset = RTOS_MEM_SIZE * rack_num;
+        return &rtos_mem[offset];
+    }
+    return nullptr;    
+}
+
+uint16_t set_dataItem(uint32_t key, uint16_t value, int rack_num)
+{
+    // item->key holds the clues
+    RegType reg_type = get_key_reg_type(key);
+    System sm_name = get_key_sm_name(key);
+    uint16_t offset = get_key_offset(key);
+    if (reg_type == RegType::SM16 || reg_type == RegType::SM8)
+    {
+        if (sm_name == System::SBMU)
+        {
+            if(reg_type == RegType::SM8)
+            {
+                uint8_t*shm_mem = get_shm_mem(System::SBMU, rack_num);
+                if(shm_mem)
+                    shm_mem[offset] = uint8_t(value);             
+            }
+            else
+            {
+                uint16_t*shm_mem = (uint16_t*)get_shm_mem(System::SBMU, rack_num);
+                offset /= 2;                
+                if(shm_mem)
+                    shm_mem[offset] = value;             
+            }
+        }
+        else if (sm_name == System::RTOS || sm_name == System::RACK)
+        {
+            if(reg_type == RegType::SM8)
+            {
+                uint8_t*shm_mem = get_shm_mem(sm_name, rack_num);
+                if(shm_mem)
+                    shm_mem[offset]= (uint8_t)value;             
+            }
+            else
+            {
+                uint16_t*shm_mem = (uint16_t*)get_shm_mem(sm_name, rack_num);
+                offset /= 2;                
+                if(shm_mem)
+                    shm_mem[offset] = value;             
+            }
+        }
+    }
+    else if (reg_type == RegType::BITS || reg_type == RegType::COIL || reg_type == RegType::HOLD || reg_type == RegType::INPUT)
+    {
+        if (sm_name == System::SBMU)
+        {
+            //TODO getesmu stuff
+            // or we can use modbus remote get ctx
+            return value;            
+        }
+        else if (sm_name == System::RTOS || sm_name == System::RACK)
+        {
+            //use_rack_mem to switch racks
+            // 
+            // release rackmem
+            return value;            
+        }
+    }
+    return value;
+}
+
+// this will honor mappedkeys just one level
+uint16_t set_dataItem(DataItem* item, uint16_t value, int rack_num)
+{
+    if (item->mappedkeys.size() > 0 )
+    {
+        for ( auto mitem : item->mappedkeys)
+        {
+            set_dataItem(mitem, value, rack_num);
+        }
+        return value;
+    }
+    set_dataItem(item->mykey, value, rack_num);
+    return value;
+}
+
+
+uint16_t get_dataItem(DataItem* item, int rack_num)
+{
+    // item->key holds the clues
+    RegType reg_type = get_key_reg_type(item->mykey);
+    System sm_name = get_key_sm_name(item->mykey);
+    uint16_t offset = get_key_offset(item->mykey);
+    uint16_t val = 0;
+    if (reg_type == RegType::SM16 || reg_type == RegType::SM8)
+    {
+        if (sm_name == System::SBMU)
+        {
+            if(reg_type == RegType::SM8)
+            {
+                uint8_t*shm_mem = get_shm_mem(System::SBMU, rack_num);
+                return (shm_mem[offset]);             
+            }
+            else
+            {
+                uint16_t*shm_mem = (uint16_t*)get_shm_mem(System::SBMU, rack_num);
+                offset /= 2;                
+                return (shm_mem[offset]);             
+            }
+        }
+        else if (sm_name == System::RTOS || sm_name == System::RACK)
+        {
+            if(reg_type == RegType::SM8)
+            {
+                uint8_t*shm_mem = get_shm_mem(sm_name, rack_num);
+                return (shm_mem[offset]);             
+            }
+            else
+            {
+                uint16_t*shm_mem = (uint16_t*)get_shm_mem(sm_name, rack_num);
+                offset /= 2;                
+                return (shm_mem[offset]);             
+            }
+        }
+    }
+    else if (reg_type == RegType::BITS || reg_type == RegType::COIL || reg_type == RegType::HOLD || reg_type == RegType::INPUT)
+    {
+        if (sm_name == System::SBMU)
+        {
+            //TODO getesmu stuff
+            // or we can use modbus remote get ctx
+            return 0;            
+        }
+        else if (sm_name == System::RTOS || sm_name == System::RACK)
+        {
+            //use_rack_mem to switch racks
+            // 
+            // release rackmem
+            return 0;            
+        }
+    }
+    return 0xFFFF;
+}
+
 // tested
 int str_to_offset(const std::string& offset_str) {
     int neg = 1;
@@ -167,26 +353,6 @@ int str_to_offset(const std::string& offset_str) {
         throw;
     }
 }
-
-// // Function to trim whitespace from both ends of a string
-// std::string trim(const std::string& str) {
-//     size_t first = str.find_first_not_of(' ');
-//     if (first == std::string::npos) return "";
-
-//     size_t last;
-    
-//     last = str.find_last_not_of('\n');
-//     str.substr(first, (last - first + 1));
-
-//     last = str.find_last_not_of('\r');
-//     str.substr(first, (last - first + 1));
-
-//     last = str.find_last_not_of('\a');
-//     str.substr(first, (last - first + 1));
-
-//     last = str.find_last_not_of(' ');
-//     return str.substr(first, (last - first + 1));
-// }
 // Function to trim whitespace and specific control characters from both ends of a string
 std::string trim(const std::string& str) {
     auto is_not_trim_char = [](char c) {
@@ -433,13 +599,14 @@ void ShowConfigDataList(const ConfigDataList& data) {
 
 
 //data/sbmu_mapping.txt
-
+// deprecated
 int test_data_map(std::string& fileName) {
 
     load_data_map(fileName, systems, reverseMap);
     return 0;
 }
 
+// decode sbmu:bits:345 into a compount type
 std::shared_ptr<ConfigItem>find_type(std::string sm_name, std::string reg_type, int offset)
 {
     std::ostringstream tname;
@@ -556,7 +723,7 @@ int test_item_sort() {
 
     return 0;
 }
-
+// merge into grpups for comsequative sets / gets
 void splitIntoGroups(const std::vector<std::shared_ptr<ConfigItem>>& sortedItems) {
     std::list<std::vector<std::shared_ptr<ConfigItem>>> groups;
     std::vector<std::shared_ptr<ConfigItem>> currentGroup;
@@ -595,6 +762,7 @@ void splitIntoGroups(const std::vector<std::shared_ptr<ConfigItem>>& sortedItems
 
 
 // show the whole thing
+// we may not use these  since the dataitem type may overrule the whole thing
 int show_data_map() {
 
     for (const auto& system : systems) {
@@ -1729,6 +1897,8 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     log_close();
 }
 
+
+// load up the memory map 
 std::map<std::string, DataTable> parse_definitions(const std::string& filename) {
     std::map<std::string, DataTable> tables;
     std::ifstream file(filename);
@@ -1747,6 +1917,9 @@ std::map<std::string, DataTable> parse_definitions(const std::string& filename) 
         if (trimmed.empty() || trimmed[0] == '#') continue; // Skip comments and empty lines
 
         if (std::regex_search(trimmed, match, table_pattern)) {
+            // System match[1].str()
+            // Regtype match[2].str()
+            // offset match[3].str()
             current_table = match[1].str() + ":" + match[2].str();
             current_offset = std::stoi(match[3].str());
             tables[current_table] = {current_offset, {}, 0};
@@ -1770,8 +1943,9 @@ std::map<std::string, DataTable> parse_definitions(const std::string& filename) 
                 throw std::runtime_error("Offset mismatch for " + name + " in table " + current_table);
             }
         }
-
-        tables[current_table].items.push_back({name, offset, size});
+        // System/Regtype in current_table
+        DataItem item(name, offset, size);
+        tables[current_table].items.push_back(item);
         tables[current_table].calculated_size += size;
     }
 
@@ -1959,6 +2133,78 @@ void start_server(int port, QueryHandler query_handler, std::map<std::string, Da
     }
 
     close(server_fd);
+}
+
+
+DataItemManager manager;
+
+// Function to parse the input string into table_key and name
+std::pair<std::string, std::string> parseKeyAndName(const std::string& input) {
+    size_t lastColonPos = input.rfind(':'); // Find the position of the last colon
+    if (lastColonPos == std::string::npos) {
+        // Handle the error case where no colon is found
+        return {"", ""}; // Return empty pair
+    }
+
+    std::string table_key = input.substr(0, lastColonPos);
+    std::string name = input.substr(lastColonPos + 1);
+
+    return {table_key, name};
+}
+
+DataItem* find_key_name(const std::string& input) {
+    auto [table_key, name] = parseKeyAndName(input);
+    auto& items = data_tables.at(table_key).items;
+    for (auto& item : items) {
+        if (item.name == name) {
+            return &item; 
+        }
+    }
+    return nullptr;
+}
+
+int run_mapper() {
+    // Assuming JSON data is stored in a file called "mapping.json"
+    std::ifstream json_file("mapping.json");
+    nlohmann::json json_data;
+    json_file >> json_data;
+
+    //std::vector<int> mappedItems; // This vector will store destination keys
+
+    // Process each entry in the JSON array
+    for (const auto& entry : json_data) {
+        MappingEntry mapping;
+        mapping.src = entry["src"];
+        mapping.dest = entry["dest"];
+        mapping.size = entry["size"];
+        mapping.method = entry["method"];
+
+        //auto [table_key, name] = parseKeyAndName(mapping.src);
+
+// sbmu:hold:at_single_charge_temp_over",
+// we need the table_key sbmu:hold
+// we need the name at_single_charge_temp_over
+// look in 
+//std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables) {
+
+        //int srcKey = manager.registerItem(mapping.src);
+        //int destKey = manager.registerItem(mapping.dest);
+
+        DataItem* msrc = find_key_name(mapping.src);
+        DataItem* mdest = find_key_name(mapping.dest); 
+        if(msrc && mdest)
+        {
+            msrc->mappedkeys.push_back(mdest->mykey);
+        }
+
+        // Assuming you link the destination key with the source key somehow
+        //mappedItems.push_back(destKey);
+
+        // Process each mapping as needed
+        std::cout << "Mapped " << mapping.src << " to " << mapping.dest << " with method " << mapping.method << std::endl;
+    }
+
+    return 0;
 }
 
 int test_server(std::map<std::string, DataTable>) {

@@ -25,17 +25,149 @@
 
 using json = nlohmann::json;
 
+
+enum class System {
+    SBMU, RTOS, RACK, UNKNOWN
+};
+
+enum class RegType {
+    BITS, HOLD, INPUT, COIL, SM8, SM16, UNKNOWN
+};
+
+// Convert string to enum for System and RegType
+System stringToSystem(const std::string& str) {
+    if (str == "sbmu") return System::SBMU;
+    if (str == "rtos") return System::RTOS;
+    if (str == "rack") return System::RACK;
+    return System::UNKNOWN;
+}
+
+RegType stringToRegType(const std::string& str) {
+    if (str == "bits") return RegType::BITS;
+    if (str == "hold") return RegType::HOLD;
+    if (str == "input") return RegType::INPUT;
+    if (str == "coil") return RegType::COIL;
+    if (str == "sm8") return RegType::SM8;
+    if (str == "sm16") return RegType::SM16;
+    return RegType::UNKNOWN;
+}
+
+// struct DataItem {
+//     std::string name;
+//     int offset;
+//     int size;
+// };
 struct DataItem {
+    std::string system_name;
+    std::string reg_type_name;
+    System system;
+    RegType reg_type;
     std::string name;
     int offset;
     int size;
+    uint32_t mykey;      // Unique numeric key
+    std::vector<uint32_t> mappedkeys;  // Key for mapping to another DataItem
+
+    DataItem(const std::string& name, int off, int sz)
+    : name(name), offset(off), size(sz) {
+    }
+
+    // Parses type from "system_name:reg_type_name" and updates object properties
+    void setType(const std::string& mytype) {
+        std::istringstream iss(mytype);
+        std::string token;
+        std::vector<std::string> tokens;
+        
+        while (getline(iss, token, ':')) {
+            tokens.push_back(token);
+        }
+
+        if (tokens.size() >= 2) {
+            system_name = tokens[0];
+            reg_type_name = tokens[1];
+            system = stringToSystem(system_name);
+            reg_type = stringToRegType(reg_type_name);
+
+            // Optionally handle offset if provided
+            if (tokens.size() > 2) {
+                offset = std::stoi(tokens[2]);
+            }
+            computeKey();
+        } else {
+            std::cerr << "Invalid type format. Expected format 'system:reg_type[:offset]'" << std::endl;
+        }
+    }
+
+    DataItem(const std::string& sys, const std::string& reg, const std::string& nm, int off, int sz)
+    : system_name(sys), reg_type_name(reg), name(nm), offset(off), size(sz) {
+        system = stringToSystem(sys);
+        reg_type = stringToRegType(reg);
+        computeKey();
+    }
+
+    void computeKey() {
+        // Compute a unique key using system and reg_type enums and offset
+        // Adjust multipliers as needed to ensure unique keys
+        mykey = static_cast<uint32_t>((int)system<<28)+ static_cast<uint32_t>((int)reg_type << 24) + (offset&0xffff);
+    }
 };
+
+// we  keep a record of data items
+// but only if the items are mapped 
+typedef std::unordered_map<uint32_t, std::shared_ptr<DataItem>> DataItemMap;
+
+// used to map the src and destinations when sbmu has to set one or more values via a map
+// [
+//   { "src": "sbmu:hold:at_single_charge_temp_over", "dest": "rtos:hold:at_single_charge_temp_over", "size": 4, "method": "trans4" },
+//   { "src": "sbmu:hold:at_single_charge_temp_under", "dest": "rtos:hold:at_single_charge_temp_under", "size": 4, "method": "trans4" }
+// ]
+
+
+struct MappingEntry {
+    std::string src;
+    std::string dest;
+    int size;
+    std::string method;  // thise mapping entries allow us to use a different method if needed
+    uint32_t srckey;
+    uint32_t destkey;
+};
+
+class DataItemManager {
+private:
+    DataItemMap items;
+public:
+
+    void addItem(const std::shared_ptr<DataItem>& item) {
+        item->computeKey(); // Ensure key is calculated
+        items[item->mykey] = item;
+    }
+
+    std::shared_ptr<DataItem>getItem(uint32_t key) {
+        auto it = items.find(key);
+        if (it != items.end()) {
+            return it->second;
+        }
+        return nullptr; // Return nullptr if not found
+    }
+
+    void displayItems() {
+        for (auto& pair : items) {
+            std::cout << "Key: " << pair.first << ", Name: " << pair.second->name << std::endl;
+        }
+    }
+};
+
+
+
 // struct DataItem {
 //     std::string name;
 //     int offset;
 // }
+
 struct DataTable {
     int base_offset;
+    //uint32_t basekey;      // base_key derived from system + regtype but we may not use htis since we compose
+
     std::vector<DataItem> items;
     int calculated_size;
 };
@@ -88,7 +220,6 @@ struct VectorHash {
         return hash;
     }
 };
-
 
 
 class ModbusClient {
