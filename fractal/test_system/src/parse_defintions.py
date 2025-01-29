@@ -57,10 +57,8 @@ def verify_offsets(data_definition):
     last_offset = -1  # Initialize to -1 to handle the first offset check correctly.
     
     for line in lines:
-        print(line)
+        #print(line)
         parts = line.split(':')
-        if len(parts)  < 2:
-            continue
         name = parts[0]
         offset = int(parts[1])
         size = int(parts[2]) if len(parts) > 2 else 1
