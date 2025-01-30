@@ -326,6 +326,139 @@ uint16_t get_dataItem(DataItem* item, int rack_num)
     return 0xFFFF;
 }
 
+
+// struct TransItem {
+//     std::string src_str;
+//     std::string meth_str;
+//     std::string dest_str;
+//     std::string lim_str;    // where we find the limits if there are any , used in the 3lim method 
+//     std::string name;
+// };
+
+// Define how to serialize TransItem to JSON
+void to_json(nlohmann::json& j, const TransItem& item) {
+    j = nlohmann::json{
+        {"src", item.src_str},
+        {"meth", item.meth_str},
+        {"dest", item.dest_str},
+        {"lim", item.lim_str},
+        {"name", item.name}
+    };
+}
+
+std::string TransItemtoJsonString(const TransItem& item)
+{
+    json js;
+    js = item;
+    return js.dump();
+}
+
+
+// transfer Items
+std::vector<TransItem> sbms_trans = {
+	{"rtos:bits:total_undervoltage", "3sum",     "sbmu:bits:1",   "none",    "total_undervoltage"},
+	{"rtos:bits:total_overvoltage", "3sum",     "sbmu:bits:4",   "none",    "total_overvoltage"},
+	{"internal", "calc",     "sbmu:bits:esbcm_lost_comms",  "none",    "ESBCM_lost_communication"},
+	{"rtos:bits:insulation_low", "3lim_max", "sbmu:bits:10",  "low_resistance"},
+	{"rack:input:117", "3lim_min", "sbmu:bits:13",  "sbmu:hold:121",  "module_low_temp"},
+	{"rack:input:117", "3lim_max", "sbmu:bits:16",  "sbmu:hold:122",  "module_high_temp"},
+	{"rack:input:125", "min", 		"sbmu:input:8",  "sbmu:input:10",  "max_battery_voltage"},
+	{"rack:input:123", "max", 		"sbmu:input:9",  "sbmu:input:11",  "min_battery_voltage"},
+	{"rack:input:101", "sum", 		"sbmu:input:33",  "none",  "max_charge_power"},
+	{"rack:input:102", "sum", 		"sbmu:input:32",  "none",   "max_discharge_power"},
+	{"rack:input:105", "sum", 		"sbmu:input:35",  "none",  "max_charge_current"},
+	{"rack:input:106", "sum", 		"sbmu:input:34",  "none",  "max_discharge_current"},
+	{"rack:input:-1",  "count",     "sbmu:input:36",  "none",   "num_daily_charges"},
+	{"rack:input:-1",  "count",     "sbmu:input:37",  "none",   "num_daily_discharges"},
+
+};
+
+// name_mappings = {
+//     'State': 'status',
+//     'Max_Allowed_Charge_Power': 'chargeable_power',
+//     'Max_Allowed_Discharge_Power':'dischargeable_power',
+
+//     'Max_Charge_Voltage':'chargeable_volt',
+//     'Max_Discharge_Voltage':'dischargeable_volt',
+
+//     'Max_Charge_Current':'chargeable_current',
+//     'Max_Discharge_Current':'dischargeable_current',
+
+//     'DI1':"di1",
+//     'DI2':"di2",
+//     'DI3':"di3",
+//     'DI4':"di4",
+//     'DI5':"di5",
+//     'DI6':"di6",
+//     'DI7':"di7",
+//     'DI8':"di8",
+
+//     'Max_cell_voltage':'max_voltage',
+//     'Max_cell_voltage_number':'max_voltage_num',
+//     'Min_cell_voltage':'min_voltage',
+//     'Min_cell_voltage_number':'min_voltage_num',
+//     'Max_cell_temperature': 'max_temp',
+//     'Max_cell_temperature_number':'max_temp_num',
+//     'Min_cell_temperature': 'min_temp',
+//     'Min_cell_temperature_number':'min_temp_num',
+//     'Max_cell_SOC':'max_soc',
+//     'Max_cell_SOC_number':'max_soc_num',
+//     'Min_cell_SOC':'min_soc',
+//     'Min_cell_SOC_number':'min_soc_num',
+//     'SOC':'soc',
+//     'SOH':'soh',
+//     'Average_cell_voltage':'avg_voltage',
+//     'Average_cell_temperature':'avg_temp',
+
+//     'Accumulated_charge_capacity':'total_charge_cap',
+//     'Accumulated_discharge_capacity':'total_discharge_cap'
+
+// }
+
+
+std::vector<TransItem> sbms_set = {
+	{"sbmu:input:100",                             "into",          "rtos:input:8",   "none",    "Status"},
+	{"sbmu:input:101",                             "into",          "rtos:input:152",   "none",    "chargeable_power"},
+	{"sbmu:input:102",                             "into",          "rtos:input:153",   "none",    "dischargeable_power"},
+	{"sbmu:input:103",                             "into2",         "rtos:input:150",   "TODO",    "charge_volt"},
+	{"sbmu:input:105",                             "into2",         "rtos:input:150",   "TODO",    "charge_current"},
+	{"sbmu:input:103",                             "into2",         "rtos:input:150",   "TODO",    "discharge_volt"},
+	{"sbmu:input:105",                               "into2",       "rtos:input:150",   "TODO",    "discharge_current"},
+    {"sbmu:hold:1111:cluster_control_data_eq_ctrl",  "into_rack",   "rtos:hold:111:cluster_control_data_eq_ctrl","TODO", "contactor_control"},
+    {"sbmu:hold:1099:ctrl_cmd_mode",                 "into_rack",  "rtos:hold:99:ctrl_cmd_mode", "TODO","contactor_mode"},
+    {"sbmu:hold:1104:g_socsohsetno",                 "into_rack",  "rtos:hold:104:g_socsohsetno""TODO","set_soc_soh_no"},
+    {"sbmu:hold:1105:g_socsohsetval",                 "into_rack", "rtos:hold:105:g_socsohsetval""TODO","set_soc_soh_val"}
+};
+
+
+std::map<std::string, TransItemTable>trans_tables;
+
+void register_trans()
+{
+    TransItemTable sbms_entry;
+    sbms_entry.name = "sbms_trans";
+    sbms_entry.desc = "Activated when the sbms receives an input from the racks";
+    sbms_entry.items = sbms_trans;  // Ensure `sbms_trans` is a valid vector of `TransItem`
+    trans_tables["sbms_trans"] = sbms_entry;
+    TransItemTable sbms_set_entry;
+    sbms_set_entry.name = "sbms_set";
+    sbms_set_entry.desc = "Activated when the sbms recieves a set val for a rack item";
+    sbms_set_entry.items = sbms_set;  // Ensure `sbms_trans` is a valid vector of `TransItem`
+    trans_tables["sbms_set"] = sbms_set_entry;
+
+}
+
+std::vector<std::string> StringWords(const std::string& str) {
+    std::istringstream iss(str);
+    std::vector<std::string> words;
+    std::string word;
+    // Extract words from the stream, ignoring extra spaces automatically
+    while (iss >> word) {
+        words.push_back(word);
+    }
+    return words;
+}
+
 // tested
 int str_to_offset(const std::string& offset_str) {
     int neg = 1;
@@ -1899,8 +2032,8 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 
 
 // load up the memory map 
-std::map<std::string, DataTable> parse_definitions(const std::string& filename) {
-    std::map<std::string, DataTable> tables;
+void parse_definitions(std::map<std::string, DataTable>& tables, const std::string& filename) {
+    //std::map<std::string, DataTable> tables;
     std::ifstream file(filename);
     std::string line;
     std::regex table_pattern(R"(\[(.+?):(.+?):(\d+)\])");
@@ -1922,7 +2055,11 @@ std::map<std::string, DataTable> parse_definitions(const std::string& filename) 
             // offset match[3].str()
             current_table = match[1].str() + ":" + match[2].str();
             current_offset = std::stoi(match[3].str());
-            tables[current_table] = {current_offset, {}, 0};
+            if(tables.find(current_table) == tables.end())
+            {
+                std::cout << "creating a new table [" <<current_table<<"]" << std::endl;
+                tables[current_table] = DataTable(current_offset);
+            }
             continue;
         }
 
@@ -1940,7 +2077,11 @@ std::map<std::string, DataTable> parse_definitions(const std::string& filename) 
         if (!tables[current_table].items.empty()) {
             int expected_offset = tables[current_table].base_offset + tables[current_table].calculated_size;
             if (offset != expected_offset) {
-                throw std::runtime_error("Offset mismatch for " + name + " in table " + current_table);
+                std::cout <<"Offset mismatch for " <<name << " in table " << current_table
+                << " actual offset " << offset << " expected " << expected_offset 
+                << " diff :" <<offset - expected_offset<< std::endl;
+                tables[current_table].calculated_size += (offset - expected_offset);
+                //throw std::runtime_error("Offset mismatch for " + name + " in table " + current_table);
             }
         }
         // System/Regtype in current_table
@@ -1949,7 +2090,7 @@ std::map<std::string, DataTable> parse_definitions(const std::string& filename) 
         tables[current_table].calculated_size += size;
     }
 
-    return tables;
+    return;
 }
 
 bool verify_offsets(const std::map<std::string, DataTable>& tables) {
@@ -1981,82 +2122,205 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
         parts.push_back(part);
     }
 
-    std::cout << " Query ["<<query<<"] parts size :"<<parts.size() << std::endl;
-    if ( parts[0] == "help")
+    std::cout << " Query ["<<query<<"] parts size "<<parts.size() << std::endl;
+    if (parts.size() > 0)
     {
-        return " basic help \n";
-    }
-    else if ( parts[0] == "tables")
-    {
-        std::ostringstream oss;
-
-        for (const auto& table_pair : data_tables) {
-                oss << table_pair.first << std::endl;
+        auto swords = StringWords(query);
+        std::cout << " swords size " << swords.size() << std::endl;
+        std::cout << " parts[0] " << parts[0] << std::endl;
+        if ( swords[0] == "help")
+        {
+            std::ostringstream oss;
+            oss <<"help :-\n";
+            oss <<"      show - show stuff\n";
+            oss <<"      json - show stuff as json\n";
+            oss <<"      tables - show tables\n";
+            oss <<"      find - items by offset or name match\n"; 
+            oss <<"      get(todo)  - get a value , define the dest by name or table:offset\n";
+            oss <<"      set(todo)  - set a value , define the dest by name or table:offset\n";
+            return oss.str();
         }
-        return oss.str();
-    }
-    else if ( parts[0] == "show")
-    {
-        std::ostringstream oss;
+        else if ( swords[0] == "tables")
+        {
+            std::ostringstream oss;
 
-        for (const auto& table_pair : data_tables) {
-            oss << table_pair.first << std::endl;
-            for (const auto& table_item : table_pair.second.items) {
-                oss <<"    name: "<< table_item.name 
-                    << " offset: "  << table_item.offset 
-                    << " size: "  << table_item.size 
+            for (const auto& table_pair : data_tables) {
+                int total_size = 0;
+                for (auto & item : table_pair.second.items){
+                    if(item.name[0] != '_')
+                        total_size += item.size;
+                }
+                oss << table_pair.first 
+                    << " number of items :"
+                    << total_size
                     << std::endl;
             }
+            return oss.str();
         }
-        return oss.str();
-    }
-    else if ( parts[0] == "json")
-    {
-        const int nameFieldWidth = 48; // Desired width for the name field
-        std::ostringstream oss;
-        oss << "[";
-        bool tfirst = true;
-        for (const auto& table_pair : data_tables) {
-            if (!tfirst) 
+        else if ( swords[0] == "show")
+        {
+            if (swords.size() > 1)
             {
-                oss << ",\n";
-            }
-            else
-            {
-                tfirst =  false;
-                oss << "\n";
-            }
-                
-            oss << "   { \"table\": \""
-            << table_pair.first << "\", \"items\":[";
-            bool first = true;
-            for (const auto& table_item : table_pair.second.items) {
-                if (!first) {
-                    oss << ",\n";
-                }
-                else
+                if (swords[1] == "tables")
                 {
-                    first =  false;
-                    oss << "\n";
+                    std::ostringstream oss;
+
+                    for (const auto& table_pair : data_tables) {
+                        oss << table_pair.first << std::endl;
+                        for (const auto& table_item : table_pair.second.items) {
+                            oss <<"    name: "<< table_item.name 
+                                << " offset: "  << table_item.offset 
+                                << " size: "  << table_item.size 
+                                << std::endl;
+                        }
+                    }
+                    return oss.str();
                 }
-
-                int spacesNeeded = nameFieldWidth - table_item.name.length(); // Calculate the number of spaces needed
-                if (spacesNeeded < 0) spacesNeeded = 0; // Ensure no negative values
-                std::string spaces(spacesNeeded, ' '); // Create a string of spaces
-
-                //oss <<"     {\"name\":" << std::left << std::setw(32)<< "\""<< table_item.name 
-                oss <<"     {\"name\":"<< spaces << "\""<< table_item.name 
-                    << "\", \"offset\": "  << table_item.offset 
-                    << ", \"size\": "  << table_item.size 
-                    << "}" ;//<< std::endl;
             }
-            oss << "\n     ]\n   }";
-
+            std::ostringstream oss;
+            oss <<"show :-\n";
+            oss <<"      tables - show all the data point tables\n";
+            return oss.str();
         }
-        oss << "]\n";
-        return oss.str();
-    }
+        else if ( swords[0] == "json")
+        {
+            if (swords.size() > 1)
+            {
+                //std::vector<TransItem> sbms_trans 
+                if (swords[1] == "trans")
+                {
+                    std::ostringstream oss;
+                    bool first = true;
+                    oss << "[";
+                    // sbms_trans needs to be registered into trans_tables
+                    for (const auto& table_item : trans_tables) {
+                        if (!first) 
+                        {
+                            oss << ",\n";
+                        }
+                        else
+                        {
+                            first =  false;
+                            oss << "\n";
+                        }
+                            
+                        oss << "   { \"table\": \""<< table_item.first << "\"," 
+                            << "\"desc\": \""<< table_item.second.desc << "\",\n"
+                            << "   \"items\":[";
+                        bool tfirst = true;
+                        //oss << "\n    [\n";
+                        for (const auto& trans : table_item.second.items) {
+                            if (!tfirst) 
+                            {
+                                oss << ",\n";
+                            }
+                            else
+                            {
+                                tfirst =  false;
+                                oss << "\n";
+                            }
+                             oss <<  "      " << TransItemtoJsonString(trans);
+                        }
+                        oss << "\n     ]\n  }";
+                    }
+                    oss << "\n]\n";
+                    return oss.str();
+                }
+                else if (swords[1] == "tables")
+                {
+                    const int nameFieldWidth = 48; // Desired width for the name field
+                    std::ostringstream oss;
+                    oss << "[";
+                    bool tfirst = true;
+                    for (const auto& table_pair : data_tables) {
+                        if (!tfirst) 
+                        {
+                            oss << ",\n";
+                        }
+                        else
+                        {
+                            tfirst =  false;
+                            oss << "\n";
+                        }
+                            
+                        oss << "   { \"table\": \""
+                        << table_pair.first << "\", \"items\":[";
+                        bool first = true;
+                        for (const auto& table_item : table_pair.second.items) {
+                            if (!first) {
+                                oss << ",\n";
+                            }
+                            else
+                            {
+                                first =  false;
+                                oss << "\n";
+                            }
 
+                            int spacesNeeded = nameFieldWidth - table_item.name.length(); // Calculate the number of spaces needed
+                            if (spacesNeeded < 0) spacesNeeded = 0; // Ensure no negative values
+                            std::string spaces(spacesNeeded, ' '); // Create a string of spaces
+
+                            //oss <<"     {\"name\":" << std::left << std::setw(32)<< "\""<< table_item.name 
+                            oss <<"     {\"name\":"<< spaces << "\""<< table_item.name 
+                                << "\", \"offset\": "  << table_item.offset 
+                                << ", \"size\": "  << table_item.size 
+                                << "}" ;//<< std::endl;
+                        }
+                        oss << "\n     ]\n   }";
+
+                    }
+                    oss << "]\n";
+                    return oss.str();
+                }
+            }
+            {
+                std::ostringstream oss;
+                oss <<"json :-\n";
+                oss <<"      tables - show all the data point tables\n";
+                oss <<"      trans  - show all the transfer tables\n";
+                return oss.str();
+            }
+        }
+        else if ( swords[0] == "find")
+        {
+            std::ostringstream oss;
+            if (swords.size() > 1)
+            {
+                if (swords[1] == "name"  && swords.size() > 2) 
+                {
+                    for (const auto& table_pair : data_tables) {
+                        for (const auto& table_item : table_pair.second.items) {
+                            if(table_item.name.find(swords[2]) != std::string::npos) {
+                                oss << table_pair.first << ":"
+                                    << table_item.offset << ":"
+                                    << table_item.name << "\n";
+                            }
+                        }
+                    }
+                }
+                else if (swords[1] == "offset"  && swords.size() > 2) 
+                {
+                    int offset = str_to_offset(swords[2]);
+                    for (const auto& table_pair : data_tables) {
+                        for (const auto& table_item : table_pair.second.items) {
+                            if(table_item.offset == offset) {
+                                oss << table_pair.first << ":"
+                                    << table_item.offset << ":"
+                                    << table_item.name << "\n";
+                            }
+                        }
+                    }
+                }
+            }
+            if (oss.str().empty())
+            {
+                oss << " find :-\n";
+                oss << "   name <name>: find item by name \n";
+                oss << "   offset <offset>: find item by offset \n";
+            }
+            return oss.str();
+        }
+    }
     if (parts.size() < 2) {
         return "Invalid query format. Use 'table:query' format.\n";
     }
@@ -2326,7 +2590,7 @@ int test_parse() {
         //     return 1;
         // }
         auto data_file = "src/data_definition.txt";
-        data_tables = parse_definitions(data_file);
+        parse_definitions(data_tables, data_file);
         for (const auto& table_pair : data_tables) {
             const auto& table = table_pair.second;
             std::cout << "Table " << table_pair.first << " starts at offset " << table.base_offset << std::endl;
@@ -2353,7 +2617,6 @@ int test_parse() {
     std::cout << handle_query("rtos:input 26", data_tables) << std::endl;
     std::cout << handle_query("rtos:input:26", data_tables) << std::endl;
     std::cout << handle_query("sbmu:bits 200-205",       data_tables) << std::endl;
-    test_server(data_tables);
     return 0;
 }
 
@@ -2365,12 +2628,14 @@ int test_parse() {
 void test_str_to_offset();
 void test_decode_name();
 void test_match_system();
+void test_StringWords();
 int test_modbus(const std::string& ip, int port );
 
 #include <fractal_test_unit_test.cpp>
 
 // Main Function
 int main(int argc, char* argv[]) {
+
     std::ostringstream filename;
 
   
@@ -2384,6 +2649,8 @@ int main(int argc, char* argv[]) {
         std::string dataMap = argv[2];
         dataMap="data/sbmu_mapping.txt";
         test_data_map(dataMap);
+        register_trans();
+
         show_data_map();
         ConfigDataList configData;
 
@@ -2393,6 +2660,7 @@ int main(int argc, char* argv[]) {
         test_str_to_offset();
         test_decode_name();
         test_match_system();
+        test_StringWords();
 
         std::cout << "testing modbus ..." << std::endl;
         test_modbus("192.168.86.209", 5000);
@@ -2405,6 +2673,9 @@ int main(int argc, char* argv[]) {
         std::cout << "\n\n**************************************"<<std::endl;
 
         test_parse() ;
+
+        test_server(data_tables);
+
 
         // assert_manager.generate_summary();
         // assert_manager.generate_report();

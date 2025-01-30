@@ -170,6 +170,16 @@ struct DataTable {
 
     std::vector<DataItem> items;
     int calculated_size;
+    DataTable(int current_offset) {
+        base_offset =  current_offset;
+        calculated_size = 0;
+        items.clear();
+    }
+    DataTable() {
+        base_offset = 0;
+        calculated_size = 0;
+        items.clear();
+    }
 };
 
 typedef std::map<std::string, DataTable> DataTables;
@@ -389,6 +399,22 @@ std::ofstream log_file;
         std::filesystem::remove(path); \
     } \
 } while (0)
+
+// transfer items 
+// // Structure definition
+struct TransItem {
+    std::string src_str;
+    std::string meth_str;
+    std::string dest_str;
+    std::string lim_str;    // where we find the limits if there are any , used in the 3lim method 
+    std::string name;
+};
+
+struct TransItemTable {
+    std::string name;
+    std::string desc;
+    std::vector<TransItem> items;    
+};
 
 
 #endif

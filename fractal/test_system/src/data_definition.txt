@@ -29,7 +29,7 @@
  input_IN1:58:1
  input_IN2:59:1
  input_IN3:60:1
- gap:61:9
+ _gap1:61:9
  summary_terminal_over_temp:70:3
  summary_pack_over_voltage:73:3
  summary_pack_under_voltage:76:3
@@ -101,7 +101,7 @@
  single_discharge_overtemp:70:3
  single_discharge_lowtemp:73:3
  soc_over:76:3
- gap:79:47
+ _gap1:79:47
  zero1:126:1
  bmm_charge_vol_d_value:127:3
  cell_discharge_temp_d_value:130:3
@@ -110,7 +110,7 @@
  cluster_circulation_warning:139:1
  zero2:140:1
  hv_sample_volt_diff:141:1
- gap2:142:158
+ _gap2:142:158
  cell_charge_vol:300:1
  cell_discharge_vol:301:1
  cell_charge_vol:302:1
@@ -129,11 +129,11 @@
  cutoff_cell_low_temp:315:1
  cutoff_cluster_charge_cell_temp_d:316:1
  cutoff_cluster_discharge_cell_temp_d:317:1
- gap3:318:682
+ _gap3:318:682
  bmm_lost_status:1000:60
 
 [sbmu:input:0]
-  dummy:0
+ _gap:0
  system_circuit_breaker:1:1
  system_total_voltage:2:1
  system_current:3:1
@@ -229,7 +229,7 @@
  cell_SOH:2391:700
 
 [rtos:input:0]
- dummy:0
+ _gap:0
  rack_voltage:1
   rack_current:2
   soc:3 
@@ -301,7 +301,7 @@
  total_fault_num:77
  fault_num:78
  fault_data:79:18
- dummy:97:33
+ _gap1:97:33
  remaining_capacity:130
  limit_temp_work_time:131
  limit_temp_chg_time:132
@@ -335,7 +335,7 @@ remining_round_trip_eff:148:1
  charge_temp_2:169
  charge_temp_3:170
  charge_temp_4:171
-  dummy_2:172:28
+  _gap2:172:28
 comm_version_m:200
 comm_version_c:201
 soft_version_10:202
@@ -343,7 +343,7 @@ proj_version:203
 soft_version_13:204
 soft_version_14:205
 soft_version_15:206
-zero:207
+_gap_zero:207
 soft_version_0:208
 soft_version_1:209
 soft_version_2:210
@@ -354,27 +354,27 @@ soft_version_6:214
 soft_version_7:215
 soft_version_8:216
 soft_version_9:217
-dummy4:218:282
+_gap3:218:282
 pole_temp:500:100
-dummy5:600:400
+_gap4:600:400
 battery_volts:1000:480
-gap1:1480:520
+_gap5:1480:520
 battery_temp:2000:480
-gap2:2480:520
+_gap6:2480:520
 battery_soc:3000:480
-gap3:3480:520
+_gap7:3480:520
 battery_soh:4000:480
-gap3:4480:1520
+_gap8:4480:1520
 battery_res:6000:480
-gap4:6480:520
+_gap9:6480:520
 battery_balance_sts:7000:60
 battery_volt_wire_lost_sts:7060:30
 battery_temp_wire_lost_sts:7090:30
-dummy6:7120:30
-dummy7:7150:480
-dummy8:7630:370
+_gap10:7120:30
+_gap11:7150:480
+_gap12:7630:370
 fault_record:8000:900
-dummy9:8900:1100
+_gap13:8900:1100
 version:10000:600
 
 [sbmu:hold:500]
@@ -392,7 +392,7 @@ version:10000:600
  heartbeat:530:1
 
 [sbmu:hold:1000]
- dummy:1000:1
+ _gap1:1000:1
  at_total_v_over:1001:4
  at_total_v_under:1005:4
  at_discharge_curr_over:1009:4
@@ -437,17 +437,17 @@ version:10000:600
  total_bmm_num:1123:1
  single_bmm_bat_num:1124:48
  single_bmm_temp_num:1172:48
- dummy3:1220:8
+ _gap2:1220:8
  battery_self_discharge_rates:1228:1
  battery_mfg_date:1229:3
  power_station_operational_date:1232:3
  battery_full_equ_cycles_num:1235:1
- dummy:1236:65
+ _gap3:1236:65
  at_cell_discharge_temp_diff_over:1301:4
  at_cell_charge_temp_diff_over:1305:4
  at_bmm_charge_total_volt_diff_over:1309:4
  at_bmm_discharge_total_volt_diff_over:1313:4
- dummy2:1317:184
+ _gap4:1317:184
  Cell_Charge_End_Volt_Start:1501:1
  Cell_Charge_End_Volt_Over:1502:1
  Cell_Discharge_End_Volt_Start:1503:1
@@ -456,14 +456,14 @@ version:10000:600
  Module_Charge_End_Volt_Over:1506:1
  Module_Discharge_End_Volt_Start:1507:1
  Module_Discharge_End_Volt_Over:1508:1
- Module_Voltage_Diff_Charge_End_Volt_Start:1509:1
- Module_Voltage_Diff_Charge_End_Volt_Over:1510:1
- Module_Voltage_Diff_Discharge_End_Volt_Start:1511:1
- Module_Voltage_Diff_Discharge_End_Volt_Over:1512:1
- Cluster_Voltage_Diff_Charge_End_Volt_Start:1513:1
- Cluster_Voltage_Diff_Charge_End_Volt_Over:1514:1
- Cluster_Voltage_Diff_Discharge_End_Volt_Start:1515:1
- Cluster_Voltage_Diff_Discharge_End_Volt_Over:1516:1
+ Module_Volt_Diff_Charge_End_Volt_Start:1509:1
+ Module_Volt_Diff_Charge_End_Volt_Over:1510:1
+ Module_Volt_Diff_Discharge_End_Volt_Start:1511:1
+ Module_Volt_Diff_Discharge_End_Volt_Over:1512:1
+ Cluster_Volt_Diff_Charge_End_Volt_Start:1513:1
+ Cluster_Volt_Diff_Charge_End_Volt_Over:1514:1
+ Cluster_Volt_Diff_Discharge_End_Volt_Start:1515:1
+ Cluster_Volt_Diff_Discharge_End_Volt_Over:1516:1
  Cluster_Charge_Cell_Range_End_Volt_Start:1517:1
  Cluster_Charge_Cell_Range_End_Volt_Over:1518:1
  Cluster_Discharge_Cell_Range_End_Volt_Start:1519:1
@@ -484,7 +484,7 @@ version:10000:600
  Cluster_Discharge_Cell_temp_Diff_Over_10:1534:1
 
 [rtos:hold:0]
- dummy:0:1
+ _gap1:0:1
  at_total_v_over:1:4
  at_total_v_under:5:4
  at_discharge_curr_over:9:4
@@ -504,8 +504,8 @@ version:10000:600
  at_single_discharge_temp_over:61:4
  at_single_discharge_temp_under:65:4
  at_single_soc_over:69:4
- value10:73:3
- value0:76:23
+ _gap_10:73:3
+ _gap_0:76:23
  ctrl_cmd_mode:99:1
  upDown_ctrl_cmd:100:1
  gpio_do_read:101:1
@@ -529,17 +529,17 @@ version:10000:600
  total_bmm_num:123:1
  single_bmm_bat_num:124:48
  single_bmm_temp_num:172:48
- dummy3:220:8
+ _gap2:220:8
  battery_self_discharge_rates:228:1
  battery_mfg_date:229:3
  power_station_operational_date:232:3
  battery_full_equ_cycles_num:235:1
- dummy:236:65
+ _gap3:236:65
  at_cell_discharge_temp_diff_over:301:4
  at_cell_charge_temp_diff_over:305:4
  at_bmm_charge_total_volt_diff_over:309:4
  at_bmm_discharge_total_volt_diff_over:313:4
- dummy2:317:184
+ _gap4:317:184
  Cell_Charge_End_Volt_Start:501:1
  Cell_Charge_End_Volt_Over:502:1
  Cell_Discharge_End_Volt_Start:503:1
@@ -548,14 +548,14 @@ version:10000:600
  Module_Charge_End_Volt_Over:506:1
  Module_Discharge_End_Volt_Start:507:1
  Module_Discharge_End_Volt_Over:508:1
- Module_Voltage_Diff_Charge_End_Volt_Start:509:1
- Module_Voltage_Diff_Charge_End_Volt_Over:510:1
- Module_Voltage_Diff_Discharge_End_Volt_Start:511:1
- Module_Voltage_Diff_Discharge_End_Volt_Over:512:1
- Cluster_Voltage_Diff_Charge_End_Volt_Start:513:1
- Cluster_Voltage_Diff_Charge_End_Volt_Over:514:1
- Cluster_Voltage_Diff_Discharge_End_Volt_Start:515:1
- Cluster_Voltage_Diff_Discharge_End_Volt_Over:516:1
+ Module_Volt_Diff_Charge_End_Volt_Start:509:1
+ Module_Volt_Diff_Charge_End_Volt_Over:510:1
+ Module_Volt_Diff_Discharge_End_Volt_Start:511:1
+ Module_Volt_Diff_Discharge_End_Volt_Over:512:1
+ Cluster_Volt_Diff_Charge_End_Volt_Start:513:1
+ Cluster_Volt_Diff_Charge_End_Volt_Over:514:1
+ Cluster_Volt_Diff_Discharge_End_Volt_Start:515:1
+ Cluster_Volt_Diff_Discharge_End_Volt_Over:516:1
  Cluster_Charge_Cell_Range_End_Volt_Start:517:1
  Cluster_Charge_Cell_Range_End_Volt_Over:518:1
  Cluster_Discharge_Cell_Range_End_Volt_Start:519:1

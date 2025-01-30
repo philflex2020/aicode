@@ -1,3 +1,19 @@
+
+void test_StringWords() {
+    bool crash = false;
+    std::string input = "  Hello   world, this is   an example string!  ";
+    std::vector<std::string> words = StringWords(input);
+
+    // // Print each word to verify the result
+    // for (const std::string& word : words) {
+    //     std::cout << "'" << word << "'\n";
+    // }
+    myassert(words.size() == 7,"StringWords_vec_size", crash);
+    myassert(words[2] == "this","StringWords_item", crash);
+
+    return;
+}
+
 void test_str_to_offset() {
     bool crash = false;
     // Test valid decimal input
