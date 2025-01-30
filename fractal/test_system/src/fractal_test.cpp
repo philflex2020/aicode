@@ -1995,6 +1995,67 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
         }
         return oss.str();
     }
+    else if ( parts[0] == "show")
+    {
+        std::ostringstream oss;
+
+        for (const auto& table_pair : data_tables) {
+            oss << table_pair.first << std::endl;
+            for (const auto& table_item : table_pair.second.items) {
+                oss <<"    name: "<< table_item.name 
+                    << " offset: "  << table_item.offset 
+                    << " size: "  << table_item.size 
+                    << std::endl;
+            }
+        }
+        return oss.str();
+    }
+    else if ( parts[0] == "json")
+    {
+        const int nameFieldWidth = 48; // Desired width for the name field
+        std::ostringstream oss;
+        oss << "[";
+        bool tfirst = true;
+        for (const auto& table_pair : data_tables) {
+            if (!tfirst) 
+            {
+                oss << ",\n";
+            }
+            else
+            {
+                tfirst =  false;
+                oss << "\n";
+            }
+                
+            oss << "   { \"table\": \""
+            << table_pair.first << "\", \"items\":[";
+            bool first = true;
+            for (const auto& table_item : table_pair.second.items) {
+                if (!first) {
+                    oss << ",\n";
+                }
+                else
+                {
+                    first =  false;
+                    oss << "\n";
+                }
+
+                int spacesNeeded = nameFieldWidth - table_item.name.length(); // Calculate the number of spaces needed
+                if (spacesNeeded < 0) spacesNeeded = 0; // Ensure no negative values
+                std::string spaces(spacesNeeded, ' '); // Create a string of spaces
+
+                //oss <<"     {\"name\":" << std::left << std::setw(32)<< "\""<< table_item.name 
+                oss <<"     {\"name\":"<< spaces << "\""<< table_item.name 
+                    << "\", \"offset\": "  << table_item.offset 
+                    << ", \"size\": "  << table_item.size 
+                    << "}" ;//<< std::endl;
+            }
+            oss << "\n     ]\n   }";
+
+        }
+        oss << "]\n";
+        return oss.str();
+    }
 
     if (parts.size() < 2) {
         return "Invalid query format. Use 'table:query' format.\n";
@@ -2162,6 +2223,49 @@ DataItem* find_key_name(const std::string& input) {
     }
     return nullptr;
 }
+
+
+// name_mappings = {
+//     'State': 'status',
+//     'Max_Allowed_Charge_Power': 'chargeable_power',
+//     'Max_Allowed_Discharge_Power':'dischargeable_power',
+
+//     'Max_Charge_Voltage':'chargeable_volt',
+//     'Max_Discharge_Voltage':'dischargeable_volt',
+
+//     'Max_Charge_Current':'chargeable_current',
+//     'Max_Discharge_Current':'dischargeable_current',
+
+//     'DI1':"di1",
+//     'DI2':"di2",
+//     'DI3':"di3",
+//     'DI4':"di4",
+//     'DI5':"di5",
+//     'DI6':"di6",
+//     'DI7':"di7",
+//     'DI8':"di8",
+
+//     'Max_cell_voltage':'max_voltage',
+//     'Max_cell_voltage_number':'max_voltage_num',
+//     'Min_cell_voltage':'min_voltage',
+//     'Min_cell_voltage_number':'min_voltage_num',
+//     'Max_cell_temperature': 'max_temp',
+//     'Max_cell_temperature_number':'max_temp_num',
+//     'Min_cell_temperature': 'min_temp',
+//     'Min_cell_temperature_number':'min_temp_num',
+//     'Max_cell_SOC':'max_soc',
+//     'Max_cell_SOC_number':'max_soc_num',
+//     'Min_cell_SOC':'min_soc',
+//     'Min_cell_SOC_number':'min_soc_num',
+//     'SOC':'soc',
+//     'SOH':'soh',
+//     'Average_cell_voltage':'avg_voltage',
+//     'Average_cell_temperature':'avg_temp',
+
+//     'Accumulated_charge_capacity':'total_charge_cap',
+//     'Accumulated_discharge_capacity':'total_discharge_cap'
+
+// }
 
 int run_mapper() {
     // Assuming JSON data is stored in a file called "mapping.json"
