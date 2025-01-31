@@ -1,5 +1,5 @@
-
-[sbmu:bits:0]
+# the inital offset should set the reference 
+[sbmu:bits:1]
  summary_total_undervoltage:0:3
  summary_total_overvoltage:3:3
  summary_overcurrent:6:3

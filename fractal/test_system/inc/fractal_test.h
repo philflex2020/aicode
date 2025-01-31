@@ -25,13 +25,35 @@
 
 using json = nlohmann::json;
 
+// for new id_based stuff , its all in smname 
+// Enums for mem_id
+enum MemId {
+    MEM_NONE = 0,
+    MEM_SBMU = 1,
+    MEM_RACK = 2,
+    MEM_RTOS = 3,
+    MEM_UNKNOWN = 4
+};
 
+// Enums for reg_id
+enum RegId {
+    REG_NONE = 0,
+    REG_BITS = 1,
+    REG_INPUT = 2,
+    REG_HOLD = 3,
+    REG_COIL = 4,
+    REG_SM16 = 5,
+    REG_SM8 = 6
+};
+
+
+//deprecated
 enum class System {
-    SBMU, RTOS, RACK, UNKNOWN
+    NONE, SBMU, RACK, RTOS, UNKNOWN
 };
 
 enum class RegType {
-    BITS, HOLD, INPUT, COIL, SM8, SM16, UNKNOWN
+    NONE, BITS, INPUT, HOLD, COIL, SM16, SM8, UNKNOWN
 };
 
 // Convert string to enum for System and RegType
@@ -231,6 +253,15 @@ struct VectorHash {
     }
 };
 
+struct TransItem;
+
+struct MethStruct {
+    std::string name;
+    std::string desc;
+    // Function signature for methods
+    std::function<int(const TransItem&)> func;
+};
+
 
 class ModbusClient {
 private:
@@ -408,6 +439,9 @@ struct TransItem {
     std::string dest_str;
     std::string lim_str;    // where we find the limits if there are any , used in the 3lim method 
     std::string name;
+    uint32_t src_id;
+    uint32_t dest_id;
+    uint32_t lim_id;
 };
 
 struct TransItemTable {

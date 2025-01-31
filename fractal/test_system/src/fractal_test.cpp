@@ -51,6 +51,9 @@ namespace fs = std::filesystem;
 
 bool debug = false;
 
+std::string g_url("ws://192.168.86.209:9003");
+
+
 // using data keys. we compress sbmu:bits:234[:num] into a var key 
 //    sm_name 4 bits
 //    reg_type 4 bits
@@ -93,6 +96,8 @@ bool debug = false;
 
 std::map<std::string, DataTable> data_tables;
 
+// Map to store method names and their corresponding functions
+std::map<std::string, MethStruct> meth_dict;
 
 //TODO 
 // Integrate test Queries
@@ -352,100 +357,167 @@ std::string TransItemtoJsonString(const TransItem& item)
     js = item;
     return js.dump();
 }
+// maxs
+// rtos:input:11:max_temp_num
+// rtos:input:12:max_temp
+// rtos:input:13:max_temp_mod
+// rtos:input:14:max_temp_module
+// rtos:input:21:max_voltage
+// rtos:input:22:max_mod_volt
+// rtos:input:23:max_mod_volt_num
+// rtos:input:26:max_mod_volt
+// rtos:input:28:max_soc
+// rtos:input:29:max_soc_mod
+// rtos:input:30:max_soc_mod_num
+// rtos:input:35:max_soh
+// rtos:input:36:max_soh_mod
+// rtos:input:37:max_soh_mod_num
+// rtos:input:48:post_temp_max
+// rtos:input:49:post_temp_max_mod
+// rtos:input:50:post_temp_max_mod_num
+// rtos:input:55:max_module_volt
+// rtos:input:56:max_module_volt_num
+// rtos:input:57:max_module_volt
+// rtos:input:58:max_module_volt_num
+// rtos:input:154:volt_max_num
+// rtos:input:156:temp_max_num
+// rtos:input:158:soc_max_num
+// rtos:input:160:soh_max_num
+// sbmu:input:7:max_pack_voltage
+// sbmu:input:9:max_battery_voltage
+// sbmu:input:12:max_battery_temp
+// sbmu:input:13:max_battery_temp_pack_number
+// sbmu:input:14:max_battery_temp_group
+// sbmu:input:32:max_discharge_power
+// sbmu:input:33:max_charge_power
+// sbmu:input:34:max_discharge_current
+//  sbmu:input:35:max_charge_current
+//mins
+// 
 
 
 // transfer Items
-std::vector<TransItem> sbms_trans = {
-	{"rtos:bits:total_undervoltage", "3sum",     "sbmu:bits:1",   "none",    "total_undervoltage"},
-	{"rtos:bits:total_overvoltage", "3sum",     "sbmu:bits:4",   "none",    "total_overvoltage"},
-	{"internal", "calc",     "sbmu:bits:esbcm_lost_comms",  "none",    "ESBCM_lost_communication"},
-	{"rtos:bits:insulation_low", "3lim_max", "sbmu:bits:10",  "low_resistance"},
-	{"rack:input:117", "3lim_min", "sbmu:bits:13",  "sbmu:hold:121",  "module_low_temp"},
-	{"rack:input:117", "3lim_max", "sbmu:bits:16",  "sbmu:hold:122",  "module_high_temp"},
-	{"rack:input:125", "min", 		"sbmu:input:8",  "sbmu:input:10",  "max_battery_voltage"},
-	{"rack:input:123", "max", 		"sbmu:input:9",  "sbmu:input:11",  "min_battery_voltage"},
-	{"rack:input:101", "sum", 		"sbmu:input:33",  "none",  "max_charge_power"},
-	{"rack:input:102", "sum", 		"sbmu:input:32",  "none",   "max_discharge_power"},
-	{"rack:input:105", "sum", 		"sbmu:input:35",  "none",  "max_charge_current"},
-	{"rack:input:106", "sum", 		"sbmu:input:34",  "none",  "max_discharge_current"},
-	{"rack:input:-1",  "count",     "sbmu:input:36",  "none",   "num_daily_charges"},
-	{"rack:input:-1",  "count",     "sbmu:input:37",  "none",   "num_daily_discharges"},
-
-};
-
-// name_mappings = {
-//     'State': 'status',
-//     'Max_Allowed_Charge_Power': 'chargeable_power',
-//     'Max_Allowed_Discharge_Power':'dischargeable_power',
-
-//     'Max_Charge_Voltage':'chargeable_volt',
-//     'Max_Discharge_Voltage':'dischargeable_volt',
-
-//     'Max_Charge_Current':'chargeable_current',
-//     'Max_Discharge_Current':'dischargeable_current',
-
-//     'DI1':"di1",
-//     'DI2':"di2",
-//     'DI3':"di3",
-//     'DI4':"di4",
-//     'DI5':"di5",
-//     'DI6':"di6",
-//     'DI7':"di7",
-//     'DI8':"di8",
-
-//     'Max_cell_voltage':'max_voltage',
-//     'Max_cell_voltage_number':'max_voltage_num',
-//     'Min_cell_voltage':'min_voltage',
-//     'Min_cell_voltage_number':'min_voltage_num',
-//     'Max_cell_temperature': 'max_temp',
-//     'Max_cell_temperature_number':'max_temp_num',
-//     'Min_cell_temperature': 'min_temp',
-//     'Min_cell_temperature_number':'min_temp_num',
-//     'Max_cell_SOC':'max_soc',
-//     'Max_cell_SOC_number':'max_soc_num',
-//     'Min_cell_SOC':'min_soc',
-//     'Min_cell_SOC_number':'min_soc_num',
-//     'SOC':'soc',
-//     'SOH':'soh',
-//     'Average_cell_voltage':'avg_voltage',
-//     'Average_cell_temperature':'avg_temp',
-
-//     'Accumulated_charge_capacity':'total_charge_cap',
-//     'Accumulated_discharge_capacity':'total_discharge_cap'
-
-// }
-
-
-std::vector<TransItem> sbms_set = {
-	{"sbmu:input:100",                             "into",          "rtos:input:8",   "none",    "Status"},
-	{"sbmu:input:101",                             "into",          "rtos:input:152",   "none",    "chargeable_power"},
-	{"sbmu:input:102",                             "into",          "rtos:input:153",   "none",    "dischargeable_power"},
-	{"sbmu:input:103",                             "into2",         "rtos:input:150",   "TODO",    "charge_volt"},
-	{"sbmu:input:105",                             "into2",         "rtos:input:150",   "TODO",    "charge_current"},
-	{"sbmu:input:103",                             "into2",         "rtos:input:150",   "TODO",    "discharge_volt"},
-	{"sbmu:input:105",                               "into2",       "rtos:input:150",   "TODO",    "discharge_current"},
-    {"sbmu:hold:1111:cluster_control_data_eq_ctrl",  "into_rack",   "rtos:hold:111:cluster_control_data_eq_ctrl","TODO", "contactor_control"},
-    {"sbmu:hold:1099:ctrl_cmd_mode",                 "into_rack",  "rtos:hold:99:ctrl_cmd_mode", "TODO","contactor_mode"},
-    {"sbmu:hold:1104:g_socsohsetno",                 "into_rack",  "rtos:hold:104:g_socsohsetno""TODO","set_soc_soh_no"},
-    {"sbmu:hold:1105:g_socsohsetval",                 "into_rack", "rtos:hold:105:g_socsohsetval""TODO","set_soc_soh_val"}
-};
-
 
 std::map<std::string, TransItemTable>trans_tables;
 
-void register_trans()
-{
-    TransItemTable sbms_entry;
-    sbms_entry.name = "sbms_trans";
-    sbms_entry.desc = "Activated when the sbms receives an input from the racks";
-    sbms_entry.items = sbms_trans;  // Ensure `sbms_trans` is a valid vector of `TransItem`
-    trans_tables["sbms_trans"] = sbms_entry;
-    TransItemTable sbms_set_entry;
-    sbms_set_entry.name = "sbms_set";
-    sbms_set_entry.desc = "Activated when the sbms recieves a set val for a rack item";
-    sbms_set_entry.items = sbms_set;  // Ensure `sbms_trans` is a valid vector of `TransItem`
-    trans_tables["sbms_set"] = sbms_set_entry;
+// json/system_config.json 
+// Function to parse JSON and populate the structures
+void parseTransJson(const std::string& filepath) {
+    // Open the JSON file
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << filepath << std::endl;
+        return;
+    }
 
+    // Parse the JSON file
+    json jsonData;
+    file >> jsonData;
+
+    // Iterate through the JSON array
+    for (const auto& tableData : jsonData) {
+        TransItemTable table;
+        table.name = tableData["table"];
+        table.desc = tableData["desc"];
+
+        // Iterate through the items in the table
+        for (const auto& itemData : tableData["items"]) {
+            TransItem item;
+            item.src_str = itemData["src"];
+            item.meth_str = itemData["meth"];
+            item.dest_str = itemData["dest"];
+            item.lim_str = itemData["lim"];
+            item.name = itemData["name"];
+            table.items.push_back(item);
+        }
+
+        // Add the table to the map
+        trans_tables[table.name] = table;
+    }
+}
+
+// Function to print the structures (for verification)
+void printTransTables() {
+    for (const auto& [tableName, table] : trans_tables) {
+        std::cout << "Table: " << tableName << "\n";
+        std::cout << "Description: " << table.desc << "\n";
+        std::cout << "Items:\n";
+        for (const auto& item : table.items) {
+            std::cout << "  - Src: " << item.src_str << "\n";
+            std::cout << "    Meth: " << item.meth_str << "\n";
+            std::cout << "    Dest: " << item.dest_str << "\n";
+            std::cout << "    Lim: " << item.lim_str << "\n";
+            std::cout << "    Name: " << item.name << "\n";
+        }
+        std::cout << "\n";
+    }
+}
+
+// Function signature for methods
+using MethFunction = std::function<int(const TransItem&)>;
+
+// Mock functions for get_var and set_var
+uint16_t get_trans_var(const std::string& var_name, int rack_num) {
+    // Replace this with actual logic to read the variable
+    std::cout << "Reading variable: " << var_name << "\n";
+    return 0; // Mock value
+}
+
+void set_trans_var(const std::string& var_name, uint16_t value, int rack_num) {
+    // Replace this with actual logic to write the variable
+    std::cout << "Writing variable: " << var_name << " with value: " << value << "\n";
+}
+
+
+// Method implementations
+int method_into(const TransItem& item) {
+    int rack_num = 0;
+    uint16_t src_value = get_trans_var(item.src_str, rack_num);
+    set_trans_var(item.dest_str, src_value, rack_num);
+    return 0; // Success
+}
+
+int method_3sum(const TransItem& item) {
+    int rack_num = 0;
+    uint16_t src_value1 = get_trans_var(item.src_str + "_1", rack_num);
+    uint16_t src_value2 = get_trans_var(item.src_str + "_2", rack_num);
+    uint16_t src_value3 = get_trans_var(item.src_str + "_3", rack_num);
+    uint16_t sum = src_value1 + src_value2 + src_value3;
+    set_trans_var(item.dest_str, sum, rack_num);
+    return 0; // Success
+}
+
+// Add more methods as needed...
+
+// Function to initialize the method dictionary
+void initializeMethodDictionary() {
+    meth_dict["into"] = {"into","transfer data from src to dest", method_into};
+    meth_dict["3sum"] = {"3sum", "find any values set in any rack", method_3sum};
+    // Add more methods here...
+}
+
+// Function to process a TransItem using the method dictionary
+int processTransItem(const TransItem& item) {
+    auto it = meth_dict.find(item.meth_str);
+    if (it != meth_dict.end()) {
+        return it->second.func(item); // Call the corresponding method
+    } else {
+        std::cerr << "Error: Method '" << item.meth_str << "' not found.\n";
+        return -1; // Failure
+    }
+}
+
+// Function to process all items in a table
+void processTransTable(const TransItemTable& table) {
+    std::cout << "Processing table: " << table.name << "\n";
+    for (const auto& item : table.items) {
+        int result = processTransItem(item);
+        if (result == 0) {
+            std::cout << "  - Item '" << item.name << "' processed successfully.\n";
+        } else {
+            std::cout << "  - Item '" << item.name << "' failed to process.\n";
+        }
+    }
 }
 
 std::vector<std::string> StringWords(const std::string& str) {
@@ -479,12 +551,13 @@ int str_to_offset(const std::string& offset_str) {
             return neg * std::stoi(offset_str.substr(start_idx)); // Parse as decimal
         }
     } catch (const std::invalid_argument& e) {
-        std::cerr << "Error: Invalid offset value: " << offset_str << std::endl;
-        throw;
+        std::cerr << "Error: xxxx Invalid offset value: " << offset_str << std::endl;
+        return -1;
     } catch (const std::out_of_range& e) {
         std::cerr << "Error: Offset value out of range: " << offset_str << std::endl;
-        throw;
+        //throw;
     }
+    return 0;
 }
 // Function to trim whitespace and specific control characters from both ends of a string
 std::string trim(const std::string& str) {
@@ -639,9 +712,29 @@ void displaySortedConfigData(const ConfigDataList& data) {
 
 
 
+// Generate query string uding the new ID interfave
+// note that the rack will already be embedded in the id
+std::string generateIdQuery(const std::string& action, int seq, uint32_t id, const std::string& type, int startOffset, const std::vector<int>&values) {
+    std::ostringstream query;
+    std::ostringstream os_name;
+    os_name << "0x" << std::hex << std::uppercase << id << std::dec;
+
+    query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< ", \"sm_name\":\"" << os_name.str()
+          << "\", \"reg_type\":\"" << type
+          << "\", \"offset\":\"" << startOffset
+          << "\", \"num\":" << 1
+          << ", \"data\":[";
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i > 0) query << ", ";
+        query << values[i];
+    }
+    query << "]}";
+    return query.str();
+}
+
 
 // Generate query string for a group of ConfigDataPairs
-std::string generateQuery(const std::string& action, int seq, int rack, const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
+std::string generateGroupQuery(const std::string& action, int seq, int rack, const ConfigDataList& group, const std::string& system, const std::string& type, int startOffset) {
     std::ostringstream query;
     std::ostringstream os_name;
     os_name << system;
@@ -649,7 +742,6 @@ std::string generateQuery(const std::string& action, int seq, int rack, const Co
     {
         os_name << "_" << rack;
     }
-
     query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< "\", \"sm_name\":\"" << os_name.str()
           << "\", \"reg_type\":\"" << type
           << "\", \"offset\":\"" << startOffset
@@ -689,7 +781,7 @@ void GenerateQueries(const std::string& action, int seq, int rack, std::vector<s
             currentGroup.push_back(item);
         } else {
             if (!currentGroup.empty()) {
-                std::string query = generateQuery(action, seq, rack, currentGroup, currentSystem, currentType, startOffset);
+                std::string query = generateGroupQuery(action, seq, rack, currentGroup, currentSystem, currentType, startOffset);
                 std::cout << query << std::endl;
                 queries.emplace_back(query);
             }
@@ -703,7 +795,7 @@ void GenerateQueries(const std::string& action, int seq, int rack, std::vector<s
 
     // Handle the last group
     if (!currentGroup.empty()) {
-        std::string query = generateQuery(action, seq, rack, currentGroup, currentSystem, currentType, startOffset);
+        std::string query = generateGroupQuery(action, seq, rack, currentGroup, currentSystem, currentType, startOffset);
         std::cout << query << std::endl;
         queries.emplace_back(query);
     }
@@ -722,7 +814,7 @@ void ShowConfigDataList(const ConfigDataList& data) {
         std::string currentType =item.first->type;
         int offset = item.first->offset;
         currentGroup.push_back(item);
-        std::string query = generateQuery("get", 22, 1, currentGroup, currentSystem, currentType, offset);
+        std::string query = generateGroupQuery("get", 22, 1, currentGroup, currentSystem, currentType, offset);
         currentGroup.clear();
         
         std::cout << query << std::endl;
@@ -739,7 +831,7 @@ int test_data_map(std::string& fileName) {
     return 0;
 }
 
-// decode sbmu:bits:345 into a compount type
+// decode sbmu:bits:345 into a component type
 std::shared_ptr<ConfigItem>find_type(std::string sm_name, std::string reg_type, int offset)
 {
     std::ostringstream tname;
@@ -800,31 +892,6 @@ std::shared_ptr<ConfigItem>find_name(const std::string& item_name)
     return find_name(sm_name, item);
 }
 
-void test_data_list(ConfigDataList&configData)
-{
-    configData.emplace_back(find_name("rtos","min_soc"), 0);
-    configData.emplace_back(find_name("rtos","max_soc"), 0);
-    configData.emplace_back(find_name("rtos","min_soc_num"), 0);
-    configData.emplace_back(find_name("rtos","max_voltage_num"), 0);
-    configData.emplace_back(find_name("rtos","min_voltage"), 0);
-    configData.emplace_back(find_name("rtos","max_voltage"), 0);
-    configData.emplace_back(find_name("rtos","alarms"), 0);
-    ConfigDataList sorted;
-    std::vector<std::string>queries;
-
-    std::cout <<" Unsorted list :" << std::endl;
-    ShowConfigDataList(configData);
-
-
-    std::cout <<" Sorted list :" << std::endl;
-    groupQueries(sorted, configData);
-    ShowConfigDataList(sorted);
-
-    std::cout <<" Queries :" << std::endl;
-    // rack 0
-    GenerateQueries("set", 2, 0, queries, sorted);
-
-    }
 
 // Comparator for sorting
 bool configItemComparator(const std::shared_ptr<ConfigItem>& a, const std::shared_ptr<ConfigItem>& b) {
@@ -1466,7 +1533,6 @@ void load_matches(const std::string& matchName) {
             auto defs = match.value("tolerance_defs", std::vector<std::string>{});
             applyMatchDefs(new_match, new_match->mask, defs);
         }
-
         new_match->name = name;
     }
 }
@@ -2032,6 +2098,7 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
 
 
 // load up the memory map 
+// auto data_file = "src/data_definition.txt";
 void parse_definitions(std::map<std::string, DataTable>& tables, const std::string& filename) {
     //std::map<std::string, DataTable> tables;
     std::ifstream file(filename);
@@ -2040,6 +2107,7 @@ void parse_definitions(std::map<std::string, DataTable>& tables, const std::stri
     std::smatch match;
     std::string current_table;
     int current_offset = 0;
+    int base_offset = 0;
 
     if (!file.is_open()) {
         throw std::runtime_error("Could not open file: " + filename);
@@ -2054,20 +2122,23 @@ void parse_definitions(std::map<std::string, DataTable>& tables, const std::stri
             // Regtype match[2].str()
             // offset match[3].str()
             current_table = match[1].str() + ":" + match[2].str();
-            current_offset = std::stoi(match[3].str());
+            base_offset = std::stoi(match[3].str());
             if(tables.find(current_table) == tables.end())
             {
-                std::cout << "creating a new table [" <<current_table<<"]" << std::endl;
+                std::cout << "****creating a new table [" <<current_table<<"]  offset : " << current_offset << std::endl;
                 tables[current_table] = DataTable(current_offset);
+                tables[current_table].base_offset = base_offset;// = DataTable(current_offset);
             }
             continue;
         }
-
+        // continue to parse a data item
         size_t colon_pos = trimmed.find(':');
         if (colon_pos == std::string::npos) continue;
         
         std::string name = trimmed.substr(0, colon_pos);
+        // the offset in the map is relative to the base offset
         int offset = std::stoi(trimmed.substr(colon_pos + 1));
+        offset += base_offset;
         int size = 1; // default size
         size_t second_colon_pos = trimmed.find(':', colon_pos + 1);
         if (second_colon_pos != std::string::npos) {
@@ -2076,6 +2147,7 @@ void parse_definitions(std::map<std::string, DataTable>& tables, const std::stri
 
         if (!tables[current_table].items.empty()) {
             int expected_offset = tables[current_table].base_offset + tables[current_table].calculated_size;
+            std::cout <<" actual offset " << offset << " expected " << expected_offset << std::endl; 
             if (offset != expected_offset) {
                 std::cout <<"Offset mismatch for " <<name << " in table " << current_table
                 << " actual offset " << offset << " expected " << expected_offset 
@@ -2112,6 +2184,111 @@ bool verify_offsets(const std::map<std::string, DataTable>& tables) {
     return all_correct;
 }
 
+// Function to decode shmdef into mem_id, reg_id, and offset
+// sbmu:bits:offset[:rack_num]
+bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset, const std::string &shmdef) {
+    size_t colon_pos1 = shmdef.find(':');
+    size_t colon_pos2 = shmdef.find(':', colon_pos1 + 1); 
+    size_t colon_pos3 = shmdef.find(':', colon_pos2 + 1);
+    rack_num = -1;  // indicate not found
+
+    if (colon_pos1 == std::string::npos || colon_pos2 == std::string::npos) {
+        return false; // Invalid format
+    }
+
+    std::string smname = shmdef.substr(0, colon_pos1);
+    std::string reg_type = shmdef.substr(colon_pos1 + 1, colon_pos2 - (colon_pos1 + 1));
+    std::string table_name = smname + ":" + reg_type;
+    std::string offset_str;
+    std::string rack_num_str;
+    if (colon_pos3 != std::string::npos)
+    {
+        offset_str = shmdef.substr(colon_pos2 + 1, colon_pos3 - (colon_pos3 + 1));
+        rack_num_str = shmdef.substr(colon_pos3 + 1);
+        rack_num = static_cast<uint16_t>(std::stoi(rack_num_str));
+    }
+    else
+    {
+        offset_str = shmdef.substr(colon_pos2 + 1);
+    }    
+    // Convert smname to mem_id
+    if (smname == "none") {
+        mem_id = MEM_NONE;
+    } else if (smname == "sbmu") {
+        mem_id = MEM_SBMU;
+    } else if (smname == "rack") {
+        mem_id = MEM_RACK;
+    } else if (smname == "rtos") {
+        mem_id = MEM_RTOS;
+    } else {
+        mem_id = MEM_UNKNOWN;
+    }
+
+    // Convert reg_type to reg_id
+    if (reg_type == "none") {
+        reg_id = REG_NONE;
+    } else if (reg_type == "bits") {
+        reg_id = REG_BITS;
+    } else if (reg_type == "input") {
+        reg_id = REG_INPUT;
+    } else if (reg_type == "hold") {
+        reg_id = REG_HOLD;
+    } else if (reg_type == "coil") {
+        reg_id = REG_COIL;
+    } else if (reg_type == "sm16") {
+        reg_id = REG_SM16;
+    } else if (reg_type == "sm8") {
+        reg_id = REG_SM8;
+    } else {
+        reg_id = REG_NONE;
+    }
+
+    // Extract offset
+    offset = str_to_offset(offset_str);
+    if (offset == 65535)
+    {
+        std::cout << "Note offset value: " << offset_str 
+          <<" offset: "<< offset << " table_name :"<< table_name <<  std::endl;
+        if(data_tables.find(table_name)!= data_tables.end())
+        {
+            const auto& items = data_tables.at(table_name).items;
+            for (const auto& item : items) {
+                if (item.name.find(offset_str) != std::string::npos) {
+                    std::cout << "Note offset item found : " << offset_str 
+                        <<" offset: "<< item.offset << " table_name :"<< table_name <<  std::endl;
+
+                    offset = item.offset;
+                    return true;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+// Function to encode shmdef and rack into a 32-bit ID
+uint32_t encode_id(const std::string &shmdef, int rack) {
+    MemId mem_id;
+    RegId reg_id;
+    uint16_t offset;
+    int rack_num;
+
+    if (!decode_shmdef(mem_id, reg_id, rack_num, offset, shmdef)) {
+        return 0; // Invalid shmdef
+    }
+
+    // Encode the ID
+    uint32_t id = 0;
+    id |= (static_cast<uint32_t>(mem_id) & 0xF) << 28;  // 4 bits for mem_id
+    id |= (static_cast<uint32_t>(reg_id) & 0xF) << 24;  // 4 bits for reg_id
+    id |= (static_cast<uint32_t>(rack) & 0xFF) << 16;   // 8 bits for rack
+    id |= (offset & 0xFFFF);                            // 16 bits for offset
+
+    return id;
+}
+
+
+
 std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables) {
     std::string query = trim(qustr);
     std::istringstream iss(query);
@@ -2138,6 +2315,102 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             oss <<"      find - items by offset or name match\n"; 
             oss <<"      get(todo)  - get a value , define the dest by name or table:offset\n";
             oss <<"      set(todo)  - set a value , define the dest by name or table:offset\n";
+            return oss.str();
+        }
+        else if ( swords[0] == "set")
+        {
+            std::ostringstream oss;
+            if (swords.size() < 3)
+            {
+                oss
+                    << "set a value <table><name|offset rack <value>"
+                    << std::endl
+                    << " examples \n" 
+                    << "    sbmu:bits:0  7 0\n" 
+                    << "    sbmu:bits:summary_total_undervoltage 7 1\n"
+                    << std::endl;
+            }
+            else if (swords.size() > 2)
+            {
+                oss
+                    << "set a value  <"<<swords[1]
+                    << std::endl;
+                int rack;// = std::stoi(swords[2]);
+                try {
+                    rack = std::stoi(swords[2]);
+                } catch (const std::exception& ex) {
+                    oss <<  " rack must be a number -1 or rack num\n";
+                    return oss.str();
+                }
+                uint32_t id;
+                id = encode_id(swords[1], rack);
+                oss
+                    << "id  <0x"<<std::hex << id << std::dec << "> " << std::endl;
+
+                std::vector<int>values;
+               try {
+ 
+                    for (int i = 3; i < swords.size(); i++)
+                    {
+                        values.push_back(std::stoi(swords[i]));
+                    }
+               }  catch (const std::exception& ex) {
+                    oss <<  " values must be numbers\n";
+                    return oss.str();
+                }               
+
+                std::string qstring  = generateIdQuery("set", 202, id, "any", rack, values);
+                std::string response = run_wscat(g_url, qstring);  // Run the query
+                oss
+                    << " url  ["<<g_url<<"] \n"
+                    << " query  ["<<qstring<<"] \n"
+                    << " response  ["<<response<<"] \n"
+                    << std::endl;
+            }
+
+            return oss.str();
+        }
+        else if ( swords[0] == "get")
+        {
+            std::ostringstream oss;
+            if (swords.size() == 1)
+            {
+                oss
+                    << "get a value <table><name|offset"
+                    << std::endl
+                    << " examples \n" 
+                    << "    sbmu:bits:0\n" 
+                    << "    sbmu:bits:summary_total_undervoltage\n";
+            }
+            else if (swords.size() == 2)
+            {
+                oss
+                    << "get a value 2 <"<<swords[1]
+                    << std::endl;
+                uint32_t id;
+                id = encode_id(swords[1],0);    
+                oss
+                    << "id  <0x"<<std::hex << id << std::dec <<"> "
+                    << std::endl;
+                std::vector<int>values = {0};
+                std::string qstring  = generateIdQuery("get", 202, id, "any", 0, values);
+                std::string response = run_wscat(g_url, qstring);  // Run the query
+                oss
+                    << " url  ["<<g_url<<"] \n"
+                    << " query  ["<<qstring<<"] \n"
+                    << " response  ["<<response<<"] \n"
+                    << std::endl;
+
+                //std::string run_query(url, mb_client, qstring);
+                //std::string response = run_wscat(url, qstring);  // Run the query
+
+            }
+            else if (swords.size() == 3)
+            {
+                oss
+                    << "get a value 3 <"<<swords[1]<<"> <"<<swords[2]<<">"
+                    << std::endl;
+            }
             return oss.str();
         }
         else if ( swords[0] == "tables")
@@ -2186,8 +2459,32 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
         {
             if (swords.size() > 1)
             {
+                if (swords[1] == "methods")
+                {                    std::ostringstream oss;
+                    bool first = true;
+                    oss << "[";
+                    // sbms_trans needs to be registered into trans_tables
+                    for (const auto& item : meth_dict) {
+                        if (!first) 
+                        {
+                            oss << ",\n";
+                        }
+                        else
+                        {
+                            first =  false;
+                            oss << "\n";
+                        }
+                            
+                        oss << "   { \"method\": \""<< item.first << "\"," 
+                            << "\"desc\": \""<< item.second.desc << "\""
+                            << "}";
+                    }
+                    oss << "\n]\n";
+                    return oss.str();
+
+                }
                 //std::vector<TransItem> sbms_trans 
-                if (swords[1] == "trans")
+                else if (swords[1] == "trans")
                 {
                     std::ostringstream oss;
                     bool first = true;
@@ -2276,6 +2573,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             {
                 std::ostringstream oss;
                 oss <<"json :-\n";
+                oss <<"      methods - show all the built in transition methods\n";
                 oss <<"      tables - show all the data point tables\n";
                 oss <<"      trans  - show all the transfer tables\n";
                 return oss.str();
@@ -2582,14 +2880,14 @@ int test_server(std::map<std::string, DataTable>) {
 }
 
 
-
-int test_parse() {
+//        auto data_file = "src/data_definition.txt";
+int test_parse(std::map<std::string, DataTable>& data_tables, const std::string & data_file) {
     try {
         // if (argc < 2) {
         //     std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
         //     return 1;
         // }
-        auto data_file = "src/data_definition.txt";
+        //auto data_file = "src/data_definition.txt";
         parse_definitions(data_tables, data_file);
         for (const auto& table_pair : data_tables) {
             const auto& table = table_pair.second;
@@ -2621,14 +2919,12 @@ int test_parse() {
 }
 
 
-
-
-
-
 void test_str_to_offset();
 void test_decode_name();
 void test_match_system();
 void test_StringWords();
+void test_data_list(ConfigDataList&configData);
+
 int test_modbus(const std::string& ip, int port );
 
 #include <fractal_test_unit_test.cpp>
@@ -2649,7 +2945,15 @@ int main(int argc, char* argv[]) {
         std::string dataMap = argv[2];
         dataMap="data/sbmu_mapping.txt";
         test_data_map(dataMap);
-        register_trans();
+
+        auto data_file = "src/data_definition.txt";
+        test_parse(data_tables, data_file) ;
+        //return 0;
+
+        // Function to initialize the method dictionary
+        initializeMethodDictionary();
+
+        //register_trans();
 
         show_data_map();
         ConfigDataList configData;
@@ -2672,7 +2976,10 @@ int main(int argc, char* argv[]) {
         assert_manager.generate_summary();
         std::cout << "\n\n**************************************"<<std::endl;
 
-        test_parse() ;
+        std::string transFile("json/system_trans.json");
+        // Function to parse JSON and populate the structures
+        parseTransJson(transFile);
+
 
         test_server(data_tables);
 
@@ -2688,6 +2995,7 @@ int main(int argc, char* argv[]) {
     auto test_run = get_test_run(testname);
 
     std::string url = "ws://192.168.86.209:9003";
+    g_url =  url;
 
     filename << "json/"<< testname<<".json";
 
