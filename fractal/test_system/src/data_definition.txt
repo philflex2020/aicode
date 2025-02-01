@@ -36,7 +36,7 @@
  cell_voltage_acquisition_fault:79:1
  cell_temp_acquisition_fault:80:1
 
-[sbmu:bits:200]
+[sbmu:bits:0]
  esbcm_lost_comms:200:1
  total_undervoltage:201:3
  total_overvoltage:204:3
@@ -50,12 +50,12 @@
  cell_low_SOH:228:3
  cell_voltage_diff:231:3
  cell_temp_diff:234:3
- bmm_lost_comms:237:6
- terminal_high_temp:243:3
- pack_over_voltage:246:3
- pack_under_voltage:249:3
- cell_voltage_acquisition_fault:252:1
- cell_temp_acquisition_fault:253:1
+ bmm_lost_comms:237:40
+ terminal_high_temp:277:3
+ pack_over_voltage:280:3
+ pack_under_voltage:283:3
+ cell_voltage_acquisition_fault:286:1
+ cell_temp_acquisition_fault:287:1
 
 [rtos:bits:0]
  terminal_overvoltage:0:3

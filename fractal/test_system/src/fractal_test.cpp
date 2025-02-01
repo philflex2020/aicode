@@ -2943,6 +2943,7 @@ int main(int argc, char* argv[]) {
     if (argc > 2) {
 
         std::string dataMap = argv[2];
+        // deprecated
         dataMap="data/sbmu_mapping.txt";
         test_data_map(dataMap);
 
