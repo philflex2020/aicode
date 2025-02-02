@@ -118,6 +118,38 @@ void register_trans()
 
 }
 
+// Test cases
+void test_decode_shmdef() {
+    MemId mem_id;
+    RegId reg_id;
+    int rack_num;
+    uint16_t offset;
+    bool crash = false;
+    // Test case 1: Valid input with 3 parts
+    bool result = decode_shmdef(mem_id, reg_id, rack_num, offset, "sbmu:bits:100");
+    myassert(result, "decode_shmdef: valid input with 3 parts", crash);
+    myassert(mem_id == MEM_SBMU, "decode_shmdef: mem_id correct", crash);
+    myassert(reg_id == REG_BITS, "decode_shmdef: reg_id correct", crash);
+    myassert(rack_num == 0, "decode_shmdef: rack_num default correct", crash);
+    myassert(offset == 100, "decode_shmdef: offset correct", crash);
+
+    // Test case 2: Valid input with 4 parts
+    result = decode_shmdef(mem_id, reg_id, rack_num, offset, "rack:input:1:300");
+    myassert(result, "decode_shmdef: valid input with 4 parts", crash);
+    myassert(mem_id == MEM_RACK, "decode_shmdef: mem_id correct", crash);
+    myassert(reg_id == REG_INPUT, "decode_shmdef: reg_id correct", crash);
+    myassert(rack_num == 1, "decode_shmdef: rack_num correct", crash);
+    myassert(offset == 300, "decode_shmdef: offset correct", crash);
+
+    // Test case 3: Invalid input (too few parts)
+    result = decode_shmdef(mem_id, reg_id, rack_num, offset, "sbmu");
+    myassert(!result, "decode_shmdef: invalid input (too few parts)", crash);
+
+    // Test case 4: Special case for offset lookup
+    result = decode_shmdef(mem_id, reg_id, rack_num, offset, "sbmu:bits:invalid");
+    myassert(result, "decode_shmdef: special case for offset lookup", crash);
+    //myassert(offset == 100, "decode_shmdef: offset lookup correct", crash);
+}
 
 
 void test_data_list(ConfigDataList&configData)

@@ -1,35 +1,36 @@
 # the inital offset should set the reference 
-[sbmu:bits:1]
- summary_total_undervoltage:0:3
- summary_total_overvoltage:3:3
- summary_overcurrent:6:3
- summary_low_resistance:9:3
- summary_module_low_temp:12:3
- summary_module_over_temp:15:3
- summary_cell_over_voltage:18:3
- summary_cell_under_voltage:21:3
- summary_cell_diff_voltage:24:3
- summary_cell_low_temp:27:3
- summary_cell_over_temp:30:3
- summary_cell_diff_temp:33:3
- summary_cell_low_SOC:36:3
- summary_cell_high_SOC:39:3
- summary_cell_low_SOH:42:3
- summary_cell_high_SOH:45:3
- ESBCM_lost_communication:48:1
- ESBMM_lost_communication:49:1
- Abnormal_total_voltage_diff:50:1
- Abnormal_contactor_open:51:1
- Abnormal_contactor_close:52:1
- Charge_prohibited:53:1
- Discharge_prohibited:54:1
- summary_BMS_system_alarms:55:1
- summary_BMS_system_faults:56:1
- input_IN0:57:1
- input_IN1:58:1
- input_IN2:59:1
- input_IN3:60:1
- _gap1:61:9
+[sbmu:bits:0]
+ _gap0:0:1
+ summary_total_undervoltage:1:3
+ summary_total_overvoltage:4:3
+ summary_overcurrent:7:3
+ summary_low_resistance:10:3
+ summary_module_low_temp:13:3
+ summary_module_over_temp:16:3
+ summary_cell_over_voltage:19:3
+ summary_cell_under_voltage:22:3
+ summary_cell_diff_voltage:25:3
+ summary_cell_low_temp:28:3
+ summary_cell_over_temp:31:3
+ summary_cell_diff_temp:34:3
+ summary_cell_low_SOC:37:3
+ summary_cell_high_SOC:40:3
+ summary_cell_low_SOH:43:3
+ summary_cell_high_SOH:46:3
+ ESBCM_lost_communication:49:1
+ ESBMM_lost_communication:50:1
+ Abnormal_total_voltage_diff:51:1
+ Abnormal_contactor_open:52:1
+ Abnormal_contactor_close:53:1
+ Charge_prohibited:54:1
+ Discharge_prohibited:55:1
+ summary_BMS_system_alarms:56:1
+ summary_BMS_system_faults:57:1
+ input_IN0:58:1
+ input_IN1:59:1
+ input_IN2:60:1
+ input_IN3:61:1
+ _reserved:62:8
  summary_terminal_over_temp:70:3
  summary_pack_over_voltage:73:3
  summary_pack_under_voltage:76:3
@@ -176,7 +177,7 @@
  pile_cumulative_charging_time:48:2
  pile_cumulative_discharging_time:50:2
 
-[sbmu:input:100]
+[sbmu:input:0]
  State:100:1
  Max_Allowed_Charge_Power:101:1
  Max_Allowed_Discharge_Power:102:1
@@ -377,7 +378,7 @@ fault_record:8000:900
 _gap13:8900:1100
 version:10000:600
 
-[sbmu:hold:500]
+[sbmu:hold:0]
  rack_num:500:1
  system_fault_reset:501:1
  main_circuit_breaker:502:1
@@ -391,7 +392,7 @@ version:10000:600
  second:529:1
  heartbeat:530:1
 
-[sbmu:hold:1000]
+[sbmu:hold:0]
  _gap1:1000:1
  at_total_v_over:1001:4
  at_total_v_under:1005:4

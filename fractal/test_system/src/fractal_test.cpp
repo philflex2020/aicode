@@ -11,6 +11,11 @@
  * @date:    2025.01.23
  ******************************************************************************
  */
+
+ /*
+ TODO today
+ disable event dispatch done in smEvent.cpp (bit of a hack)
+ */
 #include <vector>
 #include <string>
 #include <map>
@@ -714,15 +719,15 @@ void displaySortedConfigData(const ConfigDataList& data) {
 
 // Generate query string uding the new ID interfave
 // note that the rack will already be embedded in the id
-std::string generateIdQuery(const std::string& action, int seq, uint32_t id, const std::string& type, int startOffset, const std::vector<int>&values) {
+std::string generateIdQuery(const std::string& action, int seq, uint32_t id, const std::string& type, int num, const std::vector<int>&values) {
     std::ostringstream query;
     std::ostringstream os_name;
     os_name << "0x" << std::hex << std::uppercase << id << std::dec;
 
     query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< ", \"sm_name\":\"" << os_name.str()
           << "\", \"reg_type\":\"" << type
-          << "\", \"offset\":\"" << startOffset
-          << "\", \"num\":" << 1
+          << "\", \"offset\":\"" << (int)(id&0xffff)
+          << "\", \"num\":" << num
           << ", \"data\":[";
     for (size_t i = 0; i < values.size(); ++i) {
         if (i > 0) query << ", ";
@@ -2184,33 +2189,49 @@ bool verify_offsets(const std::map<std::string, DataTable>& tables) {
     return all_correct;
 }
 
-// Function to decode shmdef into mem_id, reg_id, and offset
-// sbmu:bits:offset[:rack_num]
-bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset, const std::string &shmdef) {
-    size_t colon_pos1 = shmdef.find(':');
-    size_t colon_pos2 = shmdef.find(':', colon_pos1 + 1); 
-    size_t colon_pos3 = shmdef.find(':', colon_pos2 + 1);
-    rack_num = -1;  // indicate not found
+// #include <vector>
+// #include <string>
+// #include <sstream>
 
-    if (colon_pos1 == std::string::npos || colon_pos2 == std::string::npos) {
+// Function to split a string by a delimiter
+std::vector<std::string> split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+// decode_shmdef Function to decode shmdef into rack_num, mem_id, reg_id, and offset
+// sbmu:bits[:rack_num]:offset (name or integer)
+bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset, const std::string &shmdef) {
+
+    // Split the string by ':'
+    std::vector<std::string> parts = split(shmdef, ':');
+    if (parts.size() < 2) {
         return false; // Invalid format
     }
 
-    std::string smname = shmdef.substr(0, colon_pos1);
-    std::string reg_type = shmdef.substr(colon_pos1 + 1, colon_pos2 - (colon_pos1 + 1));
+    std::string smname = parts[0];
+    std::string reg_type = parts[1];
     std::string table_name = smname + ":" + reg_type;
-    std::string offset_str;
     std::string rack_num_str;
-    if (colon_pos3 != std::string::npos)
-    {
-        offset_str = shmdef.substr(colon_pos2 + 1, colon_pos3 - (colon_pos3 + 1));
-        rack_num_str = shmdef.substr(colon_pos3 + 1);
-        rack_num = static_cast<uint16_t>(std::stoi(rack_num_str));
+    std::string offset_str;
+
+    // sbmu:bits:offset
+
+    if (parts.size() == 3) {
+        offset_str = parts[2];
+        rack_num = -1;  // use default as not defined
     }
-    else
-    {
-        offset_str = shmdef.substr(colon_pos2 + 1);
-    }    
+    if (parts.size() >= 4) {
+        rack_num_str = parts[2];
+        offset_str = parts[3];
+        rack_num = static_cast<uint16_t>(std::stoi(rack_num_str));
+        std::cout << "Note rack_num  " << rack_num << std::endl; 
+    }
+
     // Convert smname to mem_id
     if (smname == "none") {
         mem_id = MEM_NONE;
@@ -2266,6 +2287,8 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
     return true;
 }
 
+
+
 // Function to encode shmdef and rack into a 32-bit ID
 uint32_t encode_id(const std::string &shmdef, int rack) {
     MemId mem_id;
@@ -2276,7 +2299,11 @@ uint32_t encode_id(const std::string &shmdef, int rack) {
     if (!decode_shmdef(mem_id, reg_id, rack_num, offset, shmdef)) {
         return 0; // Invalid shmdef
     }
-
+    if(rack_num >=0)
+    {
+        // decode found it !!
+        rack = rack_num;
+    }
     // Encode the ID
     uint32_t id = 0;
     id |= (static_cast<uint32_t>(mem_id) & 0xF) << 28;  // 4 bits for mem_id
@@ -2323,11 +2350,13 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             if (swords.size() < 3)
             {
                 oss
-                    << "set a value <table><name|offset rack <value>"
+                    << "set a value <table>:<name|offset>[:rack] <value>"
                     << std::endl
                     << " examples \n" 
-                    << "    sbmu:bits:0  7 0\n" 
-                    << "    sbmu:bits:summary_total_undervoltage 7 1\n"
+                    << "    set sbmu:bits::1 0         set bits:1 to 0 rack is not needed and defaults to 0\n" 
+                    << "    set sbmu:bits:1 0         set bits:1 to 0 rack is not needed and defaults to 0\n" 
+                    << "    set sbmu:bits::summary_total_undervoltage  1\n"
+                    << "    set sbmu:input:7:State  123    sets rack 7 state to 123\n"
                     << std::endl;
             }
             else if (swords.size() > 2)
@@ -2359,7 +2388,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     return oss.str();
                 }               
 
-                std::string qstring  = generateIdQuery("set", 202, id, "any", rack, values);
+                std::string qstring  = generateIdQuery("set", 202, id, "any", (int)values.size(), values);
                 std::string response = run_wscat(g_url, qstring);  // Run the query
                 oss
                     << " url  ["<<g_url<<"] \n"
@@ -2372,6 +2401,8 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
         }
         else if ( swords[0] == "get")
         {
+            uint32_t id = 0;
+            std::vector<int>values = {0};
             std::ostringstream oss;
             if (swords.size() == 1)
             {
@@ -2379,21 +2410,20 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     << "get a value <table><name|offset"
                     << std::endl
                     << " examples \n" 
-                    << "    sbmu:bits:0\n" 
+                    << "    get sbmu:bits[:rack_num]:1\n" 
+                    << "    get sbmu:bits[:rack_num]:1  <num of bits> \n" 
                     << "    sbmu:bits:summary_total_undervoltage\n";
             }
-            else if (swords.size() == 2)
+            else if (swords.size() >= 2)
             {
                 oss
                     << "get a value 2 <"<<swords[1]
                     << std::endl;
-                uint32_t id;
                 id = encode_id(swords[1],0);    
                 oss
                     << "id  <0x"<<std::hex << id << std::dec <<"> "
                     << std::endl;
-                std::vector<int>values = {0};
-                std::string qstring  = generateIdQuery("get", 202, id, "any", 0, values);
+                std::string qstring  = generateIdQuery("get", 202, id, "any", 1, values);
                 std::string response = run_wscat(g_url, qstring);  // Run the query
                 oss
                     << " url  ["<<g_url<<"] \n"
@@ -2405,11 +2435,27 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                 //std::string response = run_wscat(url, qstring);  // Run the query
 
             }
-            else if (swords.size() == 3)
+            if (swords.size() == 3)
             {
                 oss
                     << "get a value 3 <"<<swords[1]<<"> <"<<swords[2]<<">"
                     << std::endl;
+                int num = 1;
+                try {
+                    num = std::stoi(swords[2]);
+                }
+                catch (const std::exception& ex) {
+                    oss <<  " values must be numbers\n";
+                    return oss.str();
+                }
+                std::string qstring  = generateIdQuery("get", 202, id, "any", num, values);
+                std::string response = run_wscat(g_url, qstring);  // Run the query
+                oss
+                    << " url  ["<<g_url<<"] \n"
+                    << " query  ["<<qstring<<"] \n"
+                    << " response  ["<<response<<"] \n"
+                    << std::endl;
+
             }
             return oss.str();
         }
@@ -2923,6 +2969,8 @@ void test_str_to_offset();
 void test_decode_name();
 void test_match_system();
 void test_StringWords();
+void test_decode_shmdef();
+
 void test_data_list(ConfigDataList&configData);
 
 int test_modbus(const std::string& ip, int port );
@@ -2966,6 +3014,7 @@ int main(int argc, char* argv[]) {
         test_decode_name();
         test_match_system();
         test_StringWords();
+        test_decode_shmdef();
 
         std::cout << "testing modbus ..." << std::endl;
         test_modbus("192.168.86.209", 5000);
