@@ -57,8 +57,26 @@ namespace fs = std::filesystem;
 bool debug = false;
 
 std::string g_url("ws://192.168.86.209:9003");
-ModbusClient mbx_client("192.168.86.209", 5000);
+ModbusClient mbx_client("192.168.86.209", 502);
 
+
+// std::vector<ModbusTransItem> sbms_di = {
+// 	{"rtos:bits:201,   "3sum",      "sbmu:bits:1",    "none",          "total_undervoltage"},
+// 	{"rtos:bits:204",  "3sum",      "sbmu:bits:4",    "none",           "total_overvoltage"},
+// 	{"rtos:bits:200,   "into",      "sbmu:bits:49",   "none",           "ESBCM_lost_communication"},
+// 	{"rtos:input:120", "3lim_max",  "sbmu:bits:10",   "sbmu:hold:120",  "low_resistance"},
+// 	{"rtos:input:117", "3lim_min",  "sbmu:bits:13",   "sbmu:hold:121",  "module_low_temp"},
+// 	{"rtos:input:117", "3lim_max",  "sbmu:bits:16",   "sbmu:hold:122",  "module_high_temp"},
+// 	{"rtos:input:125", "min", 		"sbmu:input:8",   "sbmu:input:10",  "max_battery_voltage"},
+// 	{"rtos:input:123", "max", 		"sbmu:input:9",   "sbmu:input:11",  "min_battery_voltage"},
+// 	{"rtos:input:101", "sum", 		"sbmu:input:33",  "none",           "max_charge_power"},
+// 	{"rtos:input:102", "sum", 		"sbmu:input:32",  "none",           "max_discharge_power"},
+// 	{"rtos:input:105", "sum", 		"sbmu:input:35",  "none",           "max_charge_current"},
+// 	{"rtos:input:106", "sum", 		"sbmu:input:34",  "none",           "max_discharge_current"},
+// 	{"rtos:input:0,   "count",     "sbmu:input:36",  "none",            "num_daily_charges"},
+// 	{"rtos:input:0",  "count",     "sbmu:input:37",  "none",            "num_daily_discharges"},
+
+// };
 
 
 // using data keys. we compress sbmu:bits:234[:num] into a var key 
@@ -2398,17 +2416,32 @@ std::pair<int, std::vector<int>> set_modbus(uint32_t id, int num, std::vector<in
     int res = -1;
 
     int idx = 0;
+    
     //if (reg_type == "hold") {
-    for ( auto& val : data)
-    {
-        std::cout << " sending val "<< (int) val << std::endl;
-        if (reg_id == REG_HOLD) {
-            res = modbus_write_register(ctx, offset + idx, val);
-        //} else if (reg_type == "coil") {
-        } else if (reg_id == REG_COIL) {
-            res = modbus_write_bit(ctx, offset+ idx, val);  // Assuming single bit write for coils
+    if (reg_id == REG_HOLD) {
+         int num = data.size();
+         std::vector<uint16_t> vals;
+          int idx = 0;
+         for ( auto& val : data)
+         {
+            std::cout << " idx " << idx << " val " << val << std::endl;
+            idx++;
+             vals.push_back((uint16_t)val);
+         }
+         res = modbus_write_registers(ctx, offset, num, vals.data());
+
+    } else if (reg_id == REG_COIL) {
+        for ( auto& val : data)
+        {
+            std::cout << " sending val "<< (uint16_t) val << std::endl;
+            if (reg_id == REG_HOLD) {
+                res = modbus_write_register(ctx, offset + idx, (uint16_t)val);
+            //} else if (reg_type == "coil") {
+            } else if (reg_id == REG_COIL) {
+                res = modbus_write_bit(ctx, offset+ idx, (uint8_t)val);  // Assuming single bit write for coils
+            }
+            idx++;
         }
-        idx++;
     }
 
     if (res == -1) {
@@ -2486,10 +2519,39 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             //     std::string resp;
             // };
             std::vector<QueryTest> tests;
+            // set / get hold
+            tests.push_back({"setmb sbmu:hold:501 251 252 253 254", " setmb sbmu:hold:501 to 2", "{\"data\":[251,252,253,254]}"    });
+            tests.push_back({"getmb sbmu:hold:501 4",               " getmb sbmu:hold:501 4", "{\"data\":[251,252,253,254]}"    });
+            // set get rack 0 direct
+            tests.push_back({"setmb sbmu:hold:2052 1251 1252 1253 1254", " setmb sbmu:hold:2052", "{\"data\":[1251,1252,1253,1254]}"    });
+            tests.push_back({"getmb sbmu:hold:2052 4", " getmb sbmu:hold:2052", "{\"data\":[1251,1252,1253,1254]}"    });
+            // set get rack 1 direct
+            tests.push_back({"setmb sbmu:hold:3052 2251 2252 2253 2254", " setmb sbmu:hold:3052", "{\"data\":[2251,2252,2253,2254]}"    });
+            tests.push_back({"getmb sbmu:hold:3052 4", " getmb sbmu:hold:3052", "{\"data\":[2251,2252,2253,2254]}"    });
+            // set get rack 12 direct
+            tests.push_back({"setmb sbmu:hold:13052 12251 12252 12253 12254", " setmb sbmu:hold:13052", "{\"data\":[12251,12252,12253,12254]}"    });
+            tests.push_back({"getmb sbmu:hold:13052 4", " getmb sbmu:hold:13052", "{\"data\":[12251,12252,12253,12254]}"    });
+            //check rack 0 access 
+            tests.push_back({"setmb sbmu:hold:500 0 ", " setmb sbmu:hold:500 to 0", "{\"data\":[0]}"    });
+            tests.push_back({"getmb sbmu:hold:500 1 ", " getmb sbmu:hold:500 1", "{\"data\":[0]}"    });
+            tests.push_back({"getmb sbmu:hold:1052 4", " getmb sbmu:hold:1052", "{\"data\":[1251,1252,1253,1254]}"    });
 
-            tests.push_back({"setmb sbmu:hold:500 2", " setmb sbmu:hold:500 to 2", "{\"data\":[2]}"    });
-            tests.push_back({"getmb sbmu:hold:500 5", " getmb sbmu:hold:500 5",    "{\"data\":[2, 5 , 6, 7, 0]}"    });//"data":[2, 5, 6, 7, 0]
-            tests.push_back({"getmb sbmu:hold:1001 5", " getmb sbmu:hold:1001 5",  "{\"data\":[0,0,0,0,0]}"    });
+            //check rack 1 access gets 
+            tests.push_back({"setmb sbmu:hold:500 1 ", " setmb sbmu:hold:500 to 0", "{\"data\":[1]}"    });
+            tests.push_back({"getmb sbmu:hold:500 1 ", " getmb sbmu:hold:500 1", "{\"data\":[1]}"    });
+            tests.push_back({"getmb sbmu:hold:1052 4", " getmb sbmu:hold:1052", "{\"data\":[2251,2252,2253,2254]}"    });
+
+            tests.push_back({"setmb sbmu:hold:1052 2251 2252 2253 2254", " setmb sbmu:hold:1052", "{\"data\":[2251,2252,2253,2254]}"    });
+            tests.push_back({"getmb sbmu:hold:1052 4", " getmb sbmu:hold:1052", "{\"data\":[2251,2252,2253,2254]}"    });
+
+            // set rack 2 but read 1052
+            tests.push_back({"setmb sbmu:hold:3052 3251 3252 3253 3254", " setmb sbmu:hold:1052", "{\"data\":[3251,3252,3253,3254]}"    });
+            tests.push_back({"getmb sbmu:hold:1052 4", " getmb sbmu:hold:1052", "{\"data\":[3251,3252,3253,3254]}"    });
+
+
+            // tests.push_back({"setmb sbmu:hold:500 2", " setmb sbmu:hold:500 to 2", "{\"data\":[2]}"    });
+            // tests.push_back({"getmb sbmu:hold:500 5", " getmb sbmu:hold:500 5",    "{\"data\":[2, 5 , 6, 7, 0]}"    });//"data":[2, 5, 6, 7, 0]
+            // tests.push_back({"getmb sbmu:hold:1001 5", " getmb sbmu:hold:1001 5",  "{\"data\":[0,0,0,0,0]}"    });
             // tests.push_back({"get sbmu:bits:1 10",              " get 10 starting at sbmu:bits:1",          "1,0,0,0,0,0,0,0,0,0"});
             // tests.push_back({"set sbmu:bits:8 1 1",             " set sbmu:bits:8,9 to 1",                  "1,1"});
             // tests.push_back({"get sbmu:bits:1 10",              " get 10 sbmu:bits:1 ",                     "1,0,0,0,0,0,0,1,1,0"});
