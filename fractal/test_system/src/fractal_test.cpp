@@ -57,6 +57,8 @@ namespace fs = std::filesystem;
 bool debug = false;
 
 std::string g_url("ws://192.168.86.209:9003");
+ModbusClient mbx_client("192.168.86.209", 5000);
+
 
 
 // using data keys. we compress sbmu:bits:234[:num] into a var key 
@@ -2315,6 +2317,136 @@ uint32_t encode_id(const std::string &shmdef, int rack) {
 }
 
 
+std::pair<int, std::vector<int>> get_modbus(uint32_t id, int num, std::vector<int>data)
+{
+
+    std::ostringstream oss;
+    MemId mem_id = (MemId)((id & 0xF0000000) >> 28);
+    RegId reg_id = (RegId)((id & 0x0F000000) >> 24);
+
+    uint16_t rack_num = (uint16_t)((id & 0x00FF0000)>>16);
+    int offset = (int)((id & 0x0FFFF));
+
+    oss << " MemId " <<  mem_id
+        << " RegId " <<  reg_id
+        << " rack_num " << rack_num
+        << " offset " << offset ;
+
+    modbus_t * ctx = mbx_client.get_ctx();
+    uint16_t rack_select[] = { static_cast<uint16_t>(rack_num) };
+
+
+    // if(offset >= 1000 && reg_id == REG_HOLD)
+    // {
+    //     auto ret = modbus_write_registers(ctx, 500, 1, rack_select);  // Assuming register 500 is used to select the rack
+    // }
+    std::vector<uint16_t> response(num);
+    std::vector<uint8_t> response_bits(num);
+    int res = -1;
+    if (reg_id ==  REG_INPUT) {
+        res = modbus_read_input_registers(ctx, offset, num, response.data());
+    } else if (reg_id == REG_HOLD) {
+        res = modbus_read_registers(ctx, offset, num, response.data());
+    } else if (reg_id == REG_BITS) {
+        res = modbus_read_bits(ctx, offset, num, response_bits.data());
+    }
+
+    if (res == -1) {
+        std::cerr << "Failed to read: " << modbus_strerror(errno) << std::endl;
+        return {-1, {}};
+    } 
+    else 
+    {
+        if (reg_id == REG_BITS) {
+            std::vector<int> int_response(response_bits.begin(), response_bits.end());
+            return {0, int_response};
+        }
+        else
+        {
+            std::vector<int> int_response(response.begin(), response.end());
+            return {0, int_response};
+        }
+    }
+    return {-1, {}};
+} // Run the query
+
+std::pair<int, std::vector<int>> set_modbus(uint32_t id, int num, std::vector<int>data)
+{
+
+    std::ostringstream oss;
+    MemId mem_id = (MemId)((id & 0xF0000000) >> 28);
+    RegId reg_id = (RegId)((id & 0x0F000000) >> 24);
+
+    uint16_t rack_num = (uint16_t)((id & 0x00FF0000)>>16);
+    int offset = (int)((id & 0x0FFFF));
+
+    oss << " MemId " <<  mem_id
+        << " RegId " <<  reg_id
+        << " rack_num " << rack_num
+        << " offset " << offset ;
+
+    modbus_t * ctx = mbx_client.get_ctx();
+    uint16_t rack_select[] = { static_cast<uint16_t>(rack_num) };
+
+    // if(offset >= 1000 && reg_id == REG_HOLD) 
+    // {
+    //     auto ret = modbus_write_registers(ctx, 500, 1, rack_select);  // Assuming register 500 is used to select the rack
+    // }
+
+    std::vector<uint16_t> response(num);
+    std::vector<uint8_t> response_bits(num);
+    int res = -1;
+
+    int idx = 0;
+    //if (reg_type == "hold") {
+    for ( auto& val : data)
+    {
+        std::cout << " sending val "<< (int) val << std::endl;
+        if (reg_id == REG_HOLD) {
+            res = modbus_write_register(ctx, offset + idx, val);
+        //} else if (reg_type == "coil") {
+        } else if (reg_id == REG_COIL) {
+            res = modbus_write_bit(ctx, offset+ idx, val);  // Assuming single bit write for coils
+        }
+        idx++;
+    }
+
+    if (res == -1) {
+        std::cerr << "Failed to write: " << modbus_strerror(errno) << std::endl;
+        return {-1, data};
+    } else {
+        std::cout << "write result: " << modbus_strerror(errno) << std::endl;
+        return {0, data};
+    }
+    return {-1, data};
+}
+
+bool find_field(json & js, const std::string& key , const std::string& obj )
+{
+    try {
+        json j = json::parse(obj);
+        if (j.contains(key))
+        {
+            js = j[key];
+            return true;
+        }
+    } catch (const json::parse_error& e) {
+        std::cerr << "JSON Parsing Error: " << e.what() << std::endl;
+    }
+    return false;
+}
+
+std::string extractDataField(const std::string& response) {
+    std::regex pattern(R"(\s*"data": \[([0-9,\s]+)\])");  // Regex to find "data": [numbers,...]
+    std::smatch matches;
+
+    if (std::regex_search(response, matches, pattern)) {
+        if (matches.size() > 1) {
+            return matches[1].str();  // Return the contents of the brackets (the numbers)
+        }
+    }
+    return "Data not found";  // Return a default or error message if no match is found
+}
 
 std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables) {
     std::string query = trim(qustr);
@@ -2342,6 +2474,77 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             oss <<"      find - items by offset or name match\n"; 
             oss <<"      get(todo)  - get a value , define the dest by name or table:offset\n";
             oss <<"      set(todo)  - set a value , define the dest by name or table:offset\n";
+            return oss.str();
+        }
+        else if ( swords[0] == "test")
+        {
+            std::ostringstream oss;
+            //std::vector<std::pair<std::string,std::string>> tests;
+            // struct QueryTest {
+            //     std::string query;
+            //     std::string desc;
+            //     std::string resp;
+            // };
+            std::vector<QueryTest> tests;
+
+            tests.push_back({"setmb sbmu:hold:500 2", " setmb sbmu:hold:500 to 2", "{\"data\":[2]}"    });
+            tests.push_back({"getmb sbmu:hold:500 5", " getmb sbmu:hold:500 5",    "{\"data\":[2, 5 , 6, 7, 0]}"    });//"data":[2, 5, 6, 7, 0]
+            tests.push_back({"getmb sbmu:hold:1001 5", " getmb sbmu:hold:1001 5",  "{\"data\":[0,0,0,0,0]}"    });
+            // tests.push_back({"get sbmu:bits:1 10",              " get 10 starting at sbmu:bits:1",          "1,0,0,0,0,0,0,0,0,0"});
+            // tests.push_back({"set sbmu:bits:8 1 1",             " set sbmu:bits:8,9 to 1",                  "1,1"});
+            // tests.push_back({"get sbmu:bits:1 10",              " get 10 sbmu:bits:1 ",                     "1,0,0,0,0,0,0,1,1,0"});
+            // tests.push_back({"set sbmu:hold:500 8 ",            " set sbmu:hold:500 to 8",                  "8"});
+            // tests.push_back({"get sbmu:hold:500 ",              " get sbmu:hold:500",                       "8"});
+            // tests.push_back({"set sbmu:hold:1001 108 208 308 18 ", " set sbmu:hold:1001 to 108 208 308 18", "108,208,308,18"});
+            // tests.push_back({"get sbmu:hold:1001 4 ",           "get 4 sbmu:hold:1001  should query rack 8", "108,208,308,18"});
+            // tests.push_back({"set sbmu:hold:500 2 ",            "set sbmu:hold:500 to 2",                    "2"});
+            // tests.push_back({"get sbmu:hold:500 ",              " get sbmu:hold:500",                        "2"});
+            // tests.push_back({"set sbmu:hold:1001 102 202 302 12 ", " set sbmu:hold:1001 to 102 202 302 12", "102,202,302,12"});
+            // tests.push_back({"get sbmu:hold:1001 4 ",          " get 4 sbmu:hold:1001  should query rack 2", "102,202,302,12"});
+            // tests.push_back({"get sbmu:hold:at_total_v_over 10", " get 10 starting at_total_v_over",          "102,202,302,12,0,0,0,0,0,0"});
+            
+            for (auto & test : tests)
+            {
+               //oss << " running test[" << test.query << "] desc ["<< test.desc <<"]";
+            // std::ostringstream oss;
+            // oss << " Tet 
+                json jresp;
+                json jtest;
+                auto resp = handle_query(test.query, data_tables);
+                bool pass = false;
+                if(find_field(jresp, "data", resp))
+                {
+                    if(find_field(jtest, "data", test.resp))
+                    {
+                        if(jtest == jresp)
+                        {
+                            pass = true;
+                        }
+                    }
+                }
+ 
+                // //std::string extractDataField(resp)
+                if (pass)
+                    oss << "[PASS]";
+                else
+                    oss << "[FAIL]";
+                oss << " test[" << test.query << "] desc ["<< test.desc <<"] jresp ["<< jresp.dump() << "]";
+                //oss << std::endl;
+                
+                //std::cout <<"["<< test.resp <<"]" << std::endl;
+                //std::cout <<"["<< resp <<"]" << std::endl;
+                //oss <<   resp;
+                oss << std::endl;
+
+            }
+
+            // oss <<"help :-\n";
+            // oss <<"      show - show stuff\n";
+            // oss <<"      json - show stuff as json\n";
+            // oss <<"      tables - show tables\n";
+            // oss <<"      find - items by offset or name match\n"; 
+            // oss <<"      get(todo)  - get a value , define the dest by name or table:offset\n";
+            // oss <<"      set(todo)  - set a value , define the dest by name or table:offset\n";
             return oss.str();
         }
         else if ( swords[0] == "set")
@@ -2457,6 +2660,166 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     << std::endl;
 
             }
+            return oss.str();
+        }
+        else if ( swords[0] == "getmb")
+        {
+            uint32_t id = 0;
+            std::vector<int>values = {0};
+            std::ostringstream oss;
+            if (swords.size() == 1)
+            {
+                oss
+                    << "getmb a value <table><name|offset using the modbus connectipn"
+                    << std::endl
+                    << " examples \n" 
+                    << "    getmb sbmu:bits[:rack_num]:1\n" 
+                    << "    getmb sbmu:bits[:rack_num]:1  <num of bits> \n" 
+                    << "    getmb sbmu:bits:summary_total_undervoltage\n";
+            }
+            else if (swords.size() == 2)
+            {
+                // oss
+                //     << "get a value 2 <"<<swords[1]
+                //     << std::endl;
+                id = encode_id(swords[1],0);    
+                oss
+                    << "{\"id\" :\"0x"<<std::hex << id << std::dec <<"\",";
+                int num = 1;
+                std::vector<int>data= {};
+                auto mbresp = get_modbus(id, num, data);  // Run the query
+                oss
+                    << " \"response\":"<<mbresp.first<<",";
+                oss << " \"data\":[";
+                bool dfirst = true;
+                for(const auto &item : mbresp.second) {
+                    if(dfirst)
+                    {
+                        dfirst = false;
+                    }
+                    else 
+                    {
+                        oss <<", ";
+                    }
+                    oss << item;
+                }
+                oss << "]\n";
+            }
+            if (swords.size() == 3)
+            {
+                id = encode_id(swords[1],0);    
+                oss
+                    << "{\"id\" :\"0x"<<std::hex << id << std::dec <<"\",";
+                int num = 1;
+                try {
+                    num = std::stoi(swords[2]);
+                }
+                catch (const std::exception& ex) {
+                    oss <<  " values must be numbers\n";
+                    return oss.str();
+                }
+                std::vector<int>data= {};
+                auto mbresp = get_modbus(id, num, data);  // Run the query
+                oss
+                    << " \"response\":"<<mbresp.first<<",";
+                oss << " \"data\":[";
+                bool dfirst = true;
+                for(const auto &item : mbresp.second) {
+                    if(dfirst)
+                    {
+                        dfirst = false;
+                    }
+                    else 
+                    {
+                        oss <<", ";
+                    }
+                    oss << item;
+                }
+                oss << "]}\n";
+
+            }
+            return oss.str();
+        }
+        else if ( swords[0] == "setmb")
+        {
+            uint32_t id = 0;
+            std::vector<int>values = {0};
+            std::ostringstream oss;
+            if (swords.size() == 1)
+            {
+                oss
+                    << "getmb a value <table><name|offset using the modbus connectipn"
+                    << std::endl
+                    << " examples \n" 
+                    << "    setmb sbmu:bits[:rack_num]:1\n" 
+                    << "    setmb sbmu:bits[:rack_num]:1  1 2 3 4 \n" 
+                    << "    setmb sbmu:bits:summary_total_undervoltage 1\n";
+            }
+            else if (swords.size() >= 2)
+            {
+                // oss
+                //     << "set a value 2 <"<<swords[1]
+                //     << std::endl;
+                id = encode_id(swords[1],0);    
+                oss
+                    << "{\"id\":\"0x"<<std::hex << id << std::dec <<"\",";
+                    //<< std::endl;
+                std::vector<int>values;
+                try {
+ 
+                    for (int i = 2; i < swords.size(); i++)
+                    {
+                        values.push_back(std::stoi(swords[i]));
+                    }
+                }  catch (const std::exception& ex) {
+                    oss <<  " values must be numbers\n";
+                    return oss.str();
+                }               
+
+
+                int num = values.size();
+                auto mbresp = set_modbus(id, num, values);  // Run the query
+                oss
+                    << "\"response\":"<<mbresp.first<<",";
+                oss << " \"data\": [";
+                bool tfirst =  true;
+                for(const auto &item : mbresp.second) {
+                    if ( tfirst)
+                    {
+                        tfirst = false;
+                    }
+                    else
+                    {
+                        oss << ", ";
+
+                    }
+                    oss << item;
+                }
+                oss << "]}\n";
+            }
+            // if (swords.size() == 3)
+            // {
+            //     oss
+            //         << "get a value 3 <"<<swords[1]<<"> <"<<swords[2]<<">"
+            //         << std::endl;
+            //     int num = 1;
+            //     try {
+            //         num = std::stoi(swords[2]);
+            //     }
+            //     catch (const std::exception& ex) {
+            //         oss <<  " values must be numbers\n";
+            //         return oss.str();
+            //     }
+            //     std::vector<int>data= {};
+            //     auto mbresp = get_modbus(id, num, data);  // Run the query
+            //     oss
+            //         << " response:"<<mbresp.first<<",\n";
+            //     oss << " data [";
+            //     for(const auto &item : mbresp.second) {
+            //         oss << item << " ";
+            //     }
+            //     oss << "]\n";
+            // }
             return oss.str();
         }
         else if ( swords[0] == "tables")
@@ -2973,7 +3336,8 @@ void test_decode_shmdef();
 
 void test_data_list(ConfigDataList&configData);
 
-int test_modbus(const std::string& ip, int port );
+//int test_modbus(const std::string& ip, int port );
+int test_modbus();//const std::string& ip, int port );
 
 #include <fractal_test_unit_test.cpp>
 
@@ -3017,7 +3381,8 @@ int main(int argc, char* argv[]) {
         test_decode_shmdef();
 
         std::cout << "testing modbus ..." << std::endl;
-        test_modbus("192.168.86.209", 5000);
+        //test_modbus("192.168.86.209", 5000);
+        test_modbus();
 
         std::cout << "\n\n**************************************"<<std::endl;
         assert_manager.generate_report();

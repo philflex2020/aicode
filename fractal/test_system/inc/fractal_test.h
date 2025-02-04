@@ -262,8 +262,36 @@ struct MethStruct {
     std::function<int(const TransItem&)> func;
 };
 
+bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset, const std::string &shmdef);
 
 class ModbusClient {
+public:
+
+    std::string run_mbQuery(uint32_t id, int num , std::vector<int>values) {
+
+    MemId mem_id = (MemId)((id & 0xF0000000) >> 28);
+        RegId reg_id = (RegId)((id & 0x0F000000) >> 24);
+        int rack_num = (int)((id & 0x0F000000)>>16);
+
+        // uint16_t def_offset;
+
+
+        // auto [status, data] =  processMbQuery(query); 
+        std::ostringstream oss;
+        // oss << "[ ";
+        // for (size_t i = 0; i < data.size(); ++i) {
+        //     oss << data[i];
+        //     if (i < data.size() - 1) oss << " ";
+        // }
+        // oss << " ]";
+        return oss.str();
+    }
+
+    modbus_t* get_ctx()
+    {
+        return ctx;
+    }
+
 private:
     modbus_t *ctx = nullptr;
     bool connected = false;
@@ -301,36 +329,99 @@ private:
 
     int decodeRackNumber(const std::string& sm_name) {
         std::regex rack_regex("rack_(\\d+)");
+        std::regex rtos_regex("rtos_(\\d+)");
         std::smatch match;
         if (std::regex_search(sm_name, match, rack_regex) && match.size() > 1) {
+            return std::stoi(match[1]);
+        }
+        if (std::regex_search(sm_name, match, rtos_regex) && match.size() > 1) {
             return std::stoi(match[1]);
         }
         return -1;
     }
 
- std::pair<int, std::vector<int>> processQuery(const json& query) {
+
+// todo 
+// we want to decode into an id rack:hold:offset[:rack_no]
+//"mbget sbms:bits:123 4"
+ //qstring [{"action":"get", "sec":202, "sm_name":"0x11000001", "reg_type":"any", "offset":"1", "num":2, "data":[0]}]
+ //qstring json ["{\"action\":\"get\", \"sec\":202, \"sm_name\":\"0x11000001\", \"reg_type\":\"any\", \"offset\":\"1\", \"num\":2, \"data\":[0]}"]
+ std::pair<int, std::vector<int>> processMbQuery(const json& query) {
+      //std::cout << "running processMbQuery #1\n";
         std::string action = query.value("action", "");
         std::string reg_type = query.value("reg_type", "");
-        int offset = query.value("offset", 0);
+        int offset = 0;// = query.value("offset", 0);
+      //std::cout << "running processMbQuery #1a\n";
         int num = query.value("num", 0);
-        std::vector<int> data = query.value("data", std::vector<int>());
+      //std::cout << "running processMbQuery #1b\n";
+        std::vector<int> data;;
+        if (query.contains("data") && query["data"].is_array()) {
+            data = query["data"].get<std::vector<int>>();
+        } else { 
+            data = {0};
+        }
+      //std::cout << "running processMbQuery #3\n";
+        MemId mem_id;
+        RegId reg_id;
+        int rack_num;
+        uint16_t def_offset;
+        std::string shmdef = query.value("sm_name", "");
+        bool use_id = decode_shmdef(mem_id, reg_id, rack_num, def_offset, shmdef);
+        if(use_id)
+        {
+            std::cout << " after decode_shmdef  use_id true ["<<shmdef <<"]"<<std::endl;
+        } else {
+            std::cout << " after decode_shmdef use_id false ["<<shmdef <<"]"<<std::endl;
+        }
+        int rack_number = 0;
 
-        int rack_number = decodeRackNumber(query.value("sm_name", ""));
+        if(!use_id)
+        {
+            std::cout << " use_id false ; decoding rack number from ["<<shmdef <<"]"<<std::endl;
+            rack_number = decodeRackNumber(shmdef);
+        }
+        else
+        {
+            std::cout << " use_id true ; using  rack num [" << rack_num <<"] from ["<<shmdef <<"]"<<std::endl;
+            rack_number = rack_num;
+        }
         if (rack_number >= 0) {
             // Select the rack by writing to a specific register before actual query
             uint16_t rack_select[] = { static_cast<uint16_t>(rack_number) };
             modbus_write_registers(ctx, 500, 1, rack_select);  // Assuming register 500 is used to select the rack
+        }
+        if(!use_id)
+        {
+            if (reg_type == "input") {
+                reg_id = REG_INPUT;
+            }
+            else if (reg_type == "bits") {
+                reg_id = REG_BITS;
+            }
+            else if (reg_type == "hold") {
+                reg_id = REG_HOLD;
+            }
+            else if (reg_type == "coil") {
+                reg_id = REG_COIL;
+            }
+        }
+        else
+        {
+            offset = def_offset;
         }
 
         if (action == "get") {
             std::vector<uint16_t> response(num);
             std::vector<uint8_t> response_bits(num);
             int res = -1;
-            if (reg_type == "input") {
+            //if (reg_id ==  == "input") {
+            if (reg_id ==  REG_INPUT) {
                 res = modbus_read_input_registers(ctx, offset, num, response.data());
-            } else if (reg_type == "hold") {
+            //} else if (reg_type == "hold") {
+            } else if (reg_id == REG_HOLD) {
                 res = modbus_read_registers(ctx, offset, num, response.data());
-            } else if (reg_type == "bits") {
+            //} else if (reg_type == "bits") {
+            } else if (reg_id == REG_BITS) {
                 res = modbus_read_bits(ctx, offset, num, response_bits.data());
             }
 
@@ -338,7 +429,8 @@ private:
                 std::cerr << "Failed to read: " << modbus_strerror(errno) << std::endl;
                 return {-1, {}};
             } else {
-                if (reg_type == "bits") {
+                //if (reg_type == "bits") {
+                if (reg_id == REG_BITS) {
                     std::vector<int> int_response(response_bits.begin(), response_bits.end());
                     return {0, int_response};
                 }
@@ -350,9 +442,11 @@ private:
             }
         } else if (action == "set") {
             int res = -1;
-            if (reg_type == "hold") {
+            //if (reg_type == "hold") {
+            if (reg_id == REG_HOLD) {
                 res = modbus_write_registers(ctx, offset, num, reinterpret_cast<const uint16_t*>(data.data()));
-            } else if (reg_type == "coil") {
+            //} else if (reg_type == "coil") {
+            } else if (reg_id == REG_COIL) {
                 res = modbus_write_bit(ctx, offset, data[0]);  // Assuming single bit write for coils
             }
 
@@ -396,11 +490,11 @@ public:
     }
 
     std::pair<int, std::vector<int>> addQuery(const json& query) {
-        return processQuery(query);
+        return processMbQuery(query);
     }
  
     std::string run_mb(const std::string& query) {
-        auto [status, data] = processQuery(query);
+        auto [status, data] = processMbQuery(query);
     
         // Convert the status and data into a JSON string
         json jsonResponse;
@@ -450,5 +544,9 @@ struct TransItemTable {
     std::vector<TransItem> items;    
 };
 
-
+struct QueryTest {
+    std::string query;
+    std::string desc;
+    std::string resp;
+};
 #endif

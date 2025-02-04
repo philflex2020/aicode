@@ -130,7 +130,7 @@ void test_decode_shmdef() {
     myassert(result, "decode_shmdef: valid input with 3 parts", crash);
     myassert(mem_id == MEM_SBMU, "decode_shmdef: mem_id correct", crash);
     myassert(reg_id == REG_BITS, "decode_shmdef: reg_id correct", crash);
-    myassert(rack_num == 0, "decode_shmdef: rack_num default correct", crash);
+    myassert(rack_num == -1, "decode_shmdef: rack_num default correct", crash);
     myassert(offset == 100, "decode_shmdef: offset correct", crash);
 
     // Test case 2: Valid input with 4 parts
@@ -323,10 +323,11 @@ void test_match_system() {
 }
 
 // nmap -v -sT localhost
-int test_modbus(const std::string& ip, int port) {
+//int test_modbus(const std::string& ip, int port) {
+int test_modbus() {
     int mb_status = -2;
     try {
-        ModbusClient client(ip.c_str(), port); // Example IP and port
+        //ModbusClient client(ip.c_str(), port); // Example IP and port
 
         // Add a sample query in JSON format
         json query = {
@@ -339,7 +340,7 @@ int test_modbus(const std::string& ip, int port) {
             {"num", 10}
         };
 
-        auto [status, data] = client.addQuery(query);
+        auto [status, data] = mbx_client.addQuery(query);
         mb_status = status;
         if (status == 0) {
             std::cout << "Data read successfully: ";
