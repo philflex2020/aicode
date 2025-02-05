@@ -190,6 +190,20 @@ void get_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
         values.push_back(simulatedMemory[mid][rack_num][offset+i]);
 
 }
+
+
+void set_mem_int_val_id(uint32_t id, int num, int value) {
+    MemId mem_id;
+    RegId reg_id; 
+    int rack_num; 
+    int offset;
+    decode_id(mem_id, reg_id, rack_num, offset, id);
+    int mid = (mem_id <<4 + reg_id);
+    int idx = 0;
+    simulatedMemory[mid][rack_num][offset+idx] = value;
+}
+
+
 void set_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
     MemId mem_id;
     RegId reg_id; 
@@ -211,28 +225,109 @@ void setRackNum(uint32_t& id, int rack_num) {
     id |= (rack_num << 8) & 0x0000FF00;  // Set the rack number in its designated bit positions
 }
 
+// given a list of values and a single id 
+// set those values for s=the same id on each rack
+// set_rack_values(0x11020010, 10, { 1,0,0,1,0});
+void set_rack_values(uint32_t id,  int max_rack, std::vector<int>values)
+{
+    // Sets the rack number within the ID by manipulating specific bits
+    int rack_num = 0;
+    for(auto value : values)
+    {
+        if(rack_num >= max_rack)
+            break;
+        setRackNum(id, rack_num);
+        set_mem_int_val_id(id, 0, value);
+        rack_num++;
+    }
+}
+
+// recover the same id across all racks
+void get_rack_values(uint32_t id,  int max_rack, std::vector<int>&values)
+{
+    // Sets the rack number within the ID by manipulating specific bits
+    values.clear();
+    for(int rack_num = 0; rack_num < max_rack ; rack_num++)
+    {
+        setRackNum(id, rack_num);
+        get_mem_int_val_id(id, 1, values);
+    }
+}
+
+// given a list of ids set the values for the next n offsets
+void set_idvec_value(std::vector<uint32_t>ids,  int rack, const std::vector<int>&values)
+{
+    int idx = 0;
+    int max_idx = values.size();
+    for (auto id : ids )
+    {   
+        if(idx>max_idx) break;
+        // Sets the rack number within the ID by manipulating specific bits
+        if(rack>=0) setRackNum(id, rack);
+        //std::cout << " setting value " << values[idx]<< std::endl;
+        set_mem_int_val_id(id, 0, values[idx]);
+        idx++;
+    }
+}
+// given a list of ids get the values for the next n offsets
+void get_idvec_value(std::vector<uint32_t>ids,  int rack, std::vector<int>&values)
+{
+    for (auto id : ids )
+    {   
+        // Sets the rack number within the ID by manipulating specific bits
+        if(rack>=0) setRackNum(id, rack);
+        get_mem_int_val_id(id, 1, values);
+    }
+}
+
+// given an id set the values for the next n offsets
 void set_values(uint32_t id,  int rack, std::vector<int>values)
 {
 // Sets the rack number within the ID by manipulating specific bits
-    setRackNum(id, rack);
+    if(rack>=0)setRackNum(id, rack);
     set_mem_int_val_id(id, 0, values);
 }
+
 
 void test_sim_mem()
 {
     init_memory_simu();
     uint32_t id = 0x11020010;
+    // starting with 0x11020010 set a list of values  
+    // if rack is >=0 then select rack
     set_values(0x11020010, 0, { 23,45,67,12,45});
+    set_rack_values(0x11020020, 10, { 1,0,0,1,0});
+
     // int num = 0;
     std::vector<int>values;
     // set_mem_int_val_id(id, num, values);
     values.clear();
-    get_mem_int_val_id(id, 4, values);
-    for (auto val : values)
-        std::cout<<val<<std::endl;  
+    get_mem_int_val_id(id, 5, values);
+    std::cout << " same rack , fixed id 0x11020010 +5 values ->"; 
+    for (auto val : values)std::cout<<val<<" ";std::cout<<std::endl;  
+    // change the value on 2
+    std::cout << " all racks , fixed id 0x11020020 5 values ->"; 
+    values.clear();
+    get_rack_values(0x11020020, 5, values);
+    for (auto val : values) std::cout<<val<<" "; std::cout <<std::endl;  
+
+    set_values(0x11020020, 2, {3});
+    std::cout << " all racks , fixed id 0x11020020 5 values one changed ->"; 
+    values.clear();
+    get_rack_values(0x11020020, 5, values);
+    for (auto val : values) std::cout<<val<<" "; std::cout <<std::endl;  
+    // given a list of ids and a list of values set each id to the vaue
+    //void set_idvec_value(std::vector<uint32_t>ids,  int rack, std::vector<int>values)
+    set_idvec_value( {0x12020020,0x11020032,0x13020014,0x11020023, 0x11020123}, -1, {1,2,3,4,5});
+    values.clear();
+    get_idvec_value( {0x12020020,0x11020032,0x13020014,0x11020023,0x11020123}, -1, values);
+    std::cout << " scatter idlist   => "; 
+    for (auto val : values) std::cout<<val<<" "; std::cout <<std::endl;  
+    
+
 }
 
-// Placeholder
+
 //void set_mem_int_val_id(uint32_t dest_id,int idx, std::vector<int>& values) {}  // Placeholder
 void use_rack_mem(int rack_num, void* base_mem, int max, size_t rtos_size) {}  // Placeholder
 void release_rack_mem() {}  // Placeholder
