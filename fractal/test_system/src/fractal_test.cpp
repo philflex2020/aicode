@@ -59,24 +59,623 @@ bool debug = false;
 std::string g_url("ws://192.168.86.209:9003");
 ModbusClient mbx_client("192.168.86.209", 502);
 
+                                         
+// src                 meth         dest              lim              notes
 
-// std::vector<ModbusTransItem> sbms_di = {
-// 	{"rtos:bits:201,   "3sum",      "sbmu:bits:1",    "none",          "total_undervoltage"},
-// 	{"rtos:bits:204",  "3sum",      "sbmu:bits:4",    "none",           "total_overvoltage"},
-// 	{"rtos:bits:200,   "into",      "sbmu:bits:49",   "none",           "ESBCM_lost_communication"},
-// 	{"rtos:input:120", "3lim_max",  "sbmu:bits:10",   "sbmu:hold:120",  "low_resistance"},
-// 	{"rtos:input:117", "3lim_min",  "sbmu:bits:13",   "sbmu:hold:121",  "module_low_temp"},
-// 	{"rtos:input:117", "3lim_max",  "sbmu:bits:16",   "sbmu:hold:122",  "module_high_temp"},
-// 	{"rtos:input:125", "min", 		"sbmu:input:8",   "sbmu:input:10",  "max_battery_voltage"},
-// 	{"rtos:input:123", "max", 		"sbmu:input:9",   "sbmu:input:11",  "min_battery_voltage"},
-// 	{"rtos:input:101", "sum", 		"sbmu:input:33",  "none",           "max_charge_power"},
-// 	{"rtos:input:102", "sum", 		"sbmu:input:32",  "none",           "max_discharge_power"},
-// 	{"rtos:input:105", "sum", 		"sbmu:input:35",  "none",           "max_charge_current"},
-// 	{"rtos:input:106", "sum", 		"sbmu:input:34",  "none",           "max_discharge_current"},
-// 	{"rtos:input:0,   "count",     "sbmu:input:36",  "none",            "num_daily_charges"},
-// 	{"rtos:input:0",  "count",     "sbmu:input:37",  "none",            "num_daily_discharges"},
+ // Creating a JSON array
+ // Creating a JSON array
+json sbms_trans_arr = json::array({
+        {{"rtos:bits:201", "3sum", "sbmu:bits:1", "none", "total_undervoltage"}},
+        {{"rtos:bits:204", "3sum", "sbmu:bits:4", "none", "total_overvoltage"}},
+        {{"rtos:bits:200", "into", "sbmu:bits:49", "none", "ESBCM_lost_communication"}},
+        {{"rtos:input:120", "3lim_max", "sbmu:bits:10", "sbmu:hold:120", "low_resistance"}},
+        {{"rtos:input:117", "3lim_min", "sbmu:bits:13", "sbmu:hold:121", "module_low_temp"}},
+        {{"rtos:input:117", "3lim_max", "sbmu:bits:16", "sbmu:hold:122", "module_high_temp"}},
+        {{"rtos:input:125", "min", "sbmu:input:8", "sbmu:input:10", "max_battery_voltage"}},
+        {{"rtos:input:123", "max", "sbmu:input:9", "sbmu:input:11", "min_battery_voltage"}},
+        {{"rtos:input:101", "sum", "sbmu:input:33", "none", "max_charge_power"}},
+        {{"rtos:input:102", "sum", "sbmu:input:32", "none", "max_discharge_power"}},
+        {{"rtos:input:105", "sum", "sbmu:input:35", "none", "max_charge_current"}},
+        {{"rtos:input:106", "sum", "sbmu:input:34", "none", "max_discharge_current"}},
+        {{"rtos:input:0", "count", "sbmu:input:36", "none", "num_daily_charges"}},
+        {{"rtos:input:0", "count", "sbmu:input:37", "none", "num_daily_discharges"}}
+    });
 
-// };
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+using namespace std;
+
+
+int read_json_array(json& jdata, const std::string& filename) {
+    ifstream file(filename);  // Open the file
+    if (!file.is_open()) {
+        cerr << "Failed to open file: " << filename << endl;
+        return 1;  // Return 1 to indicate failure
+    }
+
+    jdata = json::array();  // Initialize jdata as a JSON array
+
+    string line;
+    bool firstLine = true;
+    while (getline(file, line)) {  // Read the file line by line
+        // Remove leading and trailing whitespaces
+        line.erase(0, line.find_first_not_of(" \t\n\r\f\v"));
+        line.erase(line.find_last_not_of(" \t\n\r\f\v") + 1);
+
+        // Skip empty lines or lines that are just array brackets
+        if (line.empty() || line == "[" || line == "]") continue;
+
+        // Remove trailing commas that are part of the array syntax
+        if (line.back() == ',') {
+            line.pop_back();
+        }
+
+        try {
+            json j = json::parse(line);  // Parse each line into a JSON object
+            jdata.push_back(j);  // Append the parsed object to the array
+        } catch (const json::parse_error& e) {
+            cerr << "Parse error at byte " << e.byte << ": " << e.what() << endl;
+            // Optionally, continue to the next line instead of stopping completely
+        }
+    }
+
+    return 0;  // Return 0 to indicate success
+}
+
+int test_read_array( json &jdata, const std::string& filename, std::ostringstream &oss) {
+    //string filename = "json/test_tdefs.json";
+    if (read_json_array(jdata, filename) == 0) {
+        oss << "Aggregated JSON data:" << std::endl << jdata.dump(4) << std::endl;
+    } else {
+        oss << "Failed to read JSON data." << std::endl;
+    }
+
+    return 0;
+}
+
+bool decode_id(MemId &mem_id, RegId& reg_id, int& rack_num, int&offset, uint32_t id)
+{
+        // Extract fields from the ID
+    mem_id = (MemId)((id >> 28) & 0xF);       // 4 bits for mem_id
+    reg_id = (RegId)((id >> 24) & 0xF);       // 4 bits for reg_id
+    rack_num = (id >> 16) & 0xFF;    // 8 bits for rack_num
+    offset = id & 0xFFFF;            // 16 bits for offset
+    return true;
+}
+
+
+
+// Simulated memory storage
+std::map<int, std::map<int, std::vector<uint16_t>>> simulatedMemory;
+#define NUM_RACKS 12
+#define NUM_VALUES_PER_RACK 512
+
+// Initialize memory simulation
+void init_memory_simu() {
+    for (int rack = 0; rack < NUM_RACKS; ++rack) {
+        for ( int mt = 0 ; mt < 4; mt++) {
+            for ( int rt = 0 ; rt < 4; rt++) {
+                int mid = (mt <<4 + rt);
+                simulatedMemory[mid][rack] = std::vector<uint16_t>(NUM_VALUES_PER_RACK, 0);  // Initialize with zeroes
+            }
+        }
+    }
+}
+
+// Dummy placeholders for functions that need to be defined
+bool rack_online(int rack_num) { return true; }  // Placeholder for checking if a rack is online
+
+void get_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
+    MemId mem_id;
+    RegId reg_id; 
+    int rack_num; 
+    int offset;
+    decode_id(mem_id, reg_id, rack_num, offset, id);
+    int mid = (mem_id <<4 + reg_id);
+    for (int i = 0 ; i < num; i++)
+        values.push_back(simulatedMemory[mid][rack_num][offset+i]);
+
+}
+void set_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
+    MemId mem_id;
+    RegId reg_id; 
+    int rack_num; 
+    int offset;
+    decode_id(mem_id, reg_id, rack_num, offset, id);
+    int mid = (mem_id <<4 + reg_id);
+    int idx = 0;
+    for (int val : values)
+    {
+        simulatedMemory[mid][rack_num][offset+idx] = val;
+        idx++;
+    }
+}
+
+void test_sim_mem()
+{
+    init_memory_simu();
+    uint32_t id = 0x11020010;
+    int num = 0;
+    std::vector<int>values = { 23,45,67,12,45};
+    set_mem_int_val_id(id, num, values);
+    values.clear();
+    get_mem_int_val_id(id, 4, values);
+    for (auto val : values)
+        std::cout<<val<<std::endl;  
+}
+
+// Placeholder
+//void set_mem_int_val_id(uint32_t dest_id,int idx, std::vector<int>& values) {}  // Placeholder
+void use_rack_mem(int rack_num, void* base_mem, int max, size_t rtos_size) {}  // Placeholder
+void release_rack_mem() {}  // Placeholder
+
+
+// Extracts the MemId from a given uint32_t ID by shifting and masking
+MemId getMemId(uint32_t id) {
+    return static_cast<MemId>((id >> 28) & 0xF);
+}
+
+// Sets the rack number within the ID by manipulating specific bits
+void setRackNum(uint32_t& id, int rack_num) {
+    id &= 0xFFFF00FF;             // Clear the bits where the rack number will be set
+    id |= (rack_num << 8) & 0x0000FF00;  // Set the rack number in its designated bit positions
+}
+
+void transfer_rack(const std::vector<ModbusTransItem>& items_vec, int rack_max) {
+    std::map<int, uint32_t> rack_sum_map, rack_max_map, rack_min_map;
+    std::map<int, int> rack_max_num_map, rack_min_num_map;
+    uint32_t src_id;
+    for (int rack_num = 0; rack_num < rack_max; ++rack_num) {
+        if (!rack_online(rack_num)) {
+            continue;
+        }
+
+        //use_rack_mem(rack_num);
+
+        for (const auto& item : items_vec) {
+            std::vector<int> values;
+
+            if (getMemId(item.src_id) != MEM_RTOS) {
+                continue;
+            }
+            src_id = item.src_id;
+
+            if (item.meth_str == "sum" ) {
+                setRackNum(src_id, rack_num);
+                get_mem_int_val_id(src_id, 0, values);
+
+                if (rack_num == 0) {
+                    rack_sum_map[item.dest_id] = 0;
+                }
+
+                if (!values.empty()) {
+                    //uint32_t sum = item.meth_str == "sum" ? values[0] : (values[0] << 16) + values[1];
+                    int sum = values[0];
+                    rack_sum_map[item.dest_id] += sum;
+                }
+
+                if (rack_num == rack_max - 1) {
+                    //values = {static_cast<uint16_t>(rack_sum_map[item.dest_id] & 0xFFFF), static_cast<uint16_t>(rack_sum_map[item.dest_id] >> 16)};
+                    values = {static_cast<int>(rack_sum_map[item.dest_id])};
+                    set_mem_int_val_id(item.dest_id, 0, values);
+                }
+            }
+            else if (item.meth_str == "sum2" ) {
+                setRackNum(src_id, rack_num);
+                get_mem_int_val_id(src_id, 0, values);
+
+                if (rack_num == 0) {
+                    rack_sum_map[item.dest_id] = 0;
+                }
+
+                if (!values.empty()) {
+                    uint32_t sum = (values[0] << 16) + values[1];
+                    rack_sum_map[item.dest_id] += sum;
+                }
+
+                if (rack_num == rack_max - 1) {
+                    values = {static_cast<int>(rack_sum_map[item.dest_id] & 0xFFFF), static_cast<int>(rack_sum_map[item.dest_id] >> 16)};
+                    //values = {static_cast<uint16_t>(rack_sum_map[item.dest_id])};
+                    set_mem_int_val_id(item.dest_id, 0, values);
+                }
+            } 
+            else if (item.meth_str == "max" || item.meth_str == "min") {
+                if (rack_num == 0) {
+                    rack_max_map[item.dest_id] = 0;
+                    rack_min_map[item.dest_id] = 0xFFFF;
+                }
+
+                uint16_t value = values.empty() ? 0 : values[0];
+                if (value > rack_max_map[item.dest_id]) {
+                    rack_max_map[item.dest_id] = value;
+                    rack_max_num_map[item.dest_id] = rack_num;
+                }
+                if (value < rack_min_map[item.dest_id]) {
+                    rack_min_map[item.dest_id] = value;
+                    rack_min_num_map[item.dest_id] = rack_num;
+                }
+                if (rack_num == rack_max - 1) {
+                    values = {static_cast<int>(item.meth_str == "max" ? rack_max_map[item.dest_id] : rack_min_map[item.dest_id])};
+                    set_mem_int_val_id(item.dest_id, 0, values);
+                }
+            }
+        }
+
+        //release_rack_mem();
+    }
+}
+
+// void transfer_rack(const std::vector<ModbusTransItem>& items_vec) {
+// 	// sadly we need one of these for each item
+// 	std::map<int,uint16_t> rack_max_map;
+// 	std::map<int,uint16_t> rack_min_map;
+// 	std::map<int,uint16_t> rack_max_num_map;
+// 	std::map<int,uint16_t> rack_min_num_map;
+// 	std::map<int,uint16_t> rack_max_group;
+// 	std::map<int,uint16_t> rack_min_group;
+// 	std::map<int,uint32_t> rack_sum_map;
+// 	uint16_t rack_min = 0xffff;
+// 	uint16_t rack_max_num=0xff;
+// 	uint16_t rack_min_num=0xff;
+
+//     for (int rack_num = 0; rack_num < rack_max; ++rack_num) {
+//         //use_rack_mem(rack_num, rtos_node->base_mem, rack_max, rtos_size);
+//         for (const auto& item : items_vec) {
+// 			// create a sum of all the input values into item.dest_reg
+//             uint32_t src_id = item.src_id;
+//             if (item.meth_str == "sum" && getMemId(item.src_id) == MEM_RTOS) 
+//             { 
+// 				if ((rack_num == 0)) {
+// 					rack_sum_map[item.dest_id] = 0;
+// 				}
+//                 std::vector<int>values;
+//                 uint16_t rack_value = 0;
+// 				if(rack_online(rack_num)) 
+// 				{
+//                     setRackNum(src_id, rack_num);
+//                     get_mem_int_val_id(src_id, 0, values);
+// 					rack_sum_map[item.dest_id] += values[0];
+// 				}
+// 				if ((rack_num == rack_max -1 )) {
+// 					rack_value = (uint16_t)rack_sum_map[item.dest_id];
+//                     values.clear();
+//                     values.push_back(rack_value);
+//                     set_mem_int_val_id(item.dest_id, 0, values);
+// 				}
+
+// 			}
+//             // 			// 32 bit summaries
+//             else if (item.meth_str == "sum2")
+// 			{
+//                 std::vector<int>values;
+// 				if ((rack_num == 0)) {
+// 					rack_sum_map[item.dest_reg]= 0;
+// 				}
+
+// 				uint16_t rack_lo_value = 0;
+// 				uint16_t rack_hi_value = 0;
+//                 uint16_t rack_ret = 0;
+// 				if(rack_online(rack_num) && item.src_reg != -1) 
+// 				{
+//                     // this may work
+//                     get_mem_int_val_id(src_id, 0, values);
+//                     get_mem_int_val_id(src_id, 1, values);
+// 					rack_sum_map[item.dest_reg] += ((values[0]<<16)+(values[1]));
+// 				}
+// 				if ((rack_num == rack_max -1 )) {
+//                     rack_sum = rack_sum_map[item.dest_id];
+// 					rack_hi_value = (uint16_t)(rack_sum>>16);
+// 					rack_lo_value = (uint16_t)(rack_sum_map[item.dest_id] & 0xffff);
+//                     values.clear();
+//                     values.push_back(rack_lo_value);
+//                     values.push_back(rack_hi_value);
+//                     set_mem_int_val_id(item.dest_id, 0, values);
+// 				}
+// 			}
+//             else if (item.meth_str == "max" && getMemId(item.src_id) == MEM_RTOS) 
+//             { 
+//                 std::vector<int>values;
+//                 values.clear();
+//                 uint16_t rack_value = 0;
+// 				if ((rack_num == 0)) {
+// 					rack_max_map[item.dest_id]= 0;
+// 					rack_max_num_map[item.dest_id]= 0;
+// 				}
+
+
+// 				if(rack_online(rack_num)) 
+// 				{
+//                     uint16_t rack_max_num = rack_max_num_map[item.dest_id];
+//                     uint16_t rack_max_val = rack_max_map[item.dest_id];					
+//                     setRackNum(src_id, rack_num);
+//                     get_mem_int_val_id(src_id, 0, values);
+//                     rack_value = values[0];
+//                     if(rack_max_val < rack_value)
+//                     {
+//                         rack_max_map[item.dest_id] = rack_value;
+//                         rack_max_num_map[item.dest_id] = rack_num;
+//                     }
+// 				}
+// 				if ((rack_num == rack_max -1 )) {
+//                     values.clear();
+//                     values.push_back(rack_max_map[item.dest_id]);
+//                     set_mem_int_val_id(item.dest_id, 0, values);
+// 				}
+
+// 			}
+//             else if (item.meth_str == "min" && getMemId(item.src_id) == MEM_RTOS) 
+//             { 
+//                 std::vector<int>values;
+//                 values.clear();
+//                 uint16_t rack_value = 0;
+// 				if ((rack_num == 0)) {
+// 					rack_min_map[item.dest_id]= 0xffff;
+// 					rack_min_num_map[item.dest_id]= 0;
+// 				}
+
+
+// 				if(rack_online(rack_num)) 
+// 				{
+//                     uint16_t rack_min_num = rack_min_num_map[item.dest_id];
+//                     uint16_t rack_min_val = rack_min_map[item.dest_id];					
+//                     setRackNum(src_id, rack_num);
+//                     get_mem_int_val_id(src_id, 0, values);
+//                     rack_value = values[0];
+//                     if(rack_min_val > rack_value)
+//                     {
+//                         rack_min_map[item.dest_id] = rack_value;
+//                         rack_min_num_map[item.dest_id] = rack_num;
+//                     }
+// 				}
+// 				if ((rack_num == rack_max -1 )) {
+//                     values.clear();
+//                     values.push_back(rack_min_map[item.dest_id]);
+//                     set_mem_int_val_id(item.dest_id, 0, values);
+// 				}
+
+// 			}
+//         }
+//         release_rack_mem();
+//     }
+// }
+
+// 			// 32 bit summaries
+//             else if (item.meth_str == "sum2" && item.src_str == "rinput") 
+// 			{
+// 				if ((rack_num == 0)) {
+// 					rack_sum_map[item.dest_reg]= 0;
+// 				}
+
+// 				uint16_t rack_lo_value = 0;
+// 				uint16_t rack_hi_value = 0;
+//                 uint16_t rack_ret = 0;
+// 				int read_mode = READ_INPUT_REG;
+// 				int write_mode = READ_INPUT_REG; // if item.dest_str == input
+// 				if(rack_online(rack_num) && item.src_reg != -1) 
+// 				{
+// 					Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.src_reg, &rack_hi_value);
+// 					Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.src_reg+1, &rack_lo_value);
+
+// 					rack_sum_map[item.dest_reg] += (rack_hi_value<<16);
+// 					rack_sum_map[item.dest_reg] += rack_lo_value;
+// 				}
+// 				if ((rack_num == rack_max -1 )) {
+// 					rack_hi_value = (uint16_t)(rack_sum_map[item.dest_reg]>>16);
+// 					rack_lo_value = (uint16_t)(rack_sum_map[item.dest_reg] & 0xffff);
+// 					Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg, rack_hi_value, &rack_ret);
+// 					Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg+1, rack_lo_value, &rack_ret);
+// 				}
+
+// 			}
+//             // 3sum
+//             else if (item.meth_str == "3sum" && item.src_str == "rbits") {
+//                 bool output_set[3] = {false, false,false};
+
+//                 for (int count = 0; count < 3; ++count) {
+//                     uint16_t rack_value = 0;
+//                     uint16_t sum_value = 0;
+//                     uint16_t ret_value = 0;
+// 					int read_mode = READ_BITS_REG;
+// 					int write_mode = READ_BITS_REG;
+// 					if(rack_online(rack_num) && item.src_reg != -1) {
+
+//                     	// if not alreasdy set; read the incoming value from the rack
+// 						if(!output_set[count])
+// 						{
+//                     		Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.src_reg + count, &rack_value);
+
+//                     		if (rack_value > 0) 
+// 							{
+//                         		sum_value = 1;
+//                         		output_set[count] = true;
+//                     			// Write the sum_value to the destination register
+//                     			Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg + count, sum_value, &ret_value);
+// 							}
+//                     	}
+//                 	}
+
+//                 	// If none of the input values were > 0, ensure the destination registers are cleared
+//                 	if ((rack_num == rack_max -1)) {
+// 						if(!output_set[count]) {
+//                         	sum_value = 0;
+//                         	uint16_t ret_value = 0;
+//                         	Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg + count, sum_value, &ret_value);
+//                     	}
+// 					}
+//                 }
+//             }
+// 			// 3lim_max 3lim_min
+// 			else if ((item.meth_str == "3lim_max" || item.meth_str == "3lim_min") && item.dest_str == "bits") 
+// 			{
+// 				bool output_set[3] = {false, false,false};
+
+//                 for (int count = 0; count < 3; ++count) {
+//                     uint16_t rack_value = 0;
+//                     uint16_t sum_value = 0;
+//                     uint16_t ret_value = 0;
+//                     uint16_t lim_value = 0;
+//                     uint16_t diff_value = 0;
+// 					int read_mode = READ_INPUT_REG;
+// 					int write_mode = READ_BITS_REG;
+// 					if(rack_online(rack_num) && item.src_reg != -1) {
+
+//                     	// if not already set; read the incoming value from the rack inputs
+// 						// also read the diff value assume that this is always lim_reg+3
+// 						if(!output_set[count])
+// 						{
+//                     		Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.src_reg + count, &rack_value);
+//                     		Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.lim_reg + count, &lim_value);
+//                     		Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.lim_reg + 3, &diff_value);
+
+// 							if (item.meth_str == "3lim_max")
+// 							{
+//                     			if (rack_value > lim_value + diff_value) 
+// 								{
+//                         			output_set[count] = true;
+// 								}
+// 							}
+// 							else if (item.meth_str == "3lim_max")
+// 							{
+//                     			if (rack_value < lim_value - diff_value) 
+// 								{
+//                         			output_set[count] = true;
+//                     				// Write the sum_value to the destination register
+// 								}
+// 							}
+// 							if (output_set[count])
+// 							{
+//                     			// Write the sum_value to the destination register
+//                         		sum_value = 1;
+//                     			Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg + count, sum_value, &ret_value);
+// 							}
+
+//                     	}
+//                 	}
+
+//                 	// If none of the input values outside limits, ensure the destination registers are cleared
+//                 	if ((rack_num == rack_max -1)) {
+// 						if(!output_set[count]) {
+//                         	sum_value = 0;
+//                         	uint16_t ret_value = 0;
+//                         	Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg + count, sum_value, &ret_value);
+//                     	}
+// 					}
+//                 }
+// 			}
+// 			// into (bits)
+// 			else if (item.meth_str == "into" && item.src_str == "rbits") 
+// 			{
+// 				bool output_set = false;
+
+// 				uint16_t rack_value = 0;
+// 				uint16_t sum_value = 0;
+// 				uint16_t ret_value = 0;
+// 				int read_mode = READ_BITS_REG;
+// 				int write_mode = READ_BITS_REG;
+// 				if(rack_online(rack_num) && item.src_reg != -1) 
+// 				{
+// 					// if not alreasdy set; read the incoming value from the rack
+// 					if(!output_set)
+// 					{
+// 						Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.src_reg, &rack_value);
+
+// 						if (rack_value > 0) 
+// 						{
+// 							sum_value = 1;
+// 							output_set = true;
+// 							// Write the sum_value to the destination register
+// 							Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg, sum_value, &ret_value);
+// 						}
+// 					}
+
+//                 	// If none of the input values were > 0, ensure the destination registers are cleared
+//                 	if ((rack_num == rack_max -1)) {
+// 						if(!output_set) {
+//                         	sum_value = 0;
+//                         	uint16_t ret_value = 0;
+//                         	Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg, sum_value, &ret_value);
+//                     	}
+// 					}
+//                 }
+// 			}
+// 			// input max or min  assume the rack num is to be placed into the lim reg ( for now)
+// 			// we may also need the group or module num
+// 			else if ((item.meth_str == "max" || item.meth_str == "min" ) 
+// 								&& item.src_str == "rinput") 
+// 			{
+// 				bool output_set = false;
+
+// 				uint16_t rack_value = 0;
+// 				uint16_t sum_value = 0;
+// 				uint16_t ret_value = 0;
+// 				uint16_t sum_num = 0;
+
+// 				int read_mode = READ_BITS_REG;
+// 				int write_mode = READ_BITS_REG;
+// 				if(rack_num == 0)
+// 				{
+// 					rack_max_map[item.dest_reg] = 0;
+// 					rack_min_map[item.dest_reg] = 0xffff;
+// 					rack_max_num_map[item.dest_reg] = 0xffff;
+// 					rack_min_num_map[item.dest_reg] = 0xffff;
+
+// 				}
+// 				if(rack_online(rack_num) && item.src_reg != -1) 
+// 				{
+// 					Esmu_ModbusSlave_ReadCallback(read_mode, rack_num, item.src_reg, &rack_value);
+
+// 					if (rack_value > rack_max_map[item.dest_reg]) 
+// 					{
+// 						rack_max_map[item.dest_reg] =  rack_value;
+// 						rack_max_num_map[item.dest_reg] = rack_num;
+// 					}
+// 					if (rack_value < rack_min_map[item.dest_reg]) 
+// 					{
+// 						rack_min_map[item.dest_reg] =  rack_value;
+// 						rack_min_num_map[item.dest_reg] = rack_num;
+// 					}
+//                     // we could use the lim reg to capture the numbers
+//                 	// If none of the input values were > 0, ensure the destination registers are cleared
+//                 	if ((rack_num == rack_max -1)) 
+// 					{
+// 						if (item.meth_str == "max")
+// 						{
+// 							// did we find one
+// 							if (rack_max_num_map[item.dest_reg] != 0xffff)
+// 							{
+//                        			sum_value = rack_max_map[item.dest_reg];
+// 								sum_num =  rack_max_num_map[item.dest_reg];
+//                         		uint16_t ret_value = 0;
+//                         		Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg, sum_value, &ret_value);
+//                         		Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.lim_reg, sum_num, &ret_value);
+// 							}
+//                     	}
+// 						else if (item.meth_str == "min")
+// 						{
+// 							// did we find one
+// 							if (rack_min_num_map[item.dest_reg] != 0xffff)
+// 							{
+//                        			sum_value = rack_min_map[item.dest_reg];
+// 								sum_num =  rack_min_num_map[item.dest_reg];
+//                         		uint16_t ret_value = 0;
+//                         		Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.dest_reg, sum_value, &ret_value);
+//                         		Esmu_ModbusSlave_WriteCallback(write_mode, rack_num, item.lim_reg, sum_num, &ret_value);
+// 							}
+//                     	}
+// 					}
+//                 }
+// 			}
+	
+//         }
+//         release_rack_mem();
+//     }
+// }
+
 
 
 // using data keys. we compress sbmu:bits:234[:num] into a var key 
@@ -2428,7 +3027,15 @@ std::pair<int, std::vector<int>> set_modbus(uint32_t id, int num, std::vector<in
             idx++;
              vals.push_back((uint16_t)val);
          }
-         res = modbus_write_registers(ctx, offset, num, vals.data());
+         if(num>1)
+         {
+            res = modbus_write_registers(ctx, offset, num, vals.data());
+         }
+         else
+         {
+            res = modbus_write_register(ctx, offset, vals[0]);
+
+         }
 
     } else if (reg_id == REG_COIL) {
         for ( auto& val : data)
@@ -2481,6 +3088,53 @@ std::string extractDataField(const std::string& response) {
     return "Data not found";  // Return a default or error message if no match is found
 }
 
+uint32_t  show_id(const json &item, const std::string&def, std::ostringstream& oss )
+{
+    uint32_t id = 0; 
+    if (item.contains(def)) {
+        oss << def << ": "<< item[def];
+        id = encode_id(item[def], 0); 
+        oss << "  0x" << std::hex << std::uppercase << id << std::dec<<"  ";
+    }
+    return id;
+}
+
+
+std::vector<ModbusTransItem> process_json_data(const json& jdata) {
+    // std::ifstream file(filename);
+    // if (!file.is_open()) {
+    //     throw std::runtime_error("Failed to open file.");
+    // }
+
+    // json jdata = json::parse(file);
+
+    std::vector<ModbusTransItem> items;
+    std::ostringstream oss;
+
+    for (const auto& item : jdata) {
+        ModbusTransItem transItem;
+        transItem.src_str = item.value("src", "");
+        transItem.src_id = encode_id(transItem.src_str, 0);
+
+        transItem.dest_str = item.value("dest", "");
+        transItem.dest_id = encode_id(transItem.dest_str, 0);
+
+        transItem.lim_str = item.value("lim", "");
+        transItem.lim_id = encode_id(transItem.lim_str, 0);
+
+        transItem.meth_str = item.value("meth", "");
+        transItem.meth_id = meth_str_to_id(transItem.meth_str);
+
+        transItem.name = item.value("desc", "");  // Using "desc" as it seems to be the descriptive field
+
+        items.push_back(transItem);
+    }
+
+    return items;
+}
+
+ 
+
 std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables) {
     std::string query = trim(qustr);
     std::istringstream iss(query);
@@ -2505,9 +3159,40 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             oss <<"      json - show stuff as json\n";
             oss <<"      tables - show tables\n";
             oss <<"      find - items by offset or name match\n"; 
-            oss <<"      get(todo)  - get a value , define the dest by name or table:offset\n";
-            oss <<"      set(todo)  - set a value , define the dest by name or table:offset\n";
+            oss <<"      get  - websocket: get a value , define the dest by name or table:offset\n";
+            oss <<"      set  - websocket: set a value , define the dest by name or table:offset\n";
+            oss <<"      getmb  - modbus: get a value , define the dest by name or table:offset\n";
+            oss <<"      setmb  - modbus set a value , define the dest by name or table:offset\n";
+            oss <<"      tdef [file]  - test transfer defs\n";
+            oss <<"      test [file]  - more stuff\n";
             return oss.str();
+        }
+        else if ( swords[0] == "tdef")
+        {
+            std::string filename = "json/test_tdefs.json";
+            if (swords.size() < 1)
+                filename = swords[1];
+
+            std::ostringstream oss;
+            json jdata;
+            test_read_array(jdata, filename, oss);
+            // Iterate through the JSON array
+            for (const auto& item : jdata) {
+                // Check if 'src' key exists to avoid potential exceptions
+                show_id(item, "src",oss );
+                show_id(item, "dest",oss );
+                show_id(item, "lim",oss );
+                show_id(item, "meth",oss );
+                show_id(item, "descr",oss );
+                oss << std::endl;
+
+            }
+            auto items = process_json_data(jdata);
+            test_sim_mem();
+
+            return oss.str();
+
+
         }
         else if ( swords[0] == "test")
         {
@@ -2548,6 +3233,12 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             tests.push_back({"setmb sbmu:hold:3052 3251 3252 3253 3254", " setmb sbmu:hold:1052", "{\"data\":[3251,3252,3253,3254]}"    });
             tests.push_back({"getmb sbmu:hold:1052 4", " getmb sbmu:hold:1052", "{\"data\":[3251,3252,3253,3254]}"    });
 
+            tests.push_back({"setmb sbmu:hold:510 48233", " setmb sbmu:hold:510 to 48223", "{\"data\":[48233]}"    });
+            tests.push_back({"getmb sbmu:hold:510 1", " getmb sbmu:hold:510 ", "{\"data\":[48233]}"    });
+            // push an event set rack to 5
+            tests.push_back({"setmb sbmu:hold:500 5 ", " setmb sbmu:hold:500 to 5", "{\"data\":[5]}"    });
+            tests.push_back({"setmb sbmu:hold:1002 34233", " setmb sbmu:hold:1002 to 34233", "{\"data\":[34233]}"    });
+            // now rack 5 1002 should be 34233 as should 6002 after the event is serviced by the rack
 
             // tests.push_back({"setmb sbmu:hold:500 2", " setmb sbmu:hold:500 to 2", "{\"data\":[2]}"    });
             // tests.push_back({"getmb sbmu:hold:500 5", " getmb sbmu:hold:500 5",    "{\"data\":[2, 5 , 6, 7, 0]}"    });//"data":[2, 5, 6, 7, 0]

@@ -549,4 +549,39 @@ struct QueryTest {
     std::string desc;
     std::string resp;
 };
+
+enum MethId {
+    METH_UNKNOWN,
+    METH_3SUM,
+    METH_INTO,
+    METH_3LIMMAX,
+    METH_3LIMMIN,
+    METH_MAX,
+    METH_MIN
+};
+
+MethId meth_str_to_id(const std::string& meth_str) {
+    if (meth_str == "3sum") return METH_3SUM;
+    if (meth_str == "into") return METH_INTO;
+    if (meth_str == "3lim_max") return METH_3LIMMAX;
+    if (meth_str == "3lim_min") return METH_3LIMMIN;
+    if (meth_str == "max") return METH_MAX;
+    if (meth_str == "min") return METH_MIN;
+    return METH_UNKNOWN;
+};
+
+
+// Structure definition
+struct ModbusTransItem {
+    std::string src_str;
+    uint32_t src_id;
+    std::string meth_str;
+    uint32_t meth_id;
+    std::string dest_str;
+    uint32_t dest_id;
+    std::string lim_str;
+    uint32_t lim_id;
+    std::string name;
+};
+
 #endif
