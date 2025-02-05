@@ -179,6 +179,82 @@ public:
     }
 };
 
+struct OpsItem {
+    std::string name;
+    std::string src;
+    std::string dest;
+    std::string meth;
+    std::string lim;
+    std::string desc;
+    uint32_t src_id;
+    uint32_t dest_id;
+    uint32_t lim_id;
+    int  meth_id;
+
+    OpsItem() {};
+    OpsItem (
+            const std::string& src,
+            const std::string& dest,
+            const std::string& meth,
+            const std::string& lim,
+             const std::string& desc)
+    : src(src),dest(dest), meth(meth),lim(lim) , desc(desc)   
+    {
+        // todo turn all the items into id's
+    };
+
+    // // Parses type from "system_name:reg_type_name" and updates object properties
+    // void setType(const std::string& mytype) {
+    //     std::istringstream iss(mytype);
+    //     std::string token;
+    //     std::vector<std::string> tokens;
+        
+    //     while (getline(iss, token, ':')) {
+    //         tokens.push_back(token);
+    //     }
+
+    //     if (tokens.size() >= 2) {
+    //         system_name = tokens[0];
+    //         reg_type_name = tokens[1];
+    //         system = stringToSystem(system_name);
+    //         reg_type = stringToRegType(reg_type_name);
+
+    //         // Optionally handle offset if provided
+    //         if (tokens.size() > 2) {
+    //             offset = std::stoi(tokens[2]);
+    //         }
+    //         computeKey();
+    //     } else {
+    //         std::cerr << "Invalid type format. Expected format 'system:reg_type[:offset]'" << std::endl;
+    //     }
+    // }
+
+    // DataItem(const std::string& sys, const std::string& reg, const std::string& nm, int off, int sz)
+    // : system_name(sys), reg_type_name(reg), name(nm), offset(off), size(sz) {
+    //     system = stringToSystem(sys);
+    //     reg_type = stringToRegType(reg);
+    //     computeKey();
+    // }
+
+    // void computeKey() {
+    //     // Compute a unique key using system and reg_type enums and offset
+    //     // Adjust multipliers as needed to ensure unique keys
+    //     mykey = static_cast<uint32_t>((int)system<<28)+ static_cast<uint32_t>((int)reg_type << 24) + (offset&0xffff);
+    // }
+};
+
+
+struct OpsTable {
+    OpsTable(){};
+    std::string name;
+    //int base_offset;
+    //uint32_t basekey;      // base_key derived from system + regtype but we may not use htis since we compose
+
+    std::vector<OpsItem> items;
+};
+
+typedef std::map<std::string, OpsTable> OpsTables;
+
 
 
 // struct DataItem {
@@ -553,20 +629,24 @@ struct QueryTest {
 enum MethId {
     METH_UNKNOWN,
     METH_3SUM,
+    METH_SUM,
+    METH_SUM2,
     METH_INTO,
     METH_3LIMMAX,
     METH_3LIMMIN,
     METH_MAX,
-    METH_MIN
+    METH_MIN,
+    METH_COUNT
 };
 
-MethId meth_str_to_id(const std::string& meth_str) {
-    if (meth_str == "3sum") return METH_3SUM;
-    if (meth_str == "into") return METH_INTO;
-    if (meth_str == "3lim_max") return METH_3LIMMAX;
-    if (meth_str == "3lim_min") return METH_3LIMMIN;
-    if (meth_str == "max") return METH_MAX;
-    if (meth_str == "min") return METH_MIN;
+int meth_str_to_id(const std::string& meth_str, const std::string& desc) {
+    if (meth_str == "3sum") return (int)METH_3SUM;
+    if (meth_str == "into") return (int)METH_INTO;
+    if (meth_str == "3lim_max") return (int)METH_3LIMMAX;
+    if (meth_str == "3lim_min") return (int)METH_3LIMMIN;
+    if (meth_str == "max") return (int)METH_MAX;
+    if (meth_str == "min") return (int)METH_MIN;
+    std::cout << "Undefined method ["<< meth_str <<"] operation ["<< desc <<"] will be ignored"<<std::endl;
     return METH_UNKNOWN;
 };
 

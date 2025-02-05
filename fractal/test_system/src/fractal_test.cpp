@@ -89,6 +89,11 @@ json sbms_trans_arr = json::array({
 
 using json = nlohmann::json;
 using namespace std;
+int tparse(std::ostringstream& oss);
+int ops_parse(std::string filename ,std::ostringstream& oss);
+int test_ops_parse(std::map<std::string, OpsTable>& ops_tables, const std::string &filename,std::ostringstream& oss);
+void test_ops_run(std::map<std::string, OpsTable>& ops_tables,const std::string& ops_table, const std::string& op_desc, std::ostringstream& oss);
+
 
 
 int read_json_array(json& jdata, const std::string& filename) {
@@ -164,15 +169,20 @@ std::map<int, std::map<int, std::vector<uint16_t>>> simulatedMemory;
 #define NUM_RACKS 12
 #define NUM_VALUES_PER_RACK 512
 
+bool sim_init = false;
 // Initialize memory simulation
 void init_memory_simu() {
-    for (int rack = 0; rack < NUM_RACKS; ++rack) {
-        for ( int mt = 0 ; mt < 4; mt++) {
-            for ( int rt = 0 ; rt < 4; rt++) {
-                int mid = (mt <<4 + rt);
-                simulatedMemory[mid][rack] = std::vector<uint16_t>(NUM_VALUES_PER_RACK, 0);  // Initialize with zeroes
+    if(!sim_init)
+    {
+        for (int rack = 0; rack < NUM_RACKS; ++rack) {
+            for ( int mt = 0 ; mt < 4; mt++) {
+                for ( int rt = 0 ; rt < 4; rt++) {
+                    int mid = (mt <<4 + rt);
+                    simulatedMemory[mid][rack] = std::vector<uint16_t>(NUM_VALUES_PER_RACK, 0);  // Initialize with zeroes
+                }
             }
         }
+        sim_init = true;
     }
 }
 
@@ -191,7 +201,7 @@ void get_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
 
 }
 
-
+bool set_value_debug = false;
 void set_mem_int_val_id(uint32_t id, int num, int value) {
     MemId mem_id;
     RegId reg_id; 
@@ -200,20 +210,28 @@ void set_mem_int_val_id(uint32_t id, int num, int value) {
     decode_id(mem_id, reg_id, rack_num, offset, id);
     int mid = (mem_id <<4 + reg_id);
     int idx = 0;
+    if(set_value_debug)printf( " set value to rack %d offset %d value %d\n", rack_num, offset, value );
     simulatedMemory[mid][rack_num][offset+idx] = value;
 }
 
+bool set_debug = false;
 
-void set_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
+void set_mem_int_val_id(uint32_t id, int num, const std::vector<int>& values) {
     MemId mem_id;
     RegId reg_id; 
     int rack_num; 
     int offset;
+    if(set_debug)printf( " handling id  0x%x \n", id);
     decode_id(mem_id, reg_id, rack_num, offset, id);
     int mid = (mem_id <<4 + reg_id);
     int idx = 0;
     for (int val : values)
     {
+        if(set_debug)printf( " mem_id  0x%x \n", mem_id);
+        if(set_debug) std::cout<< "setting memory id ["<< (int)mid << "] rack ["<< rack_num <<"] offset ["<<offset+idx<<"]\n";
+        if(simulatedMemory.find(mid) == simulatedMemory.end())
+            simulatedMemory[mid][rack_num] = std::vector<uint16_t>(NUM_VALUES_PER_RACK, 0);  // Initialize with zeroes
+
         simulatedMemory[mid][rack_num][offset+idx] = val;
         idx++;
     }
@@ -221,8 +239,9 @@ void set_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
 
 // Sets the rack number within the ID by manipulating specific bits
 void setRackNum(uint32_t& id, int rack_num) {
-    id &= 0xFFFF00FF;             // Clear the bits where the rack number will be set
-    id |= (rack_num << 8) & 0x0000FF00;  // Set the rack number in its designated bit positions
+    rack_num &= 0xff;
+    id &= 0xFF00FFFF;             // Clear the bits where the rack number will be set
+    id |= (rack_num << 16) & 0x00FF0000;  // Set the rack number in its designated bit positions
 }
 
 // given a list of values and a single id 
@@ -283,7 +302,7 @@ void get_idvec_value(std::vector<uint32_t>ids,  int rack, std::vector<int>&value
 // given an id set the values for the next n offsets
 void set_values(uint32_t id,  int rack, std::vector<int>values)
 {
-// Sets the rack number within the ID by manipulating specific bits
+    // Sets the rack number within the ID by manipulating specific bits
     if(rack>=0)setRackNum(id, rack);
     set_mem_int_val_id(id, 0, values);
 }
@@ -832,6 +851,8 @@ void transfer_rack(const std::vector<ModbusTransItem>& items_vec, int rack_max) 
 // }
 
 std::map<std::string, DataTable> data_tables;
+std::map<std::string, DataTable> test_data_tables;
+std::map<std::string, OpsTable> test_ops_tables;
 
 // Map to store method names and their corresponding functions
 std::map<std::string, MethStruct> meth_dict;
@@ -1288,7 +1309,7 @@ int str_to_offset(const std::string& offset_str) {
             return neg * std::stoi(offset_str.substr(start_idx)); // Parse as decimal
         }
     } catch (const std::invalid_argument& e) {
-        std::cerr << "Error: xxxx Invalid offset value: " << offset_str << std::endl;
+        //std::cerr << "Error: xxxx Invalid offset value: [" << offset_str <<"]"<< std::endl;
         return -1;
     } catch (const std::out_of_range& e) {
         std::cerr << "Error: Offset value out of range: " << offset_str << std::endl;
@@ -2955,7 +2976,7 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
 
     if (parts.size() == 3) {
         offset_str = parts[2];
-        rack_num = -1;  // use default as not defined
+        rack_num = 0;  // use default as not defined
     }
     if (parts.size() >= 4) {
         rack_num_str = parts[2];
@@ -3000,15 +3021,16 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
     offset = str_to_offset(offset_str);
     if (offset == 65535)
     {
-        std::cout << "Note offset value: " << offset_str 
-          <<" offset: "<< offset << " table_name :"<< table_name <<  std::endl;
+        std::cout << "Note offset value: [" << offset_str 
+          <<"] offset: ["<< offset << "] table_name :["<< table_name << "]" <<  std::endl;
         if(data_tables.find(table_name)!= data_tables.end())
         {
+            //std::cout <<" Found table ["<< table_name <<"]"<< std::endl;
             const auto& items = data_tables.at(table_name).items;
             for (const auto& item : items) {
                 if (item.name.find(offset_str) != std::string::npos) {
-                    std::cout << "Note offset item found : " << offset_str 
-                        <<" offset: "<< item.offset << " table_name :"<< table_name <<  std::endl;
+                    if(0)std::cout << "Note offset item found : " << offset_str 
+                            <<" offset: "<< item.offset << " table_name :"<< table_name <<  std::endl;
 
                     offset = item.offset;
                     return true;
@@ -3236,7 +3258,7 @@ std::vector<ModbusTransItem> process_json_data(const json& jdata) {
         transItem.lim_id = encode_id(transItem.lim_str, 0);
 
         transItem.meth_str = item.value("meth", "");
-        transItem.meth_id = meth_str_to_id(transItem.meth_str);
+        transItem.meth_id = meth_str_to_id(transItem.meth_str,"no desc");
 
         transItem.name = item.value("desc", "");  // Using "desc" as it seems to be the descriptive field
 
@@ -3277,7 +3299,17 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             oss <<"      getmb  - modbus: get a value , define the dest by name or table:offset\n";
             oss <<"      setmb  - modbus set a value , define the dest by name or table:offset\n";
             oss <<"      tdef [file]  - test transfer defs\n";
+            oss <<"      tparse [file]  - test table parsen";
             oss <<"      test [file]  - more stuff\n";
+            oss <<"      tops [desc, table]  - run a test op (load defs with tdef  first) \n";
+            return oss.str();
+        }
+        else if ( swords[0] == "tparse")
+        {
+            
+            std::ostringstream oss;
+            tparse(oss);
+            oss<< " file parsed\n";
             return oss.str();
         }
         else if ( swords[0] == "tdef")
@@ -3287,25 +3319,41 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                 filename = swords[1];
 
             std::ostringstream oss;
-            json jdata;
-            test_read_array(jdata, filename, oss);
-            // Iterate through the JSON array
-            for (const auto& item : jdata) {
-                // Check if 'src' key exists to avoid potential exceptions
-                show_id(item, "src",oss );
-                show_id(item, "dest",oss );
-                show_id(item, "lim",oss );
-                show_id(item, "meth",oss );
-                show_id(item, "descr",oss );
-                oss << std::endl;
+            
+            //std::string filename = "json/test_tdefs.json";
+            ops_parse(filename, oss);
+            // test_read_array(jdata, filename, oss);
+            // // Iterate through the JSON array
+            // for (const auto& item : jdata) {
+            //     // Check if 'src' key exists to avoid potential exceptions
+            //     show_id(item, "src",oss );
+            //     show_id(item, "dest",oss );
+            //     show_id(item, "lim",oss );
+            //     show_id(item, "meth",oss );
+            //     show_id(item, "descr",oss );
+            //     oss << std::endl;
 
-            }
-            auto items = process_json_data(jdata);
-            test_sim_mem();
+            // }
+            // auto items = process_json_data(jdata);
+            // test_sim_mem();
 
             return oss.str();
 
 
+        }
+        else if ( swords[0] == "tops")
+        {
+            std::ostringstream oss;
+            std::string op_table ="rack_input_complete";
+            std::string op_desc = "terminal_undervoltage";
+
+            if (swords.size() >1)
+                op_desc = swords[1];
+            if (swords.size() >2)
+                op_table = swords[2];
+            test_ops_run(test_ops_tables , op_table, op_desc, oss);
+
+            return oss.str();
         }
         else if ( swords[0] == "test")
         {
@@ -3705,6 +3753,23 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             }
             return oss.str();
         }
+        else if ( swords[0] == "test_tables")
+        {
+            std::ostringstream oss;
+
+            for (const auto& table_pair : test_data_tables) {
+                int total_size = 0;
+                for (auto & item : table_pair.second.items){
+                    if(item.name[0] != '_')
+                        total_size += item.size;
+                }
+                oss << table_pair.first 
+                    << " number of items :"
+                    << total_size
+                    << std::endl;
+            }
+            return oss.str();
+        }
         else if ( swords[0] == "show")
         {
             if (swords.size() > 1)
@@ -3714,6 +3779,21 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     std::ostringstream oss;
 
                     for (const auto& table_pair : data_tables) {
+                        oss << table_pair.first << std::endl;
+                        for (const auto& table_item : table_pair.second.items) {
+                            oss <<"    name: "<< table_item.name 
+                                << " offset: "  << table_item.offset 
+                                << " size: "  << table_item.size 
+                                << std::endl;
+                        }
+                    }
+                    return oss.str();
+                }
+                if (swords[1] == "test_tables")
+                {
+                    std::ostringstream oss;
+
+                    for (const auto& table_pair : test_data_tables) {
                         oss << table_pair.first << std::endl;
                         for (const auto& table_item : table_pair.second.items) {
                             oss <<"    name: "<< table_item.name 
@@ -4154,7 +4234,273 @@ int test_server(std::map<std::string, DataTable>) {
     return 0;
 }
 
+// int process_json_item(std::map<std::string, DataTable>& data_tables, const json &jitem) {
+//     std::string table_name = jitem["table"];
+//     std::cout << " Table name [" << table_name<<"]\n";
+//     int current_offset  = 0;
+//     data_tables[table_name] = DataTable(current_offset);
+//     data_tables[table_name].base_offset = current_offset;// = DataTable(current_offset);
+//     json jtable = item["items"];
+//     if (jtable.is_array()){
+//         std::cout << " Items Array found " << std::endl;
+//     }
+//     for (const auto& jitem : jtable) {
+//         std::string name = jitem["name"];
+//         int offset =  jitem["offset"];
+//         int size =  jitem["size"];
+//         // we may have a notes string 
+//         //{"name":                            "terminal_overvoltage", "offset": 0, "size": 3},
+//         DataItem item(name, offset, size);
+//         data_tables[table_name].items.push_back(item);
+//         data_tables[table_name].calculated_size += size;
+//     }
+//     return 0;
+// }
 
+int meth_to_id(std::string & meth, std::string& desc)
+{
+    int meth_id = 0;
+    if(meth == "3sum")
+        meth_id = METH_3SUM;
+    else if(meth == "into")
+        meth_id = METH_INTO;
+    else if(meth == "3lim_max")
+        meth_id = METH_3LIMMAX;
+    else if(meth == "3lim_min")
+        meth_id = METH_3LIMMIN;
+    else if(meth == "3limmax")
+        meth_id = METH_3LIMMAX;
+    else if(meth == "3limmin")
+        meth_id = METH_3LIMMIN;
+    else if(meth == "max")
+        meth_id = METH_MAX;
+    else if(meth == "min")
+        meth_id = METH_MIN;
+    else if(meth == "sum")
+        meth_id = METH_SUM;
+    else if(meth == "sum2")
+        meth_id = METH_SUM2;
+    else if(meth == "count")
+        meth_id = METH_COUNT;
+    else
+    {
+        std::cout << "Undefined method ["<< meth <<"] operation ["<< desc <<"] will be ignored"<<std::endl;
+    }
+    return meth_id;
+
+
+} 
+
+//int meth_str_to_id(const std::string& meth_str, const std::string& desc) {
+uint32_t shm_def_to_id(std::string& shmdef, const std::string& item, std::string& desc)
+{
+    uint32_t id = 0;
+    if (shmdef == "none")
+        return id;
+
+    MemId mem_id;
+    RegId reg_id; 
+    int rack_num ;
+    uint16_t offset;   
+    bool def_ok = decode_shmdef(mem_id, reg_id, rack_num, offset,shmdef);  
+    
+    if(def_ok)
+    {
+        id |= (static_cast<uint32_t>(mem_id) & 0xF) << 28;  // 4 bits for mem_id
+        id |= (static_cast<uint32_t>(reg_id) & 0xF) << 24;  // 4 bits for reg_id
+        id |= (static_cast<uint32_t>(rack_num) & 0xFF) << 16;   // 8 bits for rack
+        id |= (offset & 0xFFFF);       
+    }
+    else
+    {
+        std::cout << "Undefined memory ["<< shmdef <<"] item ["<<item<<"] operation ["<< desc <<"]  will be ignored"<<std::endl;
+    }
+    
+    return id;
+}
+
+int process_ops_item(std::map<std::string, OpsTable>& ops_tables, const json &jitem) {
+    if (!jitem.contains("table") || !jitem["table"].is_string()) {
+        std::cerr << "Error: Missing or invalid 'table' field" << std::endl;
+        return -1;
+    }
+
+    std::string table_name = jitem["table"];
+    std::cout << "Table name [" << table_name << "]\n";
+
+    if (!jitem.contains("items") || !jitem["items"].is_array()) {
+        std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
+        return -1;
+    }
+
+    json jtable = jitem["items"];
+    std::cout << "Items Array found" << std::endl;
+
+    bool isNewTable = ops_tables.find(table_name) == ops_tables.end();
+    if (isNewTable) {
+        ops_tables[table_name] = OpsTable();
+        ops_tables[table_name].name = table_name; // Uses the default constructor
+    }
+
+    // Create or access the DataTable for this table_name
+    OpsTable& table = ops_tables[table_name];
+    if (isNewTable) {
+        table.name = table_name;
+    }
+
+    for (const auto& jitem : jtable) {
+        if (!jitem.contains("src") || !jitem.contains("dest") || !jitem.contains("meth")|| !jitem.contains("lim")|| !jitem.contains("desc")) {
+            std::cerr << "Error: Missing required fields in item" << std::endl;
+            continue;  // Skip this item or you might want to return an error
+        }
+
+        std::string src = jitem["src"];
+        std::string dest = jitem["dest"];
+        std::string meth = jitem["meth"];
+        std::string lim = jitem["lim"];
+        std::string desc = jitem["desc"];
+        std::string notes = jitem.value("notes", "");  // Optional notes field
+        std::cout << " table ["<<table_name<<"] Added opts item [" << desc <<"]\n"; 
+        OpsItem item(src, dest, meth, lim, desc);
+        item.src_id =  shm_def_to_id(src,   "src",  desc);
+        item.dest_id = shm_def_to_id(dest,  "dest", desc);
+        item.lim_id =  shm_def_to_id(lim,   "lim",  desc);
+        item.meth_id = meth_to_id(meth, desc);
+
+        table.items.push_back(item);
+        //table.calculated_size += size;
+    }
+
+    return 0;
+}
+
+int process_json_item(std::map<std::string, DataTable>& data_tables, const json &jitem) {
+    if (!jitem.contains("table") || !jitem["table"].is_string()) {
+        std::cerr << "Error: Missing or invalid 'table' field" << std::endl;
+        return -1;
+    }
+
+    std::string table_name = jitem["table"];
+    std::cout << "Table name [" << table_name << "]\n";
+
+    if (!jitem.contains("items") || !jitem["items"].is_array()) {
+        std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
+        return -1;
+    }
+
+    json jtable = jitem["items"];
+    std::cout << "Items Array found" << std::endl;
+
+    bool isNewTable = data_tables.find(table_name) == data_tables.end();
+    if (isNewTable) {
+        data_tables[table_name] = DataTable(); // Uses the default constructor
+    }
+
+    // Create or access the DataTable for this table_name
+    DataTable& table = data_tables[table_name];
+    if (isNewTable) {
+        table.base_offset = 0;  // Set base_offset only if it's a new table
+        table.calculated_size = 0;  // Ensure calculated size starts at 0
+    }
+
+    for (const auto& jitem : jtable) {
+        if (!jitem.contains("name") || !jitem.contains("offset") || !jitem.contains("size")) {
+            std::cerr << "Error: Missing required fields in item" << std::endl;
+            continue;  // Skip this item or you might want to return an error
+        }
+
+        std::string name = jitem["name"];
+        int offset = jitem["offset"];
+        int size = jitem["size"];
+        std::string notes = jitem.value("notes", "");  // Optional notes field
+
+        DataItem item(name, offset, size);
+        table.items.push_back(item);
+        table.calculated_size += size;
+    }
+
+    return 0;
+}
+
+int test_ops_parse(std::map<std::string, OpsTable>& ops_tables, const std::string &filename,std::ostringstream& oss) {
+    std::ifstream file(filename);
+    json jfile;
+
+    if (!file.is_open()) {
+        std::cout <<"Could not open file: " + filename;
+        //throw std::runtime_error("Could not open file: " + filename);
+    }
+
+    try {
+
+        file >> jfile;
+        std::cout << " json loaded " << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return -1;
+    }
+    try {
+        // Iterate over each element in the array
+        for (const auto& item : jfile) {
+        // Check if "table" key exists in the JSON object
+            if(item.contains("Title"))
+                std::cout << " Data Tables ["<<item["Title"]<<"]\n";
+            if(item.contains("Release"))
+                std::cout << " Release ["<<item["Release"]<<"]\n";
+            if(item.contains("Date"))
+                std::cout << " Date ["<<item["Date"]<<"]\n";
+
+            if (item.contains("table") && item["table"].is_string()) {
+                process_ops_item(ops_tables, item);
+                //process_json_item(data_tables, item);
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+int test_json_parse(std::map<std::string, DataTable>& data_tables, const std::string &filename) {
+
+    std::ifstream file(filename);
+
+    try {
+        
+        if (!file.is_open()) {
+            throw std::runtime_error("Could not open file: " + filename);
+        }
+        json jfile;
+        file >> jfile;
+        std::cout << " json loaded " << std::endl;
+
+
+        if (jfile.is_array()){
+            std::cout << " Array found " << std::endl;
+        }
+
+        // Iterate over each element in the array
+        for (const auto& item : jfile) {
+        // Check if "table" key exists in the JSON object
+            if(item.contains("Title"))
+                std::cout << " Data Tables ["<<item["Title"]<<"]\n";
+            if(item.contains("Release"))
+                std::cout << " Release ["<<item["Release"]<<"]\n";
+            if(item.contains("Date"))
+                std::cout << " Date ["<<item["Date"]<<"]\n";
+
+            if (item.contains("table") && item["table"].is_string()) {
+                process_json_item(data_tables, item);
+            }
+        }
+
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return -1;
+    }
+    return 0;
+}
 //        auto data_file = "src/data_definition.txt";
 int test_parse(std::map<std::string, DataTable>& data_tables, const std::string & data_file) {
     try {
@@ -4193,6 +4539,117 @@ int test_parse(std::map<std::string, DataTable>& data_tables, const std::string 
     return 0;
 }
 
+// well assume a local data
+int run_ops_item(OpsItem& item, int rack_num, int max_rack, std::ostringstream& oss)
+{
+    uint32_t src_id = item.src_id;
+    uint32_t test_id = src_id | 0xc0000000;
+    if(set_debug)printf( " src_id 0x%x \n", src_id);
+    if(set_debug)printf( " test_id 0x%x \n", test_id);
+
+    // testid will use local cache memory
+
+    switch (item.meth_id)
+    {
+        case METH_3SUM: // we just do one for now
+        {
+            if(rack_num == 0)
+            {
+                // set all 3  results to all 0
+                set_mem_int_val_id(test_id, 3, {0,0,0});
+                // set up dummy rack vals 
+                // but this is just for one of the three levels
+                //  but luckily we can do this
+                std::vector<int>init_vals(max_rack,0);
+                set_rack_values(src_id, max_rack, init_vals);
+                set_rack_values(src_id+1, max_rack, init_vals);
+                set_rack_values(src_id+2, max_rack, init_vals);
+
+                printf(" before set src rack to 3 0x%x\n", src_id);
+                setRackNum(src_id,3);
+                printf(" after set src rack to 3 0x%x\n", src_id);
+                // put a value in place
+                set_value_debug = true;
+                printf(" set rack 3 val to 1\n");
+                set_mem_int_val_id(src_id, 3, 1);
+                set_value_debug = false;
+
+                    //set_values(0x11020020, 2, {3});
+            }
+            // todo return if rack is not online            
+            std::vector<int>test_results;
+            std::vector<int>test_values;
+            get_mem_int_val_id(test_id, 3, test_results);
+            oss << " rack ["<< rack_num << "] test_results so far ";
+            for (auto val : test_results)oss<<val<<" ";oss<<std::endl;  
+            // pick a value for this rack
+            setRackNum(src_id,rack_num); 
+            get_mem_int_val_id(src_id, 3, test_values);
+
+            oss << " rack ["<< rack_num << "] test_values so far ";
+            for (auto val : test_values)oss<<val<<" ";oss<<std::endl;  
+            // now we have the test_values in an array and the test_results in an array
+            // if any test value is > 0 then set the test_result to that value 
+            int vsize = test_results.size();
+            for ( int i = 0 ; i < vsize; i++)
+            {
+                if((test_results[i] == 0) &&(test_values[i] > 0))
+                {
+                    test_results[i] = test_values[i];
+                    set_mem_int_val_id(test_id, 3, test_results);
+                }
+            }
+            if(rack_num == max_rack-1)
+            {
+                oss << " rack final test results ";
+                for (auto val : test_results)oss<<val<<" ";oss<<std::endl;  
+                set_mem_int_val_id(item.dest_id, 3, test_results);
+                set_value_debug = false;
+            }
+        
+        }            
+        break;
+        default:
+            oss << " Item method []"<< item.meth <<"] not registered\n";
+    }
+    return 0;
+}
+//   if(rack>=0)setRackNum(id, rack);
+//     set_mem_int_val_id(id, 0, values);
+// }
+
+
+// void test_sim_mem()
+// {
+//     
+void test_ops_run(std::map<std::string, OpsTable>& ops_tables, const std::string& ops_table, const std::string& op_desc, std::ostringstream& oss)
+{
+    int max_rack = 12;
+    init_memory_simu();
+    if (ops_tables.find(ops_table) != ops_tables.end())
+    {
+        oss << " Found ops table [" << ops_table <<"]"<< std::endl;
+
+        for ( auto&item : ops_tables[ops_table].items)
+        {
+            oss << "Item desc ["<< item.desc <<"]" << std::endl;
+            if( item.desc == op_desc) {
+                oss << "Running Item desc ["<< item.desc <<"]" << std::endl;
+                oss << "src [" << item.src<<"] dest [" << item.dest<<"]  lim [" << item.lim<<"] meth [" << item.meth<<"]\n"; 
+                if (item.meth =="3sum")
+                {
+                    oss << "the plan is to get the src from all the racks and if one is set then the dest is to be set\n";
+                    oss << "its a 3sum because after the initial offset we have two more to check\n";
+                    for (int i = 0; i< max_rack ; i++)
+                    {
+                        run_ops_item(item,i, max_rack, oss);
+                    }
+
+                }
+            }
+        }
+    }
+}
 
 void test_str_to_offset();
 void test_decode_name();
@@ -4204,6 +4661,34 @@ void test_data_list(ConfigDataList&configData);
 
 //int test_modbus(const std::string& ip, int port );
 int test_modbus();//const std::string& ip, int port );
+int ops_parse(std::string filename ,std::ostringstream& oss)
+{
+    
+    test_ops_parse(test_ops_tables, filename, oss);
+    //test_read_array(jdata, filename, oss);
+            // // Iterate through the JSON array
+            // for (const auto& item : jdata) {
+            //     // Check if 'src' key exists to avoid potential exceptions
+            //     show_id(item, "src",oss );
+            //     show_id(item, "dest",oss );
+            //     show_id(item, "lim",oss );
+            //     show_id(item, "meth",oss );
+            //     show_id(item, "descr",oss );
+            //     oss << std::endl;
+
+            // }
+    return 0;
+}
+
+int tparse(std::ostringstream& oss)
+{
+    //std::map<std::string, DataTable> test_data_tables;
+
+    std::string data_file = "json/data_definition.json";
+
+    test_json_parse(test_data_tables, data_file);
+    return 1;
+}
 
 #include <fractal_test_unit_test.cpp>
 
@@ -4211,7 +4696,6 @@ int test_modbus();//const std::string& ip, int port );
 int main(int argc, char* argv[]) {
 
     std::ostringstream filename;
-
   
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <test_plan>\n";
@@ -4227,7 +4711,9 @@ int main(int argc, char* argv[]) {
 
         auto data_file = "src/data_definition.txt";
         test_parse(data_tables, data_file) ;
-        //return 0;
+        // //return 0;
+        // data_file = "json/data_defintion.json";
+        // test_json_parse(data_tables, data_file) ;
 
         // Function to initialize the method dictionary
         initializeMethodDictionary();
