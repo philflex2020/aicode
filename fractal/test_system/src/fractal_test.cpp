@@ -144,10 +144,19 @@ bool decode_id(MemId &mem_id, RegId& reg_id, int& rack_num, int&offset, uint32_t
     mem_id = (MemId)((id >> 28) & 0xF);       // 4 bits for mem_id
     reg_id = (RegId)((id >> 24) & 0xF);       // 4 bits for reg_id
     rack_num = (id >> 16) & 0xFF;    // 8 bits for rack_num
-    offset = id & 0xFFFF;            // 16 bits for offset
+    offset = id & 0xFFFF;            // 16 bits for oenffset
     return true;
 }
 
+bool code_id(MemId &mem_id, RegId& reg_id, int& rack_num, int&offset, uint32_t id)
+{
+        // Extract fields from the ID
+    id  = (mem_id & 0xF)<<28       // 4 bits for mem_id
+        +  (reg_id & 0xf)<< 24
+        +  (rack_num & 0xff)<< 16
+        +  (offset & 0xffff);
+    return true;
+}
 
 
 // Simulated memory storage
@@ -196,13 +205,27 @@ void set_mem_int_val_id(uint32_t id, int num, std::vector<int>& values) {
     }
 }
 
+// Sets the rack number within the ID by manipulating specific bits
+void setRackNum(uint32_t& id, int rack_num) {
+    id &= 0xFFFF00FF;             // Clear the bits where the rack number will be set
+    id |= (rack_num << 8) & 0x0000FF00;  // Set the rack number in its designated bit positions
+}
+
+void set_values(uint32_t id,  int rack, std::vector<int>values)
+{
+// Sets the rack number within the ID by manipulating specific bits
+    setRackNum(id, rack);
+    set_mem_int_val_id(id, 0, values);
+}
+
 void test_sim_mem()
 {
     init_memory_simu();
     uint32_t id = 0x11020010;
-    int num = 0;
-    std::vector<int>values = { 23,45,67,12,45};
-    set_mem_int_val_id(id, num, values);
+    set_values(0x11020010, 0, { 23,45,67,12,45});
+    // int num = 0;
+    std::vector<int>values;
+    // set_mem_int_val_id(id, num, values);
     values.clear();
     get_mem_int_val_id(id, 4, values);
     for (auto val : values)
@@ -220,11 +243,6 @@ MemId getMemId(uint32_t id) {
     return static_cast<MemId>((id >> 28) & 0xF);
 }
 
-// Sets the rack number within the ID by manipulating specific bits
-void setRackNum(uint32_t& id, int rack_num) {
-    id &= 0xFFFF00FF;             // Clear the bits where the rack number will be set
-    id |= (rack_num << 8) & 0x0000FF00;  // Set the rack number in its designated bit positions
-}
 
 void transfer_rack(const std::vector<ModbusTransItem>& items_vec, int rack_max) {
     std::map<int, uint32_t> rack_sum_map, rack_max_map, rack_min_map;
