@@ -55,6 +55,8 @@ namespace fs = std::filesystem;
 // ./ftest tyest_plan1
 
 bool debug = false;
+bool ops_debug = false;
+bool ops_test = false;
 
 std::string g_url("ws://192.168.86.209:9003");
 ModbusClient mbx_client("192.168.86.209", 502);
@@ -4539,11 +4541,14 @@ int test_parse(std::map<std::string, DataTable>& data_tables, const std::string 
     return 0;
 }
 
-// well assume a local data
+// well assume a local data cache is acceses when the src_id is masked 
+
 int run_ops_item(OpsItem& item, int rack_num, int max_rack, std::ostringstream& oss)
 {
     uint32_t src_id = item.src_id;
-    uint32_t test_id = src_id | 0xc0000000;
+    uint32_t dest_id = item.dest_id;
+    uint32_t test_id = src_id | 0xc0000000; // mask src_id to divert to test cache
+
     if(set_debug)printf( " src_id 0x%x \n", src_id);
     if(set_debug)printf( " test_id 0x%x \n", test_id);
 
@@ -4551,6 +4556,144 @@ int run_ops_item(OpsItem& item, int rack_num, int max_rack, std::ostringstream& 
 
     switch (item.meth_id)
     {
+        case METH_BLOCK:
+        {
+            // send all the values from src to dest lim is the string of the count
+            if(item.count == 0)
+            {
+                // lim str is now two values "480:1000"
+                std::istringstream iss(item.lim);
+                std::string part;
+                if (std::getline(iss, part, ':')) {
+                    item.count = std::stoi(part); // First number before the colon
+                }
+                if (std::getline(iss, part)) {
+                    item.rack_inc = std::stoi(part); // Second number after the colon
+                }
+            }
+            if(rack_online(rack_num))
+            {
+                std::vector<int>test_values;
+                setRackNum(src_id, rack_num); 
+                //setRackNum(dest_id, rack_num); 
+                get_mem_int_val_id(src_id, item.count, test_values);
+                set_mem_int_val_id(dest_id+(item.rack_inc*rack_num), item.count, test_values);
+            }
+
+        }
+        break;
+        case METH_3LIMMAX:
+        case METH_3LIMMIN:
+        {
+            if(rack_num == 0)
+            {
+                //set set max and min alert maybe we have max/min rack_num as well flags  
+                set_mem_int_val_id(test_id, 8, {0,0,0,0,0,0, max_rack+1, max_rack+1 });
+            }
+            std::vector<int>test_results;
+            get_mem_int_val_id(test_id, 6, test_results);
+            if(rack_online(rack_num))
+            {
+                std::vector<int>test_values;
+                setRackNum(src_id,rack_num); 
+                get_mem_int_val_id(src_id, 1, test_values);
+                std::vector<int>test_limits;
+                get_mem_int_val_id(test_id, 4, test_limits);  // level 0 level 1 level 2 /diff
+                if(item.meth_id==METH_3LIMMAX)
+                {
+                    if (test_values[0]> (test_limits[0]+test_limits[3]))
+                        test_results[0] = 1;
+                    if (test_values[0]> (test_limits[1]+test_limits[3]))
+                        test_results[1] = 1;
+                    if (test_values[0]> (test_limits[2]+test_limits[3]))
+                        test_results[2] = 1;
+                }
+                else if(item.meth_id==METH_3LIMMIN)
+                {
+                    if (test_values[0]< (test_limits[0]-test_limits[3]))
+                        test_results[0] = 1;
+                    if (test_values[0]< (test_limits[1]-test_limits[3]))
+                        test_results[1] = 1;
+                    if (test_values[0]< (test_limits[2]-test_limits[3]))
+                        test_results[2] = 1;
+                }
+                set_mem_int_val_id(test_id, 6, test_results);
+            }
+            if(rack_num == max_rack-1)
+            {
+                std::vector<int>test_results;
+                get_mem_int_val_id(test_id, 6, test_results);
+                if (item.meth_id == METH_3LIMMAX )
+                {
+                     set_mem_int_val_id(item.dest_id,   1, test_results[0]);
+                     set_mem_int_val_id(item.dest_id+1, 1, test_results[1]);
+                     set_mem_int_val_id(item.dest_id+2, 1, test_results[2]);
+                }
+                if (item.meth_id == METH_3LIMMIN )
+                {
+                     set_mem_int_val_id(item.dest_id,   1, test_results[3]);
+                     set_mem_int_val_id(item.dest_id+1, 1, test_results[4]);
+                     set_mem_int_val_id(item.dest_id+2, 1, test_results[5]);
+                }
+            }
+        }
+        break;
+        // max min avg
+        case METH_MAX: // we just do one for now
+        case METH_MIN: // we just do one for now
+        case METH_SUM: // we just do one for now
+        case METH_SUM2: // we just do one for now
+        case METH_COUNT: // we just do one for now
+        {
+            if(rack_num == 0)
+            {
+                //set max and min count and sum(32 bit) values
+                set_mem_int_val_id(test_id, 5, {0,0xffff,0,0,0});
+            }
+            if(rack_online(rack_num))
+            {
+                std::vector<int>test_values;
+                setRackNum(src_id,rack_num); 
+                get_mem_int_val_id(src_id, 1, test_values);
+                std::vector<int>test_results;
+                get_mem_int_val_id(test_id, 5, test_results);
+                if (test_results[0]< test_values[0])
+                {
+                    test_results[0] = test_values[0];  // max
+                }
+                if (test_results[1]> test_values[0])
+                {
+                    test_results[1] = test_values[0]; // min
+                }
+                test_results[2] = test_values[2]+1; // count 
+                uint32_t sum = (test_results[3]<< 16) + test_results[4];
+                sum += test_values[0];
+                test_results[3] == sum>>16;
+                test_results[4] == sum&0xffff;
+                set_mem_int_val_id(test_id, 5, test_results);
+
+            }
+            if(rack_num == max_rack-1)
+            {
+                std::vector<int>test_results;
+                get_mem_int_val_id(test_id, 5, test_results);
+
+                if (item.meth_id == METH_MAX )
+                    set_mem_int_val_id(item.dest_id, 1, test_results[0]);
+                else if (item.meth_id == METH_MIN )
+                    set_mem_int_val_id(item.dest_id, 1, test_results[1]);
+                else if (item.meth_id == METH_SUM )
+                    set_mem_int_val_id(item.dest_id, 1, test_results[4]);
+                else if (item.meth_id == METH_SUM2 )
+                {
+                    set_mem_int_val_id(item.dest_id, 1, test_results[3]);
+                    set_mem_int_val_id(item.dest_id+1, 1, test_results[4]);
+                }
+                else if (item.meth_id == METH_COUNT)
+                    set_mem_int_val_id(item.dest_id, 1, test_results[2]);
+            }
+        }
+        break;
         case METH_3SUM: // we just do one for now
         {
             if(rack_num == 0)
@@ -4560,49 +4703,57 @@ int run_ops_item(OpsItem& item, int rack_num, int max_rack, std::ostringstream& 
                 // set up dummy rack vals 
                 // but this is just for one of the three levels
                 //  but luckily we can do this
-                std::vector<int>init_vals(max_rack,0);
-                set_rack_values(src_id, max_rack, init_vals);
-                set_rack_values(src_id+1, max_rack, init_vals);
-                set_rack_values(src_id+2, max_rack, init_vals);
-
-                printf(" before set src rack to 3 0x%x\n", src_id);
+                if(ops_test)
+                {
+                    std::vector<int>init_vals(max_rack,0);
+                    set_rack_values(src_id,   max_rack, init_vals);
+                    set_rack_values(src_id+1, max_rack, init_vals);
+                    set_rack_values(src_id+2, max_rack, init_vals);
+                }
+                if(ops_debug)printf(" before set src rack to 3 0x%x\n", src_id);
                 setRackNum(src_id,3);
-                printf(" after set src rack to 3 0x%x\n", src_id);
+                if(ops_debug)printf(" after set src rack to 3 0x%x\n", src_id);
                 // put a value in place
-                set_value_debug = true;
-                printf(" set rack 3 val to 1\n");
+                //set_value_debug = true;
+                if(ops_debug)printf(" set rack 3 val to 1\n");
                 set_mem_int_val_id(src_id, 3, 1);
-                set_value_debug = false;
+                //set_value_debug = false;
 
                     //set_values(0x11020020, 2, {3});
             }
-            // todo return if rack is not online            
-            std::vector<int>test_results;
-            std::vector<int>test_values;
-            get_mem_int_val_id(test_id, 3, test_results);
-            oss << " rack ["<< rack_num << "] test_results so far ";
-            for (auto val : test_results)oss<<val<<" ";oss<<std::endl;  
-            // pick a value for this rack
-            setRackNum(src_id,rack_num); 
-            get_mem_int_val_id(src_id, 3, test_values);
-
-            oss << " rack ["<< rack_num << "] test_values so far ";
-            for (auto val : test_values)oss<<val<<" ";oss<<std::endl;  
-            // now we have the test_values in an array and the test_results in an array
-            // if any test value is > 0 then set the test_result to that value 
-            int vsize = test_results.size();
-            for ( int i = 0 ; i < vsize; i++)
+            if(rack_online(rack_num))
             {
-                if((test_results[i] == 0) &&(test_values[i] > 0))
+                // todo return if rack is not online            
+                std::vector<int>test_results;
+                std::vector<int>test_values;
+                get_mem_int_val_id(test_id, 3, test_results);
+                if(ops_debug)oss << " rack ["<< rack_num << "] test_results so far ";
+                if(ops_debug)for (auto val : test_results)oss<<val<<" ";oss<<std::endl;  
+                // pick a value for this rack
+                setRackNum(src_id,rack_num); 
+                get_mem_int_val_id(src_id, 3, test_values);
+
+                if(ops_debug)oss << " rack ["<< rack_num << "] test_values so far ";
+                if(ops_debug)for (auto val : test_values)oss<<val<<" ";oss<<std::endl;  
+                // now we have the test_values in an array and the test_results in an array
+                // if any test value is > 0 then set the test_result to that value 
+                int vsize = test_results.size();
+                for ( int i = 0 ; i < vsize; i++)
                 {
-                    test_results[i] = test_values[i];
-                    set_mem_int_val_id(test_id, 3, test_results);
+                    if((test_results[i] == 0) &&(test_values[i] > 0))
+                    {
+                        test_results[i] = test_values[i];
+                        set_mem_int_val_id(test_id, 3, test_results);
+                    }
                 }
             }
             if(rack_num == max_rack-1)
             {
-                oss << " rack final test results ";
-                for (auto val : test_results)oss<<val<<" ";oss<<std::endl;  
+                std::vector<int>test_results;
+                get_mem_int_val_id(test_id, 3, test_results);
+
+                if(ops_debug)oss << " rack final test results ";
+                if(ops_debug)for (auto val : test_results)oss<<val<<" ";oss<<std::endl;  
                 set_mem_int_val_id(item.dest_id, 3, test_results);
                 set_value_debug = false;
             }
