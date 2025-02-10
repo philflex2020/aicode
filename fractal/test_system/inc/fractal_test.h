@@ -330,6 +330,21 @@ public:
         return ctx;
     }
 
+    modbus_t* reconnect()
+    {
+        closeModbusConnection();
+        if(!ctx)
+        {
+            std::cout << "try to connect\n";
+            initializeModbusConnection(myip, myport);
+            if(!ctx)
+            {
+                std::cout << "reconnect failed\n";
+            }
+        }
+        return ctx;
+    }
+
 private:
     modbus_t *ctx = nullptr;
     bool connected = false;

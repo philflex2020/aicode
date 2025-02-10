@@ -3117,6 +3117,17 @@ std::pair<int, std::vector<int>> get_modbus(uint32_t id, int num, std::vector<in
     std::vector<uint16_t> response(num);
     std::vector<uint8_t> response_bits(num);
     int res = -1;
+    if(!ctx)
+    {
+        printf(" no modbus ctx; try reconnect\n");
+        ctx = mbx_client.reconnect();
+        if(!ctx)
+        {
+            printf(" reconnect failed \n");
+            oss << " no modbus ctx; reconnect failed";
+            return {-1, {}};
+        }
+    }
     if (reg_id ==  REG_INPUT) {
         res = modbus_read_input_registers(ctx, offset, num, response.data());
     } else if (reg_id == REG_HOLD) {
@@ -3127,9 +3138,12 @@ std::pair<int, std::vector<int>> get_modbus(uint32_t id, int num, std::vector<in
     }
 
     if (res == -1) {
-        std::cerr << " Failed to read: errno "<< errno << " -> " << modbus_strerror(errno) << std::endl;
-        oss << " Failed to read: " << modbus_strerror(errno) << std::endl;
+        int err = errno;
+        std::cerr << " Failed to read: errno "<< err << " -> " << modbus_strerror(err) << std::endl;
+        oss << " Failed to read: " << modbus_strerror(err) << std::endl;
         std::cout << oss.str();
+        if((err ==  22) || (err == 104)|| (err == 32))
+            ctx = mbx_client.reconnect();
         return {-1, {}};
     } 
     else 
