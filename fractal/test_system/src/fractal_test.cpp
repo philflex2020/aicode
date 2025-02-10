@@ -58,7 +58,7 @@ bool debug = false;
 bool ops_debug = false;
 bool ops_test = false;
 
-std::string g_url("ws://192.168.86.209:9003");
+std::string g_url("ws://192.168.86.209:9001");
 ModbusClient mbx_client("192.168.86.209", 502);
 
                                          
@@ -852,6 +852,7 @@ void transfer_rack(const std::vector<ModbusTransItem>& items_vec, int rack_max) 
 
 // }
 
+std::map<std::string, TestTable> test_tables;
 std::map<std::string, DataTable> data_tables;
 std::map<std::string, DataTable> test_data_tables;
 std::map<std::string, OpsTable> test_ops_tables;
@@ -1479,7 +1480,7 @@ std::string generateIdQuery(const std::string& action, int seq, uint32_t id, con
     std::ostringstream os_name;
     os_name << "0x" << std::hex << std::uppercase << id << std::dec;
 
-    query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< ", \"sm_name\":\"" << os_name.str()
+    query << "{\"action\":\""<< action <<"\", \"seq\":" <<seq<< ", \"sm_name\":\"" << os_name.str()
           << "\", \"reg_type\":\"" << type
           << "\", \"offset\":\"" << (int)(id&0xffff)
           << "\", \"num\":" << num
@@ -1502,7 +1503,7 @@ std::string generateGroupQuery(const std::string& action, int seq, int rack, con
     {
         os_name << "_" << rack;
     }
-    query << "{\"action\":\""<< action <<"\", \"sec\":" <<seq<< "\", \"sm_name\":\"" << os_name.str()
+    query << "{\"action\":\""<< action <<"\", \"seq\":" <<seq<< "\", \"sm_name\":\"" << os_name.str()
           << "\", \"reg_type\":\"" << type
           << "\", \"offset\":\"" << startOffset
           << "\", \"num\":" << group.size()
@@ -2576,7 +2577,7 @@ void run_test_plan(json& testPlan, std::string& testName, int test_run)
     std::string url = jmon.contains("Url") ? jmon["Url"].get<std::string>():"ws://192.168.86.209:9003";
 
 
-    int seq = jmq.contains("sec") ? jmq["sec"].get<int>():1;
+    int seq = jmq.contains("seq") ? jmq["seq"].get<int>():1;
     if (testPlan.contains("Tests") && testPlan["Tests"].is_array()) {   
         jtests = testPlan["Tests"];
         std::cout << "Tests found" << std::endl;
@@ -3310,6 +3311,49 @@ std::vector<ModbusTransItem> process_json_data(const json& jdata) {
     return items;
 }
 
+//std::map<std::string, TestTable> test_tables;
+
+std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables);
+
+void tests_run(const std::string& tname, std::ostringstream& oss)
+{
+    if(test_tables.find(tname) == test_tables.end())
+    {
+        oss << " no test called [" << tname<<"] found" << std::endl;
+        return;
+        //"action"
+    }
+    auto test_item = test_tables[tname];
+    oss << " test called [" << tname<<"] found" << std::endl;
+
+    for ( auto& item : test_item.items)
+    {
+        oss  << item.action << std::endl;
+        if (item.action.find("pause") == 0)
+        {
+            std::istringstream iss(item.action);
+            std::vector<std::string> parts;
+            std::string part;
+            while (std::getline(iss, part, ':')) {
+                parts.push_back(part);
+            }
+            int pause = 1000;
+            if(parts.size() > 1)
+            {
+                pause = std::stoi(parts[1].c_str());
+            }
+            // Pause execution for the specified duration
+            std::this_thread::sleep_for(std::chrono::milliseconds(pause));
+        }
+        else
+        {
+            auto resp = handle_query(item.action, data_tables);
+            oss << resp;
+        }
+    }
+
+}
+
  
 
 std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables) {
@@ -3344,6 +3388,18 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             oss <<"      tparse [file]  - test table parsen";
             oss <<"      test [file]  - more stuff\n";
             oss <<"      tops [desc, table]  - run a test op (load defs with tdef  first) \n";
+            oss <<"      run  [test]         - run a test  from test_tables \n";
+            return oss.str();
+        }
+        else if ( swords[0] == "run")
+        {
+            std::string tname = "first";
+            if (swords.size() < 1)
+                tname = swords[1];
+
+            std::ostringstream oss;
+            tests_run(tname, oss);
+            oss<< " test complete\n";
             return oss.str();
         }
         else if ( swords[0] == "tparse")
@@ -3524,12 +3580,12 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     << "set a value  <"<<swords[1]
                     << std::endl;
                 int rack;// = std::stoi(swords[2]);
-                try {
-                    rack = std::stoi(swords[2]);
-                } catch (const std::exception& ex) {
-                    oss <<  " rack must be a number -1 or rack num\n";
-                    return oss.str();
-                }
+                // try {
+                //     rack = std::stoi(swords[2]);
+                // } catch (const std::exception& ex) {
+                //     oss <<  " rack must be a number -1 or rack num\n";
+                //     return oss.str();
+                // }
                 uint32_t id;
                 id = encode_id(swords[1], rack);
                 oss
@@ -3538,7 +3594,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                 std::vector<int>values;
                try {
  
-                    for (int i = 3; i < swords.size(); i++)
+                    for (int i = 2; i < swords.size(); i++)
                     {
                         values.push_back(std::stoi(swords[i]));
                     }
@@ -3966,6 +4022,57 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     oss << "]\n";
                     return oss.str();
                 }
+                else if (swords[1] == "tests")
+                {
+                    const int nameFieldWidth = 48; // Desired width for the name field
+                    std::ostringstream oss;
+                    oss << "[";
+                    bool tfirst = true;
+                    for (const auto& table_pair : test_tables) {
+                        if (!tfirst) 
+                        {
+                            oss << ",\n";
+                        }
+                        else
+                        {
+                            tfirst =  false;
+                            oss << "\n";
+                        }
+                            
+                        oss << "   { \"test\": \""
+                        << table_pair.first << "\", \"items\":[";
+                        bool first = true;
+                        for (const auto& table_item : table_pair.second.items) {
+                            if (!first) {
+                                oss << ",\n";
+                            }
+                            else
+                            {
+                                first =  false;
+                                oss << "\n";
+                            }
+
+                            int spacesNeeded = nameFieldWidth - table_item.action.length(); // Calculate the number of spaces needed
+                            if (spacesNeeded < 0) spacesNeeded = 0; // Ensure no negative values
+                            std::string spaces(spacesNeeded, ' '); // Create a string of spaces
+
+                            //oss <<"     {\"name\":" << std::left << std::setw(32)<< "\""<< table_item.name 
+                            oss <<"     {\"action\":"<< spaces << "\""<< table_item.action 
+                                << "\", \"desc\": "  << table_item.desc 
+                                << ", \"data\": [";  //<< table_item.size 
+                            for (size_t i = 0; i < table_item.data.size(); ++i) {
+                                if (i > 0) oss << ", ";
+                                oss << table_item.data[i];
+                            }
+                            oss << "]"  //<< table_item.size 
+                                << "}" ;//<< std::endl;
+                        }
+                        oss << "\n     ]\n   }";
+
+                    }
+                    oss << "]\n";
+                    return oss.str();
+                }
             }
             {
                 std::ostringstream oss;
@@ -3973,6 +4080,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                 oss <<"      methods - show all the built in transition methods\n";
                 oss <<"      tables - show all the data point tables\n";
                 oss <<"      trans  - show all the transfer tables\n";
+                oss <<"      tests  - show all the test tables\n";
                 return oss.str();
             }
         }
@@ -4977,6 +5085,114 @@ int parse_data_tables(std::map<std::string, DataTable>& data_tables, const std::
 	return 0;
 }
 
+int process_test_item(std::map<std::string, TestTable>& test_tables, const json &jitem) {
+    std::cout << __func__ <<" Test item\n";
+    if (!jitem.contains("test") || !jitem["test"].is_string()) {
+        std::cerr << "Error: Missing or invalid 'test' field" << std::endl;
+        return -1;
+    }
+    std::cout << __func__ <<" Test item #2\n";
+
+    std::string test_name = jitem["name"];
+    std::cout << __func__ <<" Test name [" << test_name << "]\n";
+
+    if (!jitem.contains("items") || !jitem["items"].is_array()) {
+        std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
+        return -1;
+    }
+
+    json jtable = jitem["items"];
+    //std::cout << "Items Array found" << std::endl;
+   bool isNewTable = test_tables.find(test_name) == test_tables.end();
+    if (isNewTable) {
+        test_tables[test_name] = TestTable(); // Uses the default constructor
+    }
+
+    // Create or access the DataTable for this table_name
+    TestTable& table = test_tables[test_name];
+    if (isNewTable) {
+        // table.base_offset = 0;  // Set base_offset only if it's a new table
+        // table.calculated_size = 0;  // Ensure calculated size starts at 0
+    }
+
+	int item_idx = -1;
+     for (const auto& jitem : jtable) {
+        item_idx++;
+
+        if (!jitem.contains("action") ||  !jitem.contains("desc") || !jitem.contains("data")) {
+            if (!jitem.contains("note")) {
+                std::cerr << "Error: Missing required fields in item idx [" << item_idx<<" ]"  << std::endl;
+            }
+            continue;  // Skip this item or you might want to return an error
+        }
+        std::string action = jitem["action"];
+        // std::string dest = jitem["dest"];
+        std::string desc = jitem["desc"];
+        std::cout << " Test Item desc ["<< desc << "]"<< std::endl;
+        std::vector<int> data = jitem["data"].get<std::vector<int>>();
+//        std::string notes = jitem.value("notes", "");  // Optional notes field
+
+		// if(item_idx < 5)
+		// 	std::cout << " Data Item found, table  [" << table_name <<"] item name [" << name << "] offset [" << offset << "]" << std::endl;		
+        TestItem item;
+        item.action = action;
+        //item.dest = dest;
+        item.desc = desc;
+        item.data = data;
+        table.items.push_back(item);
+//        table.calculated_size += size;
+    }
+
+    return 0;
+}
+
+
+int parse_test_tables(std::map<std::string, TestTable>& data_tables, const std::string &filename, const std::string &filedir)
+{
+
+	std::cout <<"\n\n\n"<< __func__<< " parse test tables \n\n" << std::endl;
+
+	std::string fname = filedir + filename;
+	std::ifstream file(fname);
+	if (!file.is_open()) {
+		std::cout << "could not open data_table file ["<<fname<<"] no data table available " << std::endl;
+		return -1;
+	}
+	try {
+	
+		json jfile;
+		file >> jfile;
+		std::cout << __func__<< " json loaded " << std::endl;
+
+
+		if (jfile.is_array()){
+			std::cout << __func__ << " Array found " << std::endl;
+		}
+
+		// Iterate over each element in the array
+		for (const auto& item : jfile) {
+		// Check if "table" key exists in the JSON object
+		    if(item.contains("Title"))
+                std::cout << " Data Tables ["<<item["Title"]<<"]\n";
+            if(item.contains("Release"))
+                std::cout << " Release ["<<item["Release"]<<"]\n";
+            if(item.contains("Date"))
+                std::cout << " Date ["<<item["Date"]<<"]\n";
+
+			if (item.contains("test") && item["test"].is_string()) {
+
+				process_test_item(data_tables, item);
+			}
+		}
+
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return -1;
+    }
+
+	return 0;
+}
+
 // Main Function
 int main(int argc, char* argv[]) {
 
@@ -5000,6 +5216,11 @@ int main(int argc, char* argv[]) {
         std::string config_dir = "config/json/";
 
         parse_data_tables(data_tables, data_table_file, config_dir);
+
+        std::string test_table_file = "test_definition.json";
+        //std::string config_dir = "config/json/";
+
+        parse_test_tables(test_tables, test_table_file, config_dir);
         // //return 0;
         // data_file = "json/data_defintion.json";
         // test_json_parse(data_tables, data_file) ;

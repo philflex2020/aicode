@@ -243,6 +243,52 @@ struct DataTable {
 };
 
 typedef std::map<std::string, DataTable> DataTables;
+// struct DataItem {
+//     std::string name;
+//     int offset;
+//     int size;
+// };
+struct TestItem {
+    std::string action;
+    std::string dest;
+    std::string desc;
+    std::string notes;
+    std::vector<int> data;  // Key for mapping to another DataItem
+
+    // DataItem(const std::string& name, int off, int sz)
+    // : name(name), offset(off), size(sz) {
+    // }
+    TestItem()
+    : action(""), desc(""), dest("") {
+    }
+
+    // void computeKey() {
+    //     // Compute a unique key using system and reg_type enums and offset
+    //     // Adjust multipliers as needed to ensure unique keys
+    //     mykey = static_cast<uint32_t>((int)system<<28)+ static_cast<uint32_t>((int)reg_type << 24) + (offset&0xffff);
+//    }
+};
+
+
+struct TestTable {
+    // int base_offset;
+    std::string name;
+    //uint32_t basekey;      // base_key derived from system + regtype but we may not use htis since we compose
+
+    std::vector<TestItem> items;
+// /    TestTable(int current_offset) {
+//         // base_offset =  current_offset;
+//         // calculated_size = 0;
+//         items.clear();
+//     }
+    TestTable() {
+        // base_offset = 0;
+        // calculated_size = 0;
+        items.clear();
+    }
+};
+
+typedef std::map<std::string, TestTable> TestTables;
 
 // Structs
 struct InputVector {
