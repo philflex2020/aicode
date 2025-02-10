@@ -224,7 +224,7 @@
  Recharge_capacity:147:2
  Dischargeable_capacity:149:2
  Pack_SOC:151:140
- cell_voltage:291:700
+ cell_voltage:191:700
  cell_temp:991:700
  cell_SOC:1691:700
  cell_SOH:2391:700

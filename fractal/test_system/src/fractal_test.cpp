@@ -4376,53 +4376,54 @@ int process_ops_item(std::map<std::string, OpsTable>& ops_tables, const json &ji
     return 0;
 }
 
-int process_json_item(std::map<std::string, DataTable>& data_tables, const json &jitem) {
-    if (!jitem.contains("table") || !jitem["table"].is_string()) {
-        std::cerr << "Error: Missing or invalid 'table' field" << std::endl;
-        return -1;
-    }
+int process_json_item(std::map<std::string, DataTable>& data_tables, const json &jitem);
+// int process_json_item(std::map<std::string, DataTable>& data_tables, const json &jitem) {
+//     if (!jitem.contains("table") || !jitem["table"].is_string()) {
+//         std::cerr << "Error: Missing or invalid 'table' field" << std::endl;
+//         return -1;
+//     }
 
-    std::string table_name = jitem["table"];
-    std::cout << "Table name [" << table_name << "]\n";
+//     std::string table_name = jitem["table"];
+//     std::cout << "Table name [" << table_name << "]\n";
 
-    if (!jitem.contains("items") || !jitem["items"].is_array()) {
-        std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
-        return -1;
-    }
+//     if (!jitem.contains("items") || !jitem["items"].is_array()) {
+//         std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
+//         return -1;
+//     }
 
-    json jtable = jitem["items"];
-    std::cout << "Items Array found" << std::endl;
+//     json jtable = jitem["items"];
+//     std::cout << "Items Array found" << std::endl;
 
-    bool isNewTable = data_tables.find(table_name) == data_tables.end();
-    if (isNewTable) {
-        data_tables[table_name] = DataTable(); // Uses the default constructor
-    }
+//     bool isNewTable = data_tables.find(table_name) == data_tables.end();
+//     if (isNewTable) {
+//         data_tables[table_name] = DataTable(); // Uses the default constructor
+//     }
 
-    // Create or access the DataTable for this table_name
-    DataTable& table = data_tables[table_name];
-    if (isNewTable) {
-        table.base_offset = 0;  // Set base_offset only if it's a new table
-        table.calculated_size = 0;  // Ensure calculated size starts at 0
-    }
+//     // Create or access the DataTable for this table_name
+//     DataTable& table = data_tables[table_name];
+//     if (isNewTable) {
+//         table.base_offset = 0;  // Set base_offset only if it's a new table
+//         table.calculated_size = 0;  // Ensure calculated size starts at 0
+//     }
 
-    for (const auto& jitem : jtable) {
-        if (!jitem.contains("name") || !jitem.contains("offset") || !jitem.contains("size")) {
-            std::cerr << "Error: Missing required fields in item" << std::endl;
-            continue;  // Skip this item or you might want to return an error
-        }
+//     for (const auto& jitem : jtable) {
+//         if (!jitem.contains("name") || !jitem.contains("offset") || !jitem.contains("size")) {
+//             std::cerr << "Error: Missing required fields in item" << std::endl;
+//             continue;  // Skip this item or you might want to return an error
+//         }
 
-        std::string name = jitem["name"];
-        int offset = jitem["offset"];
-        int size = jitem["size"];
-        std::string notes = jitem.value("notes", "");  // Optional notes field
+//         std::string name = jitem["name"];
+//         int offset = jitem["offset"];
+//         int size = jitem["size"];
+//         std::string notes = jitem.value("notes", "");  // Optional notes field
 
-        DataItem item(name, offset, size);
-        table.items.push_back(item);
-        table.calculated_size += size;
-    }
+//         DataItem item(name, offset, size);
+//         table.items.push_back(item);
+//         table.calculated_size += size;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
 int test_ops_parse(std::map<std::string, OpsTable>& ops_tables, const std::string &filename,std::ostringstream& oss) {
     std::ifstream file(filename);
@@ -4843,6 +4844,99 @@ int tparse(std::ostringstream& oss)
 
 #include <fractal_test_unit_test.cpp>
 
+int process_json_item(std::map<std::string, DataTable>& data_tables, const json &jitem) {
+    if (!jitem.contains("table") || !jitem["table"].is_string()) {
+        std::cerr << "Error: Missing or invalid 'table' field" << std::endl;
+        return -1;
+    }
+
+    std::string table_name = jitem["table"];
+    std::cout << __func__ <<" Table name [" << table_name << "]\n";
+
+    if (!jitem.contains("items") || !jitem["items"].is_array()) {
+        std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
+        return -1;
+    }
+
+    json jtable = jitem["items"];
+    //std::cout << "Items Array found" << std::endl;
+   bool isNewTable = data_tables.find(table_name) == data_tables.end();
+    if (isNewTable) {
+        data_tables[table_name] = DataTable(); // Uses the default constructor
+    }
+
+    // Create or access the DataTable for this table_name
+    DataTable& table = data_tables[table_name];
+    if (isNewTable) {
+        table.base_offset = 0;  // Set base_offset only if it's a new table
+        table.calculated_size = 0;  // Ensure calculated size starts at 0
+    }
+
+	int item_idx = 0;
+     for (const auto& jitem : jtable) {
+        if (!jitem.contains("name") || !jitem.contains("offset") || !jitem.contains("size")) {
+            std::cerr << "Error: Missing required fields in item idx [" << item_idx<<" ]"  << std::endl;
+            continue;  // Skip this item or you might want to return an error
+        }
+		item_idx++;
+        std::string name = jitem["name"];
+        int offset = jitem["offset"];
+        int size = jitem["size"];
+        std::string notes = jitem.value("notes", "");  // Optional notes field
+
+		if(item_idx < 5)
+			std::cout << " Data Item found, table  [" << table_name <<"] item name [" << name << "] offset [" << offset << "]" << std::endl;		
+        DataItem item(name, offset, size);
+        table.items.push_back(item);
+        table.calculated_size += size;
+    }
+
+    return 0;
+}
+
+
+int parse_data_tables(std::map<std::string, DataTable>& data_tables, const std::string &filename, const std::string &filedir)
+{
+	std::string fname = filedir + filename;
+	std::ifstream file(fname);
+	if (!file.is_open()) {
+		std::cout << "could not open data_table file ["<<fname<<"] no data table available " << std::endl;
+		return -1;
+	}
+	try {
+	
+		json jfile;
+		file >> jfile;
+		//std::cout << " json loaded " << std::endl;
+
+
+		// if (jfile.is_array()){
+		// 	std::cout << " Array found " << std::endl;
+		// }
+
+		// Iterate over each element in the array
+		for (const auto& item : jfile) {
+		// Check if "table" key exists in the JSON object
+		    if(item.contains("Title"))
+                std::cout << " Data Tables ["<<item["Title"]<<"]\n";
+            if(item.contains("Release"))
+                std::cout << " Release ["<<item["Release"]<<"]\n";
+            if(item.contains("Date"))
+                std::cout << " Date ["<<item["Date"]<<"]\n";
+
+			if (item.contains("table") && item["table"].is_string()) {
+				process_json_item(data_tables, item);
+			}
+		}
+
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return -1;
+    }
+
+	return 0;
+}
+
 // Main Function
 int main(int argc, char* argv[]) {
 
@@ -4857,11 +4951,15 @@ int main(int argc, char* argv[]) {
 
         std::string dataMap = argv[2];
         // deprecated
-        dataMap="data/sbmu_mapping.txt";
-        test_data_map(dataMap);
+        // dataMap="data/sbmu_mapping.txt";
+        // test_data_map(dataMap);
 
-        auto data_file = "src/data_definition.txt";
-        test_parse(data_tables, data_file) ;
+        // auto data_file = "src/data_definition.txt";
+        // test_parse(data_tables, data_file) ;
+        std::string data_table_file = "data_definition.json";
+        std::string config_dir = "config/json/";
+
+        parse_data_tables(data_tables, data_table_file, config_dir);
         // //return 0;
         // data_file = "json/data_defintion.json";
         // test_json_parse(data_tables, data_file) ;
