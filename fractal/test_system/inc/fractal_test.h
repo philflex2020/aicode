@@ -333,19 +333,26 @@ public:
 private:
     modbus_t *ctx = nullptr;
     bool connected = false;
+    std::string myip;
+    int myport;
 
     void initializeModbusConnection(const std::string& ip, int port) {
         std::cout << " Modbus client opening " << std::endl;
+        myip = ip;
+        myport = port;
         ctx = modbus_new_tcp(ip.c_str(), port);
         if (ctx == nullptr) {
             connected = false;
-            throw std::runtime_error("Failed to create the Modbus context.");
+            //throw std::runtime_error("Failed to create the Modbus context.");
+            printf("Failed to create the Modbus context.");
         }
 
         if (modbus_connect(ctx) == -1) {
             modbus_free(ctx);
             connected = false;
-            throw std::runtime_error("Failed to connect to the Modbus server.");
+            ctx = nullptr;
+            //throw std::runtime_error("Failed to connect to the Modbus server.");
+            printf("Failed to connect to the Modbus server.");
         }
         else
         {
@@ -385,7 +392,16 @@ private:
  //qstring [{"action":"get", "sec":202, "sm_name":"0x11000001", "reg_type":"any", "offset":"1", "num":2, "data":[0]}]
  //qstring json ["{\"action\":\"get\", \"sec\":202, \"sm_name\":\"0x11000001\", \"reg_type\":\"any\", \"offset\":\"1\", \"num\":2, \"data\":[0]}"]
  std::pair<int, std::vector<int>> processMbQuery(const json& query) {
-      //std::cout << "running processMbQuery #1\n";
+        if(!ctx)
+        {
+            std::cout << "try to connect\n";
+            initializeModbusConnection(myip, myport);
+            if(!ctx)
+            {
+                std::cout << "reconnect failed\n";
+                return {-1, {}};
+            }
+        }
         std::string action = query.value("action", "");
         std::string reg_type = query.value("reg_type", "");
         int offset = 0;// = query.value("offset", 0);
@@ -417,6 +433,7 @@ private:
         {
             std::cout << " use_id false ; decoding rack number from ["<<shmdef <<"]"<<std::endl;
             rack_number = decodeRackNumber(shmdef);
+            std::cout << " ..... done ["<<rack_number<<"] \n";
         }
         else
         {
@@ -426,7 +443,10 @@ private:
         if (rack_number >= 0) {
             // Select the rack by writing to a specific register before actual query
             uint16_t rack_select[] = { static_cast<uint16_t>(rack_number) };
-            modbus_write_registers(ctx, 500, 1, rack_select);  // Assuming register 500 is used to select the rack
+            if(ctx)
+            {
+                modbus_write_registers(ctx, 500, 1, rack_select);  // Assuming register 500 is used to select the rack
+            }
         }
         if(!use_id)
         {
@@ -453,16 +473,19 @@ private:
             std::vector<uint8_t> response_bits(num);
             int res = -1;
             //if (reg_id ==  == "input") {
-            if (reg_id ==  REG_INPUT) {
-                res = modbus_read_input_registers(ctx, offset, num, response.data());
-            //} else if (reg_type == "hold") {
-            } else if (reg_id == REG_HOLD) {
-                res = modbus_read_registers(ctx, offset, num, response.data());
-            //} else if (reg_type == "bits") {
-            } else if (reg_id == REG_BITS) {
-                res = modbus_read_bits(ctx, offset, num, response_bits.data());
+            printf( " mb ctx %p\n", (void*)ctx);
+            if(ctx)
+            {
+                if (reg_id ==  REG_INPUT) {
+                    res = modbus_read_input_registers(ctx, offset, num, response.data());
+                //} else if (reg_type == "hold") {
+                } else if (reg_id == REG_HOLD) {
+                    res = modbus_read_registers(ctx, offset, num, response.data());
+                //} else if (reg_type == "bits") {
+                } else if (reg_id == REG_BITS) {
+                    res = modbus_read_input_bits(ctx, offset, num, response_bits.data());
+                }
             }
-
             if (res == -1) {
                 std::cerr << "Failed to read: " << modbus_strerror(errno) << std::endl;
                 return {-1, {}};

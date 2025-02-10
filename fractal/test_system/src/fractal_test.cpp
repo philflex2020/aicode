@@ -3027,17 +3027,22 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
           <<"] offset: ["<< offset << "] table_name :["<< table_name << "]" <<  std::endl;
         if(data_tables.find(table_name)!= data_tables.end())
         {
-            //std::cout <<" Found table ["<< table_name <<"]"<< std::endl;
+            if(1)std::cout <<" Found table ["<< table_name <<"]"<< std::endl;
             const auto& items = data_tables.at(table_name).items;
             for (const auto& item : items) {
                 if (item.name.find(offset_str) != std::string::npos) {
-                    if(0)std::cout << "Note offset item found : " << offset_str 
+                    if(1)std::cout << "Note offset item found : " << offset_str 
                             <<" offset: "<< item.offset << " table_name :"<< table_name <<  std::endl;
 
                     offset = item.offset;
                     return true;
                 }
             }
+        }
+        else
+        {
+            if(1)std::cout << "Error  offset item NOT found : " 
+                            <<" offset_str: ["<< offset_str << "] table_name :"<< table_name <<  std::endl;
         }
     }
     return true;
@@ -3053,6 +3058,7 @@ uint32_t encode_id(const std::string &shmdef, int rack) {
     int rack_num;
 
     if (!decode_shmdef(mem_id, reg_id, rack_num, offset, shmdef)) {
+        printf(" invalid shmdef [%s]\n", shmdef.c_str());
         return 0; // Invalid shmdef
     }
     if(rack_num >=0)
@@ -3088,7 +3094,21 @@ std::pair<int, std::vector<int>> get_modbus(uint32_t id, int num, std::vector<in
 
     modbus_t * ctx = mbx_client.get_ctx();
     uint16_t rack_select[] = { static_cast<uint16_t>(rack_num) };
-
+/*
+    0x01	Read Coils	Reads 1-bit output coil values.
+    0x02	Read Discrete Inputs	Reads 1-bit input status values.
+    0x03	Read Holding Registers	Reads multiple 16-bit holding registers.
+    0x04	Read Input Registers	Reads multiple 16-bit input registers.
+    0x05	Write Single Coil	Writes a single 1-bit output coil.
+    0x06	Write Single Register	Writes a single 16-bit register.
+    0x0F (15)	Write Multiple Coils	Writes multiple 1-bit output coils.
+    0x10 (16)	Write Multiple Registers	Writes multiple 16-bit holding registers.
+    0x07	Read Exception Status	Reads 8-bit device status.
+    0x08	Diagnostics	Special diagnostics function.
+    0x11	Report Server ID	Reads device information.
+    0x16	Mask Write Register	Mask-based write to a single holding register.
+    0x17	Read/Write Multiple Registers	Reads & writes multiple registers in one request.
+*/
 
     // if(offset >= 1000 && reg_id == REG_HOLD)
     // {
@@ -3102,25 +3122,31 @@ std::pair<int, std::vector<int>> get_modbus(uint32_t id, int num, std::vector<in
     } else if (reg_id == REG_HOLD) {
         res = modbus_read_registers(ctx, offset, num, response.data());
     } else if (reg_id == REG_BITS) {
-        res = modbus_read_bits(ctx, offset, num, response_bits.data());
+        oss << " modbus read input bits offset ["<<offset<<"] num ["<<num<<"]\n"; 
+        res = modbus_read_input_bits(ctx, offset, num, response_bits.data());
     }
 
     if (res == -1) {
-        std::cerr << "Failed to read: " << modbus_strerror(errno) << std::endl;
+        std::cerr << " Failed to read: errno "<< errno << " -> " << modbus_strerror(errno) << std::endl;
+        oss << " Failed to read: " << modbus_strerror(errno) << std::endl;
+        std::cout << oss.str();
         return {-1, {}};
     } 
     else 
     {
         if (reg_id == REG_BITS) {
             std::vector<int> int_response(response_bits.begin(), response_bits.end());
+            std::cout << oss.str();
             return {0, int_response};
         }
         else
         {
             std::vector<int> int_response(response.begin(), response.end());
+            std::cout << oss.str();
             return {0, int_response};
         }
     }
+    std::cout << oss.str();
     return {-1, {}};
 } // Run the query
 

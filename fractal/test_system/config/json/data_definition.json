@@ -3,9 +3,15 @@
         "Title": " Primary SBMS Memory Layout ",
         "Description": "reference source for the system data_tables ",
         "Release": "0.9.0 ",
-        "date": "02_05_2005 ",
+        "Version": "2",
+        "DateCreated": "02_05_2005",
+        "DateModified": "02_10_2005",
         "CreatedBy": "Phil Wilshire",
         "ApprovedBy": "John Calcagni (soon)"
+    },
+    { "table": "rack:sm16", "items":[
+      {"name":                                           "online", "offset": 26626, "size": 1}
+      ]
     },
     { "table": "rtos:bits", "items":[
       {"name":                                           "_gap1", "offset": 0, "size": 1},

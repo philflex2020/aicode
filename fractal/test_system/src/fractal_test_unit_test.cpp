@@ -340,9 +340,12 @@ int test_modbus() {
             {"num", 10}
         };
 
+        std::cout << "Adding Query \n";
         auto [status, data] = mbx_client.addQuery(query);
+        std::cout << "After adding Query \n";
+
         mb_status = status;
-        if (status == 0) {
+        if (status == 0) { 
             std::cout << "Data read successfully: ";
             for (int value : data) {
                 std::cout << value << " ";
