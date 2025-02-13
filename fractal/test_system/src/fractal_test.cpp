@@ -3325,10 +3325,12 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
     }
     auto test_item = test_tables[tname];
     oss << " test called [" << tname<<"] found" << std::endl;
+    int passes = 0;
+    int fails = 0;
 
     for ( auto& item : test_item.items)
     {
-        oss  << item.action << std::endl;
+        //oss  << item.action << std::endl;
         if (item.action.find("pause") == 0)
         {
             std::istringstream iss(item.action);
@@ -3348,9 +3350,48 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
         else
         {
             auto resp = handle_query(item.action, data_tables);
-            oss << resp;
+            auto j = json::parse(resp);
+            // Extract the 'data' array from the JSON object
+            std::vector<int> respvec = j["data"];
+            if(item.data.size() > 0 )
+            {
+                if(item.data == respvec)
+                {
+                    oss << " [PASS] ";
+                    oss << "[" << item.action << "] ";
+                    oss << " result: " << json(respvec).dump() << " ";
+                    passes++;
+                }
+                else
+                {
+                    oss << " [FAIL] ";
+                    oss << "[" << item.action<<"] ";
+                    oss << " result: " << json(respvec).dump() << " ";
+                    oss << " expected: " << json(item.data).dump() << " ";
+                    fails++;
+            
+                }
+            }
+            else 
+            {
+                //oss << " [    ] ";
+            }
+            //oss << item.desc;
+            oss << std::endl;
+
+            //oss<< item.desc << " resp " << resp << endl;
+            //oss << resp;
         }
     }
+    if ( fails > 0)
+    {
+        oss << " Test Results pass " << passes <<" fail " << fails<< std::endl ;
+    }
+    else
+    {
+        oss << " Test Results all tests passed " << std::endl ;
+
+    }        
 
 }
 
@@ -3366,12 +3407,12 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
         parts.push_back(part);
     }
 
-    std::cout << " Query ["<<query<<"] parts size "<<parts.size() << std::endl;
+    //std::cout << " Query ["<<query<<"] parts size "<<parts.size() << std::endl;
     if (parts.size() > 0)
     {
         auto swords = StringWords(query);
-        std::cout << " swords size " << swords.size() << std::endl;
-        std::cout << " parts[0] " << parts[0] << std::endl;
+        //std::cout << " swords size " << swords.size() << std::endl;
+        //std::cout << " parts[0] " << parts[0] << std::endl;
         if ( swords[0] == "help")
         {
             std::ostringstream oss;
@@ -3394,12 +3435,12 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
         else if ( swords[0] == "run")
         {
             std::string tname = "first";
-            if (swords.size() < 1)
+            if (swords.size() > 1)
                 tname = swords[1];
 
             std::ostringstream oss;
             tests_run(tname, oss);
-            oss<< " test complete\n";
+            oss<< " tests [" <<tname<<"] complete\n";
             return oss.str();
         }
         else if ( swords[0] == "tparse")
@@ -3774,7 +3815,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                 //     << std::endl;
                 id = encode_id(swords[1],0);    
                 oss
-                    << "{\"id\":\"0x"<<std::hex << id << std::dec <<"\",";
+                        << "{\"id\":\"0x"<<std::hex << id << std::dec <<"\",";
                     //<< std::endl;
                 std::vector<int>values;
                 try {
@@ -3803,7 +3844,6 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     else
                     {
                         oss << ", ";
-
                     }
                     oss << item;
                 }
