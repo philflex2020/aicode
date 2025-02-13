@@ -1,0 +1,132 @@
+[
+    {
+        "test": "first", 
+        "name": "first", 
+        "items":[
+                {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[1]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[1]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+                {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",    "data":[0]},
+                {"action":"setmb sbmu:hold:531 65197 7 0 0",  "desc": " force rack 7 offline",    "data":[1]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]}
+                
+            ]
+        },
+        {
+        "test": "test1", 
+        "name": "test1", 
+        "desc": "tests that the rack select on hold:500 allows writes to the other racks", 
+        "items":[
+                {"action":"setmb sbmu:hold:500 7",             "desc": " select rack 7               ",    "data":[7]},
+                {"action":"getmb sbmu:hold:500 1",            "desc": " check that we got rack 7     ",       "data":[7]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197,0,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197,1,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197,2,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197,3,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197,4,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197,5,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197,6,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197,7,1,1]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": "read num_racks_online        ",    "data":[]},
+ 
+                {"action":"pause:500",                               "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",                   "desc": "read num_racks_online",    "data":[8]},
+ 
+                {"action":"setmb sbmu:hold:1001 1701 1702 1703",    "desc": " write  data to rack 7         ",    "data":[1701, 1702, 1703]},
+                {"action":"setmb sbmu:hold:500 6",                  "desc": " select rack 6 via 500         ",    "data":[6]},
+                {"action":"setmb sbmu:hold:1001 1601 1602 1603",    "desc": " write data to rack 6 via 1000 ",    "data":[1601,1602,1603]},
+                {"action":"getmb sbmu:hold:1001 3",                 "desc": " read read rack 6 from 1000    ",    "data":[1601, 1602,1603]},
+                {"action":"setmb sbmu:hold:500 7",                  "desc": " select rack 7                 ",    "data":[7]},
+                {"action":"getmb sbmu:hold:1001 3",                 "desc": " read rack 7                   ",    "data":[1701, 1702,1703]},
+                {"action":"getmb sbmu:hold:8001 3",                 "desc": " read rack 6 via 8000          ",    "data":[1601, 1602, 1603]},
+                {"action":"getmb sbmu:hold:9001 3",                 "desc": " read rack 7 via 9000          ",    "data":[1701, 1702, 1703]},
+                {"action":"setmb sbmu:hold:531 65197 7 0 0",         "desc": "force rack 7 offline          ",    "data":[65197,7,0,0]},
+                {"action":"setmb sbmu:hold:535 0",                   "desc": "clear force                    ",    "data":[0]}
+
+            ]
+    },
+    {
+        "test": "second", 
+        "name": "second", 
+        "items":[
+                {"action":"setmb sbmu:hold:500 7",           "desc": " setmb sbmu:hold:501 to 7",    "data":[7]},
+                {"action":"getmb sbmu:hold:500 1",                         "desc": " getmb sbmu:hold:501 4",       "data":[7]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[1]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+                {"action":"setmb sbmu:hold:531 65197 7 0 1",  "desc": " force rack 7 offline noupdates",    "data":[1]},
+ 
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+ 
+                {"action":"getmb sbmu:hold:1001 3",          "desc": " read total overvoltage rack 7",    "data":[]},
+                {"action":"setmb sbmu:hold:1001 1345 1355 1365",    "desc": " set total overvoltage rack 7",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:hold:1001 3",          "desc": " read total overvoltage rack 7",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:hold:8001 3",          "desc": " read r6 direct total overvoltage rack 6",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:hold:9001 3",          "desc": " read r7 direct total overvoltage rack 7",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:input:23191 10",       "desc": " read r7 direct cell  voltage rack 7",    "data":[]},
+                {"action":"get rtos:input:7:21 10",           "desc": " read r7 direct inputs",    "data":[]},
+                {"action":"set rtos:input:7:21 10",           "desc": " let rack 0 take over",    "data":[]},
+                {"action":"pause:500",                       "desc": " let rack 0 take over",    "data":[]},
+                {"action":"set rtos:input:7:21 4456",         "desc": " let rack 7 take over",    "data":[]},
+                {"action":"setmb sbmu:hold:535 0",           "desc": " clear force",    "data":[1]}
+
+            ]
+    },
+    {
+        "test": "Initial Test", 
+        "name": "Initial Test", 
+        "items":[
+                {"action":"setmb sbmu:hold:501 251 252 253 254",           "desc": " setmb sbmu:hold:501 to 2",    "data":[251,252,253,254]},
+                {"action":"getmb sbmu:hold:501 4",                         "desc": " getmb sbmu:hold:501 4",       "data":[251,252,253,254]},
+                {"action":"setmb sbmu:hold:2052 1251 1252 1253 1254",      "desc":" setmb sbmu:hold:2052",         "data":[1251,1252,1253,1254]},
+                {"action":"getmb sbmu:hold:2052 4",                        "desc":" getmb sbmu:hold:2052",         "data":[1251,1252,1253,1254]},
+                {"note":"set get rack 1 direct"},
+                {"action":"setmb sbmu:hold:3052 2251 2252 2253 2254",      "desc":" setmb sbmu:hold:3052",         "data":[2251,2252,2253,2254]},
+                {"action":"getmb sbmu:hold:3052 4",                        "desc":" getmb sbmu:hold:3052",         "data":[2251,2252,2253,2254]},
+                {"note":" set get rack 12 direct"},
+                {"action":"setmb sbmu:hold:13052 12251 12252 12253 12254", "desc":" setmb sbmu:hold:13052",        "data":[12251,12252,12253,12254]},
+                {"action":"getmb sbmu:hold:13052 4",                       "desc":" getmb sbmu:hold:13052",        "data":[12251,12252,12253,12254]},
+                {"note":"check rack 0 access "},
+                {"action":"setmb sbmu:hold:500 0 ",                        "desc":" setmb sbmu:hold:500 to 0",     "data":[0]},
+                {"action":"getmb sbmu:hold:500 1 ",                        "desc":" getmb sbmu:hold:500 1",        "data":[0]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",         "data":[1251,1252,1253,1254]},
+
+                {"note":"check rack 1 access gets "},
+                {"action":"setmb sbmu:hold:500 1 ",                        "desc":" setmb sbmu:hold:500 to 0",     "data":[1]},
+                {"action":"getmb sbmu:hold:500 1 ",                        "desc":" getmb sbmu:hold:500 1",        "data":[1]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",         "data":[2251,2252,2253,2254]},
+
+                {"action":"setmb sbmu:hold:1052 2251 2252 2253 2254",      "desc":" setmb sbmu:hold:1052",          "data":[2251,2252,2253,2254]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",          "data":[2251,2252,2253,2254]},
+
+                {"note":"set rack 2 but read 1052"},
+                {"action":"setmb sbmu:hold:3052 3251 3252 3253 3254",      "desc":" setmb sbmu:hold:1052",          "data":[3251,3252,3253,3254]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",          "data":[3251,3252,3253,3254]},
+
+                {"action":"setmb sbmu:hold:510 48233",                     "desc":" setmb sbmu:hold:510 to 48223",  "data":[48233]},
+                {"action":"getmb sbmu:hold:510 1",                         "desc":" getmb sbmu:hold:510 ",          "data":[48233]},
+                {"note":"push an event set rack to 5"},
+                {"action":"setmb sbmu:hold:500 5 ",                        "desc":" setmb sbmu:hold:500 to 5",      "data":[5]},
+                {"action":"setmb sbmu:hold:1002 34233",                    "desc":" setmb sbmu:hold:1002 to 34233", "data":[34233]}
+            ]
+    }
+]
