@@ -58,6 +58,8 @@ bool debug = false;
 bool ops_debug = false;
 bool ops_test = false;
 
+std::string restart_string;
+
 std::string g_url("ws://192.168.86.209:9001");
 ModbusClient mbx_client("192.168.86.209", 502);
 
@@ -2950,6 +2952,14 @@ bool verify_offsets(const std::map<std::string, DataTable>& tables) {
 // #include <vector>
 // #include <string>
 // #include <sstream>
+void restartSystem() {
+    std::cout << " restart string = ["<<restart_string<<"]";
+
+    // This command reboots the system. It needs appropriate permissions.
+    // int result = system("sleep 0.2 &&  &  ./ftest test_plan1 ffff&");
+    // // Optionally, you can add a safe exit if needed.
+    // exit(EXIT_SUCCESS); // Exit the program successfully after issuing the reboot command
+}
 
 // Function to split a string by a delimiter
 std::vector<std::string> split(const std::string& str, char delimiter) {
@@ -3314,7 +3324,7 @@ std::vector<ModbusTransItem> process_json_data(const json& jdata) {
 
 //std::map<std::string, TestTable> test_tables;
 
-std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables);
+std::string handle_query(const std::string& qustr, std::map<std::string, DataTable>& data_tables, int sock);
 
 void tests_run(const std::string& tname, std::ostringstream& oss)
 {
@@ -3350,7 +3360,7 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
         }
         else
         {
-            auto resp = handle_query(item.action, data_tables);
+            auto resp = handle_query(item.action, data_tables, 0);
             std::cout << "got resp [" << resp <<"]\n";
             std::cout << "parsing resp \n";
             auto j = json::parse(resp);
@@ -3401,7 +3411,7 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
 
  
 
-std::string handle_query(const std::string& qustr, const std::map<std::string, DataTable>& data_tables) {
+std::string handle_query(const std::string& qustr, std::map<std::string, DataTable>& data_tables, int sock) {
     std::string query = trim(qustr);
     std::istringstream iss(query);
     std::vector<std::string> parts;
@@ -3436,6 +3446,17 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             oss <<"      run  [test]         - run a test  from test_tables \n";
             return oss.str();
         }
+        // else if ( swords[0] == "res")
+        // {
+        //     close(sock);
+        //     std::ostringstream oss;
+        //     // Use system to execute the command
+        //     int result = system(restart_string.c_str());
+        //     if (result) {
+        //         std::cerr << "Failed to execute command." << std::endl;
+        //     }
+        //     oss << " restarting \n";
+        // }
         else if ( swords[0] == "run")
         {
             std::string tname = "first";
@@ -3567,7 +3588,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             // oss << " Tet 
                 json jresp;
                 json jtest;
-                auto resp = handle_query(test.query, data_tables);
+                auto resp = handle_query(test.query, data_tables, sock);
                 bool pass = false;
                 if(find_field(jresp, "data", resp))
                 {
@@ -4406,7 +4427,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
 }
 
 // Define a function pointer type for handling queries
-typedef std::string (*QueryHandler)(const std::string&, const std::map<std::string, DataTable>&);
+typedef std::string (*QueryHandler)(const std::string&, std::map<std::string, DataTable>&, int);
 
 void start_server(int port, QueryHandler query_handler, std::map<std::string, DataTable>& data_tables) {
     int server_fd, new_socket;
@@ -4463,7 +4484,7 @@ void start_server(int port, QueryHandler query_handler, std::map<std::string, Da
                 }
 
                 std::string query(buffer);
-                std::string response = query_handler(query, data_tables);
+                std::string response = query_handler(query, data_tables, new_socket);
                 send(new_socket, response.c_str(), response.size(), 0);
             }
 
@@ -4897,13 +4918,13 @@ int test_parse(std::map<std::string, DataTable>& data_tables, const std::string 
     }
 
     // Example queries
-    std::cout << handle_query("tables",                  data_tables) << std::endl;
-    std::cout << handle_query("rtos:input rack_voltage", data_tables) << std::endl;
-    std::cout << handle_query("rtos:input:rack_voltage", data_tables) << std::endl;
-    std::cout << handle_query("rtos:input rack*",        data_tables) << std::endl;
-    std::cout << handle_query("rtos:input 26", data_tables) << std::endl;
-    std::cout << handle_query("rtos:input:26", data_tables) << std::endl;
-    std::cout << handle_query("sbmu:bits 200-205",       data_tables) << std::endl;
+    std::cout << handle_query("tables",                  data_tables,0) << std::endl;
+    std::cout << handle_query("rtos:input rack_voltage", data_tables,0) << std::endl;
+    std::cout << handle_query("rtos:input:rack_voltage", data_tables,0) << std::endl;
+    std::cout << handle_query("rtos:input rack*",        data_tables,0) << std::endl;
+    std::cout << handle_query("rtos:input 26", data_tables,0) << std::endl;
+    std::cout << handle_query("rtos:input:26", data_tables,0) << std::endl;
+    std::cout << handle_query("sbmu:bits 200-205",       data_tables,0) << std::endl;
     return 0;
 }
 
@@ -5569,6 +5590,23 @@ int parse_test_tables(std::map<std::string, TestTable>& data_tables, const std::
 
 // Main Function
 int main(int argc, char* argv[]) {
+    std::ostringstream cmd;
+ // Get the current process ID
+    pid_t pid = getpid();
+
+    // Construct the command to sleep, kill the current process, and restart
+    cmd << "sleep 0.2 && kill " << pid << " && ";
+    cmd << argv[0];  // assuming argv[0] contains the path to the executable
+
+    // Append all original arguments
+    for (int i = 1; i < argc; ++i) {
+        cmd << " " << argv[i];
+    }
+
+    // Execute the command in the background
+    cmd << " &";
+    restart_string = cmd.str();
+
 
     std::ostringstream filename;
   
