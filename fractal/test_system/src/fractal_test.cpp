@@ -856,6 +856,8 @@ std::map<std::string, TestTable> test_tables;
 std::map<std::string, DataTable> data_tables;
 std::map<std::string, DataTable> test_data_tables;
 std::map<std::string, OpsTable> test_ops_tables;
+std::map<std::string, DataMap> data_maps;
+std::map<std::string, DataMap> test_data_maps;
 
 // Map to store method names and their corresponding functions
 std::map<std::string, MethStruct> meth_dict;
@@ -2985,7 +2987,7 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
         rack_num_str = parts[2];
         offset_str = parts[3];
         rack_num = static_cast<uint16_t>(std::stoi(rack_num_str));
-        std::cout << "Note rack_num  " << rack_num << std::endl; 
+        //std::cout << "Note rack_num  " << rack_num << std::endl; 
     }
 
     // Convert smname to mem_id
@@ -3024,15 +3026,15 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
     offset = str_to_offset(offset_str);
     if (offset == 65535)
     {
-        std::cout << "Note offset value: [" << offset_str 
-          <<"] offset: ["<< offset << "] table_name :["<< table_name << "]" <<  std::endl;
+        if(0)std::cout << "  Note offset value: [" << offset_str 
+                        <<"] offset: ["<< offset << "] table_name :["<< table_name << "]" <<  std::endl;
         if(data_tables.find(table_name)!= data_tables.end())
         {
-            if(1)std::cout <<" Found table ["<< table_name <<"]"<< std::endl;
+            if(0)std::cout <<" Found table ["<< table_name <<"]"<< std::endl;
             const auto& items = data_tables.at(table_name).items;
             for (const auto& item : items) {
                 if (item.name.find(offset_str) != std::string::npos) {
-                    if(1)std::cout << "Note offset item found : " << offset_str 
+                    if(0)std::cout << "Note offset item found : " << offset_str 
                             <<" offset: "<< item.offset << " table_name :"<< table_name <<  std::endl;
 
                     offset = item.offset;
@@ -3042,7 +3044,7 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
         }
         else
         {
-            if(1)std::cout << "Error  offset item NOT found : " 
+            if(1)std::cout << __func__ << " >>>>Error  offset item NOT found : " 
                             <<" offset_str: ["<< offset_str << "] table_name :"<< table_name <<  std::endl;
         }
     }
@@ -3212,7 +3214,6 @@ std::pair<int, std::vector<int>> set_modbus(uint32_t id, int num, std::vector<in
          else
          {
             res = modbus_write_register(ctx, offset, vals[0]);
-
          }
 
     } else if (reg_id == REG_COIL) {
@@ -3350,7 +3351,10 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
         else
         {
             auto resp = handle_query(item.action, data_tables);
+            std::cout << "got resp [" << resp <<"]\n";
+            std::cout << "parsing resp \n";
             auto j = json::parse(resp);
+            std::cout << "parsed resp [" << resp <<"]\n";
             // Extract the 'data' array from the JSON object
             std::vector<int> respvec = j["data"];
             if(item.data.size() > 0 )
@@ -3424,7 +3428,7 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             oss <<"      get  - websocket: get a value , define the dest by name or table:offset\n";
             oss <<"      set  - websocket: set a value , define the dest by name or table:offset\n";
             oss <<"      getmb  - modbus: get a value , define the dest by name or table:offset\n";
-            oss <<"      setmb  - modbus set a value , define the dest by name or table:offset\n";
+            oss <<"      setmb  - modbus set a value , (all also) define the dest by name or table:offset\n";
             oss <<"      tdef [file]  - test transfer defs\n";
             oss <<"      tparse [file]  - test table parsen";
             oss <<"      test [file]  - more stuff\n";
@@ -3617,9 +3621,9 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
             }
             else if (swords.size() > 2)
             {
-                oss
-                    << "set a value  <"<<swords[1]
-                    << std::endl;
+                // oss
+                //     << "set a value  <"<<swords[1]
+                //     << std::endl;
                 int rack;// = std::stoi(swords[2]);
                 // try {
                 //     rack = std::stoi(swords[2]);
@@ -3629,8 +3633,8 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                 // }
                 uint32_t id;
                 id = encode_id(swords[1], rack);
-                oss
-                    << "id  <0x"<<std::hex << id << std::dec << "> " << std::endl;
+                // oss
+                //     << "id  <0x"<<std::hex << id << std::dec << "> " << std::endl;
 
                 std::vector<int>values;
                try {
@@ -3646,13 +3650,59 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
 
                 std::string qstring  = generateIdQuery("set", 202, id, "any", (int)values.size(), values);
                 std::string response = run_wscat(g_url, qstring);  // Run the query
+                oss  << response;
+                    // << " url  ["<<g_url<<"] \n"
+                    // << " query  ["<<qstring<<"] \n"
+                    // << " response  ["<<response<<"] \n"
+                    // << std::endl;
+            }
+
+            return oss.str();
+        }
+        else if ( swords[0] == "setall")
+        {
+            uint32_t id = 0;
+            std::vector<int>values = {0};
+            std::ostringstream oss;
+            if (swords.size() == 1)
+            {
+                oss
+                    << "setall set a value <table><name|offset using the modbus connectipn"
+                    << std::endl
+                    << " examples \n" 
+                    << "    setall sbmu:bits[:rack_num]:1  <num> <val>\n" ;
+            }
+            else if (swords.size() >= 4)
+            {
+                // oss
+                //     << "set a value 2 <"<<swords[1]
+                //     << std::endl;
+                id = encode_id(swords[1],0);    
+                oss
+                        << "{\"id\":\"0x"<<std::hex << id << std::dec <<"\",";
+                    //<< std::endl;
+                std::vector<int>values;
+                try {
+                    int num  = std::stoi(swords[2]);
+                    int val  = std::stoi(swords[3]);
+                    for (int i = 0; i < num; i++)
+                    {
+                        values.push_back(val);
+                    }
+                }  catch (const std::exception& ex) {
+                    oss <<  " values must be numbers\n";
+                    return oss.str();
+                }               
+
+                std::string qstring  = generateIdQuery("set", 202, id, "any", (int)values.size(), values);
+                std::string response = run_wscat(g_url, qstring);  // Run the query
                 oss
                     << " url  ["<<g_url<<"] \n"
                     << " query  ["<<qstring<<"] \n"
                     << " response  ["<<response<<"] \n"
                     << std::endl;
-            }
 
+            }
             return oss.str();
         }
         else if ( swords[0] == "get")
@@ -3670,32 +3720,34 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     << "    get sbmu:bits[:rack_num]:1  <num of bits> \n" 
                     << "    sbmu:bits:summary_total_undervoltage\n";
             }
-            else if (swords.size() >= 2)
+            else if (swords.size() == 2)
             {
-                oss
-                    << "get a value 2 <"<<swords[1]
-                    << std::endl;
+                // oss
+                //     << "get a value 2 <"<<swords[1]
+                //     << std::endl;
                 id = encode_id(swords[1],0);    
-                oss
-                    << "id  <0x"<<std::hex << id << std::dec <<"> "
-                    << std::endl;
+                // oss
+                //     << "id  <0x"<<std::hex << id << std::dec <<"> "
+                //     << std::endl;
                 std::string qstring  = generateIdQuery("get", 202, id, "any", 1, values);
                 std::string response = run_wscat(g_url, qstring);  // Run the query
-                oss
-                    << " url  ["<<g_url<<"] \n"
-                    << " query  ["<<qstring<<"] \n"
-                    << " response  ["<<response<<"] \n"
+                // oss
+                //     << " url  ["<<g_url<<"] \n"
+                //     << " query  ["<<qstring<<"] \n"
+                //     << " response  ["<<response<<"] \n"
+                //     << std::endl;
+                oss << response
                     << std::endl;
 
                 //std::string run_query(url, mb_client, qstring);
                 //std::string response = run_wscat(url, qstring);  // Run the query
 
             }
-            if (swords.size() == 3)
+            else if (swords.size() == 3)
             {
-                oss
-                    << "get a value 3 <"<<swords[1]<<"> <"<<swords[2]<<">"
-                    << std::endl;
+                // oss
+                //     << "get a value 3 <"<<swords[1]<<"> <"<<swords[2]<<">"
+                //     << std::endl;
                 int num = 1;
                 try {
                     num = std::stoi(swords[2]);
@@ -3704,12 +3756,17 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                     oss <<  " values must be numbers\n";
                     return oss.str();
                 }
+                id = encode_id(swords[1],0);    
+
                 std::string qstring  = generateIdQuery("get", 202, id, "any", num, values);
+                //std::cout << " qstring ["<<qstring<<"]\n";
                 std::string response = run_wscat(g_url, qstring);  // Run the query
-                oss
+                std::cout
                     << " url  ["<<g_url<<"] \n"
                     << " query  ["<<qstring<<"] \n"
                     << " response  ["<<response<<"] \n"
+                    << std::endl;
+                oss << response
                     << std::endl;
 
             }
@@ -3790,6 +3847,64 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                 }
                 oss << "]}\n";
 
+            }
+            return oss.str();
+        }
+
+        else if ( swords[0] == "setallmb")
+        {
+            uint32_t id = 0;
+            std::vector<int>values = {0};
+            std::ostringstream oss;
+            if (swords.size() == 1)
+            {
+                oss
+                    << "getmb a value <table><name|offset using the modbus connectipn"
+                    << std::endl
+                    << " examples \n" 
+                    << "    setallmb sbmu:bits[:rack_num]:1  <num> <val>\n" ;
+            }
+            else if (swords.size() >= 4)
+            {
+                // oss
+                //     << "set a value 2 <"<<swords[1]
+                //     << std::endl;
+                id = encode_id(swords[1],0);    
+                oss
+                        << "{\"id\":\"0x"<<std::hex << id << std::dec <<"\",";
+                    //<< std::endl;
+                std::vector<int>values;
+                try {
+                    int num  = std::stoi(swords[2]);
+                    int val  = std::stoi(swords[3]);
+                    for (int i = 0; i < num; i++)
+                    {
+                        values.push_back(val);
+                    }
+                }  catch (const std::exception& ex) {
+                    oss <<  " values must be numbers\n";
+                    return oss.str();
+                }               
+
+
+                int num = values.size();
+                auto mbresp = set_modbus(id, num, values);  // Run the query
+                oss
+                    << "\"response\":"<<mbresp.first<<",";
+                oss << " \"data\": [";
+                bool tfirst =  true;
+                for(const auto &item : mbresp.second) {
+                    if ( tfirst)
+                    {
+                        tfirst = false;
+                    }
+                    else
+                    {
+                        oss << ", ";
+                    }
+                    oss << item;
+                }
+                oss << "]}\n";
             }
             return oss.str();
         }
@@ -4055,6 +4170,62 @@ std::string handle_query(const std::string& qustr, const std::map<std::string, D
                                 << "\", \"offset\": "  << table_item.offset 
                                 << ", \"size\": "  << table_item.size 
                                 << "}" ;//<< std::endl;
+                        }
+                        oss << "\n     ]\n   }";
+                    }
+                    tfirst = true;
+
+                    for (const auto& map_pair : data_maps) {
+                        if (!tfirst) 
+                        {
+                            oss << ",\n";
+                        }
+                        else
+                        {
+                            tfirst =  false;
+                            oss << "\n";
+                        }
+                            
+                        oss << "   { \"map\": \""
+                        << map_pair.first << "\", \"items\":[";
+                        bool first = true;
+                        for (const auto& map_item : map_pair.second.sitems) {
+                            if (!first) {
+                                oss << ",\n";
+                            }
+                            else
+                            {
+                                first =  false;
+                                oss << "\n";
+                            }
+
+                            int spacesNeeded = nameFieldWidth - map_item.second.destname.length(); // Calculate the number of spaces needed
+                            if (spacesNeeded < 0) spacesNeeded = 0; // Ensure no negative values
+                            std::string spaces(spacesNeeded, ' '); // Create a string of spaces
+
+                            //oss <<"     {\"name\":" << std::left << std::setw(32)<< "\""<< table_item.name 
+                            oss <<"     {\"name\":"<< spaces << "\""<< map_item.second.destname 
+                                << "\"";
+                            if(map_item.second.method == "map")
+                            {
+                                oss << ",\"map\": \""  << map_item.second.srcname 
+                                << "\" ";
+                            }
+                            if(map_item.second.method == "mapbit")
+                            {
+                                oss << ",\"mapbit\": \""  << map_item.second.srcname 
+                                << "\" ";
+                            }
+                            if(map_item.second.method == "calc")
+                            {
+                                oss << ",\"calc\": \""  << map_item.second.srcname 
+                                << "\" ";
+                            }
+                            if(map_item.second.size > 0)
+                            {
+                                oss <<", \"size\": "  << map_item.second.size 
+                                << "" ;//<< std::endl;
+                            }
                         }
                         oss << "\n     ]\n   }";
 
@@ -4474,7 +4645,7 @@ int meth_to_id(std::string & meth, std::string& desc)
         meth_id = METH_COUNT;
     else
     {
-        std::cout << "Undefined method ["<< meth <<"] operation ["<< desc <<"] will be ignored"<<std::endl;
+        std::cout << " Undefined method ["<< meth <<"] operation ["<< desc <<"] will be ignored"<<std::endl;
     }
     return meth_id;
 
@@ -4482,7 +4653,7 @@ int meth_to_id(std::string & meth, std::string& desc)
 } 
 
 //int meth_str_to_id(const std::string& meth_str, const std::string& desc) {
-uint32_t shm_def_to_id(std::string& shmdef, const std::string& item, std::string& desc)
+uint32_t shm_def_to_id(std::string& shmdef)
 {
     uint32_t id = 0;
     if (shmdef == "none")
@@ -4503,11 +4674,17 @@ uint32_t shm_def_to_id(std::string& shmdef, const std::string& item, std::string
     }
     else
     {
-        std::cout << "Undefined memory ["<< shmdef <<"] item ["<<item<<"] operation ["<< desc <<"]  will be ignored"<<std::endl;
+        std::cout << " Undefined memory ["<< shmdef <<"]  will be ignored ";
     }
     
     return id;
 }
+//int meth_str_to_id(const std::string& meth_str, const std::string& desc) {
+uint32_t shm_def_to_id(std::string& shmdef, const std::string& item, std::string& desc)
+{
+    return shm_def_to_id(shmdef);
+}
+
 
 int process_ops_item(std::map<std::string, OpsTable>& ops_tables, const json &jitem) {
     if (!jitem.contains("table") || !jitem["table"].is_string()) {
@@ -5032,6 +5209,160 @@ int tparse(std::ostringstream& oss)
 
 #include <fractal_test_unit_test.cpp>
 
+
+int process_map_item(std::map<std::string, DataMap>& data_maps, const json &jitem) {
+    if (!jitem.contains("map") || !jitem["map"].is_string()) {
+        std::cerr << "Error: Missing or invalid 'table' field" << std::endl;
+        return -1;
+    }
+
+    std::string map_name = jitem["map"];
+    std::cout << __func__ <<" Map name [" << map_name << "]\n\n";
+
+    if (!jitem.contains("items") || !jitem["items"].is_array()) {
+        std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
+        return -1;
+    }
+
+    json jtable = jitem["items"];
+    //std::cout << "Items Array found" << std::endl;
+   bool isNewMap = data_maps.find(map_name) == data_maps.end();
+    if (isNewMap) {
+        data_maps[map_name] = DataMap(); // Uses the default constructor
+    }
+
+    // Create or access the DataTable for this table_name
+    DataMap& dmap = data_maps[map_name];
+    if (isNewMap) {
+        // table.base_offset = 0;  // Set base_offset only if it's a new table
+        // table.calculated_size = 0;  // Ensure calculated size starts at 0
+    }
+
+	int item_idx = 0;
+     for (const auto& jitem : jtable) {
+        if (!jitem.contains("name") ) {
+            std::cerr << "Error: Missing name field in item idx [" << item_idx<<" ]"  << std::endl;
+            continue;  // Skip this item or you might want to return an error
+        }
+		item_idx++;
+		MapItem item;
+        item.destname = jitem["name"];
+        auto src = map_name + ":" + item.destname;
+		item.destkey = shm_def_to_id(src);
+        if((item.destkey &0xffff) == 0xffff)
+        {
+            std:: cout << ">>> Mapping error [" << src << "] bad key  [0x" << std::hex << item.destkey << std::dec <<"]";
+            //exit (0);
+        }
+        else 
+        {
+            std:: cout << "Mapping OK  [" << src << "] found [0x" << std::hex << item.destkey << std::dec <<"]";
+        }
+        item.methodkey = 0xffff;
+        item.srckey = 0xffff;
+        item.optkey = 0xffff;
+        
+        if (jitem.contains("map") ) {
+        	item.srcname = jitem["map"]; 
+            auto src = item.srcname;
+            if( src=="todo")
+            {
+                std:: cout << " map src [" << src << "] is undefined ";
+            }
+            else
+            {
+			    item.srckey = shm_def_to_id(src);
+        	    item.method = "map";
+        	    item.methodkey = 0;
+                std:: cout << " map src [" << src << "] [0x" << std::hex << item.srckey << std::dec <<"] ";
+            }
+		}
+        if (jitem.contains("opt") ) {
+        	item.optname = jitem["opt"];
+		    auto src = item.optname;
+			item.optkey = shm_def_to_id(src);
+            std:: cout << " option [" << src << "] [0x" << std::hex << item.optkey << std::dec <<"] ";
+		}
+		//"rtos:input:group_di 0"},
+        if (jitem.contains("mapbit") ) {
+        	item.srcname = jitem["mapbit"];
+            auto src = item.srcname;
+			item.srckey = shm_def_to_id(src);
+        	item.method = "mapbit";
+        	item.methodkey = 1;
+            std:: cout << " map bit [" << src << "] [0x" << std::hex << item.srckey << std::dec <<"] ";
+		}
+		//"calc":"alarms"
+        if (jitem.contains("calc") ) {
+        	item.srcname = jitem["calc"];
+            auto src = item.srcname;
+			item.srckey = shm_def_to_id(src);
+        	item.method = "calc";
+        	item.methodkey = 2;
+            std:: cout << " map calc [" << src << "] [0x" << std::hex << item.srckey << std::dec <<"] ";
+		}
+        if (jitem.contains("size") ) {
+        	item.size = jitem["size"];
+            std:: cout << " size [" << item.size << "] ";
+		}
+		else 
+			item.size = 0;
+        std::cout << "\n" ;
+
+
+        dmap.sitems[item.destname] = item;
+    }
+
+    return 0;
+}
+
+int parse_data_maps(std::map<std::string, DataMap>& data_maps, const std::string &filename, const std::string &filedir)
+{
+	std::string fname = filedir + filename;
+	std::ifstream file(fname);
+	json jfile;
+	if (!file.is_open()) {
+		std::cout << "could not open data_table file ["<<fname<<"] no data table available " << std::endl;
+		return -1;
+	}
+
+    std::string str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    //std::cout << "File contents read: ->" << str << " <-" << std::endl;  // Debug output
+
+    if (!file.is_open()) {
+        std::cout << "Could not open data_map file [" << fname << "], not using embedded data instead." << std::endl;
+        // try {
+        //     jfile = json::parse(jsonData);
+        // } catch (const std::exception& e) {
+        //     std::cerr << "Exception parsing embedded JSON data: " << e.what() << std::endl;
+        return -1;
+        // }
+    } else {
+        try {
+            jfile = json::parse(str);
+            //file >> jfile;
+        } catch (const std::exception& e) {
+            std::cerr << "Exception parsing file JSON data: " << e.what() << std::endl;
+            return -1;
+        }
+    }
+
+	try {
+		// Iterate over each element in the array
+		for (const auto& item : jfile) {
+			if (item.contains("map") && item["map"].is_string()) {
+				process_map_item(data_maps, item);
+			}
+		}
+
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return -1;
+    }
+
+	return 0;
+}
+
 int process_json_item(std::map<std::string, DataTable>& data_tables, const json &jitem) {
     if (!jitem.contains("table") || !jitem["table"].is_string()) {
         std::cerr << "Error: Missing or invalid 'table' field" << std::endl;
@@ -5085,7 +5416,10 @@ int process_json_item(std::map<std::string, DataTable>& data_tables, const json 
 
 int parse_data_tables(std::map<std::string, DataTable>& data_tables, const std::string &filename, const std::string &filedir)
 {
+    //std::cout << " parsing data tables" << std::endl;
+
 	std::string fname = filedir + filename;
+    std::cout << " parsing data tables filename [" << fname <<"]"<< std::endl;
 	std::ifstream file(fname);
 	if (!file.is_open()) {
 		std::cout << "could not open data_table file ["<<fname<<"] no data table available " << std::endl;
@@ -5095,12 +5429,12 @@ int parse_data_tables(std::map<std::string, DataTable>& data_tables, const std::
 	
 		json jfile;
 		file >> jfile;
-		//std::cout << " json loaded " << std::endl;
+		std::cout << " json loaded " << std::endl;
 
 
-		// if (jfile.is_array()){
-		// 	std::cout << " Array found " << std::endl;
-		// }
+		if (jfile.is_array()){
+			std::cout << " Array found " << std::endl;
+		}
 
 		// Iterate over each element in the array
 		for (const auto& item : jfile) {
@@ -5256,6 +5590,9 @@ int main(int argc, char* argv[]) {
         std::string config_dir = "config/json/";
 
         parse_data_tables(data_tables, data_table_file, config_dir);
+        std::cout  << " data tables parsed " << std::endl; 
+        parse_data_maps(data_maps, data_table_file, config_dir);
+        std::cout  << " data maps parsed " << std::endl; 
 
         std::string test_table_file = "test_definition.json";
         //std::string config_dir = "config/json/";

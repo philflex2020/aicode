@@ -218,6 +218,37 @@ struct OpsTable {
 typedef std::map<std::string, OpsTable> OpsTables;
 
 
+struct MapItem {
+    uint32_t srckey;          // id of rtos:input:state  for example
+    std::string srcname;      //       rtos:input:state  for example
+          
+    uint32_t optkey;          // id of rtos:input:state  for example
+    std::string optname;      //       rtos:input:state  for example
+
+    uint32_t destkey;        // id of sbmu:input:State  for example
+    std::string destname;    //       sbmu:input:State  for example
+     
+    std::string method;      // "map"
+    uint32_t methodkey;      
+    int size;
+};
+
+struct DataMap {
+    //uint32_t basekey;      // base_key derived from system + regtype but we may not use htis since we compose
+
+    std::unordered_map<std::string, MapItem> sitems; // map of strings to items
+    // ritems sbmu some dest value must come from one source 
+    std::unordered_map<uint32_t, MapItem> ritems;     // map of ids to forward items 
+    // fitems rtos some src value could map to several dests using different methods
+    std::unordered_map<uint32_t, std::vector<MapItem>> fitems;     // map of incoming ids to different dests 
+    DataMap() {
+        sitems.clear();
+        ritems.clear();
+        fitems.clear();
+    }
+};
+
+typedef std::map<std::string, DataMap> DataMaps;
 
 // struct DataItem {
 //     std::string name;
@@ -712,5 +743,8 @@ struct ModbusTransItem {
     uint32_t lim_id;
     std::string name;
 };
+
+uint32_t shm_def_to_id(const std::string& shmdef, const std::string& item, std::string& desc);
+uint32_t shm_def_to_id(const std::string& shmdef);
 
 #endif

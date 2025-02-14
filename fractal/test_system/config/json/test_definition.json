@@ -2,6 +2,7 @@
     {
         "test": "first", 
         "name": "first", 
+        "desc": "turn all racks offline",
         "items":[
                 {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[1]},
                 {"action":"pause:500",                       "desc": " pause",    "data":[]},
@@ -25,6 +26,61 @@
             ]
         },
         {
+            "test": "r1", 
+            "name": "r1", 
+            "desc": "tst rack one volts",
+            "items":[
+                    {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                    {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                    {"action":"set rtos:sm16:0:0xc800 2033 2034 2035",  "desc": "set some sm16 cell volts",    "data":[2033, 2034, 2035]},
+                    {"action":"get rtos:sm16:0:0xc800 3",  "desc": "get some sm16 cell volts",    "data":[2033, 2034, 2035]}
+                    ]
+            },
+        {
+            "test": "r1v", 
+            "name": "r1v", 
+            "desc": "tst rack one volts",
+            "items":[
+                    {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                    {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                    {"action":"set rtos:sm16:0:0xc800 2033 2034 2035",  "desc": "set some sm16 cell volts",    "data":[2033, 2034, 2035]},
+                    {"action":"get rtos:sm16:0:0xc800 3",  "desc": "get some sm16 cell volts",    "data":[2033, 2034, 2035]}
+                    ]
+            },
+        {
+            "test": "offline", 
+            "name": "offline", 
+            "desc": "turn all racks offline",
+            "items":[
+                    {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                    {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197, 1, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197, 2, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197, 3, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197, 4, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197, 5, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197, 6, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]}
+                    
+                ]
+            },
+            {
+            "test": "online", 
+            "name": "online", 
+            "desc": "turn all racks offline",
+            "items":[
+                    {"action":"setmb sbmu:hold:531 65197 0 0 0",  "desc": " force rack 0 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 1 0 0",  "desc": " force rack 1 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 2 0 o",  "desc": " force rack 2 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 3 0 0",  "desc": " force rack 3 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 4 0 0",  "desc": " force rack 4 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 5 0 0",  "desc": " force rack 5 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 6 0 0",  "desc": " force rack 6 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 7 0 0",  "desc": " force rack 7 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",              "data":[0]}                    
+                ]
+            },
+            {
         "test": "test1", 
         "name": "test1", 
         "desc": "tests that the rack select on hold:500 allows writes to the other racks", 
