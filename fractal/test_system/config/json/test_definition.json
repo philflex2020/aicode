@@ -37,24 +37,28 @@
                     ]
             },
             {
-                "test": "r7d", 
-                "name": "r7d", 
+                "test": "r7v", 
+                "name": "r7v", 
                 "desc": "test rack eight volts",
                 "items":[
-                        {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
-                        {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 7, 1, 1]},
-                        {"action":"set rtos:sm16:7:0xc800 2733 2734 2735",  "desc": "set some sm16 cell volts",    "data":[2733, 2734, 2735]},
-                        {"action":"get rtos:sm16:7:0xc800 3",  "desc": "get some sm16 cell volts",    "data":[2733, 2734, 2735]}
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",    "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 0 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0xc800 2733 2734 2735",   "desc": "set some sm16 cell volts",    "data":[2733, 2734, 2735]},
+                        {"action":"get rtos:sm16:7:0xc800 3",                "desc": "get some sm16 cell volts",    "data":[2733, 2734, 2735]},
+                        {"action":"get sbmu:input:7:191 3",                  "desc": "get some smbu input cell volts",    "data":[2733, 2734, 2735]}
                         ]
             },
             {
-                "test": "allr7", 
-                "name": "allr7", 
-                "desc": "All rack tests so far inputs  191 + 21000   Passed ",
+                "test": "r7all", 
+                "name": "r7all", 
+                "desc": "All rack tests so far   Passed ",
                 "items":[
-                        {"action":"run r7a",                  "desc": " r7a ",           "data":[]},
-                        {"action":"run r7b",                  "desc": " r7b ",           "data":[]},
-                        {"action":"run r7c",                  "desc": " r7c ",           "data":[]}
+                        {"action":"run r7a",                  "desc": " r7a ",              "data":[]},
+                        {"action":"run r7b",                  "desc": " r7b ",              "data":[]},
+                        {"action":"run r7c",                  "desc": " r7c SOC ",          "data":[]},
+                        {"action":"run r7d",                  "desc": " r7d SOH ",          "data":[]},
+                        {"action":"run r7e",                  "desc": " r7e State ",         "data":[]},
+                        {"action":"run r7v",                  "desc": " r7v rack Volts",     "data":[]}
                         ]
             },
             {
@@ -84,7 +88,7 @@
             {
                 "test": "r7c", 
                 "name": "r7c", 
-                "desc": "TODO  sbmu set cell_soc values /BSW/BasicSoft/src/SOC_Calc.c  0x4000 0x42d8 inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "desc": "TODO  sbmu set cell_soc values /BSW/BasicSoft/src/SOC_Calc.c  0x42d8 inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
@@ -93,9 +97,56 @@
                         {"action":"get rtos:sm16:7:0x42d8 3",             "desc": "get some sm16 cell soc",            "data":[733, 734, 735]},
                         {"action":"get sbmu:input:7:22591 3",             "desc": "get values from sbmu ",             "data":[733, 734, 735]},
                         {"action":"get sbmu:input:7:1591 3",              "desc": "get values from sbmu ",             "data":[733, 734, 735]},
+                        {"action":"get sbmu:input:7:22591 3",             "desc": "get values from sbmu ",             "data":[733, 734, 735]},
                         {"action":"get rtos:input:7:3000 3",              "desc": "get values from rtos ",             "data":[730, 730, 730]},
                         {"action":"set rtos:sm16:7:0x42d8 634  614 604",  "desc": "set some sm16 battery soc values",  "data":[634, 614, 604]},
                         {"action":"get rtos:input:7:3000 3",              "desc": "get values from rtos ",             "data":[630, 610, 600]}
+                        ]
+            },
+            {
+                "test": "r7d", 
+                "name": "r7d", 
+                "desc": "sbmu set cell_soh values /BSW/BasicSoft/src/SOC_Calc.c  0x42d8 inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",           "data":[64]},
+                        {"action":"set rtos:sm8:7:0x4002 83 84 85",       "desc": "set some sm16 battery soh values",  "data":[83, 84, 85]},
+                        {"action":"get rtos:sm8:7:0x4002 3",             "desc": "get some sm16 soh ",                "data":[83, 84, 85]},
+                        {"action":"get sbmu:input:7:23291 3",             "desc": "get values from sbmu ",             "data":[83, 84, 85]},
+                        {"action":"get sbmu:input:7:2291 3",              "desc": "get soh values from sbmu ",         "data":[83, 84, 85]},
+                        {"action":"get rtos:input:7:4000 3",              "desc": "get values from rtos ",             "data":[83, 84, 85]},
+                        {"action":"set rtos:sm16:7:0x42d8 634  614 604",  "desc": "set some sm16 battery soc values",  "data":[634, 614, 604]},
+                        {"action":"get rtos:input:7:4000 3",              "desc": "get values from rtos ",             "data":[83, 84, 85]}
+                        ]
+            },
+            {
+                "test": "r7e", 
+                "name": "r7e", 
+                "desc": "rack system state 0x6800   Passed ",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",          "data":[64]},
+                        {"action":"set rtos:sm8:7:0x6800 23",             "desc": "set sm16 state ",                   "data":[23]},
+                        {"action":"get rtos:sm8:7:0x6800 1",              "desc": "get some sm16 soh ",                "data":[23]},
+                        {"action":"get sbmu:input:7:21100 1",             "desc": "get state from sbmu ",              "data":[24]},
+                        {"action":"get sbmu:input:7:100 1",               "desc": "get statefrom sbmu ",               "data":[24]},
+                        {"action":"get rtos:input:7:8 1",                 "desc": "get values from rtos ",             "data":[24]}
+                        ]
+            },
+            {
+                "test": "r7f", 
+                "name": "r7f", 
+                "desc": "rack total_charge_cap 0x5418   In progress ",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",          "data":[64]},
+                        {"action":"set rtos:sm16:7:0x5418 2300 4500",     "desc": "set sm16 state ",                   "data":[2300,4500]},
+                        {"action":"get rtos:sm16:7:0x5418 2",              "desc": "get total_charge ",                "data":[2300, 4500]},
+                        {"action":"get rtos:input:7:total_charge_cap 2",          "desc": "get cap from sbmu ",        "data":[4500, 2300]},
+                        {"action":"get sbmu:input:7:Max_Allowed_Charge_Power 2",   "desc": "get power from sbmu ",     "data":[4500, 2300]}
                         ]
             },
             {
