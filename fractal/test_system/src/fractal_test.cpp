@@ -3334,6 +3334,8 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
         return;
         //"action"
     }
+    bool isJson = false;
+    
     auto test_item = test_tables[tname];
     oss << " test called [" << tname<<"] found" << std::endl;
     int passes = 0;
@@ -3363,53 +3365,255 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
             auto resp = handle_query(item.action, data_tables, 0);
             std::cout << "got resp [" << resp <<"]\n";
             std::cout << "parsing resp \n";
-            auto j = json::parse(resp);
-            std::cout << "parsed resp [" << resp <<"]\n";
-            // Extract the 'data' array from the JSON object
-            std::vector<int> respvec = j["data"];
-            if(item.data.size() > 0 )
-            {
-                if(item.data == respvec)
-                {
-                    oss << " [PASS] ";
-                    oss << "[" << item.action << "] ";
-                    oss << " result: " << json(respvec).dump() << " ";
-                    passes++;
-                }
-                else
-                {
-                    oss << " [FAIL] ";
-                    oss << "[" << item.action<<"] ";
-                    oss << " result: " << json(respvec).dump() << " ";
-                    oss << " expected: " << json(item.data).dump() << " ";
-                    fails++;
-            
-                }
+            isJson = false;
+            json j;
+            try {
+                j = json::parse(resp);
+                isJson = true;
+            } catch (json::parse_error& e) {
+                std::cout << "resp is not json \n";
             }
-            else 
-            {
-                //oss << " [    ] ";
-            }
-            //oss << item.desc;
-            oss << std::endl;
 
+            //std::cout << "parsed resp [" << resp <<"]\n";
+            // Extract the 'data' array from the JSON object
+            if (isJson)
+            {
+                std::vector<int> respvec = j["data"];
+                if(item.data.size() > 0 )
+                {
+                    if(item.data == respvec)
+                    {
+                        oss << " [PASS] ";
+                        oss << "[" << item.action << "] ";
+                        oss << " result: " << json(respvec).dump() << " ";
+                        passes++;
+                    }
+                    else
+                    {
+                        oss << " [FAIL] ";
+                        oss << "[" << item.action<<"] ";
+                        oss << " result: " << json(respvec).dump() << " ";
+                        oss << " expected: " << json(item.data).dump() << " ";
+                        fails++;
+                    }
+                }
+                else 
+                {
+                    //oss << " [    ] ";
+                }
+                //oss << item.desc;
+                oss << std::endl;
+            }
+            else
+            {
+                oss << resp;
+            }
             //oss<< item.desc << " resp " << resp << endl;
             //oss << resp;
         }
     }
-    if ( fails > 0)
+    if(isJson)
     {
-        oss << " Test Results pass " << passes <<" fail " << fails<< std::endl ;
+        if ( fails > 0)
+        {
+            oss << " Test Results pass " << passes <<" fail " << fails<< std::endl ;
+        }
+        else
+        {
+            oss << " Test Results all tests passed " << std::endl ;
+        }        
     }
-    else
-    {
-        oss << " Test Results all tests passed " << std::endl ;
-
-    }        
 
 }
 
- 
+std::string unescapeJSON(const std::string& input) {
+    std::string output;
+    output.reserve(input.size()); // Reserve original size to avoid reallocations
+
+    for (size_t i = 0; i < input.length(); ++i) {
+        if (input[i] == '\\' && i + 1 < input.length() && input[i + 1] == '"') {
+            // Skip the backslash if it escapes a double quote
+            continue;
+        }
+        output += input[i];
+    }
+
+    return output;
+}
+
+std::string jsonTypeToString(const json::value_t type) {
+    switch (type) {
+        case json::value_t::null:
+            return "null";
+        case json::value_t::object:
+            return "object";
+        case json::value_t::array:
+            return "array";
+        case json::value_t::string:
+            return "string";
+        case json::value_t::boolean:
+            return "boolean";
+        case json::value_t::number_integer:
+            return "number_integer";
+        case json::value_t::number_unsigned:
+            return "number_unsigned";
+        case json::value_t::number_float:
+            return "number_float";
+        case json::value_t::binary:
+            return "binary";
+        case json::value_t::discarded:
+            return "discarded";
+        default:
+            return "unknown";
+    }
+}
+
+void printJsonKeys(const json& jmsg, const std::string& key, std::ostringstream& oss) {
+    if (jmsg.contains(key)) {
+        oss << "Found key '" << key << "'." << std::endl;
+        const json& j = jmsg[key];
+
+        // If the value is a string that needs to be unescaped or re-parsed:
+        if (j.is_string()) {
+            std::string escdata = unescapeJSON(j.get<std::string>());
+            try {
+                json parsed = json::parse(escdata);
+                if (parsed.is_object()) {
+                    for (auto it = parsed.begin(); it != parsed.end(); ++it) {
+                        if ( it.key() == "RBMS")
+                        {
+                            oss << " Get keys from : " << it.key() << std::endl;
+
+                            printJsonKeys(parsed, "RBMS", oss);
+                        }
+                    } 
+                } else if (parsed.is_array()) {
+                        oss << "Array items under key '" << key << "':" << std::endl;
+                        for (const auto& jitem : parsed) {
+                        if (jitem.is_object()) {
+                            for (auto it = jitem.begin(); it != jitem.end(); ++it) {
+                                oss << "  - " << it.key() << ": " << it.value() << std::endl;
+                            }
+                        } else {
+                            // If the array elements are not objects, just output their value
+                            oss << "  - " << jitem << std::endl;
+                        }
+                    }
+                } else {
+                    oss << "The parsed string is not an object but a " << jsonTypeToString(parsed.type()) << std::endl;
+                }
+            } catch (const json::parse_error& e) {
+                oss << "Error parsing string: " << e.what() << std::endl;
+            }
+        } else if (j.is_object()) {
+            for (auto it = j.begin(); it != j.end(); ++it) {
+                oss << " Key: " << it.key() << std::endl;
+            }
+        } else if (j.is_array()) {
+            oss << "Array items under key '" << key << "':" << std::endl;
+            for (const auto& jitem : j) {
+                if (jitem.is_object()) {
+                    for (auto it = jitem.begin(); it != jitem.end(); ++it) {
+                        oss << "  - " << it.key() << ": " << it.value() << std::endl;
+                    }
+                } else {
+                    // If the array elements are not objects, just output their value
+                    oss << "  - " << jitem << std::endl;
+                }
+            }
+        } else {
+            oss << "Value at key '" << key << "' is not an object but a " << jsonTypeToString(j.type()) << std::endl;
+        }
+    } else {
+        oss << "Key '" << key << "' not found in the JSON object." << std::endl;
+    }
+}
+
+
+std::string processWebSocketMessage(const json& message, std::ostringstream& oss) {
+    try {
+        if (message.contains("data")) {
+            std::string rawdata = message["data"];
+            std::string escdata = unescapeJSON(rawdata);
+            auto data = json::parse(escdata);
+
+            if (data.contains("Configuration")) {
+                oss << "Configuration Data Found:\n" << data["Configuration"].dump(4) << std::endl;
+            }
+            if (data.contains("RBMS")) {
+                oss << "RBMS Data Found:\n";
+                for (const auto& rack : data["RBMS"]) {
+                    oss << "Rack ID: " << rack["RackID"] << ", Total Voltage: " << rack["TotalVoltage"] << " V\n";
+                }
+            }
+        }
+    } catch (const json::exception& e) {
+        oss << "Error processing message: " << e.what() << std::endl;
+    }
+    return oss.str();
+}
+
+
+std::string decode_ws(std::string logFileName, std::ostringstream& oss) 
+{
+
+    // std::ostringstream oss;
+    // std::string logFileName = "config/json/ws_example.json"; // Adjust the file name/path as necessary
+    std::ifstream logFile(logFileName);
+
+    if (!logFile.is_open()) {
+        //std::cerr 
+        oss << "Failed to open log file." << std::endl;
+        return oss.str();
+    }
+
+    try {
+        json logEntries = json::parse(logFile);
+        oss << "  parsed logfile." << std::endl;
+        int entries  = 0;
+        // Iterate through the array of WebSocket messages
+        if (logEntries.contains("log"))
+        {
+            oss << "found a log." << std::endl;
+            auto jlog = logEntries["log"];
+            if (jlog.contains("entries"))
+            {
+                oss << "found entries." << std::endl;
+                auto jentries = jlog["entries"];
+                for (auto& jentry : jentries)
+                {
+                    if (jentry.contains("_webSocketMessages"))
+                    {
+                        oss << "found messages" << std::endl;
+                        auto jmsgs = jentry["_webSocketMessages"];
+                        for (auto& jmsg : jmsgs)
+                        {
+                            printJsonKeys(jmsg, "data", oss);
+                            //processWebSocketMessage(jmsg, oss);
+                            entries++;
+                        }
+                    }
+                }
+            }
+        }
+        // for (const auto& log : logEntries["log"]) {
+        //     for (const auto& entry : log["entries"]) {
+        //         for (const auto& wsm : entry["_webSocketMessages"]) {
+        //             processWebSocketMessage(wsm, oss);
+        //             entries ++;
+        //         }
+        //     }
+        // }
+        oss << "  processed ["<<entries<<"] logfile entries." << std::endl;
+
+    } catch (const json::exception& e) {
+        //std::cerr 
+        oss << "Failed to parse log file: " << e.what() << std::endl;
+        //return 2;
+    }
+
+    return oss.str();
+}
 
 std::string handle_query(const std::string& qustr, std::map<std::string, DataTable>& data_tables, int sock) {
     std::string query = trim(qustr);
@@ -3444,6 +3648,8 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             oss <<"      test [file]  - more stuff\n";
             oss <<"      tops [desc, table]  - run a test op (load defs with tdef  first) \n";
             oss <<"      run  [test]         - run a test  from test_tables \n";
+            oss <<"      ws_log  [log_name]         - decode a ws_log \n";
+            
             return oss.str();
         }
         // else if ( swords[0] == "res")
@@ -3457,6 +3663,20 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
         //     }
         //     oss << " restarting \n";
         // }
+        else if ( swords[0] == "ws_log")
+        {
+            std::string decode_ws(std::string logFileName, std::ostringstream& oss) ;
+            // decode_ws
+            std::string logName = "config/json/ws_example.json"; // Adjust the file name/path as necessary
+            if (swords.size() > 1)
+                logName = swords[1];
+
+            std::ostringstream oss;
+            oss << " decoding logfile";
+            decode_ws(logName, oss);
+            //oss<< " tests [" <<tname<<"] complete\n";
+            return oss.str();
+        }
         else if ( swords[0] == "run")
         {
             std::string tname = "first";
