@@ -211,6 +211,37 @@
                         ]
             },
             {
+                "test": "r7j", 
+                "name": "r7j", 
+                "cat": "sbmu:input:mapping", 
+                "desc": " read avg_voltage (18) , avg_temp (20) min_voltage ",
+                "note1": " CAP_Read_ModSOC sm8 0x5428 data 120",
+                "note2": "temp (18)  BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 142 ptr 0xdd40 val 700",
+                "note3": "min_volt BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 4 VOLT_MIN1 ptr 0xdcec val 0",
+                "note4": "voltage (20) BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 8 ptr 0xdd04 val 0",
+                "note5": "max_volt BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 0 VOLT_MAX1 ptr 0xdcd4 val 0",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+                        {"action":"set rtos:sm16:7:0xdd40 567",   "desc": "set avg_temp to 567  ",                       "data":[567]},
+                        {"action":"set rtos:sm16:7:0xdd04 3567",   "desc": "set avg_volt to 3567  ",                       "data":[3567]},
+                        {"action":"set rtos:sm16:7:0xdcec 3467",   "desc": "set min_volt to 3467  ",                       "data":[3467]},
+                        {"action":"set rtos:sm16:7:0xdcd4 3667",   "desc": "set max_volt to 3667  ",                       "data":[3667]},
+                        {"action":"get rtos:sm16:7:0xdd04 1",      "desc": "get avg_volt ",                               "data":[3567]},
+                        {"action":"get rtos:sm16:7:0xddb8 1",      "desc": "get avg_temp ",                               "data":[967]},
+                        {"action":"get rtos:sm16:7:0xdcec 1",             "desc": "get min_volt to 3467  ",                      "data":[3467]},
+                        {"action":"get rtos:input:7:avg_temp 1",         "desc": "get avg_temp modbus  ",            "data":[567]},
+                        {"action":"get rtos:input:7:avg_voltage 1",     "desc": "get avg_voltage modbus  ",            "data":[3567]},
+                        {"action":"get rtos:input:7:min_volt 1",        "desc": "get min_volt modbus  ",               "data":[3467]},
+                        {"action":"get rtos:input:7:max_voltage 1",        "desc": "get min_voltage modbus  ",               "data":[3667]},
+                        {"action":"get sbmu:input:7:Average_cell_voltage 1",          "desc": "get " ,  "data":[3567]},
+                        {"action":"get sbmu:input:7:Average_cell_temp 1",             "desc": "get ",  "data":[967]},
+                        {"action":"get sbmu:input:7:Min_cell_voltage 1",          "desc": "get " ,  "data":[3467]},
+                        {"action":"get sbmu:input:7:Max_cell_voltage 1",          "desc": "get " ,  "data":[3667]}
+                        ]
+            },
+            {
             "test": "r1v", 
             "name": "r1v", 
             "desc": "tst rack one volts",
