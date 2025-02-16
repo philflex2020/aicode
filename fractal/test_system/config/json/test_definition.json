@@ -60,6 +60,8 @@
                         {"action":"run r7e",                  "desc": " r7e State ",         "data":[]},
                         {"action":"run r7f",                  "desc": " r7f Charge/Discharge  ",        "data":[]},
                         {"action":"run r7g",                  "desc": " r7g DI DO  ",                   "data":[]},
+                        {"action":"run r7h",                  "desc": " r7g DI DO  ",                   "data":[]},
+                        {"action":"run r7i",                  "desc": " r7g DI DO  ",                   "data":[]},
                         {"action":"run r7v",                  "desc": " r7v rack Volts",                "data":[]},
                         {"action":"run r7vc",                 "desc": " r7v rack_voltage/current",     "data":[]}
                         ]
@@ -186,6 +188,26 @@
                         {"action":"get rtos:input:7:group_do 1",             "desc": "get cap from sbmu ",              "data":[149]},
                         {"action":"get sbmu:input:7:DI1 1",                  "desc": "get sbmu DI 1",                   "data":[1]},
                         {"action":"get sbmu:input:7:DI8 1",                  "desc": "get sbmu DI 8",                   "data":[0]}
+                        ]
+            },
+            {
+                "test": "r7i", 
+                "name": "r7i", 
+                "desc": " read soc , soh",
+                "note1": " CAP_Read_ModSOC sm8 0x5428 data 120",
+                "note2": " BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 82 ptr 0xdda0 val 0",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+                        {"action":"set rtos:sm8:7:0x5428 44",   "desc": "set module soc ",                              "data":[44]},
+                        {"action":"get rtos:sm8:7:0x5428 1",   "desc": "get module soc ",                               "data":[44]},
+                        {"action":"get rtos:input:7:soc 1",             "desc": "get soc from modbus  ",                "data":[440]},
+                        {"action":"get sbmu:input:7:118 1",                  "desc": "get sbmu SOC 1 (118)",            "data":[440]},
+                        {"action":"set rtos:sm8:7:0xdda0 55",   "desc": "set soh ",                                     "data":[55]},
+                        {"action":"get rtos:sm8:7:0xdda0 1",     "desc": "get soh ",                                    "data":[55]},
+                        {"action":"get rtos:input:7:soh 1",             "desc": "get soh from modbus  ",                "data":[55]},
+                        {"action":"get sbmu:input:7:119 1",               "desc": "get sbmu SOH 1 (119)",               "data":[55]}
                         ]
             },
             {

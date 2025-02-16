@@ -3043,7 +3043,7 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
             if(0)std::cout <<" Found table ["<< table_name <<"]"<< std::endl;
             const auto& items = data_tables.at(table_name).items;
             for (const auto& item : items) {
-                if (item.name.find(offset_str) != std::string::npos) {
+                if (item.name == offset_str) {
                     if(0)std::cout << "Note offset item found : " << offset_str 
                             <<" offset: "<< item.offset << " table_name :"<< table_name <<  std::endl;
 
