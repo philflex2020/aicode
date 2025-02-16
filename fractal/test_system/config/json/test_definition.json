@@ -58,6 +58,7 @@
                         {"action":"run r7c",                  "desc": " r7c SOC ",          "data":[]},
                         {"action":"run r7d",                  "desc": " r7d SOH ",          "data":[]},
                         {"action":"run r7e",                  "desc": " r7e State ",         "data":[]},
+                        {"action":"run r7f",                  "desc": " r7f Charge/Discharge  ",         "data":[]},
                         {"action":"run r7v",                  "desc": " r7v rack Volts",     "data":[]}
                         ]
             },
@@ -138,15 +139,32 @@
             {
                 "test": "r7f", 
                 "name": "r7f", 
-                "desc": "rack total_charge_cap 0x5418   In progress ",
+                "desc": "rack total_charge_cap 0x5418   Done ",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
                         {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",          "data":[64]},
-                        {"action":"set rtos:sm16:7:0x5418 2300 4500",     "desc": "set sm16 state ",                   "data":[2300,4500]},
-                        {"action":"get rtos:sm16:7:0x5418 2",              "desc": "get total_charge ",                "data":[2300, 4500]},
-                        {"action":"get rtos:input:7:total_charge_cap 2",          "desc": "get cap from sbmu ",        "data":[4500, 2300]},
-                        {"action":"get sbmu:input:7:Max_Allowed_Charge_Power 2",   "desc": "get power from sbmu ",     "data":[4500, 2300]}
+                        {"action":"set rtos:sm16:7:0x5418 2300 3300 4400 5500",     "desc": "set sm16 state ",         "data":[2300,3300, 4400, 5500 ]},
+                        {"action":"get rtos:sm16:7:0x5418 4",              "desc": "get total_charge ",                "data":[2300,3300, 4400, 5500 ]},
+                        {"action":"get rtos:input:7:total_charge_cap 2",          "desc": "get cap from sbmu ",        "data":[3300, 2300]},
+                        {"action":"get rtos:input:7:total_discharge_cap 2",          "desc": "get cap from sbmu ",     "data":[5500, 4400]},
+                        {"action":"get sbmu:input:7:Accumulated charge_capacity 2",   "desc": "get power from sbmu ",     "data":[3300, 2300]},
+                        {"action":"get sbmu:input:7:Accumulated discharge_capacity 2",   "desc": "get power from sbmu ",  "data":[5500, 4400]}
+                        ]
+            },
+            {
+                "test": "r7g", 
+                "name": "r7g", 
+                "desc": "rack ASW/src/RelayControl.c DO 0x6825 DI 0x681c   In progress ",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",          "data":[64]},
+                        {"action":"set rtos:sm8:7:0x6825 1 0 1 0 1 0 1 0",            "desc": "set DO (10) ",        "data":[1, 0, 1, 0, 1, 0, 1, 0 ]},
+                        {"action":"set rtos:sm8:7:0x681c 1 1 1 1 0 0 0 0",            "desc": "set DI (9) ",         "data":[1, 1, 1, 1, 0, 0, 0, 0 ]},
+                        {"action":"get rtos:sm16:7:0x6825 1",              "desc": "get gpio ",                "data":[34 ]},
+                        {"action":"get rtos:input:7:group_di 1",          "desc": "get rtos ",        "data":[15]},
+                        {"action":"get rtos:input:7:group_do 1",          "desc": "get cap from sbmu ",        "data":[149]}
                         ]
             },
             {
