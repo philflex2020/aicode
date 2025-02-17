@@ -224,6 +224,10 @@
                 "note7": "max_volt_num (155) BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 21 VOLT_MIN_NUM ptr 0xdcfc val 0",
                 "note8": "max_temp_num (11) BSW/dataCenter/configPara/EvbmmConfigPara.c:Get_BmmBase_TotalBatteryTempNum  ptr 0x0406 val 0",
                 "note9": "max_temp (12) BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 0 VOLT_MAX1 ptr 0xdd10 val 0",
+                "note10": "min_temp (15)  157BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 138 ptr 0xdd28 val 700",
+                "note11": "temp_min_num  (15)BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 47 TEMP_MIN_NUM_1 ptr 0xdd38 val 0",
+                "note12": ">> max_soc>> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 52 SOC_MAX ptr 0xffff926fdd4c val 0",
+                "note21": ">> min_soc BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 56 SOC_MIN ptr 0xffff926fdd64 val 0",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
@@ -235,6 +239,9 @@
                         {"action":"set rtos:sm16:7:0xdcfc 33",      "desc": "set min_volt_num to 33  ",                    "data":[33]},
                         {"action":"set rtos:sm16:7:0x0406 21",      "desc": "set max_temp_num to 21  ",                    "data":[21]},
                         {"action":"set rtos:sm16:7:0xdd10 457",      "desc": "set max_temp to 457  ",                       "data":[457]},
+                        {"action":"set rtos:sm16:7:0xdd28 257",      "desc": "set min_temp to 257  ",                       "data":[257]},
+                        {"action":"set rtos:sm16:7:0xdd38 5",      "desc": "set temp_min_num to 5  ",                       "data":[5]},
+                        {"action":"set rtos:sm16:7:0xdd4c 98",      "desc": "set mx_soc to 98  ",                       "data":[98]},
  
                         {"action":"get rtos:sm16:7:0xdd04 1",      "desc": "get avg_volt ",                               "data":[3567]},
                         {"action":"get rtos:sm16:7:0xddb8 1",      "desc": "get avg_temp ",                               "data":[967]},
@@ -242,6 +249,8 @@
                         {"action":"get rtos:sm16:7:0xdcfc 1",             "desc": "get min_volt_num as 33  ",             "data":[33]},
                         {"action":"get rtos:sm16:7:0xdd10 1",       "desc": "get max_temp as 457  ",                       "data":[457]},
                         {"action":"get rtos:sm16:7:0x0406 1",       "desc": "get max_temp_num as 21  ",                    "data":[21]},
+                        {"action":"get rtos:sm16:7:0xdd28 1",      "desc": "get min_temp to 257  ",                       "data":[257]},
+                        {"action":"get rtos:sm16:7:0xdd38 1",      "desc": "get temp_min_num to 5  ",                       "data":[5]},
 
                         {"action":"get rtos:input:7:avg_temp 1",         "desc": "get avg_temp modbus  ",            "data":[567]},
                         {"action":"get rtos:input:7:max_temp 1",         "desc": "get max_temp modbus  ",            "data":[857]},
@@ -252,6 +261,9 @@
                         {"action":"get rtos:input:7:volt_max_num 1",                     "desc": "get volt_max_num modbus  ",               "data":[66]},
                         {"action":"get rtos:input:7:volt_min_num 1",                     "desc": "get volt_min_num modbus  ",               "data":[33]},
                         {"action":"get rtos:input:7:max_temp_num 1",                     "desc": "get max_temp_num modbus  ",               "data":[21]},
+                        {"action":"get rtos:input:7:min_temp 1",                         "desc": "get min_temp modbus  ",               "data":[657]},
+                        {"action":"get rtos:input:7:temp_min_num 1",                     "desc": "get temp_min_num modbus  ",           "data":[5]},
+
                         {"action":"get sbmu:input:7:Average_cell_voltage 1",             "desc": "get " ,  "data":[3567]},
                         {"action":"get sbmu:input:7:Average_cell_temp 1",                "desc": "get ",  "data":[967]},
                         {"action":"get sbmu:input:7:Min_cell_voltage 1",                 "desc": "get " ,  "data":[3467]},
@@ -259,7 +271,9 @@
                         {"action":"get sbmu:input:7:Max_cell_voltage_number 1",          "desc": "get " ,  "data":[66]},
                         {"action":"get sbmu:input:7:Min_cell_voltage_number 1",          "desc": "get " ,  "data":[33]},
                         {"action":"get sbmu:input:7:Max_cell_temp 1",                    "desc": "get " ,  "data":[857]},
-                        {"action":"get sbmu:input:7:Max_cell_temp_number 1",          "desc": "get " ,  "data":[21]}
+                        {"action":"get sbmu:input:7:Max_cell_temp_number 1",          "desc": "get " ,  "data":[21]},
+                        {"action":"get sbmu:input:7:Min_cell_temp 1",                 "desc": "get " ,  "data":[657]},
+                        {"action":"get sbmu:input:7:Min_cell_temp_number 1",          "desc": "get " ,  "data":[5]}
                         ]
             },
             {
