@@ -63,6 +63,7 @@
                         {"action":"run r7h",                  "desc": " r7g DI DO  ",                   "data":[]},
                         {"action":"run r7i",                  "desc": " r7g DI DO  ",                   "data":[]},
                         {"action":"run r7j",                  "desc": " r7j soc soh etc  ",             "data":[]},
+                        {"action":"run r7k",                  "desc": " r7k acc capacity  ",            "data":[]},
                         {"action":"run r7v",                  "desc": " r7v rack Volts",                "data":[]},
                         {"action":"run r7vc",                 "desc": " r7v rack_voltage/current",     "data":[]}
                         ]
@@ -327,6 +328,70 @@
 
                     ]
             },
+            {
+                "test": "r7k", 
+                "name": "r7k", 
+                "cat": "sbmu:input:mapping", 
+                "desc": " read avg_voltage (18) , avg_temp (20) min_voltage ",
+                "note1": " single_charge_cap 63  >> Get_Battery_Accumulate_Data Type 6 addr 0x5408 data 0",
+                "note2": " single_discharge_cap 64 Get_Battery_Accumulate_Data Type 7 addr 0x540c data 0",
+                "note3": " accumulated single_charge_cap 134     >> Get_Battery_Accumulate_Data Type 6 addr 0x5404 data 0",
+                "note4": " accumulated single_discharge_cap 136  >> Get_Battery_Accumulate_Data Type 6 addr 0x5400 data 0",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+
+                        {"action":"set rtos:sm16:7:0x5408 5670",                "desc": "set single_charge_cap to 5670  ",           "data":[5670]},
+                        {"action":"set rtos:sm16:7:0x540c 5770",                "desc": "set single_discharge_cap to 5770  ",        "data":[5770]},
+                        {"action":"set rtos:sm16:7:0x5404 1670 23",             "desc": "set acc single_charge_cap to 1670 23  ",    "data":[1670, 23]},
+                        {"action":"set rtos:sm16:7:0x5400 670 24",              "desc": "set acc single_dis charge_cap to 670 23  ", "data":[670, 24]},
+
+                        {"action":"get rtos:sm16:7:0x5408 1",                   "desc": "get single_charge_cap as 5670  ",           "data":[5670]},
+                        {"action":"get rtos:sm16:7:0x540c 1",                   "desc": "get single_discharge_cap as 5770  ",        "data":[5770]},
+                        {"action":"get rtos:sm16:7:0x5404 2",                   "desc": "get single_charge_cap as 1670 23  ",        "data":[1670, 23]},
+                        {"action":"get rtos:sm16:7:0x5400 2",                   "desc": "get single_discharge_cap as 670 24  ",      "data":[670, 24]},
+
+                        {"action":"get rtos:input:7:single_charge_cap 1",      "desc": "get single_charge_cap mb  5670  ",           "data":[5670]},
+                        {"action":"get rtos:input:7:single_discharge_cap 1",   "desc": "get single_charge_cap mb  5770  ",           "data":[5770]},
+
+                        {"action":"get rtos:input:7:acc_single_charge_cap 2",      "desc": "get acc_single_charge_cap mb  5670  ",   "data":[2,26281]},
+                        {"action":"get rtos:input:7:acc_single_discharge_cap 2",   "desc": "get acc_single_charge_cap mb  5770  ",   "data":[2,19827]},
+
+                        {"action":"get sbmu:input:7:Accumulated_single_charge_capacity 2",   "desc": "get single_charge_cap mb   ",  "data":[2,26281]},
+                        {"action":"get sbmu:input:7:Accumulated_single_discharge_capacity 2", "desc": "get single_discharge_cap mb ", "data":[2, 19827]},
+                        {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                        {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]}
+
+                    ]
+            },
+            {
+                "test": "r7j", 
+                "name": "r7j", 
+                "cat": "sbmu:input:mapping", 
+                "desc": "  pack soc soh  ",
+                "note0":"./ASW/src/CAN0_PC_Analysis.c:static void CanSend_BatterySoc_Package(Can_Chl_Def can_chl, uint16_t packNum, uint8_t myaddr)",
+                "note1": " single_charge_cap 63  >> Get_Battery_Accumulate_Data Type 6 addr 0x5408 data 0",
+                "note2": " single_discharge_cap 64 Get_Battery_Accumulate_Data Type 7 addr 0x540c data 0",
+                "note3": ">> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Module_SOC_Data type 4 MODULE_SOC_AVR ptr 0xd90e val 0",
+                "note4": " >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Module_SOC_Data type 4 MODULE_SOH_AVG ptr 0xdaee val 0",
+
+                "note5": " accumulated single_charge_cap 134     >> Get_Battery_Accumulate_Data Type 6 addr 0x5404 data 0",
+                "note6": " accumulated single_discharge_cap 136  >> Get_Battery_Accumulate_Data Type 6 addr 0x5400 data 0",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+
+                        {"action":"set rtos:sm16:7:0xd90e 450 460 470 480",  "desc": " set avg soc",        "data":[450,460,470,480]},
+                        {"action":"set rtos:sm16:7:0xdaee 550 560 570 580",  "desc": " set avg soc",        "data":[550,560,570,580]},
+
+                        {"action":"get rtos:sm16:7:0xd90e 4",  "desc": " set avg soc",        "data":[450,460,470,480]},
+                        {"action":"get rtos:sm16:7:0xd90e 4",  "desc": " set avg soc",        "data":[450,460,470,480]}
+
+                    ]
+            },
+
             {
             "test": "r1v", 
             "name": "r1v", 
