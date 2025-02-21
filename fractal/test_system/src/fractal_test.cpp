@@ -3708,15 +3708,15 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             oss <<"      json - show stuff as json\n";
             oss <<"      tables - show tables\n";
             oss <<"      find - items by offset or name match\n"; 
-            oss <<"      get  - websocket: get a value , define the dest by name or table:offset\n";
-            oss <<"      set  - websocket: set a value , define the dest by name or table:offset\n";
-            oss <<"      getmb  - modbus: get a value , define the dest by name or table:offset\n";
-            oss <<"      setmb  - modbus set a value , (all also) define the dest by name or table:offset\n";
+            oss <<"      get  - websocket: get a value, define the dest by name or table:offset\n";
+            oss <<"      set  - websocket: set a value, define the dest by name or table:offset\n";
+            oss <<"      getmb  - sbmu modbus: get a value, define the dest by name or table:offset\n";
+            oss <<"      setmb  - modbus set a value, (all also) define the dest by name or table:offset\n";
             oss <<"      tdef [file]  - test transfer defs\n";
             oss <<"      tparse [file]  - test table parsen";
             oss <<"      test [file]  - more stuff\n";
             oss <<"      tops [desc, table]  - run a test op (load defs with tdef  first) \n";
-            oss <<"      run  [test]         - run a test  from test_tables \n";
+            oss <<"      run  [test]         - run a test from test_tables \n";
             oss <<"      ws_log  [log_name]         - decode a ws_log \n";
             oss <<"      cats  [clear]        - show teet results (cats)\n";
             
