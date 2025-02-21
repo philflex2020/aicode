@@ -283,6 +283,7 @@ struct TestItem {
     std::string action;
     std::string dest;
     std::string desc;
+    std::string cat;
     std::string notes;
     std::vector<int> data;  // Key for mapping to another DataItem
 
@@ -304,6 +305,8 @@ struct TestItem {
 struct TestTable {
     // int base_offset;
     std::string name;
+    std::string cat;
+    
     //uint32_t basekey;      // base_key derived from system + regtype but we may not use htis since we compose
 
     std::vector<TestItem> items;
@@ -743,6 +746,18 @@ struct ModbusTransItem {
     uint32_t lim_id;
     std::string name;
 };
+
+
+struct TestResult {
+    std::string title;
+    int pass_count = 0;
+    int fail_count = 0;
+    //std::string details;
+    std::vector<std::string> test_lines; // Store each test line separately
+    std::map<std::string, TestResult> subtests;
+};
+
+void parse_test_result( std::ostringstream& toss,const std::string& title, const std::string& category);
 
 uint32_t shm_def_to_id(const std::string& shmdef, const std::string& item, std::string& desc);
 uint32_t shm_def_to_id(const std::string& shmdef);

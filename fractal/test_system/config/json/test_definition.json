@@ -53,25 +53,27 @@
                 "name": "r7all", 
                 "desc": "All rack tests so far   Passed ",
                 "items":[
-                        {"action":"run r7a",                  "desc": " r7a ",              "data":[]},
-                        {"action":"run r7b",                  "desc": " r7b ",              "data":[]},
-                        {"action":"run r7c",                  "desc": " r7c SOC ",          "data":[]},
-                        {"action":"run r7d",                  "desc": " r7d SOH ",          "data":[]},
-                        {"action":"run r7e",                  "desc": " r7e State ",         "data":[]},
-                        {"action":"run r7f",                  "desc": " r7f Charge/Discharge  ",        "data":[]},
-                        {"action":"run r7g",                  "desc": " r7g DI DO  ",                   "data":[]},
-                        {"action":"run r7h",                  "desc": " r7g DI DO  ",                   "data":[]},
-                        {"action":"run r7i",                  "desc": " r7g DI DO  ",                   "data":[]},
-                        {"action":"run r7j",                  "desc": " r7j soc soh etc  ",             "data":[]},
-                        {"action":"run r7k",                  "desc": " r7k acc capacity  ",            "data":[]},
-                        {"action":"run r7v",                  "desc": " r7v rack Volts",                "data":[]},
-                        {"action":"run r7vc",                 "desc": " r7v rack_voltage/current",     "data":[]}
+                        {"action":"run r7a",    "desc": " r7a ",                    "cat":"rack.test1",           "data":[]},
+                        {"action":"run r7b",    "desc": " r7b ",                    "cat":"rack.test2",           "data":[]},
+                        {"action":"run r7c",    "desc": " r7c SOC ",                "cat":"rack.SOC",             "data":[]},
+                        {"action":"run r7d",    "desc": " r7d SOH ",                "cat":"rack.SOH",             "data":[]},
+                        {"action":"run r7e",    "desc": " r7e State ",              "cat":"rack.state",           "data":[]},
+                        {"action":"run r7f",    "desc": " r7f Charge/Discharge  ",  "cat":"rack.charge_dis",      "data":[]},
+                        {"action":"run r7g",    "desc": " r7g DI DO  ",             "cat":"rack.di do",           "data":[]},
+                        {"action":"run r7h",    "desc": " r7g DI DO  ",              "cat":"rack.r7h",            "data":[]},
+                        {"action":"run r7i",    "desc": " r7g DI DO  ",              "cat":"rack.r7i",            "data":[]},
+                        {"action":"run r7j",    "desc": " r7j soc soh etc  ",        "cat":"rack.soc_soh",        "data":[]},
+                        {"action":"run r7k",    "desc": " r7k acc capacity  ",       "cat":"rack.capacity",       "data":[]},
+                        {"action":"run r7l",    "desc": " r7l Module_temp  ",         "cat":"rack.module_temp",   "data":[]},
+                        {"action":"run r7v",    "desc": " r7v rack Volts",            "cat":"rack.volts",         "data":[]},
+                        {"action":"run r7vc",   "desc": " r7v rack_voltage/current",  "cat":"rack.volts_current", "data":[]}
                         ]
             },
             {
                 "test": "r7a", 
                 "name": "r7a", 
                 "desc": "Passed sbmu mapping rack volt inputs to sbmu at offset 191; set rack eight volts @0xc800  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.force_online",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
@@ -84,6 +86,7 @@
                 "test": "r7b", 
                 "name": "r7b", 
                 "desc": "Passed sbmu mapping battery temp inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.battery_temp",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",          "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates", "data":[65197, 7, 1, 1]},
@@ -96,6 +99,7 @@
                 "test": "r7c", 
                 "name": "r7c", 
                 "desc": "TODO  sbmu set cell_soc values /BSW/BasicSoft/src/SOC_Calc.c  0x42d8 inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.soc_soh_init",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
@@ -114,6 +118,7 @@
                 "test": "r7d", 
                 "name": "r7d", 
                 "desc": "sbmu set cell_soh values /BSW/BasicSoft/src/SOC_Calc.c  0x42d8 inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.cel_soc_soh",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
@@ -131,6 +136,7 @@
                 "test": "r7e", 
                 "name": "r7e", 
                 "desc": "rack system state 0x6800   Passed ",
+                "cat":"sbmu_inputs.State",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
@@ -146,7 +152,8 @@
                 "test": "r7f", 
                 "name": "r7f", 
                 "desc": "rack total_charge_cap 0x5418   Done ",
-                "items":[
+                "cat": "sbmu_inputs.charge_cap",
+                "items":[ 
                         {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
                         {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",          "data":[64]},
@@ -162,13 +169,14 @@
                 "test": "r7g", 
                 "name": "r7g", 
                 "desc": "rack ASW/src/RelayControl.c DO 0x6825 DI 0x681c   note In progress ",
+                "cat":"sbmu_inputs.relay_control",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
                         {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
                         {"action":"set rtos:sm8:7:0x6825 1 0 1 0 1 0 1 0",   "desc": "set DO (10) ",                    "data":[1, 0, 1, 0, 1, 0, 1, 0 ]},
                         {"action":"set rtos:sm8:7:0x681c 1 1 1 1 0 0 0 0",   "desc": "set DI (9) ",                     "data":[1, 1, 1, 1, 0, 0, 0, 0 ]},
-                        {"action":"get rtos:sm16:7:0x6825 1",                "desc": "get gpio ",                       "data":[273 ]},
+                        {"action":"get rtos:sm16:7:0x6825 1",                "desc": "get gpio ",                       "data":[256 ]},
                         {"action":"get rtos:input:7:group_di 1",             "desc": "get rtos ",                       "data":[15]},
                         {"action":"get rtos:input:7:group_do 1",             "desc": "get cap from sbmu ",              "data":[149]},
                         {"action":"get sbmu:input:7:DI1 1",                  "desc": "get sbmu DI 1",                   "data":[1]},
@@ -179,6 +187,7 @@
                 "test": "r7h", 
                 "name": "r7h", 
                 "desc": "rack ASW/src/RelayControl.c DO 0x6825 DI 0x681c   note In progress ",
+                "cat":"sbmu_inputs.check_di",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
@@ -196,6 +205,7 @@
                 "test": "r7i", 
                 "name": "r7i", 
                 "desc": " read soc , soh",
+                "cat":"sbmu_inputs.module_soc",
                 "note1": " CAP_Read_ModSOC sm8 0x5428 data 120",
                 "note2": " BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 82 ptr 0xdda0 val 0",
                 "items":[
@@ -215,7 +225,8 @@
             {
                 "test": "r7j", 
                 "name": "r7j", 
-                "cat": "sbmu:input:mapping", 
+                "cat": "sbmu:_input:mapping", 
+
                 "desc": " read avg_voltage (18) , avg_temp (20) min_voltage ",
                 "note1": " CAP_Read_ModSOC sm8 0x5428 data 120",
                 "note2": "temp (18)  BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 142 ptr 0xdd40 val 700",
@@ -331,7 +342,7 @@
             {
                 "test": "r7k", 
                 "name": "r7k", 
-                "cat": "sbmu:input:mapping", 
+                "cat": "sbmu.input.mapping_2", 
                 "desc": " read avg_voltage (18) , avg_temp (20) min_voltage ",
                 "note1": " single_charge_cap 63  >> Get_Battery_Accumulate_Data Type 6 addr 0x5408 data 0",
                 "note2": " single_discharge_cap 64 Get_Battery_Accumulate_Data Type 7 addr 0x540c data 0",
@@ -366,36 +377,78 @@
                     ]
             },
             {
-                "test": "r7j", 
-                "name": "r7j", 
-                "cat": "sbmu:input:mapping", 
-                "desc": "  pack soc soh  ",
-                "note0":"./ASW/src/CAN0_PC_Analysis.c:static void CanSend_BatterySoc_Package(Can_Chl_Def can_chl, uint16_t packNum, uint8_t myaddr)",
-                "note1": " single_charge_cap 63  >> Get_Battery_Accumulate_Data Type 6 addr 0x5408 data 0",
-                "note2": " single_discharge_cap 64 Get_Battery_Accumulate_Data Type 7 addr 0x540c data 0",
-                "note3": ">> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Module_SOC_Data type 4 MODULE_SOC_AVR ptr 0xd90e val 0",
-                "note4": " >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Module_SOC_Data type 4 MODULE_SOH_AVG ptr 0xdaee val 0",
+                "test": "r7l", 
+                "name": "r7l", 
+                "desc": "Module_temp  ",
+                "cat": "sbmu_input.Module_temp",
+                "note7": "uint8_t GENERAL_Read_Module_Temp_Data(uint8_t module_Num, uint8_t type)",
+                "note8": " max_temp_mod  (13)BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 143 TEMP_MAX_MODL_1 ptr 0xdd18 val 0",
+                "note9": " max_temp_mod>> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 143 TEMP_MAX_NUM_1 ptr 0xdd20 val 0",
+                "note10": " max_temp_mod>> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 143 TEMP_MIN_NUM_1 ptr 0xdd38 val 5",
+                "note11":"GENERAL_Read_Data type 35 GROUP_INSU_JUST (pos) addr 0x5014 GROUP_INSU_BEAR (neg) addr 0x5016 ",  
+                "note12": "Mod num 24 addr 0xd83c  value 0",
+                "note13": "terminal temp 100 at 2991 Battery_Data.c  Get_U16Bias40_01_PoleTemp(regAddr - 500);",
+                "note14": "Pole_temp  Evbcm_Config_Para->bcm_pole_temp_num addr 0x001a",
+                "note15": "Pole_temp Evbmm_Base_Config->total_poleTemp_num  addr 0x0408",
+                "note16": "Pole_temp   addr 0xd340",
 
-                "note5": " accumulated single_charge_cap 134     >> Get_Battery_Accumulate_Data Type 6 addr 0x5404 data 0",
-                "note6": " accumulated single_discharge_cap 136  >> Get_Battery_Accumulate_Data Type 6 addr 0x5400 data 0",
                 "items":[
                         {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
                         {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
 
-                        {"action":"set rtos:sm16:7:0xd90e 450 460 470 480",  "desc": " set avg soc",        "data":[450,460,470,480]},
-                        {"action":"set rtos:sm16:7:0xdaee 550 560 570 580",  "desc": " set avg soc",        "data":[550,560,570,580]},
+                        {"action":"set rtos:sm16:7:0xdd18 24",               "desc": " set temp max_mod 1",        "data":[24]},
+                        {"action":"set rtos:sm16:7:0xd83c 12",               "desc": " set temp max_mod_num",        "data":[12]},
+                        {"action":"set rtos:sm16:7:0xdd20 4",               "desc": " set temp max_mod_num",        "data":[4]},
+                        {"action":"set rtos:sm16:7:0xdd38 8",               "desc": " set temp min_mod_num 1",        "data":[8]},
+                        {"action":"set rtos:sm16:7:0x5014 245",               "desc": " set insul pos",        "data":[245]},
+                        {"action":"set rtos:sm16:7:0x5016 345",               "desc": " set insul neg",        "data":[345]},
 
-                        {"action":"get rtos:sm16:7:0xd90e 4",  "desc": " set avg soc",        "data":[450,460,470,480]},
-                        {"action":"get rtos:sm16:7:0xd90e 4",  "desc": " set avg soc",        "data":[450,460,470,480]}
+                        {"action":"set rtos:sm16:7:0x001a 8",               "desc": " set pole temp num",        "data":[8]},
+                        {"action":"set rtos:sm16:7:0x0408 0",               "desc": " set total pole temp num",        "data":[0]},
+                        {"action":"set rtos:sm16:7:0xd340 431",             "desc": " set total pole temp",        "data":[431]},
+
+
+                        {"action":"get rtos:sm16:7:0x5014 1",                "desc": " get sm16 insul_pos",       "data":[245]},
+                        {"action":"get rtos:sm16:7:0x5016 1",                "desc": " get sm16 insul_neg",       "data":[345]},
+                        {"action":"get rtos:sm16:7:0xdd18 1",                "desc": " get sm16 module temp",       "data":[24]},
+                        {"action":"get rtos:sm16:7:0xdd20 1",               "desc": " get temp max_mod_num",        "data":[4]},
+                        {"action":"get rtos:sm16:7:0xdd38 1",               "desc": " get temp min_mod_num 1",      "data":[8]},
+
+                        {"action":"get rtos:input:7:max_temp_mod 1",         "desc": " get max_temp_mod ",          "data":[24]},
+                        {"action":"get rtos:input:7:max_temp_mod_num 1",     "desc": " get max_temp_mod ",         "data":[12]},
+                        {"action":"get sbmu:input:7:Module_temp 1",          "desc": " get Module_temp",           "data":[24]},
+                        {"action":"get rtos:input:7:insulation_res_pos 1",   "desc": " get insul_pos ",            "data":[345]},
+                        {"action":"get rtos:input:7:insulation_res_neg 1",   "desc": " get insul_neg ",            "data":[245]},
+                        {"action":"get sbmu:input:7:Insulation_Resistance",  "desc": " get sbmu:insul_res ",       "data":[345]},
+                        {"action":"get rtos:input:7:500 1",                  "desc": " get rtos terminal_temp ",   "data":[831]},
+                        {"action":"get sbmu:input:7:terminal_temp 1",        "desc": " get sbmu terminal_temp ",   "data":[831]}
+
 
                     ]
+            },
+            {
+                "test": "r7m", 
+                "name": "r7m", 
+                "desc": "close rack 7  ",
+                "cat": "close rack",
+                "note1": "set rack state to 0x25",
+                "note2": "Get_InputRegData >>>> System State   addr 0x6800  data 24",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+
+                        {"action":"set rtos:sm16:7:0x6800 36",               "desc": " set state closed",        "data":[36]},
+                        {"action":"get rtos:input:7:state 1",                "desc": " check state closed",      "data":[37]}
+                ]
             },
 
             {
             "test": "r1v", 
             "name": "r1v", 
             "desc": "tst rack one volts",
+            "cat": "sbmu_input.volts",
             "items":[
                     {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
                     {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
@@ -406,6 +459,7 @@
             {
                 "test": "r7vc", 
                 "name": "r7vc", 
+                "cat": "sbmu_input.current",
                 "desc": "test rack eight volts current",
                 "notes": "esbcm Get_InputRegData -> GROUP_Read_Data ./BSW/dataCenter/operatingData/EvbcmData.c test rack eight volts current",
                 "notes1":"GROUP_Read_Data type 1 GROUP_VOLT addr 0x5000  value 0 >>>> Esbcm_ModbusSlave_ReadCallback getting   reg 2 batnum 64",

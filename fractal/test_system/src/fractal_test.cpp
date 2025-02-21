@@ -33,6 +33,7 @@
 #include <ctime>
 #include <stdexcept>
 #include <filesystem>
+#include <queue>
 
 #include <algorithm>
 #include <list>
@@ -3343,7 +3344,7 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
 
     for ( auto& item : test_item.items)
     {
-        //oss  << item.action << std::endl;
+
         if (item.action.find("pause") == 0)
         {
             std::istringstream iss(item.action);
@@ -3378,31 +3379,35 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
             // Extract the 'data' array from the JSON object
             if (isJson)
             {
+                std::ostringstream toss;
+
                 std::vector<int> respvec = j["data"];
                 if(item.data.size() > 0 )
                 {
                     if(item.data == respvec)
                     {
-                        oss << " [PASS] ";
-                        oss << "[" << item.action << "] ";
-                        oss << " result: " << json(respvec).dump() << " ";
+                        toss << " [PASS] ";
+                        toss << "[" << item.action << "] ";
+                        toss << " result: " << json(respvec).dump() << " ";
                         passes++;
                     }
                     else
                     {
-                        oss << " [FAIL] ";
-                        oss << "[" << item.action<<"] ";
-                        oss << " result: " << json(respvec).dump() << " ";
-                        oss << " expected: " << json(item.data).dump() << " ";
+                        toss << " [FAIL] ";
+                        toss << "[" << item.action<<"] ";
+                        toss << " result: " << json(respvec).dump() << " ";
+                        toss << " expected: " << json(item.data).dump() << " ";
                         fails++;
                     }
+                    parse_test_result(toss, tname, item.cat );
+
                 }
                 else 
                 {
                     //oss << " [    ] ";
                 }
                 //oss << item.desc;
-                oss << std::endl;
+                oss << toss.str() << std::endl;
             }
             else
             {
@@ -3615,6 +3620,70 @@ std::string decode_ws(std::string logFileName, std::ostringstream& oss)
     return oss.str();
 }
 
+std::map<std::string, TestResult> tests;
+
+// Function to print all categories breadth-first to an ostringstream
+//void printCats(std::map<std::string, TestResult>& tests, std::ostringstream& oss) {
+void printCats(std::ostringstream& oss) {
+    std::queue<std::pair<std::string, std::map<std::string, TestResult>*>> queue;
+
+    // Enqueue all top-level categories
+    for (auto& test : tests) {
+        queue.push({test.first, &test.second.subtests});
+    }
+
+    // Breadth-first traversal
+    while (!queue.empty()) {
+        auto current = queue.front();
+        queue.pop();
+        std::string categoryName = current.first;
+        std::map<std::string, TestResult>* subtests = current.second;
+
+        oss << categoryName << " (Pass: " << tests[categoryName].pass_count
+            << ", Fail: " << tests[categoryName].fail_count << ")\n";
+
+        for (auto& subtest : *subtests) {
+            queue.push({categoryName + "." + subtest.first, &subtest.second.subtests});
+        }
+    }
+}
+
+// Recursive function to update the test result counts
+void updateCounts(std::map<std::string, TestResult>& tests, std::string& line, const std::string& title, const std::vector<std::string>& categories, int index, bool isPass) {
+    if (index >= categories.size()) return;
+    TestResult &result = tests[categories[index]];
+    if (isPass) {
+        result.pass_count++;
+    } else {
+        result.fail_count++;
+    }
+    // Save input at the deepest level of the category
+    if (index == categories.size() - 1) {
+        result.title = title; // Store the input string here
+        result.test_lines.push_back(line); // Store each line here
+        //result.details = input; // Store the input string here
+    }
+
+    updateCounts(result.subtests, line, title, categories, index + 1, isPass);
+}
+
+
+void parse_test_result( std::ostringstream& toss, const std::string& title, const std::string& category )
+{
+    std::istringstream iss(toss.str());
+    std::string line;
+    while (std::getline(iss, line)) {
+        bool isPass = line.find("[PASS]") != std::string::npos;
+        bool isFail = line.find("[FAIL]") != std::string::npos;
+        if (isPass || isFail) {
+            // Example: tests.inputs.rack_online
+            std::vector<std::string> categories = split(category, '.');
+            updateCounts(tests, line, title, categories, 0, isPass);
+        }
+    }
+}
+
+
 std::string handle_query(const std::string& qustr, std::map<std::string, DataTable>& data_tables, int sock) {
     std::string query = trim(qustr);
     std::istringstream iss(query);
@@ -3649,6 +3718,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             oss <<"      tops [desc, table]  - run a test op (load defs with tdef  first) \n";
             oss <<"      run  [test]         - run a test  from test_tables \n";
             oss <<"      ws_log  [log_name]         - decode a ws_log \n";
+            oss <<"      cats  [clear]        - show teet results (cats)\n";
             
             return oss.str();
         }
@@ -3677,6 +3747,13 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             //oss<< " tests [" <<tname<<"] complete\n";
             return oss.str();
         }
+        else if ( swords[0] == "cats")
+        {
+            std::ostringstream oss;
+            printCats(oss);
+            return oss.str();
+
+        }
         else if ( swords[0] == "run")
         {
             std::string tname = "first";
@@ -3686,6 +3763,8 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             std::ostringstream oss;
             tests_run(tname, oss);
             oss<< " tests [" <<tname<<"] complete\n";
+
+
             return oss.str();
         }
         else if ( swords[0] == "tparse")
@@ -5740,6 +5819,11 @@ int process_test_item(std::map<std::string, TestTable>& test_tables, const json 
             }
             continue;  // Skip this item or you might want to return an error
         }
+        std::string cat("base");
+        if(jitem.contains("cat"))
+        {
+            cat = jitem["cat"];
+        }
         std::string action = jitem["action"];
         // std::string dest = jitem["dest"];
         std::string desc = jitem["desc"];
@@ -5751,6 +5835,7 @@ int process_test_item(std::map<std::string, TestTable>& test_tables, const json 
 		// 	std::cout << " Data Item found, table  [" << table_name <<"] item name [" << name << "] offset [" << offset << "]" << std::endl;		
         TestItem item;
         item.action = action;
+        item.cat = cat;
         //item.dest = dest;
         item.desc = desc;
         item.data = data;
