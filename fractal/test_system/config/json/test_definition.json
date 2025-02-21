@@ -212,20 +212,26 @@
                         {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
                         {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
-                        {"action":"set rtos:sm8:7:0x5428 44",   "desc": "set module soc ",                              "data":[44]},
-                        {"action":"get rtos:sm8:7:0x5428 1",   "desc": "get module soc ",                               "data":[44]},
-                        {"action":"get rtos:input:7:soc 1",             "desc": "get soc from modbus  ",                "data":[440]},
+                        {"action":"set rtos:sm8:7:0x5428 44",                "desc": "set module soc ",                 "data":[44]},
+                        {"action":"get rtos:sm8:7:0x5428 1",                 "desc": "get module soc ",                 "data":[44]},
+                        {"action":"get rtos:input:7:soc 1",                  "desc": "get soc from modbus  ",           "data":[440]},
                         {"action":"get sbmu:input:7:118 1",                  "desc": "get sbmu SOC 1 (118)",            "data":[440]},
-                        {"action":"set rtos:sm8:7:0xdda0 55",   "desc": "set soh ",                                     "data":[55]},
-                        {"action":"get rtos:sm8:7:0xdda0 1",     "desc": "get soh ",                                    "data":[55]},
-                        {"action":"get rtos:input:7:soh 1",             "desc": "get soh from modbus  ",                "data":[55]},
-                        {"action":"get sbmu:input:7:119 1",               "desc": "get sbmu SOH 1 (119)",               "data":[55]}
+                        {"action":"set rtos:sm8:7:0xdda0 55",                "desc": "set soh ",                        "data":[55]},
+                        {"action":"get rtos:sm8:7:0xdda0 1",                 "desc": "get soh ",                        "data":[55]},
+                        {"action":"get rtos:input:7:soh 1",                  "desc": "get soh from modbus  ",           "data":[55]},
+                        {"action":"pause:0.2"},
+                        {"action":"get sbmu:input:7:119 1",                  "desc": "get sbmu SOH 1 (119)",            "data":[55]},
+                        {"action":"set rtos:sm8:7:0xdda0 60",                "desc": "set soh ",                        "data":[60]},
+                        {"action":"get rtos:sm8:7:0xdda0 1",                 "desc": "get soh ",                        "data":[60]},
+                        {"action":"get rtos:input:7:soh 1",                  "desc": "get soh from modbus  ",           "data":[60]},
+                        {"action":"pause:0.3"},
+                        {"action":"get sbmu:input:7:119 1",                  "desc": "get sbmu SOH 1 (119)",            "data":[60]}
                         ]
             },
             {
                 "test": "r7j", 
                 "name": "r7j", 
-                "cat": "sbmu:_input:mapping", 
+                "cat": "sbmu.input.mapping", 
 
                 "desc": " read avg_voltage (18) , avg_temp (20) min_voltage ",
                 "note1": " CAP_Read_ModSOC sm8 0x5428 data 120",
@@ -398,32 +404,32 @@
                         {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
                         {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
 
-                        {"action":"set rtos:sm16:7:0xdd18 24",               "desc": " set temp max_mod 1",        "data":[24]},
-                        {"action":"set rtos:sm16:7:0xd83c 12",               "desc": " set temp max_mod_num",        "data":[12]},
-                        {"action":"set rtos:sm16:7:0xdd20 4",               "desc": " set temp max_mod_num",        "data":[4]},
-                        {"action":"set rtos:sm16:7:0xdd38 8",               "desc": " set temp min_mod_num 1",        "data":[8]},
-                        {"action":"set rtos:sm16:7:0x5014 245",               "desc": " set insul pos",        "data":[245]},
-                        {"action":"set rtos:sm16:7:0x5016 345",               "desc": " set insul neg",        "data":[345]},
+                        {"action":"set rtos:sm16:7:0xdd18 24",               "desc": " set temp max_mod 1",             "data":[24]},
+                        {"action":"set rtos:sm16:7:0xd83c 12",               "desc": " set temp max_mod_num",           "data":[12]},
+                        {"action":"set rtos:sm16:7:0xdd20 4",               "desc": " set temp max_mod_num",            "data":[4]},
+                        {"action":"set rtos:sm16:7:0xdd38 8",               "desc": " set temp min_mod_num 1",          "data":[8]},
+                        {"action":"set rtos:sm16:7:0x5014 245",               "desc": " set insul pos",                 "data":[245]},
+                        {"action":"set rtos:sm16:7:0x5016 345",               "desc": " set insul neg",                 "data":[345]},
 
-                        {"action":"set rtos:sm16:7:0x001a 8",               "desc": " set pole temp num",        "data":[8]},
+                        {"action":"set rtos:sm16:7:0x001a 8",               "desc": " set pole temp num",              "data":[8]},
                         {"action":"set rtos:sm16:7:0x0408 0",               "desc": " set total pole temp num",        "data":[0]},
-                        {"action":"set rtos:sm16:7:0xd340 431",             "desc": " set total pole temp",        "data":[431]},
+                        {"action":"set rtos:sm16:7:0xd340 431",             "desc": " set total pole temp",            "data":[431]},
 
 
-                        {"action":"get rtos:sm16:7:0x5014 1",                "desc": " get sm16 insul_pos",       "data":[245]},
-                        {"action":"get rtos:sm16:7:0x5016 1",                "desc": " get sm16 insul_neg",       "data":[345]},
-                        {"action":"get rtos:sm16:7:0xdd18 1",                "desc": " get sm16 module temp",       "data":[24]},
-                        {"action":"get rtos:sm16:7:0xdd20 1",               "desc": " get temp max_mod_num",        "data":[4]},
-                        {"action":"get rtos:sm16:7:0xdd38 1",               "desc": " get temp min_mod_num 1",      "data":[8]},
+                        {"action":"get rtos:sm16:7:0x5014 1",                "desc": " get sm16 insul_pos",           "data":[245]},
+                        {"action":"get rtos:sm16:7:0x5016 1",                "desc": " get sm16 insul_neg",           "data":[345]},
+                        {"action":"get rtos:sm16:7:0xdd18 1",                "desc": " get sm16 module temp",         "data":[24]},
+                        {"action":"get rtos:sm16:7:0xdd20 1",               "desc": " get temp max_mod_num",          "data":[4]},
+                        {"action":"get rtos:sm16:7:0xdd38 1",               "desc": " get temp min_mod_num 1",        "data":[8]},
 
-                        {"action":"get rtos:input:7:max_temp_mod 1",         "desc": " get max_temp_mod ",          "data":[24]},
-                        {"action":"get rtos:input:7:max_temp_mod_num 1",     "desc": " get max_temp_mod ",         "data":[12]},
-                        {"action":"get sbmu:input:7:Module_temp 1",          "desc": " get Module_temp",           "data":[24]},
-                        {"action":"get rtos:input:7:insulation_res_pos 1",   "desc": " get insul_pos ",            "data":[345]},
-                        {"action":"get rtos:input:7:insulation_res_neg 1",   "desc": " get insul_neg ",            "data":[245]},
-                        {"action":"get sbmu:input:7:Insulation_Resistance",  "desc": " get sbmu:insul_res ",       "data":[345]},
-                        {"action":"get rtos:input:7:500 1",                  "desc": " get rtos terminal_temp ",   "data":[831]},
-                        {"action":"get sbmu:input:7:terminal_temp 1",        "desc": " get sbmu terminal_temp ",   "data":[831]}
+                        {"action":"get rtos:input:7:max_temp_mod 1",         "desc": " get max_temp_mod ",            "data":[24]},
+                        {"action":"get rtos:input:7:max_temp_mod_num 1",     "desc": " get max_temp_mod ",            "data":[12]},
+                        {"action":"get sbmu:input:7:Module_temp 1",          "desc": " get Module_temp",              "data":[24]},
+                        {"action":"get rtos:input:7:insulation_res_pos 1",   "desc": " get insul_pos ",               "data":[345]},
+                        {"action":"get rtos:input:7:insulation_res_neg 1",   "desc": " get insul_neg ",               "data":[245]},
+                        {"action":"get sbmu:input:7:Insulation_Resistance",  "desc": " get sbmu:insul_res ",          "data":[345]},
+                        {"action":"get rtos:input:7:500 1",                  "desc": " get rtos terminal_temp ",      "data":[831]},
+                        {"action":"get sbmu:input:7:terminal_temp 1",        "desc": " get sbmu terminal_temp ",      "data":[831]}
 
 
                     ]

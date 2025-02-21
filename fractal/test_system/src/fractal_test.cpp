@@ -5819,7 +5819,7 @@ int process_test_item(std::map<std::string, TestTable>& test_tables, const json 
             }
             continue;  // Skip this item or you might want to return an error
         }
-        std::string cat("base");
+        std::string cat("default.test.cat");
         if(jitem.contains("cat"))
         {
             cat = jitem["cat"];
