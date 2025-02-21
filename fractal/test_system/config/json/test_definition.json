@@ -256,6 +256,7 @@
                         {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
                         {"action":"set rtos:sm16:7:0xdd40 567",   "desc": "set avg_temp to 567  ",                       "data":[567]},
                         {"action":"set rtos:sm16:7:0xdd04 3567",   "desc": "set avg_volt to 3567  ",                       "data":[3567]},
+                        {"action":"set rtos:sm16:7:0xdcd4 3667",   "desc": "set max_volt to 3667  ",                       "data":[3667]},
                         {"action":"set rtos:sm16:7:0xdcec 3467",   "desc": "set min_volt to 3467  ",                       "data":[3467]},
                         {"action":"set rtos:sm16:7:0xdce4 66",      "desc": "set max_volt_num to 66  ",                    "data":[66]},
                         {"action":"set rtos:sm16:7:0xdcfc 33",      "desc": "set min_volt_num to 33  ",                    "data":[33]},
