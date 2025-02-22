@@ -1,0 +1,56 @@
+{
+    "name":"test_basic_system",
+    "file":"test_plan1.json",
+    "author":"Phil Wilshire",
+    "Release":"version 1.0",
+    "Target":"sbmu",
+    "Url":"ws://192.168.86.209:9003",
+
+    "Monitor":{
+        "Notes":" Monitor these values every second and save the matches in the match file, run for 10 seconds",
+        "Query":{"action":"get", "seq":2, "sm_name":"rtos_1", "debug":true, "reg_type":"mb_input", "offset":"1", "num":36, "data":[0]},
+        "Notes1":" The QArray will send multiple queries , it will over ride  the single query",
+        "QArray":[
+            {"action":"get", "seq":2, "sm_name":"rtos_1", "debug":true, "reg_type":"mb_input", "offset":"1", "num":24, "data":[0]},
+            {"action":"get", "seq":2, "sm_name":"rtos_1", "debug":true, "reg_type":"mb_bits", "offset":"20", "num":12, "data":[0]}
+        ],
+        "Notes2":" Time is currenty in seconds",
+        "Period":1.0,
+        "Time":10.0,
+        "MatchFile":"test_plan1"
+    },
+    "Notes3":"  Specify tests to occur at spcific times after the start of the test",
+    "Tests" : [
+        {
+            "Desc:": " Demo test 1 ",
+            "when":2,
+            "Query":{"action":"set",   "seq":2, "sm_name":"rtos_1", "debug":true, "reg_type":"mb_hold", "offset":"100", "data":[0 , 3, 4]},
+            "QArray":[
+                {"action":"set",   "seq":2, "sm_name":"rtos_1", "debug":true, "reg_type":"mb_hold", "offset":"100", "data":[0 , 3, 4]},
+                {"action":"set",   "seq":2, "sm_name":"rtos_1", "debug":true, "reg_type":"mb_bits", "offset":"10", "data":[0 , 1, 0]}
+            ]
+        },
+        {
+            "Desc:": " Demo test 2 ",
+            "when":4,
+            "Query":{"action":"set",   "seq":2, "sm_name":"rtos_1", "debug":true, "reg_type":"mb_hold", "offset":"100", "data":[1 , 0, 0]}
+        }
+    ],
+    "Notes4":" These are states defined by the named  the system can be in several states at any one time",
+    "Notes5":" These are states defined by the named matches from decoding  the system monitor data",
+    "Notes6":" One of these matches must be found during the defined time to  allow the current test to pass ",
+    "Expects" : [
+        {"match_name": "PrechargeRelayActive",       "when": 3, "duration": 2},
+        {"match_name": "ContactorClosed",           "when": 5, "duration": 2 },
+        {"match_name": "PrechargeRelayInactive",     "when": 6, "duration": 1}
+    ],
+    "Notes7":" An alarm of fault state can span across the whole test period causing any tests diring that period to fail ",
+    "Notes8":" Entering any one of these states during the defined time indicates thet the current test has failed ",
+    "NotExpects" : [
+        {"match_name": "RelayAlarm",               "when": 0},
+        {"match_name": "ContactorAlarm",           "when": 3,   "duration": 2},
+        {"match_name": "PrechargeError",           "when": 6, "duration":4}
+    ]
+
+
+}

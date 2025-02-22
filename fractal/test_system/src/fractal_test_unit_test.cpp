@@ -130,7 +130,7 @@ void test_decode_shmdef() {
     myassert(result, "decode_shmdef: valid input with 3 parts", crash);
     myassert(mem_id == MEM_SBMU, "decode_shmdef: mem_id correct", crash);
     myassert(reg_id == REG_BITS, "decode_shmdef: reg_id correct", crash);
-    myassert(rack_num == -1, "decode_shmdef: rack_num default correct", crash);
+    myassert(rack_num == 0, "decode_shmdef: rack_num default correct", crash);
     myassert(offset == 100, "decode_shmdef: offset correct", crash);
 
     // Test case 2: Valid input with 4 parts

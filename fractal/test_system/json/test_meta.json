@@ -1,0 +1,22 @@
+{
+    "test_plan1": {
+        "results": [],
+        "runs": 35
+    },
+    "test_plan2": {
+        "results": [],
+        "runs": 4
+    },
+    "test_plan3": {
+        "results": [],
+        "runs": 69
+    },
+    "test_sbms1": {
+        "results": [],
+        "runs": 11
+    },
+    "test_sbms_mb": {
+        "results": [],
+        "runs": 4
+    }
+}

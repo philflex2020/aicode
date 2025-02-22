@@ -63,6 +63,7 @@ std::string restart_string;
 
 std::string g_url("ws://192.168.86.209:9001");
 ModbusClient mbx_client("192.168.86.209", 502);
+//ModbusClient mbx_client("192.168.86.180", 1502);
 
                                          
 // src                 meth         dest              lim              notes
@@ -5794,6 +5795,11 @@ int process_test_item(std::map<std::string, TestTable>& test_tables, const json 
         std::cerr << "Error: Missing or invalid 'items' array" << std::endl;
         return -1;
     }
+    std::string cat("summary.sbms.inputs");
+    // if(jitem.contains("cat"))
+    // {
+    //     cat = jitem["cat"];
+    // }
 
     json jtable = jitem["items"];
     //std::cout << "Items Array found" << std::endl;
@@ -5818,11 +5824,6 @@ int process_test_item(std::map<std::string, TestTable>& test_tables, const json 
                 std::cerr << "Error: Missing required fields in item idx [" << item_idx<<" ]"  << std::endl;
             }
             continue;  // Skip this item or you might want to return an error
-        }
-        std::string cat("default.test.cat");
-        if(jitem.contains("cat"))
-        {
-            cat = jitem["cat"];
         }
         std::string action = jitem["action"];
         // std::string dest = jitem["dest"];

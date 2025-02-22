@@ -1,0 +1,28 @@
+[
+    {
+        "Title": " Primary SBMS Memory Operations ",
+        "Description": " reference source for the data operations ",
+        "Release": "9.0.0 ",
+        "date": "02_05_2005 ",
+        "CreatedBy": "Phil Wilshire",
+        "ApprovedBy": "John Calcagni (soon)"
+    },
+    { "table": "rack_input_complete", "items":[
+        {"src":"rtos:bits:terminal_undervoltage",     "meth":"3sum",     "dest":"sbmu:bits:1",   "lim":"none",            "desc":"terminal_undervoltage"},
+        {"src":"rtos:input:1000",                    "meth":"block",    "dest":"sbmu:input:2000", "lim":"480:1000",      "desc":"cell volts"},
+        {"src":"rtos:bits:204",                      "meth":"3sum",     "dest":"sbmu:bits:4",   "lim":"none",            "desc":"total_overvoltage"},
+        {"src":"rtos:bits:200",                      "meth":"into",     "dest":"sbmu:bits:49",   "lim":"none",           "desc":"ESBCM_lost_communication"},
+        {"src":"rtos:input:120",                     "meth":"3lim_max", "dest":"sbmu:bits:10",   "lim":"sbmu:hold:120",  "desc":"low_resistance"},
+        {"src":"rtos:input:117",                     "meth":"3lim_min", "dest":"sbmu:bits:13",   "lim":"sbmu:hold:121",  "desc":"module_low_temp"},
+        {"src":"rtos:input:117",                     "meth":"3lim_max", "dest":"sbmu:bits:16",   "lim":"sbmu:hold:122",  "desc":"module_high_temp"},
+        {"src":"rtos:input:125",                     "meth":"min",      "dest":"sbmu:input:8",   "lim":"sbmu:input:10",  "desc":"max_battery_voltage"},
+        {"src":"rtos:input:123",                     "meth":"max",      "dest":"sbmu:input:9",   "lim":"sbmu:input:11",  "desc":"min_battery_voltage"},
+        {"src":"rtos:input:101",                     "meth":"sum",      "dest":"sbmu:input:33",   "lim":"none",          "desc":"max_charge_power"},
+        {"src":"rtos:input:102",                     "meth":"sum",      "dest":"sbmu:input:32",   "lim":"none",          "desc":"max_discharge_power"},
+        {"src":"rtos:input:105",                     "meth":"sum",      "dest":"sbmu:input:35",   "lim":"none",          "desc":"max_charge_current"},
+        {"src":"rtos:input:106",                     "meth":"sum",      "dest":"sbmu:input:34",   "lim":"none",          "desc":"max_discharge_current"},
+        {"src":"rtos:input:0",                       "meth":"count",    "dest":"sbmu:input:36",   "lim":"none",          "desc":"num_daily_charges"},
+        {"src":"rtos:input:0",                       "meth":"count",    "dest":"sbmu:input:37",   "lim":"none",          "desc":"num_daily_discharges"}
+        ]
+    }
+]

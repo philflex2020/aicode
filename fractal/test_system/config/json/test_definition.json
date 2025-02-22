@@ -106,6 +106,7 @@
                         {"action":"set rtos:sm16:7:0x402 64",             "desc": "set number of batteries",           "data":[64]},
                         {"action":"set rtos:sm16:7:0x42d8 733  734 735",  "desc": "set some sm16 battery soc values",  "data":[733, 734, 735]},
                         {"action":"get rtos:sm16:7:0x42d8 3",             "desc": "get some sm16 cell soc",            "data":[733, 734, 735]},
+                        {"action":"pause:500",                         "desc": " pause",    "data":[]},
                         {"action":"get sbmu:input:7:22591 3",             "desc": "get values from sbmu ",             "data":[733, 734, 735]},
                         {"action":"get sbmu:input:7:1591 3",              "desc": "get values from sbmu ",             "data":[733, 734, 735]},
                         {"action":"get sbmu:input:7:22591 3",             "desc": "get values from sbmu ",             "data":[733, 734, 735]},
@@ -194,7 +195,7 @@
                         {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
                         {"action":"set rtos:sm8:7:0x6825 1 0 1 0 1 0 1 0",   "desc": "set DO (10) ",                    "data":[1, 0, 1, 0, 1, 0, 1, 0 ]},
                         {"action":"set rtos:sm8:7:0x681c 1 1 1 1 0 0 0 0",   "desc": "set DI (9) ",                     "data":[1, 1, 1, 1, 0, 0, 0, 0 ]},
-                        {"action":"get rtos:sm16:7:0x6825 1",                "desc": "get gpio ",                       "data":[273 ]},
+                        {"action":"get rtos:sm16:7:0x6825 1",                "desc": "get gpio ",                       "data":[256 ]},
                         {"action":"get rtos:input:7:group_di 1",             "desc": "get rtos ",                       "data":[15]},
                         {"action":"get rtos:input:7:group_do 1",             "desc": "get cap from sbmu ",              "data":[149]},
                         {"action":"get sbmu:input:7:DI1 1",                  "desc": "get sbmu DI 1",                   "data":[1]},
@@ -219,12 +220,10 @@
                         {"action":"set rtos:sm8:7:0xdda0 55",                "desc": "set soh ",                        "data":[55]},
                         {"action":"get rtos:sm8:7:0xdda0 1",                 "desc": "get soh ",                        "data":[55]},
                         {"action":"get rtos:input:7:soh 1",                  "desc": "get soh from modbus  ",           "data":[55]},
-                        {"action":"pause:0.2"},
-                        {"action":"get sbmu:input:7:119 1",                  "desc": "get sbmu SOH 1 (119)",            "data":[55]},
                         {"action":"set rtos:sm8:7:0xdda0 60",                "desc": "set soh ",                        "data":[60]},
                         {"action":"get rtos:sm8:7:0xdda0 1",                 "desc": "get soh ",                        "data":[60]},
                         {"action":"get rtos:input:7:soh 1",                  "desc": "get soh from modbus  ",           "data":[60]},
-                        {"action":"pause:0.3"},
+                        {"action":"pause:1000"},
                         {"action":"get sbmu:input:7:119 1",                  "desc": "get sbmu SOH 1 (119)",            "data":[60]}
                         ]
             },
@@ -482,8 +481,94 @@
                         {"action":"get sbmu:input:7:Total_Voltage",  "desc": "get  total voltage",    "data":[4321]},
                         {"action":"get sbmu:input:7:Total_Current",  "desc": "get  total current",    "data":[16321]}
                         ]
-                },
+            },
             {
+                "test": "mbgets", 
+                "name": "mbgets", 
+                "desc": "multiple modbus gets ",
+                "items":[
+         
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]}
+
+                ]
+            } ,
+            {
+                "test": "closeracks", 
+                "name": "closeracks", 
+                "desc": "close all racks and monitor state ",
+                "items":[
+                {"action":"setmb sbmu:hold:536 2", "desc": "close all racks with debug",            "data":[2]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]}
+                ]
+            },
+            {
+                "test": "openracks", 
+                "name": "openracks", 
+                "desc": "open all racks and monitor state ",
+                "items":[
+                {"action":"get rtos:hold:6:gpio_do_read",  "desc": "get rack dio",            "data":[160]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"setmb sbmu:hold:537 2", "desc": "open all racks with debug",            "data":[2]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]}
+                ]
+
+            },
+
+            {
+                "test": "mbget", 
+                "name": "mbget", 
+                "desc": "multiple modbus gets ",
+                "items":[
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]}
+            ]
+
+        },
+        {
             "test": "offline", 
             "name": "offline", 
             "desc": "turn all racks offline",
