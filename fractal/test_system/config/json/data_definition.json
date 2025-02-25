@@ -2,10 +2,10 @@
   {
       "Title": " Primary SBMS Memory Layout ",
       "Description": "reference source for the system data_tables ",
-      "Release": "0.9.1 ",
-      "Version": "12",
+      "Release": "0.9.2 ",
+      "Version": "13",
       "DateCreated": "02_05_2025",
-      "DateModified": "02_20_2025",
+      "DateModified": "02_25_2025",
       "CreatedBy": "Phil Wilshire",
       "ModifiedBy": "Phil Wilshire",
       "ApprovedBy": "John Calcagni (soon)"
@@ -370,7 +370,7 @@
    {"name":                                "max_mod_volt_num", "offset": 23, "size": 1},
    {"name":                                        "min_volt", "offset": 24, "size": 1},
    {"name":                                "min_volt_mod_num", "offset": 25, "size": 1},
-   {"name":                                    "max_mod_volt", "offset": 26, "size": 1},
+   {"name":                                    "min_mod_volt", "offset": 26, "size": 1},
    {"name":                                         "avg_soc", "offset": 27, "size": 1},
    {"name":                                         "max_soc", "offset": 28, "size": 1},
    {"name":                                     "max_soc_mod", "offset": 29, "size": 1},

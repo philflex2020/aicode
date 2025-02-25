@@ -482,6 +482,34 @@
                         {"action":"get sbmu:input:7:Total_Current",  "desc": "get  total current",    "data":[16321]}
                         ]
             },
+
+            {
+                "test": "r20maxv", 
+                "name": "r20maxv", 
+                "cat": "sbmu_bits.t1",
+                "desc": "test all rack max/min_voltage",
+                "notes": "esbcm Get_InputRegData -> GROUP_Read_Data ./BSW/dataCenter/operatingData/EvbcmData.c test rack eight volts current",
+                "notes1":"GROUP_Read_Data type 1 GROUP_VOLT addr 0x5000  value 0 >>>> Esbcm_ModbusSlave_ReadCallback getting   reg 2 batnum 64",
+                "notes2": "GROUP_Read_Data type 2 GROUP_CURR FLAG addr 0x502d INVALID = 0 GROUP_CURR addr 0x5008",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",    "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 20 1 1",              "desc": "force all racks online noupdates",    "data":[65197, 20, 1, 1]},
+                        {"action":"set rtos:sm8:7:0x502d 1",                       "desc": "clear invalid",           "data":[1]},
+                        {"action":"set rtos:sm16:7:0x5008 321",                    "desc": "set current value",       "data":[321]},
+                        {"action":"set rtos:sm16:7:0x5000 4321",                   "desc": "set volts value",         "data":[4321]},
+                        {"action":"set rtos:input:20:max_voltage  3456",           "desc": "set all rack voltage",    "data":[3456]},
+                        {"action":"set rtos:input:2:max_voltage  4567",            "desc": "set rack 2 voltage",      "data":[4567]},
+                        {"action":"set rtos:input:20:min_volt  3300",              "desc": "set all rack voltage",    "data":[3300]},
+                        {"action":"set rtos:input:3:min_volt  3200",               "desc": "set rack 3 voltage",      "data":[3200]},
+                        {"action":"get sbmu:input:Max_cell_voltage",               "desc": "get max cell voltage",    "data":[4567]},
+                        {"action":"get sbmu:input:Max_cell_voltage_number",        "desc": "get max voltage num",     "data":[2]},
+                        {"action":"get sbmu:input:max_battery_voltage",             "desc": "get max battery voltage",    "data":[4567]},
+                        {"action":"get sbmu:input:min_battery_voltage",             "desc": "get min battery voltage",    "data":[4567]},
+                        {"action":"get sbmu:input:Max_cell_voltage_number",        "desc": "get max voltage num",     "data":[2]},
+                        {"action":"get sbmu:input:Min_cell_voltage",               "desc": "get min cell voltage",    "data":[3300]},
+                        {"action":"get sbmu:input:Min_cell_voltage_number",        "desc": "get min voltage number",  "data":[3]}
+                    ]
+                },
             {
                 "test": "mbgets", 
                 "name": "mbgets", 

@@ -3000,7 +3000,7 @@ bool decode_shmdef(MemId &mem_id, RegId &reg_id, int& rack_num, uint16_t &offset
         rack_num_str = parts[2];
         offset_str = parts[3];
         rack_num = static_cast<uint16_t>(std::stoi(rack_num_str));
-        //std::cout << "Note rack_num  " << rack_num << std::endl; 
+        std::cout << "Note rack_num  " << rack_num << std::endl; 
     }
 
     // Convert smname to mem_id
@@ -3928,6 +3928,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
         }
         else if ( swords[0] == "set")
         {
+            // set sprcial for testing use rack 20 forall racks
             std::ostringstream oss;
             if (swords.size() < 3)
             {
@@ -3939,6 +3940,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     << "    set sbmu:bits:1 0         set bits:1 to 0 rack is not needed and defaults to 0\n" 
                     << "    set sbmu:bits::summary_total_undervoltage  1\n"
                     << "    set sbmu:input:7:State  123    sets rack 7 state to 123\n"
+                    << "    set rtos:hold:20:max_volts  3456    sets all racks  max_volts to 3456\n"
                     << std::endl;
             }
             else if (swords.size() > 2)
@@ -3946,7 +3948,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                 // oss
                 //     << "set a value  <"<<swords[1]
                 //     << std::endl;
-                int rack;// = std::stoi(swords[2]);
+                int rack=0;// = std::stoi(swords[2]);
                 // try {
                 //     rack = std::stoi(swords[2]);
                 // } catch (const std::exception& ex) {
@@ -3956,6 +3958,13 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                 uint32_t id;
                 id = encode_id(swords[1], rack);
                 // oss
+                // id = 0x33nnaaaa
+                int rack_num = (id & 0x00ff0000) >> 16;
+                //printf("id 0x%x extracted rack_num %d \n", id, rack_num);
+                if(rack_num == 20)
+                {
+                    printf("running on all racks \n");
+                }
                 //     << "id  <0x"<<std::hex << id << std::dec << "> " << std::endl;
 
                 std::vector<int>values;
@@ -3970,6 +3979,18 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     return oss.str();
                 }               
 
+                if(rack_num == 20)
+                {
+                    for ( auto i = 0 ; i < 20 ; i++)
+                    {
+                        setRackNum(id,i);
+                        std::string qstring  = generateIdQuery("set", 202+i, id, "any", (int)values.size(), values);
+                        std::string response = run_wscat(g_url, qstring);  // Run the query
+                        oss  << response;
+                    }
+                }
+                else
+                {
                 std::string qstring  = generateIdQuery("set", 202, id, "any", (int)values.size(), values);
                 std::string response = run_wscat(g_url, qstring);  // Run the query
                 oss  << response;
@@ -3977,6 +3998,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     // << " query  ["<<qstring<<"] \n"
                     // << " response  ["<<response<<"] \n"
                     // << std::endl;
+                }
             }
 
             return oss.str();
@@ -4040,27 +4062,49 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     << " examples \n" 
                     << "    get sbmu:bits[:rack_num]:1\n" 
                     << "    get sbmu:bits[:rack_num]:1  <num of bits> \n" 
-                    << "    sbmu:bits:summary_total_undervoltage\n";
+                    << "    sbmu:bits:summary_total_undervoltage\n"
+                    << "    get rtos:bits:20:1\n" ;
             }
             else if (swords.size() == 2)
             {
                 // oss
                 //     << "get a value 2 <"<<swords[1]
                 //     << std::endl;
-                id = encode_id(swords[1],0);    
+                uint32_t id;
+                id = encode_id(swords[1], 0);
+                // oss
+                // id = 0x33nnaaaa
+                int rack_num = (id & 0x00ff0000) >> 16;
+                //printf("id 0x%x extracted rack_num %d \n", id, rack_num);
+                if(rack_num == 20)
+                {
+                    printf("running on all racks \n");
+                }
                 // oss
                 //     << "id  <0x"<<std::hex << id << std::dec <<"> "
                 //     << std::endl;
-                std::string qstring  = generateIdQuery("get", 202, id, "any", 1, values);
-                std::string response = run_wscat(g_url, qstring);  // Run the query
-                // oss
-                //     << " url  ["<<g_url<<"] \n"
-                //     << " query  ["<<qstring<<"] \n"
-                //     << " response  ["<<response<<"] \n"
-                //     << std::endl;
-                oss << response
-                    << std::endl;
-
+                if(rack_num == 20)
+                {
+                    for ( auto i = 0 ; i < 20 ; i++)
+                    {
+                        setRackNum(id,i);
+                        std::string qstring  = generateIdQuery("get", 202+i, id, "any", (int)values.size(), values);
+                        std::string response = run_wscat(g_url, qstring);  // Run the query
+                        oss  << response;
+                    }
+                }
+                else
+                {
+                    std::string qstring  = generateIdQuery("get", 202, id, "any", 1, values);
+                    std::string response = run_wscat(g_url, qstring);  // Run the query
+                    // oss
+                    //     << " url  ["<<g_url<<"] \n"
+                    //     << " query  ["<<qstring<<"] \n"
+                    //     << " response  ["<<response<<"] \n"
+                    //     << std::endl;
+                    oss << response
+                        << std::endl;
+                }
                 //std::string run_query(url, mb_client, qstring);
                 //std::string response = run_wscat(url, qstring);  // Run the query
 
@@ -4079,7 +4123,29 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     return oss.str();
                 }
                 id = encode_id(swords[1],0);    
-
+// oss
+                // id = 0x33nnaaaa
+                int rack_num = (id & 0x00ff0000) >> 16;
+                //printf("id 0x%x extracted rack_num %d \n", id, rack_num);
+                if(rack_num == 20)
+                {
+                    printf("running on all racks \n");
+                }
+                // oss
+                //     << "id  <0x"<<std::hex << id << std::dec <<"> "
+                //     << std::endl;
+                if(rack_num == 20)
+                {
+                    for ( auto i = 0 ; i < 20 ; i++)
+                    {
+                        setRackNum(id,i);
+                        std::string qstring  = generateIdQuery("get", 202+i, id, "any", num, values);
+                        std::string response = run_wscat(g_url, qstring);  // Run the query
+                        oss  << response;
+                    }
+                }
+                else
+                {
                 std::string qstring  = generateIdQuery("get", 202, id, "any", num, values);
                 //std::cout << " qstring ["<<qstring<<"]\n";
                 std::string response = run_wscat(g_url, qstring);  // Run the query
@@ -4090,6 +4156,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     << std::endl;
                 oss << response
                     << std::endl;
+                }
 
             }
             return oss.str();
