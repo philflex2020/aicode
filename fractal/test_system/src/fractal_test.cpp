@@ -60,9 +60,10 @@ bool ops_debug = false;
 bool ops_test = false;
 
 std::string restart_string;
+std::string mb_connect("192.168.86.209:502");
 
 std::string g_url("ws://192.168.86.209:9001");
-ModbusClient mbx_client("192.168.86.209", 502);
+ModbusClient mbx_client;//("192.168.86.209", 502);
 //ModbusClient mbx_client("192.168.86.180", 1502);
 
                                          
@@ -4210,6 +4211,11 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
 
                 int num = values.size();
                 auto mbresp = set_modbus(id, num, values);  // Run the query
+                if(mbresp.first == -1)
+                {
+                    mbx_client.connect(mb_connect);
+                    mbresp = set_modbus(id, num, values);
+                }
                 oss
                     << "\"response\":"<<mbresp.first<<",";
                 oss << " \"data\": [";
@@ -4268,6 +4274,12 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
 
                 int num = values.size();
                 auto mbresp = set_modbus(id, num, values);  // Run the query
+                if(mbresp.first == -1)
+                {
+                    mbx_client.connect(mb_connect);
+                    mbresp = set_modbus(id, num, values);
+                }
+
                 oss
                     << "\"response\":"<<mbresp.first<<",";
                 oss << " \"data\": [";
@@ -5965,6 +5977,8 @@ int main(int argc, char* argv[]) {
 
         std::cout << "testing modbus ..." << std::endl;
         //test_modbus("192.168.86.209", 5000);
+        mbx_client.connect(mb_connect); //("192.168.86.209", 502);
+
         test_modbus();
 
         std::cout << "\n\n**************************************"<<std::endl;

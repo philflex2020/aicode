@@ -607,6 +607,12 @@
                 {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
                 {"action":"pause:2500",                        "desc": "wait a bit",                    "data":[1]},
                 {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[6]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:1500",                        "desc": "wait a bit more",                "data":[1]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[7]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:2500",                        "desc": "wait a bit more",                "data":[1]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[133]},
                 {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]}
                 ]
 
