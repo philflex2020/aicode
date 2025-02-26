@@ -3386,12 +3386,14 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
                 std::vector<int> respvec = j["data"];
                 if(item.data.size() > 0 )
                 {
+                    int pass = 0;
+                    int fail = 0;
                     if(item.data == respvec)
                     {
                         toss << " [PASS] ";
                         toss << "[" << item.action << "] ";
                         toss << " result: " << json(respvec).dump() << " ";
-                        passes++;
+                        pass++;
                     }
                     else
                     {
@@ -3399,9 +3401,11 @@ void tests_run(const std::string& tname, std::ostringstream& oss)
                         toss << "[" << item.action<<"] ";
                         toss << " result: " << json(respvec).dump() << " ";
                         toss << " expected: " << json(item.data).dump() << " ";
-                        fails++;
+                        fail++;
                     }
-                    parse_test_result(toss, tname, item.cat );
+                    parse_test_result(toss, tname, pass, fail, item.cat );
+                    passes+=pass;
+                    fails+=fail;
 
                 }
                 else 
@@ -3650,6 +3654,24 @@ void printCats(std::ostringstream& oss) {
     }
 }
 
+// Recursive helper function
+void showCatsRecursive(const std::map<std::string, TestResult>& tests, std::ostringstream& oss, const std::string& prefix = "") {
+    for (const auto& test : tests) {
+        // Construct the category name with the prefix
+        std::string categoryName = prefix.empty() ? test.first : prefix + "." + test.first;
+
+        // Append the test results to the output stream
+        oss << categoryName << " (Pass: " << test.second.pass_count
+            << ", Fail: " << test.second.fail_count << ")\n";
+
+        // Recursively call the function to handle subtests
+        if (!test.second.subtests.empty()) {
+            showCatsRecursive(test.second.subtests, oss, categoryName);
+        }
+    }
+}
+
+
 // Recursive function to update the test result counts
 void updateCounts(std::map<std::string, TestResult>& tests, std::string& line, const std::string& title, const std::vector<std::string>& categories, int index, bool isPass) {
     if (index >= categories.size()) return;
@@ -3670,8 +3692,10 @@ void updateCounts(std::map<std::string, TestResult>& tests, std::string& line, c
 }
 
 
-void parse_test_result( std::ostringstream& toss, const std::string& title, const std::string& category )
+void parse_test_result( std::ostringstream& toss, const std::string& title, int pass, int fail, const std::string& category )
 {
+    std::vector<std::string> categories = split(category, '.');
+
     std::istringstream iss(toss.str());
     std::string line;
     while (std::getline(iss, line)) {
@@ -3679,7 +3703,6 @@ void parse_test_result( std::ostringstream& toss, const std::string& title, cons
         bool isFail = line.find("[FAIL]") != std::string::npos;
         if (isPass || isFail) {
             // Example: tests.inputs.rack_online
-            std::vector<std::string> categories = split(category, '.');
             updateCounts(tests, line, title, categories, 0, isPass);
         }
     }
@@ -3753,6 +3776,15 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
         {
             std::ostringstream oss;
             printCats(oss);
+            //showCatsRecursive(tests, oss);
+            return oss.str();
+
+        }
+        else if ( swords[0] == "scats")
+        {
+            std::ostringstream oss;
+            //printCats(oss);
+            showCatsRecursive(tests, oss);
             return oss.str();
 
         }

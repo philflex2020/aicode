@@ -757,7 +757,7 @@ struct TestResult {
     std::map<std::string, TestResult> subtests;
 };
 
-void parse_test_result( std::ostringstream& toss,const std::string& title, const std::string& category);
+void parse_test_result( std::ostringstream& toss,const std::string& title, int pass, int fail, const std::string& category);
 
 uint32_t shm_def_to_id(const std::string& shmdef, const std::string& item, std::string& desc);
 uint32_t shm_def_to_id(const std::string& shmdef);
