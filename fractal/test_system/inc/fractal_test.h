@@ -285,6 +285,7 @@ struct TestItem {
     std::string desc;
     std::string cat;
     std::string notes;
+    std::vector <int> repeat;
     std::vector<int> data;  // Key for mapping to another DataItem
 
     // DataItem(const std::string& name, int off, int sz)
@@ -761,5 +762,6 @@ void parse_test_result( std::ostringstream& toss,const std::string& title, int p
 
 uint32_t shm_def_to_id(const std::string& shmdef, const std::string& item, std::string& desc);
 uint32_t shm_def_to_id(const std::string& shmdef);
+void parse_repeat(std::vector<int>& offsets, const json& jitem );
 
 #endif

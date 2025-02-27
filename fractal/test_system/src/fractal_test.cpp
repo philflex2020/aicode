@@ -3708,6 +3708,63 @@ void parse_test_result( std::ostringstream& toss, const std::string& title, int 
     }
 }
 
+// Helper function to parse numbers from strings, handling both decimal and hex
+int parse_number(const std::string& num_str) {
+    std::istringstream iss(num_str);
+    int num = 0;
+    if (num_str.find("0x") == 0) { // Check for hex format
+        iss >> std::hex >> num;
+    } else {
+        iss >> num;
+    }
+    return num;
+}
+
+// Function to parse the "repeat" string and populate offsets
+void parse_repeat(const std::string& repeat_str, std::vector<int>& offsets) {
+    int base = 0, increment = 1, start_offset = 0;
+    std::vector<std::string> parts;
+    std::stringstream ss(repeat_str);
+    std::string item;
+
+    while (std::getline(ss, item, ':')) {
+        parts.push_back(item);
+    }
+
+    if (!parts.empty()) {
+        base = parse_number(parts[0]);
+    }
+    if (parts.size() > 1) {
+        increment = parse_number(parts[1]);
+    }
+    if (parts.size() > 2) {
+        start_offset = parse_number(parts[2]);
+    }
+
+    for (int i = 0; i < base; ++i) {
+        offsets.push_back(start_offset + i * increment);
+    }
+}
+
+// Updated function to accept a vector by reference and populate it
+void parse_repeat(std::vector<int>& offsets, const json& jitem ) {
+    if (jitem.contains("repeat") && !jitem["repeat"].is_null()) {
+        if(jitem["repeat"].is_string())
+        {
+            std::string repeat_str = jitem["repeat"].get<std::string>();
+            parse_repeat(repeat_str, offsets);
+        }
+        else if(jitem["repeat"].is_number())
+        {
+            int count = jitem["repeat"].get<int>();
+            for ( int i = 0 ; i < count; i++ )
+            offsets.push_back(i); // Populate with 0 if no repeat field or null
+        }
+    } else {
+        offsets.push_back(0); // Populate with 0 if no repeat field or null
+    }
+}
+
 
 std::string handle_query(const std::string& qustr, std::map<std::string, DataTable>& data_tables, int sock) {
     std::string query = trim(qustr);
@@ -5951,6 +6008,8 @@ int process_test_item(std::map<std::string, TestTable>& test_tables, const json 
         //item.dest = dest;
         item.desc = desc;
         item.data = data;
+        parse_repeat(item.repeat, jitem);
+
         table.items.push_back(item);
 //        table.calculated_size += size;
     }
