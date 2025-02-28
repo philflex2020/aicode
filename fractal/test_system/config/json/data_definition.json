@@ -750,6 +750,8 @@
    {"name":                            "dischargeable_energy", "offset": 56, "size": 2},
    {"name":                                    "voltage_diff", "offset": 58, "size": 1},
    {"name":                                       "temp_diff", "offset": 59, "size": 1},
+   {"name":                         "total_chargeable_energy", "offset": 60, "size": 2},
+   {"name":                      "total_dischargeable_energy", "offset": 62, "size": 2},
    {"name":                                           "State", "offset": 100, "size": 1},
    {"name":                        "Max_Allowed_Charge_Power", "offset": 101, "size": 1},
    {"name":                     "Max_Allowed_Discharge_Power", "offset": 102, "size": 1},
