@@ -2049,8 +2049,12 @@ std::string run_wscat(const std::string& url, const std::string& query_str) {
     std::string command = "wscat -c " + url + " -x '" + query_str + "' -w 0";
     std::array<char, 1024> buffer;
     std::string result;
-
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, std::function<void(FILE*)>> pipe(
+        popen(command.c_str(), "r"), 
+        [](FILE* f) { if (f) pclose(f); }
+    );
+    
+ //   std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
     if (!pipe) {
         throw std::runtime_error("Failed to run command: " + command);
         log_msg << " Unable to process message "<< std::endl; 
