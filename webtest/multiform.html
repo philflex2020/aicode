@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dynamic JSON Tables</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Data Tables</h1>
+    <div id="table-buttons"></div>
+    <div id="table-container"></div>
+
+    <script>
+        var jsonData = [
+            {
+                "System": [
+                    {"name": "System", "status": ""},
+                    {"name": "rack_1", "status": "Online"},
+                    {"name": "rack_2", "status": "Online"},
+                    {"name": "rack_3", "status" : "Online"},
+                    {"name": "rack_4", "status" : "Online"},
+                    {"name": "rack_5", "status" :"Online"},
+                    {"name": "rack_6", "status" :"Online"},
+                    {"name": "rack_7", "status" :"Online"},
+                    {"name": "rack_8", "status" :"Online"}
+                ],
+            },
+            {
+                "Sbms": [
+                    {"name": "System Bms", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "total_current", "reg_type": "input", "offset" :24, "value": 45000},
+                    {"name": "total_voltage", "reg_type": "input", "offset" :26, "value": 1345},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_1": [
+                    {"name": "rack 1", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input", "offset" :24, "value": 45000},
+                    {"name": "voltage", "reg_type": "input", "offset" :26, "value": 1345},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_2": [
+                    {"name": "rack 2", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input", "offset" :24, "value": 45000},
+                    {"name": "voltage", "reg_type": "input", "offset" :26, "value": 1345},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_3": [
+                    {"name": "rack 3", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input", "offset" :24, "value": 43000},
+                    {"name": "voltage", "reg_type": "input", "offset" :26, "value": 1245},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_4": [
+                {"name": "rack 4", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input", "offset" :24, "value": 35000},
+                    {"name": "voltage", "reg_type": "input", "offset" :26, "value": 1245},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_5": [
+                    {"name": "rack 5", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input", "offset" :24, "value": 45000},
+                    {"name": "voltage", "reg_type": "input", "offset" :26, "value": 1345},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_6": [
+                    {"name": "rack 6", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input", "offset" :24, "value": 46000},
+                    {"name": "voltage", "reg_type": "input", "offset" :26, "value": 1355},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_7": [
+                {"name": "rack 7", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input", "offset" :24, "value": 42000},
+                    {"name": "voltage", "reg_type": "input", "offset" :26, "value": 1445},
+                    {"name": "charge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input", "offset" :26, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :26, "value": 25000}
+                ]
+            },
+            {
+                "Rack_8": [
+                    {"name": "rack 8", "reg_type": "", "offset" :"", "value": ""},
+                    {"name": "state", "reg_type": "input", "offset" :20, "value": "Online"},
+                    {"name": "contactor", "reg_type": "input", "offset" :22, "value": "Open"},
+                    {"name": "current", "reg_type": "input",            "offset" :24, "value": 45000},
+                    {"name": "voltage", "reg_type": "input",            "offset" :26, "value": 1345},
+                    {"name": "charge_capacity", "reg_type": "input",    "offset" :28, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :30, "value": 25000},
+                    {"name": "max_charge_power", "reg_type": "input",   "offset" :32, "value": 25000},
+                    {"name": "max_discharge_power", "reg_type": "input","offset" :34, "value": 25000},
+                    {"name": "discharge_capacity", "reg_type": "input", "offset" :36, "value": 25000}
+                ]
+            }
+
+        ];
+
+        window.onload = function() {
+            var buttonsDiv = document.getElementById('table-buttons');
+            var containerDiv = document.getElementById('table-container');
+
+            jsonData.forEach((item, index) => {
+                Object.keys(item).forEach(key => {
+                    var button = document.createElement('button');
+                    button.innerHTML = key;
+                    button.onclick = function() { showTable(key); };
+                    buttonsDiv.appendChild(button);
+
+                    var table = document.createElement('table');
+                    table.id = key;
+                    table.classList.add('hidden');
+                    var thead = document.createElement('thead');
+                    var tbody = document.createElement('tbody');
+                    var headerRow = document.createElement('tr');
+
+                    Object.keys(item[key][0]).forEach(header => {
+                        var th = document.createElement('th');
+                        th.textContent = header;
+                        headerRow.appendChild(th);
+                    });
+
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    item[key].forEach(row => {
+                        var tr = document.createElement('tr');
+                        Object.values(row).forEach(cell => {
+                            var td = document.createElement('td');
+                            td.textContent = cell;
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+
+                    table.appendChild(tbody);
+                    containerDiv.appendChild(table);
+
+                    // Initially show the first table
+                    if (index === 0) {
+                        table.classList.remove('hidden');
+                    }
+                });
+            });
+        };
+
+        function showTable(id) {
+            var tables = document.querySelectorAll('table');
+            tables.forEach(table => {
+                table.classList.add('hidden');
+            });
+            var selectedTable = document.getElementById(id);
+            selectedTable.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

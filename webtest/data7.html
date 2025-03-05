@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        /* ... [Keep previous styles] ... */
+        .config-form {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .config-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .config-input {
+            padding: 8px;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .connect-btn {
+            padding: 8px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .connect-btn:hover {
+            background-color: #1976d2;
+        }
+        .nested-object {
+            padding-left: 20px;
+            border-left: 2px solid #90caf9;
+            margin: 8px 0;
+        }
+        .config-value {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <form id="configForm" class="config-form">
+        <div class="config-input-group">
+            <input type="text" id="ipInput" class="config-input" placeholder="IP Address" value="localhost">
+            <input type="text" id="portInput" class="config-input" placeholder="Port" value="9001">
+            <button type="submit" class="connect-btn">Connect</button>
+        </div>
+    </form>
+    <div id="tabs-container" class="tabs"></div>
+    <div id="data-container" class="data-container"></div>
+    <div id="title-container" class="title-container"></div>
+    <div id="status-message" class="status-message"></div>
+
+    <script>
+        // DOM element references
+        let tabsContainer, dataContainer, titleContainer, statusMessage;
+        // Initialize after DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            tabsContainer = document.getElementById('tabs-container');
+            dataContainer = document.getElementById('data-container');
+            titleContainer = document.getElementById('title-container');
+            statusMessage = document.getElementById('status-message');
+            
+            // Set up form listener
+            document.getElementById('configForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                initializeConnection();
+            });
+
+            // Initial load
+            loadTestData();
+        });
+
+        let ws = null;
+        let activeTabID = null;
+        let lastConfig = null;
+
+        const testData = { 
+            Configuration: {
+                SystemInfo: {
+                    Name: "Test Cluster",
+                    Version: "2.1.4",
+                    Architecture: "x86_64"
+                },
+                Network: {
+                    IP: "192.168.1.100",
+                    Subnet: "255.255.255.0",
+                    DNS: ["8.8.8.8", "8.8.4.4"]
+                }
+            },
+            RBMS: [
+                {
+                    RackID: 1,
+                    Status: {
+                        Health: "Normal",
+                        Temperature: "22°C",
+                        PowerUsage: "450W"
+                    }
+                }
+            ]
+        };
+
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            initializeConnection();
+        });
+
+        function initializeConnection() {
+            const ip = document.getElementById('ipInput').value;
+            const port = document.getElementById('portInput').value;
+            
+            // Clear previous connection
+            if(ws) {
+                ws.close();
+                ws = null;
+            }
+
+            // Reset UI
+            tabsContainer.innerHTML = '';
+            dataContainer.innerHTML = '';
+            titleContainer.innerHTML = '';
+            statusMessage.style.display = 'none';
+
+            try {
+                ws = new WebSocket(`ws://${ip}:${port}/ws`);
+                let connected = false;
+
+                const connectionTimeout = setTimeout(() => {
+                    if (!connected) {
+                        showStatus("Connection timeout. Using test data.");
+                        loadTestData();
+                    }
+                }, 2000);
+
+                ws.onopen = function() {
+                    clearTimeout(connectionTimeout);
+                    connected = true;
+                    console.log("WebSocket connected");
+                    statusMessage.style.display = 'none';
+                    ws.send("config?");
+                };
+
+                ws.onmessage = function(event) {
+                    console.log("Received data:", event.data);
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.Configuration) {
+                            lastConfig = data.Configuration;
+                            displayConfiguration(lastConfig);
+                        }
+                        if (data.RBMS) {
+                            updateRacks(data.RBMS);
+                        }
+                    } catch (e) {
+                        console.error("JSON parse error:", e);
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    console.error("WebSocket error:", error);
+                    showStatus("Connection error. Using test data.");
+                    if (!connected) loadTestData();
+                };
+
+                ws.onclose = function() {
+                    console.log("WebSocket closed");
+                    if (!connected) {
+                        showStatus("Connection closed. Using test data.");
+                        loadTestData();
+                    }
+                };
+
+            } catch (error) {
+                console.error("Connection failed:", error);
+                showStatus("Invalid connection parameters. Using test data.");
+                loadTestData();
+            }
+        }
+
+        function loadTestData() {
+            console.log("Loading test data");
+            displayConfiguration(testData.Configuration);
+            updateRacks(testData.RBMS);
+            showStatus("Connected to test data. Displaying simulated racks.", false);
+        }
+
+        function displayConfiguration(config) {
+            titleContainer.innerHTML = '';
+            const configContainer = document.createElement('div');
+            renderNestedObject(config, configContainer);
+            titleContainer.appendChild(configContainer);
+            titleContainer.style.display = 'block';
+        }
+
+        function renderNestedObject(obj, container, depth = 0) {
+            Object.entries(obj).forEach(([key, value]) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'data-item';
+                entryDiv.style.paddingLeft = `${depth * 15}px`;
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'data-title';
+                titleDiv.textContent = key;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.style.flexGrow = '1';
+
+                if (typeof value === 'object' && value !== null) {
+                    contentDiv.classList.add('nested-object');
+                    renderNestedObject(value, contentDiv, depth + 1);
+                } else {
+                    contentDiv.textContent = Array.isArray(value) 
+                        ? value.join(', ') 
+                        : value;
+                }
+
+                entryDiv.appendChild(titleDiv);
+                entryDiv.appendChild(contentDiv);
+                container.appendChild(entryDiv);
+            });
+        }
+
+        function updateRacks(racks) {
+            tabsContainer.innerHTML = '';
+            createTab('config', 'Configuration', () => displayConfiguration(lastConfig));
+            racks.forEach((rack) => {
+                createTab(`rack-${rack.RackID}`, `Rack ${rack.RackID}`, () => displayRackData(rack));
+            });
+            setActiveTab();
+        }
+
+        function createTab(id, label, onClick) {
+            const tab = document.createElement('div');
+            tab.id = id;
+            tab.className = 'tab';
+            tab.textContent = label;
+            tab.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                activeTabID = id;
+                dataContainer.innerHTML = '';
+                titleContainer.innerHTML = '';
+                
+                if (id === 'config') {
+                    titleContainer.style.display = 'block';
+                    dataContainer.style.display = 'none';
+                } else {
+                    titleContainer.style.display = 'none';
+                    dataContainer.style.display = 'block';
+                }
+                
+                onClick();
+            };
+            tabsContainer.appendChild(tab);
+        }
+
+        function setActiveTab() {
+            const defaultTab = document.getElementById(activeTabID) || document.getElementById('config');
+            if (defaultTab) defaultTab.click();
+        }
+
+        function displayRackData(rack) {
+            dataContainer.innerHTML = '';
+            Object.entries(rack).forEach(([key, value]) => {
+                const dataItem = document.createElement('div');
+                dataItem.className = 'data-item';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'data-title';
+                titleDiv.textContent = key;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.style.flexGrow = '1';
+
+                if (typeof value === 'object' && value !== null) {
+                    contentDiv.classList.add('nested-object');
+                    renderNestedObject(value, contentDiv);
+                } else {
+                    contentDiv.textContent = value;
+                }
+
+                dataItem.appendChild(titleDiv);
+                dataItem.appendChild(contentDiv);
+                dataContainer.appendChild(dataItem);
+            });
+        }
+
+        function showStatus(message, isError = true) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            statusMessage.style.backgroundColor = isError ? '#f8d7da' : '#d4edda';
+            statusMessage.style.borderColor = isError ? '#f5c6cb' : '#c3e6cb';
+        }
+
+        // Initial connection attempt
+        loadTestData();
+    </script>
+</body>
+</html>

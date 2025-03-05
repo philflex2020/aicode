@@ -1,0 +1,14 @@
+{
+  "People": [
+    {"name": "Alice", "age": 25, "city": "New York"},
+    {"name": "Bob", "age": 30, "city": "San Francisco"},
+    {"name": "Jimmy", "age": 45, "city": "London"},
+    {"name": "Charlie", "age": 35, "city": "Los Angeles"}
+  ],
+  "Projects": [
+    {"name": "Project1", "value": 250000, "time": 400},
+    {"name": "Project2", "value": 300000, "time": 450},
+    {"name": "Project3", "value": 200000, "time": 380},
+    {"name": "Project4", "value": 50000, "time": 500}
+  ]
+}

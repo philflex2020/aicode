@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Web Page with Objects</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        #container {
+            width: 80%;
+            height: 80%;
+            position: relative;
+            background-color: #fff;
+            border: 2px dashed #ccc;
+        }
+
+        .object {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            position: absolute;
+            cursor: grab;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            line-height: 100px;
+            user-select: none;
+        }
+
+        /* Context Menu */
+        #contextMenu {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        #contextMenu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #contextMenu ul li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #contextMenu ul li:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container"></div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu">
+        <ul>
+            <li id="addCircle">Add Circle</li>
+            <li id="addSquare">Add Square</li>
+        </ul>
+    </div>
+
+    <script>
+        let container = document.getElementById('container');
+        let contextMenu = document.getElementById('contextMenu');
+        let currentObject = null;
+        let offsetX, offsetY;
+
+        // Object types
+        const objectTypes = {
+            circle: {width: 100, height: 100, backgroundColor: 'red', label: 'Circle'},
+            square: {width: 100, height: 100, backgroundColor: 'green', label: 'Square'}
+        };
+
+        // Right-click to show context menu
+        container.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.style.top = `${e.pageY}px`;
+        });
+
+        // Hide context menu if clicked anywhere else
+        window.addEventListener('click', function(e) {
+            if (e.target !== contextMenu && !contextMenu.contains(e.target)) {
+                contextMenu.style.display = 'none';
+            }
+        });
+
+        // Add object to the container
+        function addObject(type, x, y) {
+            let object = document.createElement('div');
+            object.className = 'object';
+            object.style.width = `${objectTypes[type].width}px`;
+            object.style.height = `${objectTypes[type].height}px`;
+            object.style.backgroundColor = objectTypes[type].backgroundColor;
+            object.innerHTML = objectTypes[type].label;
+            object.style.left = `${x - object.offsetWidth / 2}px`;
+            object.style.top = `${y - object.offsetHeight / 2}px`;
+
+            // Enable dragging functionality
+            object.addEventListener('mousedown', function(e) {
+                currentObject = object;
+                offsetX = e.clientX - object.getBoundingClientRect().left;
+                offsetY = e.clientY - object.getBoundingClientRect().top;
+                document.addEventListener('mousemove', dragObject);
+                document.addEventListener('mouseup', stopDrag);
+            });
+
+            container.appendChild(object);
+        }
+
+        // Dragging function
+        function dragObject(e) {
+            if (!currentObject) return;
+            currentObject.style.left = `${e.clientX - offsetX}px`;
+            currentObject.style.top = `${e.clientY - offsetY}px`;
+        }
+
+        // Stop dragging
+        function stopDrag() {
+            document.removeEventListener('mousemove', dragObject);
+            document.removeEventListener('mouseup', stopDrag);
+            currentObject = null;
+        }
+
+        // Handle context menu actions
+        document.getElementById('addCircle').addEventListener('click', function() {
+            contextMenu.style.display = 'none';
+            addObject('circle', event.pageX, event.pageY);
+        });
+
+        document.getElementById('addSquare').addEventListener('click', function() {
+            contextMenu.style.display = 'none';
+            addObject('square', event.pageX, event.pageY);
+        });
+    </script>
+
+</body>
+</html>

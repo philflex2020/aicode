@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        .title-container, .data-container {
+            display: none;  /* Initially hidden */
+            border: 1px solid #ccc;
+            margin-top: 5px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .tabs {
+            overflow-x: auto;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #ccc;
+            background-color: #f0f0f0;
+        }
+        .tab {
+            padding: 10px 15px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-bottom: none;
+        }
+        .tab.active {
+            background-color: #9daec5;
+            border-bottom: 2px solid white;
+        }
+        .data-item, .complex-data-item {
+            margin-bottom: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #a2aacf;
+        }
+        .complex-data-section {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 5px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            background-color: #1aa749;
+        }
+        .complex-data-section:last-child {
+            margin-right: 0;
+        }
+        .data-title {
+            font-weight: bold;
+            background-color: #5b1bf0;
+            padding: 5px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="tabs-container" class="tabs"></div>
+    <div id="data-container" class="data-container"></div>
+    <div id="title-container" class="title-container"></div>
+
+    <script>
+        const tabsContainer = document.getElementById('tabs-container');
+        const dataContainer = document.getElementById('data-container');
+        const titleContainer = document.getElementById('title-container');
+        let ip = "192.168.86.209";
+        let activeTabID = null; // default active tab
+        let lastConfig = null;
+
+        const ws = new WebSocket(`ws://${ip}:9001/ws`);
+
+        ws.onopen = function() {
+            console.log("Connected to WebSocket Server.");
+            ws.send("config?");
+        };
+
+        ws.onmessage = function(event) {
+            //console.log("Received:", event.data);
+            const data = JSON.parse(event.data);
+            if (data.Configuration) {
+                lastConfig = data.Configuration;
+                displayConfiguration(lastConfig);
+            }
+            if (data.RBMS) {
+                updateRacks(data.RBMS);
+            }
+        };
+
+        function displayConfiguration(config) {
+            console.log("Config:", config);
+            if(config) {
+            titleContainer.innerHTML = '';
+            const configContainer = document.createElement('div');
+            configContainer.className = 'config-container';
+            Object.entries(config).forEach(([key, value]) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'config-entry';
+                let content = `<div class="data-title">${key}:</div>`;
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    Object.entries(value).forEach(([subKey, subValue]) => {
+                        content += `<div class="complex-data-section"><strong>${subKey}:</strong> ${subValue}</div>`;
+                    });
+                    entryDiv.className = 'complex-data-item';
+                } else {
+                    entryDiv.className = 'data-item';
+                }
+                entryDiv.innerHTML = content;
+                configContainer.appendChild(entryDiv);
+            });
+            titleContainer.appendChild(configContainer);
+            titleContainer.style.display = 'block';
+            }
+        }
+
+        function updateRacks(racks) {
+            tabsContainer.innerHTML = ''; // Clear previous tabs if any
+            createTab('config', 'Configuration', displayConfiguration(lastConfig));
+            racks.forEach((rack, index) => {
+                createTab(`rack-${rack.RackID}`, `Rack ${rack.RackID}`, () => displayRackData(rack));
+            });
+            document.getElementById(activeTabID || 'config').click(); // Default or restore active tab
+        }
+
+        function createTab(id, label, onClick) {
+            const tab = document.createElement('div');
+            tab.id = id;
+            tab.className = 'tab';
+            tab.textContent = label;
+            tab.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                activeTabID = id; // Set the current active tab ID
+                onClick();
+            };
+            tabsContainer.appendChild(tab);
+        }
+
+        function displayRackData(rack) {
+            dataContainer.innerHTML = '';  // Clear previous content
+
+            // Iterate over each key-value pair in the rack object
+            Object.entries(rack).forEach(([key, value]) => {
+                // Create a container for each pair
+                const dataItem = document.createElement('div');
+                dataItem.className = 'data-item';
+
+                // Determine how to display the value
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    // If the value is a nested object, iterate further
+                    let subContent = `<div class="data-title">${key}:</div>`;
+                    Object.entries(value).forEach(([subKey, subValue]) => {
+                        subContent += `<div class="complex-data-section"><strong>${subKey}:</strong> ${subValue}</div>`;
+                    });
+                    dataItem.innerHTML = subContent;
+                } else {
+                    // For simple key-value pairs
+                    dataItem.innerHTML = `<strong>${key}:</strong> ${value}`;
+                }
+                
+                // Append the new element to the data container
+                dataContainer.appendChild(dataItem);
+            });
+        }
+    </script>
+</body>
+</html>

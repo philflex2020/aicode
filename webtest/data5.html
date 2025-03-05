@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .title-container, .data-container {
+            display: none;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 5px;
+            padding: 10px 0;
+            background-color: #f0f0f0;
+            border-bottom: 2px solid #007bff;
+        }
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            background-color: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 4px 4px 0 0;
+            color: #1976d2;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab.active {
+            background-color: #2196f3;
+            color: white;
+            border-color: #1976d2;
+            transform: translateY(1px);
+        }
+        .data-item {
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 4px;
+            display: flex;
+            gap: 15px;
+            align-items: baseline;
+        }
+        .data-item:nth-child(even) {
+            background-color: #e3f2fd;
+        }
+        .data-item:nth-child(odd) {
+            background-color: #bbdefb;
+        }
+        .data-title {
+            font-weight: 600;
+            color: #0d47a1;
+            min-width: 150px;
+        }
+        .complex-data-section {
+            background-color: #90caf9;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 5px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .status-message {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .key-value-pair {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background-color: rgba(255,255,255,0.3);
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="tabs-container" class="tabs"></div>
+    <div id="data-container" class="data-container"></div>
+    <div id="title-container" class="title-container"></div>
+    <div id="status-message" class="status-message"></div>
+
+    <script>
+        const tabsContainer = document.getElementById('tabs-container');
+        const dataContainer = document.getElementById('data-container');
+        const titleContainer = document.getElementById('title-container');
+        const statusMessage = document.getElementById('status-message');
+        let ip = "192.168.86.209";
+        let activeTabID = null;
+        let lastConfig = null;
+
+        const testData = {
+            Configuration: {
+                SystemName: "Test System",
+                Version: "2.1.4",
+                Nodes: 8,
+                LastUpdated: new Date().toISOString(),
+                Location: "Lab Room 5"
+            },
+            RBMS: [
+                {
+                    RackID: 1,
+                    Temperature: "22°C",
+                    Power: "450W",
+                    Status: "Normal",
+                    Sensors: {
+                        Voltage: "230V",
+                        Current: "2.1A",
+                        FanSpeed: "2400 RPM"
+                    }
+                },
+                {
+                    RackID: 2,
+                    Temperature: "24°C",
+                    Power: "480W",
+                    Status: "Warning",
+                    Sensors: {
+                        Voltage: "228V",
+                        Current: "2.3A",
+                        FanSpeed: "2800 RPM"
+                    }
+                }
+            ]
+        };
+
+        function showStatus(message, isError = true) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            statusMessage.style.backgroundColor = isError ? '#f8d7da' : '#d4edda';
+            statusMessage.style.borderColor = isError ? '#f5c6cb' : '#c3e6cb';
+        }
+
+        function initializeConnection() {
+            try {
+                const ws = new WebSocket(`ws://${ip}:9001/ws`);
+                let connected = false;
+
+                const connectionTimeout = setTimeout(() => {
+                    if (!connected) {
+                        showStatus("Connection timeout. Using test data.");
+                        loadTestData();
+                    }
+                }, 3000);
+
+                ws.onopen = function() {
+                    clearTimeout(connectionTimeout);
+                    connected = true;
+                    console.log("Connected to WebSocket Server.");
+                    statusMessage.style.display = 'none';
+                    ws.send("config?");
+                };
+
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.Configuration) {
+                        lastConfig = data.Configuration;
+                        displayConfiguration(lastConfig);
+                    }
+                    if (data.RBMS) {
+                        updateRacks(data.RBMS);
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    showStatus("Connection error. Using test data.");
+                    loadTestData();
+                };
+
+            } catch (error) {
+                showStatus("WebSocket initialization failed. Using test data.");
+                loadTestData();
+            }
+        }
+
+        function loadTestData() {
+            displayConfiguration(testData.Configuration);
+            updateRacks(testData.RBMS);
+            showStatus("Connected to test data. Displaying simulated racks.", false);
+        }
+
+        function displayConfiguration(config) {
+            if (config) {
+                titleContainer.innerHTML = '';
+                const configContainer = document.createElement('div');
+                configContainer.className = 'config-container';
+                Object.entries(config).forEach(([key, value]) => {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'data-item';
+                    let content = `<div class="data-title">${key}:</div> ${JSON.stringify(value, null, 2)}`;
+                    entryDiv.innerHTML = content;
+                    configContainer.appendChild(entryDiv);
+                });
+                titleContainer.appendChild(configContainer);
+                titleContainer.style.display = 'block';
+            }
+        }
+
+        function updateRacks(racks) {
+            tabsContainer.innerHTML = '';
+            createTab('config', 'Configuration', () => displayConfiguration(lastConfig));
+            racks.forEach((rack) => {
+                createTab(`rack-${rack.RackID}`, `Rack ${rack.RackID}`, () => displayRackData(rack));
+            });
+            setActiveTab();
+        }
+
+        function createTab(id, label, onClick) {
+            const tab = document.createElement('div');
+            tab.id = id;
+            tab.className = 'tab';
+            tab.textContent = label;
+            tab.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                activeTabID = id;
+                dataContainer.innerHTML = '';
+                titleContainer.innerHTML = '';
+                
+                if (id === 'config') {
+                    titleContainer.style.display = 'block';
+                    dataContainer.style.display = 'none';
+                } else {
+                    titleContainer.style.display = 'none';
+                    dataContainer.style.display = 'block';
+                }
+                
+                onClick();
+            };
+            tabsContainer.appendChild(tab);
+        }
+
+        function setActiveTab() {
+            const defaultTab = document.getElementById(activeTabID) || document.getElementById('config');
+            if (defaultTab) defaultTab.click();
+        }
+
+        function displayRackData(rack) {
+            dataContainer.innerHTML = '';
+            Object.entries(rack).forEach(([key, value]) => {
+                const dataItem = document.createElement('div');
+                dataItem.className = 'data-item';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'data-title';
+                titleDiv.textContent = key;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.style.flexGrow = '1';
+
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    Object.entries(value).forEach(([subKey, subValue]) => {
+                        const pairDiv = document.createElement('div');
+                        pairDiv.className = 'key-value-pair';
+                        pairDiv.innerHTML = `
+                            <div style="font-weight:600">${subKey}:</div>
+                            <div>${subValue}</div>
+                        `;
+                        contentDiv.appendChild(pairDiv);
+                    });
+                } else {
+                    contentDiv.textContent = value;
+                }
+
+                dataItem.appendChild(titleDiv);
+                dataItem.appendChild(contentDiv);
+                dataContainer.appendChild(dataItem);
+            });
+        }
+
+        // Start the connection attempt
+        initializeConnection();
+    </script>
+</body>
+</html>

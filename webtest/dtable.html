@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        .config-container {
+            margin: 10px;
+            padding: 10px;
+        }
+
+        .config-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+
+        .complex-data-item {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }
+
+        .complex-data-section {
+            border: 1px solid #ddd;
+            margin-right: 10px;
+            padding: 5px;
+            background-color: #f0f0f0;
+        }
+
+        .complex-data-section:last-child {
+            margin-right: 0;
+        }
+
+        .xdata-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .data-container {
+            margin-top: 5px;
+        }
+        .data-item {
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-bottom: 5px;
+            background-color: #a2aacf;
+        }
+        .complex-data-item {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .complex-data-section {
+            border: 1px solid #ccc;
+            margin-right: 10px;
+            padding: 5px;
+            background-color: #1aa749;
+        }
+        .complex-data-section:last-child {
+            margin-right: 0;
+        }
+        .data-title {
+            font-weight: bold;
+            background-color: #5b1bf0;
+        }
+        .title-container {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        .tabs {
+            overflow-x: auto; /* Allows horizontal scrolling if tabs overflow */
+            white-space: nowrap; /* Prevents tabs from wrapping onto the next line */
+            display: flex; /* Aligns children (tabs) in a row */
+            align-items: center; /* Centers tabs vertically */
+            border-bottom: 2px solid #ccc; /* Adds a line under the tabs for better visual separation */
+            padding: 0;
+            margin: 0;
+        }
+
+        .tab {
+            display: inline-block; /* Makes the tab behave like an inline element that respects width and height */
+            padding: 10px 15px; /* Adds padding inside the tabs */
+            margin-right: 5px; /* Adds space between the tabs */
+            cursor: pointer; /* Changes cursor to pointer when hovering over tabs */
+            background-color: #f0f0f0; /* Light grey background, easier on the eyes */
+            border: 1px solid #ccc; /* Gives each tab a border */
+            border-bottom: none; /* Removes bottom border to blend with the tab container's border */
+        }
+
+        .tab.active {
+            background-color: #9daec5; /* White background for active tab */
+            border-bottom: 2px solid white; /* Hides the container border under the active tab */
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Configuration Display Toggle Button -->
+    <button id="configToggle">Show Configuration</button>
+    <div id="title-container" class="title-container" style="display: none;"></div> <!-- Initially hidden -->
+
+    <div class="tabs"></div>
+    <div class="data-container"></div>
+
+    <script>
+        const titleContainer = document.querySelector('.title-container');
+        const dataContainer = document.querySelector('.data-container');
+        const tabsContainer = document.querySelector('.tabs');
+        let ip="192.168.86.209";
+        let activeRackID = null;  // This will store the ID of the currently active rack
+        let foundActiveRack = false;  // This will check if the previously active rack is still present
+        // WebSocket connection
+        const ws = new WebSocket(`ws://${ip}:9001/ws`);
+
+        ws.onopen = function() {
+            console.log("Connected to WebSocket Server.");
+            ws.send("config?");
+        };
+
+        ws.onmessage = function(event) {
+            console.log("Received:", event.data);
+            const data = JSON.parse(event.data);
+
+            if (data.Configuration) {
+                displayConfiguration(data.Configuration);
+            } else if (data.TS && data.RBMS) {
+                updateRacks(data.RBMS);
+            }
+        };
+
+        function displayConfiguration(config) {
+            const titleContainer = document.getElementById('title-container');
+            titleContainer.innerHTML = '';  // Clear previous content
+            const configContainer = document.createElement('div');
+            configContainer.className = 'config-container';
+
+            Object.entries(config).forEach(([key, value]) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'config-entry';
+
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    let content = `<div class="data-title">${key}:</div>`;
+                    Object.entries(value).forEach(([subKey, subValue]) => {
+                        content += `<div class="complex-data-section"><strong>${subKey}:</strong> ${subValue}</div>`;
+                    });
+                    entryDiv.innerHTML = content;
+                    entryDiv.className = 'complex-data-item'; // Use flex layout for complex objects
+                } else {
+                    entryDiv.innerHTML = `<strong>${key}:</strong> ${value}`;
+                    entryDiv.className = 'data-item';  // Simple data styling
+                }
+                configContainer.appendChild(entryDiv);
+            });
+
+            titleContainer.appendChild(configContainer);
+        }
+
+        function xdisplayConfiguration(config) {
+            const configEntries = Object.entries(config).map(([key, value]) => {
+                return `<strong>${key}:</strong> ${typeof value === 'object' ? JSON.stringify(value, null, 2) : value}`;
+            }).join('<br>');
+            titleContainer.innerHTML = configEntries;
+        }
+        function displayRackData(rackData) {
+            dataContainer.innerHTML = ''; // Clear previous content
+
+            Object.entries(rackData).forEach(([key, value]) => {
+                if (typeof value === 'object' && value !== null) {
+                    const complexContainer = document.createElement('div');
+                    complexContainer.className = 'complex-data-item';
+                    let content = `<div class="data-title">${key}:</div>`;
+
+                    Object.entries(value).forEach(([subKey, subValue]) => {
+                        content += `<div class="complex-data-section"><strong>${subKey}:</strong> ${subValue}</div>`;
+                    });
+
+                    complexContainer.innerHTML = content;
+                    dataContainer.appendChild(complexContainer);
+                } else {
+                    const simpleContainer = document.createElement('div');
+                    simpleContainer.className = 'data-item';
+                    simpleContainer.innerHTML = `<strong>${key}:</strong> ${value}`;
+                    dataContainer.appendChild(simpleContainer);
+                }
+            });
+        }
+
+        function xdisplayRackData(rackData) {
+            // Clear existing data
+            dataContainer.innerHTML = '';
+
+            // Create a div for each data field in the rack data
+            Object.entries(rackData).forEach(([key, value]) => {
+                const dataElement = document.createElement('div');
+                dataElement.className = 'rack-data-item'; // Add a class for styling if needed
+                // Check if the value is an object and needs further parsing
+                if (typeof value === 'object' && value !== null) {
+                    dataElement.innerHTML = `<strong>${key}:</strong> ${JSON.stringify(value)}`;
+                } else {
+                    dataElement.innerHTML = `<strong>${key}:</strong> ${value}`;
+                }
+            dataContainer.appendChild(dataElement);
+            });
+        }
+
+        function updateRacks(racks) {
+            tabsContainer.innerHTML = ''; // Clear previous tabs if any
+            racks.forEach((rack, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'tab';
+                tab.textContent = `Rack ${rack.RackID}`;
+                tab.onclick = () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    activeRackID = rack.RackID;  // Update the activeRackID on click
+                    displayRackData(rack);
+                };
+                tabsContainer.appendChild(tab);
+
+                // Set the tab as active if it matches the stored activeRackID
+                 if (rack.RackID === activeRackID) {
+                    tab.classList.add('active');
+                    displayRackData(rack);  // Display data for the active rack
+                    foundActiveRack = true;
+                }
+                // If the previously active rack is not found, default to the first rack
+                //if (!foundActiveRack && racks.length > 0) {
+                if (!foundActiveRack) {
+                    tabsContainer.children[0].click();
+                }
+                // if (index === 0) {
+                //     tab.click(); // Automatically click the first tab
+                // }
+            });
+        }
+        document.getElementById('configToggle').addEventListener('click', function() {
+            var titleContainer = document.getElementById('title-container');
+            if (titleContainer.style.display === 'none' || titleContainer.style.display === '') {
+                titleContainer.style.display = 'block';  // Show the container
+                this.textContent = 'Hide Configuration';  // Update button text
+            } else {
+                titleContainer.style.display = 'none';  // Hide the container
+                this.textContent = 'Show Configuration';  // Update button text
+            }
+        });
+</script>
+</body>
+</html>

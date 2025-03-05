@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Web Page with Objects and Line Drawing</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        #container {
+            width: 80%;
+            height: 80%;
+            position: relative;
+            background-color: #fff;
+            border: 2px dashed #ccc;
+        }
+
+        .object {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            position: absolute;
+            cursor: grab;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            line-height: 100px;
+            user-select: none;
+        }
+
+        /* Context Menu */
+        #contextMenu {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        #contextMenu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #contextMenu ul li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #contextMenu ul li:hover {
+            background-color: #f0f0f0;
+        }
+
+        .line {
+            position: absolute;
+            width: 2px;
+            background-color: #e74c3c;
+            z-index: -1; /* Keep the line below the objects */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container"></div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu">
+        <ul>
+            <li id="addCircle">Add Circle</li>
+            <li id="addSquare">Add Square</li>
+        </ul>
+    </div>
+
+    <script>
+let container = document.getElementById('container');
+let contextMenu = document.getElementById('contextMenu');
+let currentObject = null;
+let offsetX, offsetY;
+let firstObject = null;
+let secondObject = null;
+let isFirstSelection = true;
+
+// Object types
+const objectTypes = {
+    circle: { width: 100, height: 100, backgroundColor: 'red', label: 'Circle' },
+    square: { width: 100, height: 100, backgroundColor: 'green', label: 'Square' }
+};
+
+// Right-click to show context menu
+container.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = `${e.pageX}px`;
+    contextMenu.style.top = `${e.pageY}px`;
+});
+
+// Hide context menu if clicked anywhere else
+window.addEventListener('click', function(e) {
+    if (e.target !== contextMenu && !contextMenu.contains(e.target)) {
+        contextMenu.style.display = 'none';
+    }
+});
+
+// Add object to the container
+function addObject(type, x, y) {
+    let object = document.createElement('div');
+    object.className = 'object';
+    object.style.width = `${objectTypes[type].width}px`;
+    object.style.height = `${objectTypes[type].height}px`;
+    object.style.backgroundColor = objectTypes[type].backgroundColor;
+    object.innerHTML = objectTypes[type].label;
+    object.style.left = `${x - object.offsetWidth / 2}px`;
+    object.style.top = `${y - object.offsetHeight / 2}px`;
+
+    // Enable dragging functionality
+    object.addEventListener('mousedown', function(e) {
+        currentObject = object;
+
+        // Calculate the mouse offset relative to the object's top-left corner
+        const rect = object.getBoundingClientRect(); // Get object position relative to viewport
+        offsetX = e.clientX - rect.left;  // Mouse X relative to the object
+        offsetY = e.clientY - rect.top;   // Mouse Y relative to the object
+
+        // Add mousemove and mouseup event listeners
+        document.addEventListener('mousemove', dragObject);
+        document.addEventListener('mouseup', stopDrag);
+    });
+
+    // Click event for selecting objects and drawing a line
+    object.addEventListener('click', function(e) {
+        if (isFirstSelection) {
+            firstObject = object;
+            isFirstSelection = false;
+        } else {
+            secondObject = object;
+            drawLineBetweenObjects(firstObject, secondObject);
+            isFirstSelection = true;
+            firstObject = null;
+            secondObject = null;
+        }
+    });
+
+    container.appendChild(object);
+}
+
+// Dragging function
+function dragObject(e) {
+    if (!currentObject) return;
+
+    // Move the object based on the mouse's position minus the initial offset
+    currentObject.style.left = `${e.clientX - offsetX}px`;
+    currentObject.style.top = `${e.clientY - offsetY}px`;
+}
+
+// Stop dragging
+function stopDrag() {
+    document.removeEventListener('mousemove', dragObject);
+    document.removeEventListener('mouseup', stopDrag);
+    currentObject = null;
+}
+
+// Draw a line between two objects
+function drawLineBetweenObjects(obj1, obj2) {
+    const rect1 = obj1.getBoundingClientRect();
+    const rect2 = obj2.getBoundingClientRect();
+
+    const startX = rect1.left + rect1.width / 2;
+    const startY = rect1.top + rect1.height / 2;
+    const endX = rect2.left + rect2.width / 2;
+    const endY = rect2.top + rect2.height / 2;
+
+    const line = document.createElement('div');
+    line.classList.add('line');
+    container.appendChild(line);
+
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    line.style.height = `${length}px`;
+    line.style.transform = `rotate(${angle}deg)`;
+    line.style.left = `${startX}px`;
+    line.style.top = `${startY}px`;
+}
+
+// Handle context menu actions
+document.getElementById('addCircle').addEventListener('click', function() {
+    contextMenu.style.display = 'none';
+    addObject('circle', event.pageX, event.pageY);
+});
+
+document.getElementById('addSquare').addEventListener('click', function() {
+    contextMenu.style.display = 'none';
+    addObject('square', event.pageX, event.pageY);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        /* ... [Keep previous styles] ... */
+        .config-form {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .config-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .config-input {
+            padding: 8px;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .connect-btn {
+            padding: 8px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .connect-btn:hover {
+            background-color: #1976d2;
+        }
+        .nested-object {
+            padding-left: 20px;
+            border-left: 2px solid #90caf9;
+            margin: 8px 0;
+        }
+        .config-value {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <form id="configForm" class="config-form">
+        <div class="config-input-group">
+            <input type="text" id="ipInput" class="config-input" placeholder="IP Address" value="192.168.86.209">
+            <input type="text" id="portInput" class="config-input" placeholder="Port" value="9001">
+            <button type="submit" class="connect-btn">Connect</button>
+        </div>
+    </form>
+    <div id="tabs-container" class="tabs"></div>
+    <div id="data-container" class="data-container"></div>
+    <div id="title-container" class="title-container"></div>
+    <div id="status-message" class="status-message"></div>
+
+    <script>
+        let ws = null;
+        let activeTabID = null;
+        let lastConfig = null;
+
+        const testData = {
+            Configuration: {
+                SystemInfo: {
+                    Name: "Test Cluster",
+                    Version: "2.1.4",
+                    Architecture: "x86_64"
+                },
+                Network: {
+                    IP: "192.168.1.100",
+                    Subnet: "255.255.255.0",
+                    DNS: ["8.8.8.8", "8.8.4.4"]
+                },
+                Hardware: {
+                    Racks: 4,
+                    NodesPerRack: 8,
+                    PowerSupply: {
+                        Type: "Dual 2400W",
+                        Voltage: "230V"
+                    }
+                }
+            },
+            RBMS: [
+                {
+                    RackID: 1,
+                    Status: {
+                        Health: "Normal",
+                        Temperature: "22°C",
+                        PowerUsage: "450W"
+                    },
+                    Sensors: {
+                        Voltage: "230V ±2%",
+                        Current: "2.1A",
+                        FanSpeeds: ["2400 RPM", "2350 RPM", "2450 RPM"]
+                    }
+                }
+            ]
+        };
+
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            initializeConnection();
+        });
+
+        function initializeConnection() {
+            const ip = document.getElementById('ipInput').value;
+            const port = document.getElementById('portInput').value;
+            
+            if(ws) ws.close();
+            
+            try {
+                ws = new WebSocket(`ws://${ip}:${port}/ws`);
+                let connected = false;
+
+                const connectionTimeout = setTimeout(() => {
+                    if (!connected) {
+                        showStatus("Connection timeout. Using test data.");
+                        loadTestData();
+                    }
+                }, 3000);
+
+                ws.onopen = function() {
+                    clearTimeout(connectionTimeout);
+                    connected = true;
+                    statusMessage.style.display = 'none';
+                    ws.send("config?");
+                };
+
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.Configuration) {
+                        lastConfig = data.Configuration;
+                        displayConfiguration(lastConfig);
+                    }
+                    if (data.RBMS) {
+                        updateRacks(data.RBMS);
+                    }
+                };
+
+                ws.onerror = function(error) {
+                    showStatus("Connection error. Using test data.");
+                    loadTestData();
+                };
+
+            } catch (error) {
+                showStatus("WebSocket initialization failed. Using test data.");
+                loadTestData();
+            }
+        }
+
+        function displayConfiguration(config) {
+            titleContainer.innerHTML = '';
+            const configContainer = document.createElement('div');
+            renderNestedObject(config, configContainer);
+            titleContainer.appendChild(configContainer);
+            titleContainer.style.display = 'block';
+        }
+
+        function renderNestedObject(obj, container, depth = 0) {
+            Object.entries(obj).forEach(([key, value]) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'data-item';
+                entryDiv.style.paddingLeft = `${depth * 15}px`;
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'data-title';
+                titleDiv.textContent = key;
+
+                const contentDiv = document.createElement('div');
+                contentDiv.style.flexGrow = '1';
+
+                if (typeof value === 'object' && value !== null) {
+                    contentDiv.classList.add('nested-object');
+                    renderNestedObject(value, contentDiv, depth + 1);
+                } else {
+                    contentDiv.textContent = Array.isArray(value) 
+                        ? value.join(', ') 
+                        : value;
+                }
+
+                entryDiv.appendChild(titleDiv);
+                entryDiv.appendChild(contentDiv);
+                container.appendChild(entryDiv);
+            });
+        }
+
+        /* ... [Keep other functions same as previous version] ... */
+    </script>
+</body>
+</html>
