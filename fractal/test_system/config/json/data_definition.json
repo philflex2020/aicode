@@ -13,7 +13,7 @@
   { "table": "rack:sm16", "items":[
     {"name":                                           "online", "offset": 26626, "size": 1},
     {"name":                                       "cell_volts", "offset": 51200, "hex":"0xc800", "size": 480},
-    {"name":                                        "cell_temp", "offset":51680,  "hex":"0xc9e0", "size": 480},
+    {"name":                                        "cell_temp", "offset": 51680, "hex":"0xc9e0", "size": 480},
     {"name":                                         "cell_soc", "offset": 17112, "hex":"0x42d8", "size": 480}
     ]
   },
@@ -699,8 +699,8 @@
    {"name":           "Cluster_Charge_Cell_temp_Diff_Over_10", "offset": 1532, "size": 1},
    {"name":       "Cluster_Discharge_Cell_temp_Diff_Start_10", "offset": 1533, "size": 1},
    {"name":        "Cluster_Discharge_Cell_temp_Diff_Over_10", "offset": 1534, "size": 1},
-   {"name":                                    "voltage_diff", "offset": 1535, "size": 1},
-   {"name":                                       "temp_diff", "offset": 1536, "size": 1}
+   {"name":                                    "voltage_diff", "offset": 1800, "size": 1},
+   {"name":                                       "temp_diff", "offset": 1801, "size": 1}
 
    ]
  },
