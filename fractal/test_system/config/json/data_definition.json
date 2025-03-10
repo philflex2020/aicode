@@ -11,13 +11,16 @@
       "ApprovedBy": "John Calcagni (soon)"
   },
   { "table": "rack:sm16", "items":[
-    {"name":                                           "online", "offset": 26626, "size": 1},
+    {"name":                                           "online", "offset": 26626, "size": 1}
+    ]
+  },
+  { "table": "rtos:sm16", "items":[
     {"name":                                       "cell_volts", "offset": 51200, "hex":"0xc800", "size": 480},
     {"name":                                        "cell_temp", "offset": 51680, "hex":"0xc9e0", "size": 480},
     {"name":                                         "cell_soc", "offset": 17112, "hex":"0x42d8", "size": 480}
     ]
   },
-  { "table": "rack:sm8", "items":[
+  { "table": "rtos:sm8", "items":[
     {"name":                                         "cell_soh", "offset": 16386,"hex":"0x4002", "size": 480}
     ]
   },
@@ -577,6 +580,10 @@
    {"name":                                       "open_rack",  "offset": 539, "size": 1,"note":"fractal set to one to open one rack"},
    {"name":                               "rack_to_close_10v",  "offset": 540, "size": 2,"note":"fractal read tests racks_to_close at 10v"},
    {"name":                               "rack_to_close_20v",  "offset": 542, "size": 2,"note":"fractal read tests racks_to_close at 20v"},
+   {"name":                               "clear_accumulated",  "offset": 544, "size": 1,"note":"clear accumulated totals"},
+   {"name":                                    "clear_single",  "offset": 545, "size": 1,"note":"clear single accumulated totals"},
+   {"name":                                  "clear_capacity",  "offset": 546, "size": 1,"note":"clear capacity"},
+
    {"name":                                   "max_cell_volt",  "offset": 600, "size": 1},
    {"name":                               "max_cell_volt_num",  "offset": 601, "size": 1},
    {"name":                                   "min_cell_volt",  "offset": 602, "size": 1},
