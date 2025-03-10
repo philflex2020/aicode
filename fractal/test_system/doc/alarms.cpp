@@ -27,6 +27,12 @@ public:
 
     };
 
+    struct AlarmLimits {
+        int threshold[4];
+        int hysteresis;
+    
+    };
+
     struct AlarmLevelState {
         bool isTriggering = false;
         bool isResetting = false;
@@ -41,6 +47,7 @@ public:
 
     struct SensorConfig {
         std::vector<AlarmLevelConfig> levels;
+        AlarmLimits limits;
     };
 
     struct SensorState {
@@ -94,10 +101,13 @@ private:
     void evaluateAlarmLevel(const std::string& sensorId, size_t levelIndex, int currentValue, double now) {
         auto& state = sensorStates[sensorId].levelStates[levelIndex];
         auto& config = sensorConfigs[sensorId].levels[levelIndex];
+        auto& limits = sensorConfigs[sensorId].limits;
+        auto &limit =  limits.threshold[levelIndex];
+        auto &hyst =  limits.threshold[3];
 
         // Trigger alarm
         //std::cout << " levelIndex " << levelIndex << " currentValue :" << currentValue << " Threshold :" << config.threshold << std::endl;   
-        if (currentValue >= config.threshold) {
+        if (currentValue >= limit) {
             // pause reset
             if (state.isResetting) {
                 state.lastResetTime += (now - state.lastSeenTime);
@@ -131,7 +141,8 @@ private:
             }
         }
         // Reset alarm
-        else if (currentValue < config.threshold - config.hysteresis) {
+        // todo allow -ve hyst
+        else if (currentValue < (limit - hyst)) {
             //pause trigger
             if (state.isTriggering ) {
                 state.lastTriggerTime += (now - state.lastSeenTime);
@@ -186,13 +197,14 @@ void resetAction(const std::string& sensorId, int level) {
 int main() {
     AlarmMonitor monitor;
     AlarmMonitor::SensorConfig config;
-            int threshold; int hysteresis; double onsetDelay; double resetDelay; bool isLatched;
+    int threshold; int hysteresis; double onsetDelay; double resetDelay; bool isLatched;
 
-    config.levels = {
+        config.limits = {100, 150,200, 10};
+        config.levels = {
         {100, 10, 1.0, 1.0, 5.0, false, onsetAction, resetAction, alarmAction},
         {150, 10, 1.0, 1.0, 5.0, false, onsetAction, resetAction, alarmAction},
         {200, 10, 1.0, 1.0, 5.0, false, onsetAction, resetAction, alarmAction}
-    };
+        };
     monitor.configureSensor("TemperatureSensor1", config);
     monitor.registerCallback("TemperatureSensor1", alarmAction);
 
