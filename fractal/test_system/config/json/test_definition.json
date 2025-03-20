@@ -641,6 +641,20 @@
                         ]
                 },
                 {
+                    "test": "sbmu_clear_single", 
+                    "name": "sbmu_clear_single", 
+                    "cat": "sbmu_acc",
+                    "desc": " clears Accumulated single charge capacity    ",
+                    "notes":"  TOD needs \"using xyz [set/get]\"",
+                    "notes1":"setmb sbmu:hold:545 1 causes the Accumulated value to reset needs to put the system in test mode and inject a value",
+                    "notes2":"TODO  needs to put the system in test mode and inject a value",
+                    "items":[
+                        {"action":"get sbmu:input:Accumulated_single_charge_capacity 8",  "desc": "show data so far",        "data":[]},
+                        {"action":"setmb sbmu:hold:545 1 ",                               "desc": "clear acc data",          "data":[1]},
+                        {"action":"get sbmu:input:Accumulated_single_charge_capacity 8",  "desc": "show cleared",            "data":[]}
+                    ]
+                },
+                {
                     "test": "sbmu_bits", 
                     "name": "sbmu_bits", 
                     "cat": "sbmu_bits",

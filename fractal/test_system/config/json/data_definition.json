@@ -2,16 +2,23 @@
   {
       "Title": " Primary SBMS Memory Layout ",
       "Description": "reference source for the system data_tables ",
-      "Release": "0.9.2 ",
-      "Version": "15",
-      "DateCreated": "02_05_2025",
-      "DateModified": "02_27_2025",
+      "Release": "0.9.3 ",
+      "Version": "16",
+      "DateCreated": "03_17_2025",
+      "DateModified": "03_17_2025",
       "CreatedBy": "Phil Wilshire",
       "ModifiedBy": "Phil Wilshire",
       "ApprovedBy": "John Calcagni (soon)"
   },
   { "table": "rack:sm16", "items":[
-    {"name":                                           "online", "offset": 26626, "size": 1}
+    {"name":                                           "online", "offset": 26626, "size": 1},
+    {"name":                                         "rs_485_1", "offset": 7182, "size": 16},
+    {"name":                                         "rs_485_2", "offset": 7198, "size": 16},
+    {"name":                                       "config_cfg", "offset": 7218, "size": 20},
+    {"name":                                           "can_id", "offset": 7294, "size": 2},
+    {"name":                                     "can_0_errors", "offset": 7296, "size": 2},
+    {"name":                                     "can_1_errors", "offset": 7298, "size": 2},
+    {"name":                                     "can_2_errors", "offset": 7300, "size": 2}
     ]
   },
   { "table": "rtos:sm16", "items":[
@@ -326,8 +333,6 @@
  },
  { "map": "sbmu:input", "items":[
   {"name":                                           "State", "map":"rtos:input:state"},
-  {"name":                     "Accumulated_charge_capacity", "map":"rtos:input:total_charge_cap",   "size":2},
-  {"name":                  "Accumulated_discharge_capacity", "map":"rtos:input:total_discharge_cap", "size":2},
   {"name":                              "Max_Charge_Voltage", "calc":"Max_Charge_Voltage",     "notes":"min of  rtos:input:chargeable_voltage"},
   {"name":                           "Max_Discharge_Voltage", "calc":"Max_Discharge_Voltage",  "notes":"min of rtos:input:chargeable_current"},
   {"name":                              "Max_Charge_Current", "calc":"Max_Charge_Current",     "notes":"sum of rtos:input:chargeable_current"},
@@ -364,10 +369,6 @@
   {"name":                             "Max_cell_SOH_number", "map":"rtos:input:soh_max_num"},
   {"name":                                    "Min_cell_SOH", "map":"rtos:input:min_soh"},
   {"name":                             "Min_cell_SOH_number", "map":"rtos:input:soh_min_num"},
-  {"name":              "Accumulated_single_charge_capacity", "map":"rtos:input:acc_single_charge_cap", "size":2},
-  {"name":           "Accumulated_single_discharge_capacity", "map":"rtos:input:acc_single_discharge_cap","size":2},
-  {"name":                               "Recharge_capacity", "calc":"todo rtos:input:remaining_charge_power ??", "size": 2},
-  {"name":                          "Dischargeable_capacity", "calc":"rtos:input:remaining_charge_power"},
   {"name":                                        "Pack_SOC", "calc":"rtos:input:module_soc", "size":40},
   {"name":                                    "cell_voltage", "map":"rtos:sm16:0xc800", "size":480},
   {"name":                                       "cell_temp", "map":"rtos:sm16:0xc9e0", "size":480},
@@ -616,6 +617,7 @@
    {"name":                               "clear_accumulated",  "offset": 544, "size": 1,"note":"clear accumulated totals"},
    {"name":                                    "clear_single",  "offset": 545, "size": 1,"note":"clear single accumulated totals"},
    {"name":                                  "clear_capacity",  "offset": 546, "size": 1,"note":"clear capacity"},
+   {"name":                                     "time_offset",  "offset": 547, "size": 1,"note":"time_offset in seconds"},
 
    {"name":                                   "max_cell_volt",  "offset": 600, "size": 1},
    {"name":                               "max_cell_volt_num",  "offset": 601, "size": 1},

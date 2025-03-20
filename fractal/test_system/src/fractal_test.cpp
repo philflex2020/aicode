@@ -15,6 +15,14 @@
  /*
  TODO today
  disable event dispatch done in smEvent.cpp (bit of a hack)
+
+using collects results into a named var
+or uses var to set values
+show vars
+show var
+
+
+
  */
 #include <vector>
 #include <string>
@@ -44,7 +52,13 @@
 #include <netinet/in.h>
 #include <unistd.h> // for close
 
+#include <any>
+#include <typeinfo>
+#include <typeindex>  // Make sure to include this
+#include <stdexcept>
+#include <string>
 #include <nlohmann/json.hpp>
+
 
 #include <fractal_test.h>
 #include <fractal_assert.h>
@@ -89,10 +103,7 @@ json sbms_trans_arr = json::array({
     });
 
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <nlohmann/json.hpp>
+
 
 using json = nlohmann::json;
 using namespace std;
@@ -102,6 +113,252 @@ int test_ops_parse(std::map<std::string, OpsTable>& ops_tables, const std::strin
 void test_ops_run(std::map<std::string, OpsTable>& ops_tables,const std::string& ops_table, const std::string& op_desc, std::ostringstream& oss);
 
 
+
+std::map<std::string, std::any> var_tables;
+
+std::string vector_to_string(const std::any& v) {
+    std::ostringstream oss;
+    if (v.type() == typeid(std::vector<int>)) {
+        for (auto& item : std::any_cast<std::vector<int>>(v)) {
+            oss << item << " ";
+        }
+    } else if (v.type() == typeid(std::vector<std::vector<int>>)) {
+        for (auto& vec : std::any_cast<std::vector<std::vector<int>>>(v)) {
+            oss << "[";
+            for (auto& item : vec) {
+                oss << item << " ";
+            }
+            oss << "] ";
+        }
+    } else if (v.type() == typeid(std::vector<std::vector<std::vector<int>>>)) {
+        for (auto& vec2d : std::any_cast<std::vector<std::vector<std::vector<int>>>>(v)) {
+            oss << "[";
+            for (auto& vec : vec2d) {
+                oss << "[";
+                for (auto& item : vec) {
+                    oss << item << " ";
+                }
+                oss << "] ";
+            }
+            oss << "] ";
+        }
+    }
+    return oss.str();
+}
+
+// Function to show specific variable
+void showvar(std::ostringstream &oss, const std::string &name) { 
+    auto it = var_tables.find(name);
+    if (it != var_tables.end()) {
+        oss << it->first << " : ";
+        if (it->second.type() == typeid(int)) {
+            oss << std::any_cast<int>(it->second);
+        } else if (it->second.type() == typeid(std::string)) {
+            oss << std::any_cast<std::string>(it->second);
+        } else if (it->second.type() == typeid(std::vector<int>) ||
+                   it->second.type() == typeid(std::vector<std::vector<int>>) ||
+                   it->second.type() == typeid(std::vector<std::vector<std::vector<int>>>)) {
+            oss << vector_to_string(it->second);
+        }
+        oss << std::endl;
+    } else {
+        oss << "Variable '" << name << "' not found." << std::endl;
+    }
+}
+
+void showvars(std::ostringstream &oss) {
+    for (const auto& table_pair : var_tables) {
+        oss << table_pair.first << " : ";
+        if (table_pair.second.type() == typeid(int)) {
+            oss << std::any_cast<int>(table_pair.second);
+        } else if (table_pair.second.type() == typeid(std::string)) {
+            oss << std::any_cast<std::string>(table_pair.second);
+        } else if (table_pair.second.type() == typeid(std::vector<int>) ||
+                   table_pair.second.type() == typeid(std::vector<std::vector<int>>) ||
+                   table_pair.second.type() == typeid(std::vector<std::vector<std::vector<int>>>)) {
+            oss << vector_to_string(table_pair.second);
+        }
+        oss << std::endl;
+    }
+}
+
+void parseAndSetVar(const std::string& input) {
+    std::istringstream iss(input);
+    std::string command, name, data;
+
+    iss >> command >> name;
+    std::getline(iss, data);
+    data.erase(data.begin(), std::find_if(data.begin(), data.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+
+    if (data.front() == '\'' && data.back() == '\'') {
+        // It's a string
+        data = data.substr(1, data.size() - 2);
+        var_tables[name] = data;
+    } else if (data.find(',') != std::string::npos || data.find(';') != std::string::npos) {
+        // It's a vector or more complex structure
+        std::vector<std::vector<std::vector<int>>> matrix;
+        std::stringstream ss(data);
+        std::string segment;
+
+        while (std::getline(ss, segment, ';')) {
+            std::vector<std::vector<int>> matrix2d;
+            std::stringstream ss2(segment);
+            std::string segment2;
+
+            while (std::getline(ss2, segment2, ',')) {
+                std::vector<int> vec;
+                std::stringstream ss3(segment2);
+                int number;
+
+                while (ss3 >> number) {
+                    vec.push_back(number);
+                }
+
+                matrix2d.push_back(vec);
+            }
+
+            matrix.push_back(matrix2d);
+        }
+
+        if (matrix.size() == 1 && matrix[0].size() == 1) {
+            var_tables[name] = matrix[0][0];
+        } else if (matrix.size() == 1) {
+           var_tables[name] = matrix[0];
+        } else {
+           var_tables[name] = matrix;
+        }
+    } else {
+        // It's a simple number or space-separated list of numbers
+        std::vector<int> vec;
+        std::stringstream ss(data);
+        int num;
+        while (ss >> num) {
+            vec.push_back(num);
+        }
+
+        if (vec.size() == 1) {
+            var_tables[name] = vec[0];
+        } else {
+            var_tables[name] = vec;
+        }
+    }
+}
+
+void parseAndSetVar(const std::string& name, const std::string& value) {
+    // Trim value from leading/trailing whitespaces and check for quotes
+    std::string trimmed = value;
+    trimmed.erase(0, trimmed.find_first_not_of(" \t\n\r\f\v")); // Left trim
+    trimmed.erase(trimmed.find_last_not_of(" \t\n\r\f\v") + 1); // Right trim
+
+    if (trimmed.front() == '\'' && trimmed.back() == '\'') { // Check for single-quoted string
+        trimmed = trimmed.substr(1, trimmed.size() - 2);
+        var_tables[name] = trimmed;
+    } else if (std::all_of(trimmed.begin(), trimmed.end(), ::isdigit)) { // Check if all are digits
+        var_tables[name] = std::stoi(trimmed);
+    } else { // Parse as vector
+        std::vector<std::vector<std::vector<int>>> matrix;
+        std::stringstream ss(trimmed);
+        std::string segment;
+
+        while (std::getline(ss, segment, ';')) { // parse 3D segments
+            std::vector<std::vector<int>> matrix2d;
+            std::stringstream ss2(segment);
+            std::string segment2;
+
+            while (std::getline(ss2, segment2, ',')) { // parse 2D segments
+                std::vector<int> vec;
+                std::stringstream ss3(segment2);
+                int number;
+
+                while (ss3 >> number) {
+                    vec.push_back(number);
+                }
+
+                matrix2d.push_back(vec);
+            }
+
+            matrix.push_back(matrix2d);
+        }
+
+        if (matrix.size() == 1 && matrix[0].size() == 1) {
+            var_tables[name] = matrix[0][0]; // Single vector
+        } else if (matrix.size() == 1) {
+            var_tables[name] = matrix[0]; // 2D vector
+        } else {
+            var_tables[name] = matrix; // 3D vector
+        }
+    }
+}
+
+int test_setvar(std::ostringstream &oss) 
+{
+    parseAndSetVar("name1", "42");
+    parseAndSetVar("name2", "1 2 3 4");
+    parseAndSetVar("name3", "1 2 3 4,5 6 7 8");
+    parseAndSetVar("name4", "'some string'");
+    parseAndSetVar("name5", "1 2 3 4,5 6 7 8;21 22 23 24,25 26 27 28;1 2 3 4,4 3 2 1");
+
+    showvars(oss);
+    return 0;
+}
+
+
+int test_parse_setvar(std::ostringstream &oss) 
+{
+    parseAndSetVar("setvar namex 42");
+    parseAndSetVar("setvar name2 1 2 3 4");
+    parseAndSetVar("setvar name3 1 2 3 4,5 6 7 8");
+    parseAndSetVar("setvar name4 'some string'");
+    parseAndSetVar("setvar name5 1 2 3 4,5 6 7 8;21 22 23 24,25 26 27 28;1 2 3 4,4 3 2 1");
+
+    showvars(oss);
+    return 0;
+}
+
+template<typename T>
+T getVar(const std::string& name) {
+    auto it = var_tables.find(name);
+    if (it != var_tables.end()) {
+        if (it->second.type() == typeid(T)) {
+            return std::any_cast<T>(it->second);
+        } else {
+            throw std::runtime_error("Type mismatch for variable: " + name);
+        }
+    } else {
+        throw std::runtime_error("Variable not found: " + name);
+    }
+}
+std::type_index getVarTypeId(const std::string& name) {
+    auto it = var_tables.find(name);
+    if (it != var_tables.end()) {
+        return std::type_index(it->second.type());
+    } else {
+        throw std::runtime_error("Variable not found: " + name);
+    }
+}
+
+int test_var_types() {
+    // Setup example variables
+    var_tables["int_var"] = 42;
+    var_tables["string_var"] = std::string("hello world");
+
+    try {
+        int value = getVar<int>("int_var");
+        std::cout << "Value of int_var: " << value << std::endl;
+
+        std::type_index type = getVarTypeId("string_var");
+        std::cout << "Type of string_var: " << type.name() << std::endl;
+
+        // This will throw because of type mismatch
+        std::string wrongType = getVar<std::string>("int_var");
+    } catch (const std::exception& e) {
+        std::cout << "Error: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
 
 int read_json_array(json& jdata, const std::string& filename) {
     ifstream file(filename);  // Open the file
@@ -4019,6 +4276,43 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             // oss <<"      set(todo)  - set a value , define the dest by name or table:offset\n";
             return oss.str();
         }
+        else if ( swords[0] == "setvar")
+        {
+            std::ostringstream oss;
+            oss << " swords.size :" << swords.size() << std::endl;
+            if (swords.size() < 2)
+            {
+                oss
+                    << "setvar  set a variable as a value of some kind"
+                    << std::endl
+                    << " examples \n" 
+                        <<    "setvar namex 42\n" 
+                        << "setvar name2 1 2 3 4\n"
+                        << "setvar name3 1 2 3 4,5 6 7 8\n"
+                        << "setvar name4 'some string'\n"
+                        << "setvar name5 1 2 3 4,5 6 7 8;21 22 23 24,25 26 27 28;1 2 3 4,4 3 2 1\n"
+                        << "setvar test \n"
+                        << "setvar show \n"
+                    << std::endl;
+            }
+            else //if (swords.size() >= 2)
+            {
+                if (swords[1] == "test")
+                {
+                    test_parse_setvar(oss);
+                }
+                else if (swords[1] == "show")
+                {
+                    showvars(oss);
+                }
+                else
+                {
+                    parseAndSetVar(query);
+                    oss << " var parsed" << std::endl;
+                }
+            }
+            return oss.str();
+        }
         else if ( swords[0] == "set")
         {
             // set sprcial for testing use rack 20 forall racks
@@ -4818,6 +5112,17 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                         }
                     }
                 }
+                else if (swords[1] == "var"  && swords.size() > 2) 
+                {
+                    for (const auto& table_pair : var_tables) {
+                        if(table_pair.first.find(swords[2]) != std::string::npos) {
+                            oss << table_pair.first << ":";
+                            showvar(oss, table_pair.first);
+                            //oss     << "\n";
+                        }
+                    }
+                }
+
             }
             if (oss.str().empty())
             {
