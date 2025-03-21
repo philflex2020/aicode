@@ -360,6 +360,7 @@ int test_var_types() {
     return 0;
 }
 
+
 int read_json_array(json& jdata, const std::string& filename) {
     ifstream file(filename);  // Open the file
     if (!file.is_open()) {
@@ -4026,12 +4027,35 @@ void parse_repeat(std::vector<int>& offsets, const json& jitem ) {
     }
 }
 
+void resp_to_2dvec(std::vector<std::vector<int>>&data2D, std::stringstream& ossr)
+{
+    
+    // Parsing JSON data
+    json j = json::parse(ossr.str());
+    
+    // Extracting each "data" array and adding it to the 2D vector
+    for (const auto& item : j) {
+        std::vector<int> dataVec = item["data"].get<std::vector<int>>();
+        data2D.push_back(dataVec);
+    }
+}
+
+void resp_to_1dvec(std::vector<int>&data1D, const std::string& resp)
+{
+    
+    // Parsing JSON data
+    json j = json::parse(resp);
+    
+    data1D = j["data"].get<std::vector<int>>();
+}
+
 
 std::string handle_query(const std::string& qustr, std::map<std::string, DataTable>& data_tables, int sock) {
     std::string query = trim(qustr);
     std::istringstream iss(query);
     std::vector<std::string> parts;
     std::string part;
+    std::string use_str;
 
     while (std::getline(iss, part, ':')) {
         parts.push_back(part);
@@ -4041,6 +4065,13 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
     if (parts.size() > 0)
     {
         auto swords = StringWords(query);
+        if ((swords[0] == "using") && (swords.size() >2))
+        {
+            use_str = swords[1];
+            // Erase the first two elements to make swords[0] become what was originally swords[2]
+            swords.erase(swords.begin(), swords.begin() + 2);
+        }
+
         //std::cout << " swords size " << swords.size() << std::endl;
         //std::cout << " parts[0] " << parts[0] << std::endl;
         if ( swords[0] == "help")
@@ -4052,6 +4083,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             oss <<"      tables - show tables\n";
             oss <<"      find - items by offset or name match\n"; 
             oss <<"      get  - websocket: get a value, define the dest by name or table:offset\n";
+            oss <<"      using myvar get  - websocket: get a value, define the dest by name or table:offset  save result in myvar\n";
             oss <<"      set  - websocket: set a value, define the dest by name or table:offset\n";
             oss <<"      getmb  - sbmu modbus: get a value, define the dest by name or table:offset\n";
             oss <<"      setmb  - modbus set a value, (all also) define the dest by name or table:offset\n";
@@ -4062,6 +4094,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             oss <<"      run  [test]         - run a test from test_tables \n";
             oss <<"      ws_log  [log_name]         - decode a ws_log \n";
             oss <<"      cats  [clear]        - show teet results (cats)\n";
+            oss <<"      setvar [test][show][name <value>]]  - sets up a named value";
             
             return oss.str();
         }
@@ -4472,13 +4505,18 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                 //     << std::endl;
                 if(rack_num == 20)
                 {
+                    oss << "[";
                     for ( auto i = 0 ; i < 20 ; i++)
                     {
+                        if (i> 0)
+                            oss <<",";
+                        oss << "\n";
                         setRackNum(id,i);
                         std::string qstring  = generateIdQuery("get", 202+i, id, "any", (int)values.size(), values);
                         std::string response = run_wscat(g_url, qstring);  // Run the query
                         oss  << response;
                     }
+                    oss << "]";
                 }
                 else
                 {
@@ -4521,6 +4559,9 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                 // oss
                 //     << "id  <0x"<<std::hex << id << std::dec <<"> "
                 //     << std::endl;
+                std::stringstream ossr;
+                ossr << "[";
+                
                 if(rack_num == 20)
                 {
                     for ( auto i = 0 ; i < 20 ; i++)
@@ -4528,14 +4569,34 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                         setRackNum(id,i);
                         std::string qstring  = generateIdQuery("get", 202+i, id, "any", num, values);
                         std::string response = run_wscat(g_url, qstring);  // Run the query
-                        oss  << response;
+                        ossr  << response;
+                        if (i < 19)
+                            ossr <<",";
+
+
                     }
+                    ossr << "]";
+
+                    if( !use_str.empty())
+                    {
+                        std::vector<std::vector<int>>data2D;
+                        resp_to_2dvec(data2D, ossr);
+                        var_tables[use_str] = std::move(data2D);
+                    }
+
+                    oss << ossr.str();
                 }
                 else
                 {
                 std::string qstring  = generateIdQuery("get", 202, id, "any", num, values);
                 //std::cout << " qstring ["<<qstring<<"]\n";
                 std::string response = run_wscat(g_url, qstring);  // Run the query
+                if( !use_str.empty())
+                {
+                    std::vector<int>data1D;
+                    resp_to_1dvec(data1D, response);
+                    var_tables[use_str] = std::move(data1D);
+                }
                 std::cout
                     << " url  ["<<g_url<<"] \n"
                     << " query  ["<<qstring<<"] \n"
@@ -4844,6 +4905,13 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     }
                     return oss.str();
                 }
+                else if (swords[1] == "vars")
+                {
+                    std::ostringstream oss;
+                    showvars(oss);
+                    return oss.str();
+                }
+ 
             }
             std::ostringstream oss;
             oss <<"show :-\n";
