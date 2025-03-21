@@ -4350,7 +4350,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
         {
             // set sprcial for testing use rack 20 forall racks
             std::ostringstream oss;
-            if (swords.size() < 3)
+            if (swords.size() < 2)
             {
                 oss
                     << "set a value <table>:<name|offset>[:rack] <value>"
@@ -4363,7 +4363,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     << "    set rtos:hold:20:max_volts  3456    sets all racks  max_volts to 3456\n"
                     << std::endl;
             }
-            else if (swords.size() > 2)
+            else if ((swords.size() > 2) || (swords.size() > 1 && !use_str.empty()))
             {
                 // oss
                 //     << "set a value  <"<<swords[1]
@@ -4386,18 +4386,38 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
                     printf("running on all racks \n");
                 }
                 //     << "id  <0x"<<std::hex << id << std::dec << "> " << std::endl;
-
                 std::vector<int>values;
-               try {
- 
-                    for (int i = 2; i < swords.size(); i++)
-                    {
-                        values.push_back(std::stoi(swords[i]));
+
+                if(use_str.empty())
+                {                
+                    try {
+                        for (int i = 2; i < swords.size(); i++)
+                        {
+                            values.push_back(std::stoi(swords[i]));
+                        }
+                    }  catch (const std::exception& ex) {
+                            oss <<  " values must be numbers\n";
+                            return oss.str();
                     }
-               }  catch (const std::exception& ex) {
-                    oss <<  " values must be numbers\n";
-                    return oss.str();
-                }               
+                }
+                else
+                {
+                    // Check if use_str is a valid key and the type is correct
+                    auto it = var_tables.find(use_str);
+                    if (it != var_tables.end()) {
+                        try {
+                        // Attempt to use std::any_cast to retrieve the vector<int>
+                            values = std::any_cast<std::vector<int>>(it->second);
+                        } catch (const std::bad_any_cast& e) {
+                            oss << "Type mismatch for key '" << use_str << "': Expected std::vector<int>\n";
+                            std::cerr << oss.str();
+                            return oss.str();
+                        }
+                    } else {
+                        oss << "No such name found : " << use_str << "\n";
+                        return  oss.str();
+                    }
+                }
 
                 if(rack_num == 20)
                 {
