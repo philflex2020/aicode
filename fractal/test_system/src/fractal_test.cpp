@@ -116,6 +116,7 @@ void test_ops_run(std::map<std::string, OpsTable>& ops_tables,const std::string&
 
 std::map<std::string, std::any> var_tables;
 
+
 std::string vector_to_string(const std::any& v) {
     std::ostringstream oss;
     if (v.type() == typeid(std::vector<int>)) {
@@ -3442,7 +3443,7 @@ std::pair<int, std::vector<int>> get_modbus(uint32_t id, int num, std::vector<in
     return {-1, {}};
 } // Run the query
 
-std::pair<int, std::vector<int>> set_modbus(uint32_t id, int num, std::vector<int>data)
+std::pair<int, std::vector<int>> set_modbus(const std::string& mbconn, uint32_t id, int num, std::vector<int>data)
 {
 
     std::ostringstream oss;
@@ -4056,6 +4057,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
     std::vector<std::string> parts;
     std::string part;
     std::string use_str;
+
 
     while (std::getline(iss, part, ':')) {
         parts.push_back(part);
@@ -4713,6 +4715,7 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             uint32_t id = 0;
             std::vector<int>values = {0};
             std::ostringstream oss;
+            std::string mbconn;
             if (swords.size() == 1)
             {
                 oss
@@ -4745,11 +4748,11 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
 
 
                 int num = values.size();
-                auto mbresp = set_modbus(id, num, values);  // Run the query
+                auto mbresp = set_modbus(mbconn, id, num, values);  // Run the query
                 if(mbresp.first == -1)
                 {
                     mbx_client.connect(mb_connect);
-                    mbresp = set_modbus(id, num, values);
+                    mbresp = set_modbus(mbconn, id, num, values);
                 }
                 oss
                     << "\"response\":"<<mbresp.first<<",";
@@ -4770,15 +4773,17 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
             }
             return oss.str();
         }
-        else if ( swords[0] == "setmb")
+        else if ( swords[0].substr(0,5) =="setmb")
         {
             uint32_t id = 0;
+            std::string mbconn = swords[0].substr(3); // starts from "mb..."
+
             std::vector<int>values = {0};
             std::ostringstream oss;
             if (swords.size() == 1)
             {
                 oss
-                    << "getmb a value <table><name|offset using the modbus connectipn"
+                    << "setmb<n> a value <table><name|offset using the modbus connectipn"
                     << std::endl
                     << " examples \n" 
                     << "    setmb sbmu:bits[:rack_num]:1\n" 
@@ -4808,11 +4813,11 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
 
 
                 int num = values.size();
-                auto mbresp = set_modbus(id, num, values);  // Run the query
+                auto mbresp = set_modbus(mbconn, id, num, values);  // Run the query
                 if(mbresp.first == -1)
                 {
                     mbx_client.connect(mb_connect);
-                    mbresp = set_modbus(id, num, values);
+                    mbresp = set_modbus(mbconn, id, num, values);
                 }
 
                 oss
@@ -6463,6 +6468,8 @@ int parse_test_tables(std::map<std::string, TestTable>& data_tables, const std::
 
 // Main Function
 int main(int argc, char* argv[]) {
+    var_tables["mb"] = std::string("192.168.86.209:502");
+
     std::ostringstream cmd;
  // Get the current process ID
     pid_t pid = getpid();
