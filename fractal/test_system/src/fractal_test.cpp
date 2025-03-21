@@ -4051,12 +4051,66 @@ void resp_to_1dvec(std::vector<int>&data1D, const std::string& resp)
 }
 
 
+#include <iostream>
+#include <vector>
+#include <string>
+#include <map>
+#include <algorithm>
+
+
+std::map<std::string, std::string> keyValues;
+
+
+//collect the key / values like on  using repeat 
+bool extractKeyValuePairs(std::map<std::string, std::string>& keyValues, const std::vector<std::string>& keys, std::vector<std::string>& words) {
+    std::vector<std::string>::iterator it = words.begin();
+    bool foundAny = false;
+
+    while (it != words.end()) {
+        auto keyIt = std::find(keys.begin(), keys.end(), *it);
+        if (keyIt != keys.end() && (it + 1 != words.end())) { // Check if it's a key and has a value next
+            std::string key = *it;
+            std::string value = *(it + 1);
+            keyValues[key] = value; // Add to map
+            it = words.erase(it);   // Remove key
+            it = words.erase(it);   // Remove value
+            foundAny = true;
+        } else {
+            ++it;
+        }
+    }
+    return foundAny;
+}
+
+
+int test_extract(std::vector<std::string>& words) {
+    std::vector<std::string> keys = {"using", "on", "repeat"};
+    extractKeyValuePairs(keyValues, keys, words);
+
+    // Print the remaining elements in the vector
+    std::cout << "Remaining words in the vector: ";
+    for (const auto& word : words) {
+        std::cout << word << " ";
+    }
+    std::cout << "\n";
+
+    // Print extracted key-value pairs
+    std::cout << "Extracted key-value pairs:\n";
+    for (const auto& pair : keyValues) {
+        std::cout << pair.first << ": " << pair.second << "\n";
+    }
+
+    return 0;
+}
+
+
 std::string handle_query(const std::string& qustr, std::map<std::string, DataTable>& data_tables, int sock) {
     std::string query = trim(qustr);
     std::istringstream iss(query);
     std::vector<std::string> parts;
     std::string part;
     std::string use_str;
+    std::string on_str;
 
 
     while (std::getline(iss, part, ':')) {
@@ -4067,12 +4121,22 @@ std::string handle_query(const std::string& qustr, std::map<std::string, DataTab
     if (parts.size() > 0)
     {
         auto swords = StringWords(query);
-        if ((swords[0] == "using") && (swords.size() >2))
+        std::vector<std::string> keys = {"using", "on", "repeat"};
+        extractKeyValuePairs(keyValues, keys, swords);
+        if (keyValues.find("using") != keyValues.end())
         {
-            use_str = swords[1];
-            // Erase the first two elements to make swords[0] become what was originally swords[2]
-            swords.erase(swords.begin(), swords.begin() + 2);
+            use_str = keyValues["using"];
         }
+        if (keyValues.find("on") != keyValues.end())
+        {
+            on_str = keyValues["on"];
+        }
+        // if ((swords[0] == "using") && (swords.size() >2))
+        // {
+        //     use_str = swords[1];
+        //     // Erase the first two elements to make swords[0] become what was originally swords[2]
+        //     swords.erase(swords.begin(), swords.begin() + 2);
+        // }
 
         //std::cout << " swords size " << swords.size() << std::endl;
         //std::cout << " parts[0] " << parts[0] << std::endl;
