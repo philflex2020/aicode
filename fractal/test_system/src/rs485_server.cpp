@@ -1,13 +1,12 @@
-#include <stdio.h>
+#include <iostream>
 #include <modbus.h>
-#include <cerrno>
+#include <errno.h>
+#include <vector>
+#include <cstdint>
+#include <map>
 
-// rs485_server
-//gcc -o rs485_server rs485_server.c -lmodbus
-//gcc -o rs485_client rs485_client.c -lmodbus
-
-#include <stdio.h>
-#include <modbus.h>
+// Assuming hex_dump function and other relevant functions are already defined elsewhere in your code.
+//void hex_dump(const char *desc, const uint8_t *data, int len);
 
 // Function to print the data in hexadecimal format
 void hex_dump(const char *desc, const uint8_t *data, int len) {
@@ -62,114 +61,127 @@ void hex_dump(const char *desc, const uint8_t *data, int len) {
     printf("  %s\n", buff);
 }
 
-void print_query_details(modbus_t *ctx, uint8_t *query, int rc) {
-    int length = modbus_get_header_length(ctx);
-    if (rc < 5) {  // Minimum length for a function with data
-        printf("Query too short (%d) to process\n", length);
-       //return;
+enum class RegisterType {
+    HOLDING,
+    INPUT,
+    COIL,
+    DISCRETE_INPUT
+};
+
+struct DataItem {
+    uint16_t value = 0;  // Default to 0 for non-coil types
+    std::string name;
+};
+
+using DataMap = std::map<int, DataItem>;
+
+struct ModbusData {
+    DataMap holdingRegisters;
+    DataMap inputRegisters;
+    DataMap coils;
+    DataMap discreteInputs;
+};
+
+// Assuming modbusData structure and set_register_value/get_register_value functions are defined.
+ModbusData modbusData;
+
+uint16_t get_register_value(std::map<int, DataItem>& register_map, int address) {
+    // Check if the address exists in the map
+    auto it = register_map.find(address);
+    if (it != register_map.end()) {
+        return it->second.value;  // Return the existing value
+    } else {
+        // If not present, initialize with a default value
+        DataItem item;
+        register_map[address] = item;  // Initialize with default value, e.g., 0
+        register_map[address].value = 0;  // Initialize with default value, e.g., 0
+        return 0;  // Return the newly set default value
     }
-
-    int slave_id = query[0];
-    int function_code = query[1];
-    int address = (query[2] << 8) + query[3];
-
-    // For typical read and write functions
-    int quantity = (query[4] << 8) + query[5];  // This applies for read coils, read holding registers, etc.
-
-    printf("Received function %d from slave %d at address %d for %d registers/values\n",
-           function_code, slave_id, address, quantity);
 }
 
-void xprint_query_details(modbus_t *ctx, uint8_t *query) {
-//    int header_length = modbus_get_header_length(ctx);
-//    int function_code = query[header_length - 1];  // Function code is the byte after the header
-            // Print details about the request (extracting relevant data from the query)
-            int header_length = modbus_get_header_length(ctx);
-            int function_code = query[header_length - 1];
-            int address = (query[header_length] << 8) + query[header_length + 1];
-            int num = (query[header_length + 2] << 8) + query[header_length + 3];
-            
-            printf("Received function %d at address %d for %d registers\n", function_code, address, num);
+void set_register_value(std::map<int, DataItem>& register_map, int address, uint16_t value) {
+    register_map[address].value = value;  // Set or overwrite the value at the address
+}
+void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mapping_t* mb_mapping) {
+    int header_length = modbus_get_header_length(ctx);
+    uint8_t function_code = query[1];
+    uint16_t address = (query[2] << 8) + query[3];
+    uint16_t num = (query[4] << 8) + query[5];
 
-    // // Extracting the starting address and number of registers from the query
-    // // These are stored in the bytes following the function code, big-endian format
-    // int address = (query[header_length] << 8) + query[header_length + 1];
-    // int num = (query[header_length + 2] << 8) + query[header_length + 3];
+    DataMap* target_map = nullptr;
+    switch (function_code) {
+        case MODBUS_FC_READ_HOLDING_REGISTERS:
+        case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
+        case MODBUS_FC_WRITE_SINGLE_REGISTER:
+            target_map = &modbusData.holdingRegisters;
+            break;
+        case MODBUS_FC_READ_INPUT_REGISTERS:
+            target_map = &modbusData.inputRegisters;
+            break;
+        case MODBUS_FC_READ_COILS:
+        case MODBUS_FC_WRITE_MULTIPLE_COILS:
+        case MODBUS_FC_WRITE_SINGLE_COIL:
+            target_map = &modbusData.coils;
+            break;
+        case MODBUS_FC_READ_DISCRETE_INPUTS:
+            target_map = &modbusData.discreteInputs;
+            break;
+        default:
+            std::cerr << "Unsupported function code received: " << static_cast<int>(function_code) << std::endl;
+            return;
+    }
 
-    // // Depending on the function code, you might want to handle more or less data
-    // printf("Data received - Function Code: %d, Starting Register: %d, Number of Registers: %d\n", function_code, address, num);
+    if (function_code == MODBUS_FC_READ_HOLDING_REGISTERS ||
+        function_code == MODBUS_FC_READ_INPUT_REGISTERS ||
+        function_code == MODBUS_FC_READ_COILS ||
+        function_code == MODBUS_FC_READ_DISCRETE_INPUTS) {
+        // Handling read request
+        std::vector<uint8_t> response(3 + 2 * num); // Slave ID, Function Code, Byte Count + Data
+        response[0] = query[0];  // Slave ID
+        response[1] = query[1];  // Function Code
+        response[2] = num * 2;   // Byte Count (number of bytes to follow)
 
-    // For function codes that involve writing, print the new values (assuming holding registers for simplicity)
-    if (function_code == 0x10 || function_code == 0x06) { // Preset Multiple Registers or Preset Single Register
-        printf("Values: ");
-        for (int i = 0; i < num; i++) {
-            int value = (query[header_length + 5 + 2 * i] << 8) + query[header_length + 5 + 2 * i + 1];
-            printf("%d ", value);
+        for (int i = 0; i < num; ++i) {
+            uint16_t value = get_register_value(*target_map, address + i);
+            response[3 + 2 * i] = value >> 8;
+            response[4 + 2 * i] = value & 0xFF;
         }
-        printf("\n");
+
+        modbus_reply(ctx, response.data(), 3 + 2 * num, nullptr);
+    } else if (function_code == MODBUS_FC_WRITE_MULTIPLE_REGISTERS ||
+               function_code == MODBUS_FC_WRITE_SINGLE_REGISTER ||
+               function_code == MODBUS_FC_WRITE_MULTIPLE_COILS ||
+               function_code == MODBUS_FC_WRITE_SINGLE_COIL) {
+        // Handling write request
+        for (int i = 0; i < num; ++i) {
+            uint16_t value = (query[7 + 2 * i] << 8) + query[8 + 2 * i];
+            set_register_value(*target_map, address + i, value);
+        }
+        modbus_reply(ctx, query, rc, nullptr);  // Echo the request as the response
     }
 }
 
-
-int start_server() {
-    modbus_t *ctx;
-    modbus_mapping_t *mb_mapping;
-
-    // Create a new RTU context with the specified serial parameters
-    ctx = modbus_new_rtu("/dev/ttyUSB5", 115200, 'N', 8, 1);
-    if (ctx == NULL) {
-        fprintf(stderr, "Unable to create the libmodbus context\n");
-        return -1;
-    }
-
-    // Set the Modbus address of this server
-    modbus_set_slave(ctx, 1);
-
-    // Allocate memory for the Modbus mapping
-    mb_mapping = modbus_mapping_new(0, 0, 100, 0);
-    if (mb_mapping == NULL) {
-        fprintf(stderr, "Failed to allocate mapping: %s\n", modbus_strerror(errno));
-        modbus_free(ctx);
-        return -1;
-    }
-
-    // Set up a sample value: write 12345 to the first holding register
-    mb_mapping->tab_registers[0] = 12345;
-
-    // Start listening for incoming queries
+int main() {
+    modbus_t* ctx = modbus_new_rtu("/dev/ttyUSB0", 19200, 'N', 8, 1);
+    modbus_mapping_t* mb_mapping = modbus_mapping_new(0, 0, 100, 100);
     if (modbus_connect(ctx) == -1) {
         fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
         modbus_free(ctx);
-        modbus_mapping_free(mb_mapping);
         return -1;
     }
 
-    for (;;) {
-        uint8_t query[MODBUS_RTU_MAX_ADU_LENGTH];
+    uint8_t query[MODBUS_RTU_MAX_ADU_LENGTH];
+    while (true) {
         int rc = modbus_receive(ctx, query);
-
         if (rc > 0) {
-            hex_dump("Received Data", query, rc);  // Call to hex dump function
-            print_query_details(ctx, query, rc);
-            modbus_reply(ctx, query, rc, mb_mapping);
+            hex_dump("Received Data", query, rc);
+            process_modbus_request(ctx, query, rc, mb_mapping);
         } else if (rc == -1) {
-            // Connection closed or error
-            break;
+            break;  // Error or client disconnected
         }
     }
 
-    printf("Quit the loop: %s\n", modbus_strerror(errno)); 
-
-    // Clean up
-    modbus_mapping_free(mb_mapping);
     modbus_close(ctx);
     modbus_free(ctx);
-
-    return 0;
-}
-
-int main(int argc, char * argv[])
-{
-    start_server();
     return 0;
 }
