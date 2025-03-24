@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <map>
 
+// concept is that we deinf a name that gives us a connection a data_server and a client or a server
+
 // Assuming hex_dump function and other relevant functions are already defined elsewhere in your code.
 //void hex_dump(const char *desc, const uint8_t *data, int len);
 
@@ -102,6 +104,36 @@ uint16_t get_register_value(std::map<int, DataItem>& register_map, int address) 
 void set_register_value(std::map<int, DataItem>& register_map, int address, uint16_t value) {
     register_map[address].value = value;  // Set or overwrite the value at the address
 }
+
+
+std::vector<uint8_t> pack_bits(const std::vector<uint8_t>& bits) {
+    size_t byte_count = (bits.size() + 7) / 8;
+    std::vector<uint8_t> packed(byte_count, 0);
+    for (size_t i = 0; i < bits.size(); ++i) {
+        if (bits[i]) {
+            packed[i / 8] |= (1 << (i % 8));
+        }
+    }
+    return packed;
+}
+
+std::vector<uint8_t> unpack_bits(const uint8_t* data, size_t bit_count) {
+    std::vector<uint8_t> bits(bit_count);
+    for (size_t i = 0; i < bit_count; ++i) {
+        bits[i] = (data[i / 8] >> (i % 8)) & 0x01;
+    }
+    return bits;
+}
+
+void print_bits(const std::vector<uint8_t>& bits) {
+    for (size_t i = 0; i < bits.size(); ++i) {
+        std::cout << static_cast<int>(bits[i]);
+        if (i % 8 == 7) std::cout << ' ';
+    }
+    std::cout << "\n";
+}
+
+// run on a server
 void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mapping_t* mb_mapping) {
     int header_length = modbus_get_header_length(ctx);
     uint8_t function_code = query[1];
@@ -131,27 +163,68 @@ void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mappin
             return;
     }
 
-    if (function_code == MODBUS_FC_READ_HOLDING_REGISTERS ||
-        function_code == MODBUS_FC_READ_INPUT_REGISTERS ||
+    if (
         function_code == MODBUS_FC_READ_COILS ||
         function_code == MODBUS_FC_READ_DISCRETE_INPUTS) {
-        // Handling read request
-        std::vector<uint8_t> response(3 + 2 * num); // Slave ID, Function Code, Byte Count + Data
-        response[0] = query[0];  // Slave ID
-        response[1] = query[1];  // Function Code
-        response[2] = num * 2;   // Byte Count (number of bytes to follow)
+            std::vector<uint8_t> bit_values;
+            for (int i = 0; i < num; ++i) {
+                uint16_t v = get_register_value(*target_map, address + i);
+                bit_values.push_back(v & 0x01);  // Only LSB used
+            }
+            
+            auto packed = pack_bits(bit_values);
+            
+            std::vector<uint8_t> response;
+            response.push_back(query[0]);           // Slave ID
+            response.push_back(function_code);      // Function code
+            response.push_back(packed.size());      // Byte count
+            response.insert(response.end(), packed.begin(), packed.end());
+            
+            modbus_reply(ctx, response.data(), response.size(), nullptr);
+            return;
+        
+    } else if (
+        function_code == MODBUS_FC_READ_HOLDING_REGISTERS ||
+        function_code == MODBUS_FC_READ_INPUT_REGISTERS) {
+            // Handling read request
+            std::vector<uint8_t> response(3 + 2 * num); // Slave ID, Function Code, Byte Count + Data
+            response[0] = query[0];  // Slave ID
+            response[1] = query[1];  // Function Code
+            response[2] = num * 2;   // Byte Count (number of bytes to follow)
 
-        for (int i = 0; i < num; ++i) {
-            uint16_t value = get_register_value(*target_map, address + i);
-            response[3 + 2 * i] = value >> 8;
-            response[4 + 2 * i] = value & 0xFF;
-        }
+            for (int i = 0; i < num; ++i) {
+                uint16_t value = get_register_value(*target_map, address + i);
+                response[3 + 2 * i] = value >> 8;
+                response[4 + 2 * i] = value & 0xFF;
+            }
 
-        modbus_reply(ctx, response.data(), 3 + 2 * num, nullptr);
+            modbus_reply(ctx, response.data(), 3 + 2 * num, nullptr);
+            return;
+            
+    } else if ( function_code == MODBUS_FC_WRITE_MULTIPLE_COILS) {
+            int byte_count = query[6];
+            const uint8_t* data_start = &query[7];
+            auto bits = unpack_bits(data_start, num);
+        
+            for (int i = 0; i < num; ++i) {
+                set_register_value(*target_map, address + i, bits[i] ? 1 : 0);
+            }
+        
+            // Respond with echo of address + quantity
+            uint8_t response[6] = {
+                query[0], query[1],
+                static_cast<uint8_t>(address >> 8), static_cast<uint8_t>(address & 0xFF),
+                static_cast<uint8_t>(num >> 8), static_cast<uint8_t>(num & 0xFF)
+            };
+            modbus_reply(ctx, response, 6, nullptr);
+            return;
+    } else if (function_code == MODBUS_FC_WRITE_SINGLE_COIL) {
+        uint16_t value = (query[4] << 8) + query[5];
+        set_register_value(*target_map, address, (value == 0xFF00) ? 1 : 0);
+        modbus_reply(ctx, query, rc, nullptr);  // Echo full request
+        return;
     } else if (function_code == MODBUS_FC_WRITE_MULTIPLE_REGISTERS ||
-               function_code == MODBUS_FC_WRITE_SINGLE_REGISTER ||
-               function_code == MODBUS_FC_WRITE_MULTIPLE_COILS ||
-               function_code == MODBUS_FC_WRITE_SINGLE_COIL) {
+               function_code == MODBUS_FC_WRITE_SINGLE_REGISTER ){
         // Handling write request
         for (int i = 0; i < num; ++i) {
             uint16_t value = (query[7 + 2 * i] << 8) + query[8 + 2 * i];
@@ -161,7 +234,8 @@ void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mappin
     }
 }
 
-int main() {
+int main(int argc , char * argv[]) {
+
     modbus_t* ctx = modbus_new_rtu("/dev/ttyUSB0", 19200, 'N', 8, 1);
     modbus_mapping_t* mb_mapping = modbus_mapping_new(0, 0, 100, 100);
     if (modbus_connect(ctx) == -1) {
