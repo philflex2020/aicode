@@ -327,7 +327,10 @@
    {"name":                             "config_rs485_115200", "offset": 733, "size": 1},
    {"name":                                      "config_emc", "offset": 734, "size": 1},
    {"name":                        "config_project_202406366", "offset": 735, "size": 1},
-   {"name":                             "config_esmu_bcm_lan", "offset": 736, "size": 1}
+   {"name":                             "config_esmu_bcm_lan", "offset": 736, "size": 1},
+   {"name":                        "config_project_202500652", "offset": 737, "size": 1},
+   {"name":                        "config_project_202500646", "offset": 738, "size": 1},
+   {"name":                              "config_dc_bmm_type", "offset": 739, "size": 1}
    ]
 
  },

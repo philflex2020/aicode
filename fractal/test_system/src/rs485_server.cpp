@@ -70,8 +70,10 @@ enum class RegisterType {
     DISCRETE_INPUT
 };
 
+//this is just  a link to a name ( we'll hold a value as well for now)
 struct DataItem {
-    uint16_t value = 0;  // Default to 0 for non-coil types
+    uint16_t value = 0; 
+    uint32_t id;
     std::string name;
 };
 
