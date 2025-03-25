@@ -223,7 +223,7 @@
                         {"action":"set rtos:sm8:7:0xdda0 60",                "desc": "set soh ",                        "data":[60]},
                         {"action":"get rtos:sm8:7:0xdda0 1",                 "desc": "get soh ",                        "data":[60]},
                         {"action":"get rtos:input:7:soh 1",                  "desc": "get soh from modbus  ",           "data":[60]},
-                        {"action":"pause:1000"},
+                        {"action":"pause:1000",  "desc": " pause",    "data":[]},
                         {"action":"get sbmu:input:7:119 1",                  "desc": "get sbmu SOH 1 (119)",            "data":[60]}
                         ]
             },
@@ -482,7 +482,52 @@
                         {"action":"get sbmu:input:7:Total_Current",  "desc": "get  total current",    "data":[16321]}
                         ]
             },
+            {
+                "test": "r7rs", 
+                "name": "r7rs", 
+                "desc": "config options for rack 7  ",
+                "cat": "config_1",
+                "note1": "select rack 7 and then trigger 703,704,705,706, 707",
+                "items":[
+                        {"action":"setmb sbmu:hold:500 6 ",                  "desc": " reset rack overrides",           "data":[6]},
 
+                        {"action":"setmb sbmu:hold:1703 1",                  "desc": " set rack 7 excommu_enable 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:excommu_enable ",         "desc": " check that its enabled ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1703 0",                  "desc": " set rack 7 excommu_enable 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:excommu_enable ",         "desc": " check that its not enabled ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1704 1",                  "desc": " set rack 7 ex_can_prot_code 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:ex_can_prot_code ",      "desc": " check that its enabled ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1704 0",                  "desc": " set rack 7 ex_can_prot_code 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:ex_can_prot_code ",         "desc": " check that its not enabled ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1705 1",                  "desc": " set rack 7 can_chan_number 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:can_chan_num ",      "desc": " check that its set ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1705 0",                  "desc": " set rack 7 ex_can_chan_num 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:can_chan_num ",         "desc": " check that its set ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1706 1",                  "desc": " set rack 7 rs485_prot_code 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_prot_code ",      "desc": " check that its set ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1706 0",                  "desc": " set rack 7 rs485_prot_code 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_prot_code ",         "desc": " check that its correct ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1707 1",                  "desc": " set rack 7 rs485_chan_num 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_chan_num ",      "desc": " check that its set ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1707 0",                  "desc": " set rack 7 rs485_chan_num 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_chan_num ",         "desc": " check that its correct ",    "data":[0]}
+
+                    ]
+            },
             {
                 "test": "r20maxv-xx", 
                 "name": "r20maxv-xx", 
