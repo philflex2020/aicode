@@ -29,7 +29,7 @@ int main() {
     if (modbus_read_registers(ctx, 0, 1, reg) == -1) {
         fprintf(stderr, "Failed to read register: %s\n", modbus_strerror(errno));
     } else {
-        printf("Register 0: %d\n", reg[0]);
+        printf("First Read Register 0: %d\n", reg[0]);
     }
 
     // Write to a register
@@ -38,6 +38,13 @@ int main() {
         fprintf(stderr, "Failed to write register: %s\n", modbus_strerror(errno));
     } else {
         printf("Written 54321 to register 0\n");
+    }
+
+    // Read holding registers
+    if (modbus_read_registers(ctx, 0, 1, reg) == -1) {
+        fprintf(stderr, "Failed to read register: %s\n", modbus_strerror(errno));
+    } else {
+        printf("Second Read Register 0: %d\n", reg[0]);
     }
 
     // Close the connection and clean up

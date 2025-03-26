@@ -156,7 +156,7 @@ void print_query_details(modbus_t *ctx, uint8_t *query, int rc) {
 
 // run on a server
 void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mapping_t* mb_mapping) {
-    print_query_details(ctx, query, rc);
+    //print_query_details(ctx, query, rc);
     int header_length = modbus_get_header_length(ctx);
     int slave_id = query[0];
     uint8_t function_code = query[1];
@@ -166,123 +166,90 @@ void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mappin
            function_code, slave_id, address, num);
 
     DataMap* target_map = nullptr;
-    switch (function_code) {
-        case MODBUS_FC_READ_HOLDING_REGISTERS:
-        case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
-        case MODBUS_FC_WRITE_SINGLE_REGISTER:
-            target_map = &modbusData.holdingRegisters;
-            break;
-        case MODBUS_FC_READ_INPUT_REGISTERS:
-            target_map = &modbusData.inputRegisters;
-            break;
-        case MODBUS_FC_READ_COILS:
-        case MODBUS_FC_WRITE_MULTIPLE_COILS:
-        case MODBUS_FC_WRITE_SINGLE_COIL:
-            target_map = &modbusData.coils;
-            break;
-        case MODBUS_FC_READ_DISCRETE_INPUTS:
-            target_map = &modbusData.discreteInputs;
-            break;
-        default:
-            std::cerr << "Unsupported function code received: " << static_cast<int>(function_code) << std::endl;
-            return;
-    }
 
-    printf(" still running #1 \n");
     if (
         function_code == MODBUS_FC_READ_COILS ||
         function_code == MODBUS_FC_READ_DISCRETE_INPUTS) {
-            std::vector<uint8_t> bit_values;
-            for (int i = 0; i < num; ++i) {
-                uint16_t v = get_register_value(*target_map, address + i);
-                bit_values.push_back(v & 0x01);  // Only LSB used
-            }
-            
-            auto packed = pack_bits(bit_values);
-            
-            std::vector<uint8_t> response;
-            response.push_back(query[0]);           // Slave ID
-            response.push_back(function_code);      // Function code
-            response.push_back(packed.size());      // Byte count
-            response.insert(response.end(), packed.begin(), packed.end());
-            
-            modbus_reply(ctx, response.data(), response.size(), nullptr);
-            return;
-        
-    } else if (
-        function_code == MODBUS_FC_READ_HOLDING_REGISTERS ||
-        function_code == MODBUS_FC_READ_INPUT_REGISTERS) {
-            // Handling read request
-            std::vector<uint8_t> response(3 + 2 * num); // Slave ID, Function Code, Byte Count + Data
-            response[0] = query[0];  // Slave ID
-            response[1] = query[1];  // Function Code
-            response[2] = num * 2;   // Byte Count (number of bytes to follow)
-            printf(" still running #2\n");
 
+        if (function_code == MODBUS_FC_READ_COILS) {
+            target_map = &modbusData.coils;
             for (int i = 0; i < num; ++i) {
-                printf(" still running #3 i %d\n", i);
                 uint16_t value = get_register_value(*target_map, address + i);
-                response[3 + 2 * i] = value >> 8;
-                response[4 + 2 * i] = value & 0xFF;
+                mb_mapping->tab_bits[address - mb_mapping->start_bits + i] = value;
+            }
+        } else if (function_code == MODBUS_FC_READ_DISCRETE_INPUTS) {
+            target_map = &modbusData.discreteInputs;
+            for (int i = 0; i < num; ++i) {
+                uint8_t value = get_register_value(*target_map, address + i); // Similar to get_coil_value but for inputs
+                mb_mapping->tab_input_bits[address - mb_mapping->start_input_bits + i] = value;
+            }
+        }        
+       
+    } else if (
+        function_code == MODBUS_FC_READ_INPUT_REGISTERS) {
+            target_map = &modbusData.inputRegisters;
+            for (int i = 0; i < num; ++i) {
+                uint16_t value = get_register_value(*target_map, address + i);
+                mb_mapping->tab_registers[ mb_mapping->start_registers + i] = value;
             }
 
-            printf(" still running #4\n");
-            modbus_reply(ctx, query, rc, mb_mapping);
-            //modbus_reply(ctx, response.data(), 3 + 2 * num, mb_mapping);
-            return;
-            
-    } else if ( function_code == MODBUS_FC_WRITE_MULTIPLE_COILS) {
-            int byte_count = query[6];
-            const uint8_t* data_start = &query[7];
-            auto bits = unpack_bits(data_start, num);
-        
+    } else if ( function_code == MODBUS_FC_READ_HOLDING_REGISTERS) {
+            target_map = &modbusData.holdingRegisters;
             for (int i = 0; i < num; ++i) {
-                set_register_value(*target_map, address + i, bits[i] ? 1 : 0);
+                uint16_t value = get_register_value(*target_map, address + i);
+                mb_mapping->tab_registers[ mb_mapping->start_registers + i] = value;
             }
-        
-            // Respond with echo of address + quantity
-            uint8_t response[6] = {
-                query[0], query[1],
-                static_cast<uint8_t>(address >> 8), static_cast<uint8_t>(address & 0xFF),
-                static_cast<uint8_t>(num >> 8), static_cast<uint8_t>(num & 0xFF)
-            };
-            modbus_reply(ctx, response, 6, nullptr);
-            return;
+
+    } else if ( function_code == MODBUS_FC_WRITE_MULTIPLE_COILS) {
+        target_map = &modbusData.coils;
+        int byte_count = query[6];
+        const uint8_t* data_start = &query[7];
+        auto bits = unpack_bits(data_start, num);
+    
+        for (int i = 0; i < num; ++i) {
+            set_register_value(*target_map, address + i, bits[i] ? 1 : 0);
+        }
+    
     } else if (function_code == MODBUS_FC_WRITE_SINGLE_COIL) {
+        target_map = &modbusData.coils;
         uint16_t value = (query[4] << 8) + query[5];
+
         set_register_value(*target_map, address, (value == 0xFF00) ? 1 : 0);
-        modbus_reply(ctx, query, rc, nullptr);  // Echo full request
-        return;
+
     } else if (function_code == MODBUS_FC_WRITE_MULTIPLE_REGISTERS ||
                function_code == MODBUS_FC_WRITE_SINGLE_REGISTER ){
-        // Handling write request
+        target_map = &modbusData.holdingRegisters;
 
         if (function_code == MODBUS_FC_WRITE_SINGLE_REGISTER ){
             printf(" still running #2a value %d\n", num);
             set_register_value(*target_map, address, num);
         } else {
-
             for (int i = 0; i < num; ++i) {
                 uint16_t value = (query[7 + 2 * i] << 8) + query[8 + 2 * i];
-                printf(" still running #3a i %d value %d\n", i , value);
-                //set_register_value(*target_map, address + i, value);
+                //printf(" still running #3a i %d value %d\n", i , value);
+                set_register_value(*target_map, address + i, value);
             }
         }
-        modbus_reply(ctx, query, rc, mb_mapping);  // Echo the request as the response
     }
+    modbus_reply(ctx, query, rc, mb_mapping);
+
 }
 
 int main(int argc , char * argv[]) {
     std::string server("/dev/ttyUSB5");
     if(argc>1)
         server = std::string(argv[1]);
+    printf(" Connecting to [%s] \n", server.c_str());
     modbus_t* ctx = modbus_new_rtu(server.c_str(), 9600, 'N', 8, 1);
-    modbus_mapping_t* mb_mapping = modbus_mapping_new(256, 256, 256, 256);
     if (modbus_connect(ctx) == -1) {
         fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
         modbus_free(ctx);
         return -1;
     }
+    printf(" Connect to [%s]  OK \n", server.c_str());
+    modbus_mapping_t* mb_mapping = modbus_mapping_new(256, 256, 256, 256);
+    printf(" Mapping  OK \n");
+
 //    int fd = modbus_get_socket(ctx);
 //    std::cout << " server ["<<server <<"] using fd  " << fd << std::endl;
 // Set the Modbus address of this server
@@ -292,7 +259,7 @@ int main(int argc , char * argv[]) {
     uint8_t query[MODBUS_RTU_MAX_ADU_LENGTH];
 
     while (true) {
-        //std::cout <<" mb server  waiting for data "<< std::endl;
+        std::cout <<" mb server  waiting for data "<< std::endl;
         int rc = modbus_receive(ctx, query);
         int err = errno;
         std::cout <<" mb server  got rc  ["<<(int) rc << "]"<< std::endl;
@@ -300,6 +267,7 @@ int main(int argc , char * argv[]) {
         if (rc > 0) {
             hex_dump("Received Data", query, rc);
             //modbus_reply(ctx, query, rc, mb_mapping);
+            std::cout <<" mb server  processing request "<< std::endl;
 
             process_modbus_request(ctx, query, rc, mb_mapping);
         } else if (rc == -1) {
