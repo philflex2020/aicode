@@ -483,6 +483,20 @@
                         ]
             },
             {
+                "test": "r7pr4", 
+                "name": "r7pr4", 
+                "desc": "test rs protocol 4  rack 7  ",
+                "cat": "config_2",
+                "note1": "select rack 7 and then trigger 706, 707",
+                "items":[
+                        {"action":"setmb sbmu:hold:500 6 ",                  "desc": " reset rack overrides",           "data":[6]},
+
+                        {"action":"setmb sbmu:hold:1706 4",                  "desc": " set rack 7 protocol 4 ",   "data":[4]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"setmb sbmu:hold:1707 5",                  "desc": " set rack 7 run and ch 1 0",    "data":[5]}
+                ]
+            },
+            {
                 "test": "r7rs", 
                 "name": "r7rs", 
                 "desc": "config options for rack 7  ",

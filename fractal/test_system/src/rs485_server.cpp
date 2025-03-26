@@ -135,12 +135,35 @@ void print_bits(const std::vector<uint8_t>& bits) {
     std::cout << "\n";
 }
 
+
+void print_query_details(modbus_t *ctx, uint8_t *query, int rc) {
+    int length = modbus_get_header_length(ctx);
+    if (rc < 5) {  // Minimum length for a function with data
+        printf("Query too short (%d) to process\n", length);
+       //return;
+    }
+
+    int slave_id = query[0];
+    int function_code = query[1];
+    int address = (query[2] << 8) + query[3];
+
+    // For typical read and write functions
+    int quantity = (query[4] << 8) + query[5];  // This applies for read coils, read holding registers, etc.
+
+    printf("Received function %d from slave %d at address %d for %d registers/values\n",
+           function_code, slave_id, address, quantity);
+}
+
 // run on a server
 void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mapping_t* mb_mapping) {
+    print_query_details(ctx, query, rc);
     int header_length = modbus_get_header_length(ctx);
+    int slave_id = query[0];
     uint8_t function_code = query[1];
     uint16_t address = (query[2] << 8) + query[3];
     uint16_t num = (query[4] << 8) + query[5];
+    printf("Received function %d from slave %d at address %d for %d registers/values\n",
+           function_code, slave_id, address, num);
 
     DataMap* target_map = nullptr;
     switch (function_code) {
@@ -165,6 +188,7 @@ void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mappin
             return;
     }
 
+    printf(" still running #1 \n");
     if (
         function_code == MODBUS_FC_READ_COILS ||
         function_code == MODBUS_FC_READ_DISCRETE_INPUTS) {
@@ -193,14 +217,18 @@ void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mappin
             response[0] = query[0];  // Slave ID
             response[1] = query[1];  // Function Code
             response[2] = num * 2;   // Byte Count (number of bytes to follow)
+            printf(" still running #2\n");
 
             for (int i = 0; i < num; ++i) {
+                printf(" still running #3 i %d\n", i);
                 uint16_t value = get_register_value(*target_map, address + i);
                 response[3 + 2 * i] = value >> 8;
                 response[4 + 2 * i] = value & 0xFF;
             }
 
-            modbus_reply(ctx, response.data(), 3 + 2 * num, nullptr);
+            printf(" still running #4\n");
+            modbus_reply(ctx, query, rc, mb_mapping);
+            //modbus_reply(ctx, response.data(), 3 + 2 * num, mb_mapping);
             return;
             
     } else if ( function_code == MODBUS_FC_WRITE_MULTIPLE_COILS) {
@@ -228,31 +256,55 @@ void process_modbus_request(modbus_t* ctx, uint8_t* query, int rc, modbus_mappin
     } else if (function_code == MODBUS_FC_WRITE_MULTIPLE_REGISTERS ||
                function_code == MODBUS_FC_WRITE_SINGLE_REGISTER ){
         // Handling write request
-        for (int i = 0; i < num; ++i) {
-            uint16_t value = (query[7 + 2 * i] << 8) + query[8 + 2 * i];
-            set_register_value(*target_map, address + i, value);
+
+        if (function_code == MODBUS_FC_WRITE_SINGLE_REGISTER ){
+            printf(" still running #2a value %d\n", num);
+            set_register_value(*target_map, address, num);
+        } else {
+
+            for (int i = 0; i < num; ++i) {
+                uint16_t value = (query[7 + 2 * i] << 8) + query[8 + 2 * i];
+                printf(" still running #3a i %d value %d\n", i , value);
+                //set_register_value(*target_map, address + i, value);
+            }
         }
-        modbus_reply(ctx, query, rc, nullptr);  // Echo the request as the response
+        modbus_reply(ctx, query, rc, mb_mapping);  // Echo the request as the response
     }
 }
 
 int main(int argc , char * argv[]) {
-
-    modbus_t* ctx = modbus_new_rtu("/dev/ttyUSB0", 19200, 'N', 8, 1);
-    modbus_mapping_t* mb_mapping = modbus_mapping_new(0, 0, 100, 100);
+    std::string server("/dev/ttyUSB5");
+    if(argc>1)
+        server = std::string(argv[1]);
+    modbus_t* ctx = modbus_new_rtu(server.c_str(), 9600, 'N', 8, 1);
+    modbus_mapping_t* mb_mapping = modbus_mapping_new(256, 256, 256, 256);
     if (modbus_connect(ctx) == -1) {
         fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
         modbus_free(ctx);
         return -1;
     }
+//    int fd = modbus_get_socket(ctx);
+//    std::cout << " server ["<<server <<"] using fd  " << fd << std::endl;
+// Set the Modbus address of this server
+    modbus_set_slave(ctx, 1);
 
+    mb_mapping->tab_registers[0] = 12345;
     uint8_t query[MODBUS_RTU_MAX_ADU_LENGTH];
+
     while (true) {
+        //std::cout <<" mb server  waiting for data "<< std::endl;
         int rc = modbus_receive(ctx, query);
+        int err = errno;
+        std::cout <<" mb server  got rc  ["<<(int) rc << "]"<< std::endl;
+
         if (rc > 0) {
             hex_dump("Received Data", query, rc);
+            //modbus_reply(ctx, query, rc, mb_mapping);
+
             process_modbus_request(ctx, query, rc, mb_mapping);
         } else if (rc == -1) {
+            fprintf(stderr, "Connection failed: %s\n", modbus_strerror(err));
+
             break;  // Error or client disconnected
         }
     }

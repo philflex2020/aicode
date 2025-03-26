@@ -9,7 +9,7 @@ int main() {
     uint16_t reg[1];
 
     // Create a new RTU context
-    ctx = modbus_new_rtu("/dev/ttyUSB6", 115200, 'N', 8, 1);
+    ctx = modbus_new_rtu("/dev/ttyUSB6", 9600, 'N', 8, 1);
     if (ctx == NULL) {
         fprintf(stderr, "Unable to create the libmodbus context\n");
         return -1;
