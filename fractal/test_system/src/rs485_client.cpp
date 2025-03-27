@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <modbus.h>
 #include <cerrno>
+#include <string>
+
 
 // rs485_client
-
-int main() {
+int main(int argc , char * argv[]) {
+    std::string server("/dev/ttyUSB6");
+    if(argc>1)
+        server = std::string(argv[1]);
+    printf(" Connecting to [%s] \n", server.c_str());
     modbus_t *ctx;
     uint16_t reg[1];
 
     // Create a new RTU context
-    ctx = modbus_new_rtu("/dev/ttyUSB6", 9600, 'N', 8, 1);
+    ctx = modbus_new_rtu(server.c_str(), 9600, 'N', 8, 1);
     if (ctx == NULL) {
         fprintf(stderr, "Unable to create the libmodbus context\n");
         return -1;

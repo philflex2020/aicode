@@ -239,45 +239,54 @@ int main(int argc , char * argv[]) {
     std::string server("/dev/ttyUSB5");
     if(argc>1)
         server = std::string(argv[1]);
-    printf(" Connecting to [%s] \n", server.c_str());
-    modbus_t* ctx = modbus_new_rtu(server.c_str(), 9600, 'N', 8, 1);
-    if (modbus_connect(ctx) == -1) {
-        fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
-        modbus_free(ctx);
-        return -1;
-    }
-    printf(" Connect to [%s]  OK \n", server.c_str());
-    modbus_mapping_t* mb_mapping = modbus_mapping_new(256, 256, 256, 256);
-    printf(" Mapping  OK \n");
-
-//    int fd = modbus_get_socket(ctx);
-//    std::cout << " server ["<<server <<"] using fd  " << fd << std::endl;
-// Set the Modbus address of this server
-    modbus_set_slave(ctx, 1);
-
-    mb_mapping->tab_registers[0] = 12345;
-    uint8_t query[MODBUS_RTU_MAX_ADU_LENGTH];
-
-    while (true) {
-        std::cout <<" mb server  waiting for data "<< std::endl;
-        int rc = modbus_receive(ctx, query);
-        int err = errno;
-        std::cout <<" mb server  got rc  ["<<(int) rc << "]"<< std::endl;
-
-        if (rc > 0) {
-            hex_dump("Received Data", query, rc);
-            //modbus_reply(ctx, query, rc, mb_mapping);
-            std::cout <<" mb server  processing request "<< std::endl;
-
-            process_modbus_request(ctx, query, rc, mb_mapping);
-        } else if (rc == -1) {
-            fprintf(stderr, "Connection failed: %s\n", modbus_strerror(err));
-
-            break;  // Error or client disconnected
+    while(true)
+    {
+        printf(" Connecting to [%s] \n", server.c_str());
+        modbus_t* ctx = modbus_new_rtu(server.c_str(), 9600, 'N', 8, 1);
+        if (modbus_connect(ctx) == -1) {
+            fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
+            modbus_free(ctx);
+            return -1;
         }
-    }
+        printf(" Connect to [%s]  OK \n", server.c_str());
+        modbus_mapping_t* mb_mapping = modbus_mapping_new(256, 256, 256, 256);
+        printf(" Mapping  OK \n");
 
-    modbus_close(ctx);
-    modbus_free(ctx);
+    //    int fd = modbus_get_socket(ctx);
+    //    std::cout << " server ["<<server <<"] using fd  " << fd << std::endl;
+    // Set the Modbus address of this server
+        modbus_set_slave(ctx, 1);
+
+        mb_mapping->tab_registers[0] = 12345;
+        uint8_t query[MODBUS_RTU_MAX_ADU_LENGTH];
+
+        while (true) {
+            std::cout <<" mb server  waiting for data "<< std::endl;
+            int rc = modbus_receive(ctx, query);
+            int err = errno;
+            std::cout <<" mb server  got rc  ["<<(int) rc << "]"<< std::endl;
+
+            if (rc > 0) {
+                hex_dump("Received Data", query, rc);
+                //modbus_reply(ctx, query, rc, mb_mapping);
+                std::cout <<" mb server  processing request "<< std::endl;
+
+                process_modbus_request(ctx, query, rc, mb_mapping);
+            } else if (rc == -1) {
+                fprintf(stderr, "Connection failed err %d : %s\n", err, modbus_strerror(err));
+                if(err == 112345690) // invalid crc
+                {
+                    modbus_flush(ctx);
+                }
+                else
+                {
+                    break;  // Error or client disconnected
+                }
+            }
+        }
+
+        modbus_close(ctx);
+        modbus_free(ctx);
+    }
     return 0;
 }
