@@ -3,3 +3,4 @@
 
 g++ -o rs485_server -I /usr/include/modbus src/rs485_server.cpp -lmodbus
 g++ -o rs485_client -I /usr/include/modbus src/rs485_client.cpp -lmodbus
+g++ -o rs485_client_test -I /usr/include/modbus src/rs485_client_test.cpp -lmodbus
