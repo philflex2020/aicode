@@ -23,42 +23,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
-
-// threaded server and client 
-//
-volatile bool running = true;
-enum mode {
-    NONE = 0,
-    RS485_SERVER,
-    RS485_CLIENT
-
-};
-
-// Callback function types
-typedef uint8_t (*WriteCallback)(uint8_t fcode, uint16_t regAddr, uint16_t value, uint16_t *p_out);
-typedef uint8_t (*ReadCallback)(uint8_t fcode, uint16_t regAddr, uint16_t *p_value);
-
-typedef struct {
-    const char *port_name;    // Serial port
-    int baud;
-    char parity;
-    int data_bits;
-    int stop_bits;
-    int mode;   // client / server
-    int fd;
-    volatile int rs485_running;
-    int server_id;
-    WriteCallback write_callback;  // Pointer to write callback function
-    ReadCallback read_callback;    // Pointer to read callback function
-    std::string rdev;
-    int btime;  // byte timeout
-    int ftime;  // repeat time
-    int port;   // if defined switches on relay operation
-    int prot;   // protocol (0 == none) used in client mode 
-    
-//     uint8_t (*write_callback)(uint8_t fcode, uint16_t regAddr, uint16_t value, uint16_t *p_out);
-//     uint8_t (*read_callback)(uint8_t fcode, uint16_t regAddr, uint16_t *p_value);
-} ModbusRTUSettings;
+#include <atomic>
 
 // for modbus rs485client
 struct ModbusMessage {
@@ -95,8 +60,83 @@ public:
 };
 
 
+// threaded server and client 
+//
+volatile bool running = true;
+enum mode {
+    NONE = 0,
+    RS485_SERVER,
+    RS485_CLIENT
+
+};
+
+// Callback function types
+typedef uint8_t (*WriteCallback)(uint8_t fcode, uint16_t regAddr, uint16_t value, uint16_t *p_out);
+typedef uint8_t (*ReadCallback)(uint8_t fcode, uint16_t regAddr, uint16_t *p_value);
+
+typedef struct {
+    std::string port_name;    // Serial port
+    int baud;
+    char parity;
+    int data_bits;
+    int stop_bits;
+    int mode;   // client / server
+    int fd;
+    volatile int rs485_running;
+    WriteCallback write_callback;  // Pointer to write callback function
+    ReadCallback read_callback;    // Pointer to read callback function
+    std::string rdev;
+    int btime;  // byte timeout
+    int ftime;  // repeat time
+    int port;   // if defined switches on relay operation
+    int prot;   // protocol (0 == none) used in client mode 
+    modbus_t *ctx;
+    modbus_mapping_t* mb_mapping;
+    MessageQueue queue;
+
+    std::atomic<int> isClient;
+    std::atomic<int> server_id;
+    std::atomic<int> baudrate;
+    std::atomic<bool> config_update = false;
+
+    std::mutex config_mutex;
+    
+    
+    void update(int newID, int newBaud, int newClient, const std::string& newPort) {
+        std::lock_guard<std::mutex> lock(config_mutex);
+        isClient = newClient;
+        server_id = newID;
+        baudrate = newBaud;
+        port_name = newPort;
+        config_update = true;
+    }
+//     uint8_t (*write_callback)(uint8_t fcode, uint16_t regAddr, uint16_t value, uint16_t *p_out);
+//     uint8_t (*read_callback)(uint8_t fcode, uint16_t regAddr, uint16_t *p_value);
+} ModbusRTUSettings;
+
+
+
 int rs485_baud_decode(int rs485_baud);
 uint16_t rs485_baud_encode(int settings_baud);
+
+std::vector<uint8_t> pack_bits(const std::vector<uint8_t>& bits) {
+    size_t byte_count = (bits.size() + 7) / 8;
+    std::vector<uint8_t> packed(byte_count, 0);
+    for (size_t i = 0; i < bits.size(); ++i) {
+        if (bits[i]) {
+            packed[i / 8] |= (1 << (i % 8));
+        }
+    }
+    return packed;
+}
+
+std::vector<uint8_t> unpack_bits(const uint8_t* data, size_t bit_count) {
+    std::vector<uint8_t> bits(bit_count);
+    for (size_t i = 0; i < bit_count; ++i) {
+        bits[i] = (data[i / 8] >> (i % 8)) & 0x01;
+    }
+    return bits;
+}
 
 uint16_t rs485_baud_encode(int settings_baud)
 {
@@ -193,7 +233,8 @@ int rs485_baud_decode(int rs485_baud)
 
 modbus_t *create_rtu_ctx(ModbusRTUSettings *settings)
 {
-    modbus_t *ctx = modbus_new_rtu(settings->port_name, settings->baud,
+    std::lock_guard<std::mutex> lock(settings->config_mutex);
+    modbus_t *ctx = modbus_new_rtu(settings->port_name.c_str(), settings->baud,
                                    settings->parity, settings->data_bits, settings->stop_bits);
     if (ctx == NULL) {
         fprintf(stderr, "Unable to create the libmodbus context\n");
@@ -209,73 +250,155 @@ modbus_t *create_rtu_ctx(ModbusRTUSettings *settings)
     return ctx;
 }
 
-// Handle a Modbus query based on its function code
-void handle_modbus_query(ModbusRTUSettings *settings, modbus_t *ctx, const uint8_t *query, int query_length) {
+
+// Handle a Modbus RTU query based on its function code
+void handle_modbus_server_query(ModbusRTUSettings *settings, const uint8_t *query, int query_length) 
+{
     uint8_t function_code = query[1];
     uint16_t reg_addr = (query[2] << 8) | query[3];
-    bool reply_ok = true;
+    uint16_t num = (query[4] << 8) + query[5];
 
+    bool reply_ok = true;
+    uint16_t value;
+ 
     switch (function_code) {
-        case 0x06: { // Write single register
-            uint16_t value = (query[4] << 8) | query[5];
-            uint16_t out;
-            if (settings->write_callback && settings->write_callback(function_code, reg_addr, value, &out)) {
-                modbus_reply(ctx, query, query_length, NULL);
-            } else {
-                reply_ok = false;
+        case MODBUS_FC_READ_COILS:
+        case MODBUS_FC_READ_DISCRETE_INPUTS:
+        {
+            if (settings->read_callback) {
+                for (int i = 0; i < num; ++i) {
+
+                    if (function_code == MODBUS_FC_READ_COILS) {
+                            settings->read_callback(function_code, reg_addr + i, &value);
+                            settings->mb_mapping->tab_bits[reg_addr - settings->mb_mapping->start_bits + i] = value;
+                    } else if (function_code == MODBUS_FC_READ_DISCRETE_INPUTS) {
+                        settings->read_callback(function_code, reg_addr + i, &value);
+                        settings->mb_mapping->tab_input_bits[reg_addr - settings->mb_mapping->start_input_bits + i] = value;
+                    }
+                }
             }
-            break;
         }
-        case 0x03: { // Read registers
-            uint16_t value;
-            if (settings->read_callback && settings->read_callback(function_code, reg_addr, &value)) {
-                modbus_reply(ctx, query, query_length, NULL);
-            } else {
-                reply_ok = false;
+        break;        
+        case MODBUS_FC_READ_INPUT_REGISTERS:
+        {
+            if (settings->read_callback) {
+                for (int i = 0; i < num; ++i) {
+                    settings->read_callback(function_code, reg_addr + i, &value);
+                    settings->mb_mapping->tab_input_registers[reg_addr - settings->mb_mapping->start_input_registers + i] = value;
+                }
             }
-            break;
         }
+        break;
+
+        case MODBUS_FC_READ_HOLDING_REGISTERS:
+        {
+            if (settings->read_callback) {
+                for (int i = 0; i < num; ++i) {
+                    settings->read_callback(function_code, reg_addr + i, &value);
+                    settings->mb_mapping->tab_registers[reg_addr - settings->mb_mapping->start_registers + i] = value;
+                }
+            }
+
+        }
+        break;
+
+        case MODBUS_FC_WRITE_SINGLE_COIL:
+        {
+            if (settings->write_callback) {
+                uint16_t val = (query[4] << 8) + query[5];
+                settings->write_callback(function_code, reg_addr, val,  &value);
+            }
+        }
+        break;
+
+        case MODBUS_FC_WRITE_MULTIPLE_COILS:
+        {
+            if (settings->write_callback) {
+    
+                int byte_count = query[6];
+                const uint8_t* data_start = &query[7];
+                auto bits = unpack_bits(data_start, num);
+    
+                for (int i = 0; i < num; ++i) {
+                    settings->write_callback(function_code, reg_addr + i, bits[i],  &value);
+                }
+            }
+        }
+        break;
+        case  MODBUS_FC_WRITE_SINGLE_REGISTER:
+        {
+            if (settings->write_callback) {
+                uint16_t val = (query[4] << 8) + query[5];
+                settings->write_callback(function_code, reg_addr, val,  &value);
+            }     
+        }
+        break;
+        case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
+        {
+            if (settings->write_callback) {
+                for (int i = 0; i < num; ++i) {
+                    uint16_t val = (query[7 + 2 * i] << 8) + query[8 + 2 * i];
+                    settings->write_callback(function_code, reg_addr+i, num,  &value);
+                }
+            }
+        }
+        break;
+
         default:
             reply_ok = false;
             break;
     }
 
     if (!reply_ok) {
-        modbus_reply_exception(ctx, query, MODBUS_EXCEPTION_ILLEGAL_FUNCTION);
+        modbus_reply_exception(settings->ctx, query, MODBUS_EXCEPTION_ILLEGAL_FUNCTION);
+    }
+    else
+    {
+         modbus_reply(settings->ctx, query, query_length, settings->mb_mapping);
     }
 }
 
 
-void modbus_server_thread(MessageQueue& queue, void* arg) {
+
+void modbus_server_thread(void* arg) {
     ModbusRTUSettings *settings = (ModbusRTUSettings *)arg;
     bool reply_ok = true;
+//void modbus_server_thread(MessageQueue& queue, void* arg) {
 
-    while (running && settings->rs485_running) {
+    
+    while (running && settings->rs485_running && !settings->config_update) 
+    {
+        {
+            std::lock_guard<std::mutex> lock(settings->config_mutex);
+            //modbus_mapping_t* 
+            if(!settings->mb_mapping)
+                settings->mb_mapping = modbus_mapping_new(256, 256, 256, 256);
 
+            if(!settings->ctx)
+                settings->ctx = create_rtu_ctx(settings);
 
-        modbus_t *ctx = create_rtu_ctx(settings);
+            modbus_set_slave(settings->ctx, settings->server_id);  // Set the Modbus server ID to 1
+            if (modbus_connect(settings->ctx) == -1) 
+            {
+                fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
+                modbus_free(settings->ctx);
+                settings->ctx = nullptr;
+            }
 
-        // modbus_t *ctx = modbus_new_rtu(settings->port_name, settings->baud_rate,
-        //                                settings->parity, settings->data_bits, settings->stop_bits);
-        if (ctx == NULL) {
+        }
+        if (settings->ctx == NULL) {
             fprintf(stderr, "Unable to create the libmodbus context\n");
             return;
         }
-        settings->fd = modbus_get_socket(ctx); 
 
         // // Set byte timeout to 0.5 seconds
         // uint32_t to_sec = 0;        // 0 seconds
         // uint32_t to_usec = 500000;  // 500,000 microseconds
 
-        // modbus_set_byte_timeout(ctx, to_sec, to_usec);
+        // modbus_set_byte_timeout(settings->ctx, to_sec, to_usec);
 
-        modbus_set_slave(ctx, settings->server_id);  // Set the Modbus server ID to 1
-        if (modbus_connect(ctx) == -1) {
-            fprintf(stderr, "Connection failed: %s\n", modbus_strerror(errno));
-            modbus_free(ctx);
-            return;
-        }
 
+        settings->fd = modbus_get_socket(settings->ctx); 
         // Set up pollfd structure
         struct pollfd fds[1];
 
@@ -291,10 +414,10 @@ void modbus_server_thread(MessageQueue& queue, void* arg) {
             } else if (rc > 0) {
                 if (fds[0].revents & POLLIN) {
                     uint8_t query[MODBUS_TCP_MAX_ADU_LENGTH];
-                    rc = modbus_receive(ctx, query);
+                    rc = modbus_receive(settings->ctx, query);
                     if (rc > 0) {
                         // Handle the query based on the Modbus function code
-                        handle_modbus_query(settings, ctx, query, rc);
+                        handle_modbus_server_query(settings, query, rc);
                     } else if (rc == -1) {
                         if (errno == ETIMEDOUT) {
                             fprintf(stderr, "A byte timeout occurred.\n");
@@ -307,100 +430,155 @@ void modbus_server_thread(MessageQueue& queue, void* arg) {
                     }
                 }
             }
-            // Check flags periodically
         }
 
-        modbus_close(ctx);
-        modbus_free(ctx);
+        modbus_close(settings->ctx);
+        modbus_free(settings->ctx);
+        settings->ctx = nullptr;
+        modbus_mapping_free(settings->mb_mapping);
     }
     return;
 }
 
-void modbus_client_thread(MessageQueue& queue, void* arg) {
-    ModbusRTUSettings *settings = (ModbusRTUSettings *)arg;
+int process_client_message(ModbusRTUSettings* settings)
+{
+    ModbusMessage message = settings->queue.pop();
+    int res = 0;
+
+
+    // Normalize FCs based on data size
+    switch (message.fc) {
+        case MODBUS_FC_WRITE_SINGLE_REGISTER:
+            if (message.data.size() > 1) message.fc = MODBUS_FC_WRITE_MULTIPLE_REGISTERS;
+            break;
+        case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
+            if (message.data.size() == 1) message.fc = MODBUS_FC_WRITE_SINGLE_REGISTER;
+            break;
+        case MODBUS_FC_WRITE_SINGLE_COIL:
+            if (message.data.size() > 1) message.fc = MODBUS_FC_WRITE_MULTIPLE_COILS;
+            break;
+        case MODBUS_FC_WRITE_MULTIPLE_COILS:
+            if (message.data.size() == 1) message.fc = MODBUS_FC_WRITE_SINGLE_COIL;
+            break;
+    }
+
+    // Execute command
+    switch (message.fc) {
+        case MODBUS_FC_WRITE_SINGLE_REGISTER:
+            res = modbus_write_register(settings->ctx, message.offset, message.data[0]);
+            break;
+        case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
+            res = modbus_write_registers(settings->ctx, message.offset,
+                                            message.data.size(), message.data.data());
+            break;
+        case MODBUS_FC_WRITE_SINGLE_COIL:
+            res = modbus_write_bit(settings->ctx, message.offset, message.data[0] ? TRUE : FALSE);
+            break;
+        case MODBUS_FC_WRITE_MULTIPLE_COILS: {
+            std::vector<uint8_t> bits(message.data.size());
+            for (size_t i = 0; i < message.data.size(); i++)
+                bits[i] = message.data[i] ? TRUE : FALSE;
+            res = modbus_write_bits(settings->ctx, message.offset, bits.size(), bits.data());
+            break;
+        }
+        default:
+            fprintf(stderr, "Unsupported function code: %d\n", message.fc);
+            break;
+    }
+
+    if (res == -1) {
+        fprintf(stderr, "Modbus client operation failed: %s\n", modbus_strerror(errno));
+        if (errno == EBADF || errno == EMBXILADD) return res;
+    }
+    return 0;
+}
+
+void modbus_worker_thread(ModbusRTUSettings* settings) {
+    settings->mb_mapping = nullptr;
+    settings->ctx = nullptr;
+
     while (running && settings->rs485_running) {
+        if (settings->config_update) 
+        {
+            std::lock_guard<std::mutex> lock(settings->config_mutex);
 
-        bool reply_ok = true;
-        modbus_t *ctx = create_rtu_ctx(settings);
-        if (!ctx) return;
-        // add timeout to check for flags
-        while (running && settings->rs485_running) {
-            if (!queue.empty()) {
-                int res = 0;
-                ModbusMessage message = queue.pop();
-                switch (message.fc) {
-                    case MODBUS_FC_WRITE_SINGLE_REGISTER:
-                        if(message.data.size() > 1)
-                            message.fc = MODBUS_FC_WRITE_MULTIPLE_REGISTERS;
-                        break;
-                    case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
-                        if(message.data.size() == 1)
-                            message.fc = MODBUS_FC_WRITE_SINGLE_REGISTER;
-                        break;
-                    case MODBUS_FC_WRITE_SINGLE_COIL:
-                        if(message.data.size() > 1)
-                            message.fc = MODBUS_FC_WRITE_MULTIPLE_COILS;
-                        break;
-                    case MODBUS_FC_WRITE_MULTIPLE_COILS:
-                        if(message.data.size() == 1)
-                            message.fc = MODBUS_FC_WRITE_SINGLE_COIL;
-                        break;
-                    default:
-                        fprintf(stderr, "Unsupported function code: %d\n", message.fc);
-
-                    }
-                // now use the adjusted fc
-                switch (message.fc) {
-                    case MODBUS_FC_WRITE_SINGLE_REGISTER:
-                        res = modbus_write_register(ctx, message.offset, message.data[0]);
-                        break;
-                    case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
-                        res = modbus_write_registers(ctx, message.offset, message.data.size(), message.data.data());
-                        break;
-                    case MODBUS_FC_WRITE_SINGLE_COIL:
-                        res = modbus_write_bit(ctx, message.offset, message.data[0] ? TRUE : FALSE);
-                        break;
-                    case MODBUS_FC_WRITE_MULTIPLE_COILS:
-                        {
-                            // Transform vector<uint16_t> to vector<uint8_t> required by libmodbus
-                            std::vector<uint8_t> bits(message.data.size());
-                            for (size_t i = 0; i < message.data.size(); i++) {
-                                bits[i] = message.data[i] ? TRUE : FALSE;
-                            }
-                            res = modbus_write_bits(ctx, message.offset, bits.size(), bits.data());
-                        }
-                        break;
-                    default:
-                        fprintf(stderr, "Unsupported function code: %d\n", message.fc);
-                }
-
-                if (res == -1) {
-                    fprintf(stderr, "Modbus operation failed: %s\n", modbus_strerror(errno));
-                    if (errno == EBADF || errno == EMBXILADD) {
-                        break; // Critical failure, exit loop
-                    }
-                }
-            } else {
-                // Sleep for a short time to prevent a busy-wait loop
-                usleep(10000); // Sleep 10ms
+            settings->config_update = false;
+            if (settings->ctx) {
+                modbus_close(settings->ctx);
+                modbus_free(settings->ctx);
+                settings->ctx = nullptr;
             }
+        // ctx = create_rtu_ctx(settings);
+        // if (!ctx || modbus_connect(ctx) == -1) {
+        //     std::cerr << "Reconnect failed: " << modbus_strerror(errno) << std::endl;
+        //     if (ctx) {
+        //         modbus_free(ctx);
+        //         ctx = nullptr;
+        //     }
+        //     std::this_thread::sleep_for(std::chrono::seconds(1));
+        //     continue;
+        // }
+            std::cout << "Modbus settings re-applied.\n";
         }
 
-        modbus_close(ctx);
-        modbus_free(ctx);
+        if (settings->isClient) 
+        {
+            {
+                // Ensure context is valid and connected
+                std::lock_guard<std::mutex> lock(settings->config_mutex);
+                if (!settings->ctx) {
+                    settings->ctx = create_rtu_ctx(settings);
+                    if (!settings->ctx || modbus_connect(settings->ctx) == -1) {
+                        fprintf(stderr, "Client connect failed: %s\n", modbus_strerror(errno));
+                        if (settings->ctx) {
+                            modbus_free(settings->ctx);
+                            settings->ctx = nullptr;
+                        }
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                        continue;
+                    }
+                }
+            }
+            // Client mode: process outgoing requests
+            while (settings->isClient && running && settings->rs485_running  && !settings->config_update ) {
+                if (!settings->queue.empty()) 
+                {
+                    process_client_message(settings);
+                } 
+                else 
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // avoid busy loop
+                }
+            }
+
+
+        } else {
+            // Server mode
+            modbus_server_thread((void*)settings);  // Reuse your existing server logic
+        }
     }
+
+    if (settings->mb_mapping) {
+        modbus_mapping_free(settings->mb_mapping);
+        settings->mb_mapping = nullptr;
+    }
+    if (settings->ctx) {
+        modbus_close(settings->ctx);
+        modbus_free(settings->ctx);
+        settings->ctx = nullptr;
+    }
+
 }
 
-
-void enqueue_message(MessageQueue& queue, int fc, int offset, const std::vector<uint16_t>& data) {
+void enqueue_message(ModbusRTUSettings* settings, int fc, int offset, const std::vector<uint16_t>& data) {
     ModbusMessage message{fc, offset, data};
-    queue.push(message);
+    settings->queue.push(message);
 }
 
-void enqueue_message(MessageQueue& queue, int fc, int offset, uint16_t* data, int len) {
+void enqueue_message(ModbusRTUSettings* settings, int fc, int offset, uint16_t* data, int len) {
     // Construct a vector from the provided pointer and length
     std::vector<uint16_t> data_vector(data, data + len);
-    enqueue_message(queue, fc, offset, data_vector);
+    enqueue_message(settings, fc, offset, data_vector);
 }
 
 void addWriteCallback(ModbusRTUSettings *settings, WriteCallback callback) {
@@ -428,6 +606,14 @@ uint8_t ExampleReadCallback(uint8_t fcode, uint16_t regAddr, uint16_t *p_value) 
 ModbusRTUSettings server_settings;
 ModbusRTUSettings client_settings;
 
+void print_settings(ModbusRTUSettings* s) {
+    std::lock_guard<std::mutex> lock(s->config_mutex);
+    std::cout << "[ModbusRTU] port=" << s->port_name
+              << ", baud=" << s->baud
+              << ", mode=" << (s->isClient ? "Client" : "Server")
+              << ", ID=" << s->server_id << std::endl;
+}
+
 int rs485_test(const std:: string & server, const std::string& client) {
 
     client_settings.port_name = client.c_str();
@@ -441,6 +627,8 @@ int rs485_test(const std:: string & server, const std::string& client) {
     client_settings.server_id = 1;
     client_settings.write_callback = nullptr;
     client_settings.read_callback = nullptr;
+    client_settings.isClient = 1;
+
 
     server_settings.port_name = server.c_str();
     server_settings.baud = 19200;
@@ -453,24 +641,25 @@ int rs485_test(const std:: string & server, const std::string& client) {
     server_settings.server_id = 1;
     server_settings.write_callback = nullptr;
     server_settings.read_callback = nullptr;
+    server_settings.isClient = 0;
 
      // Set the callbacks dynamically
     addWriteCallback(&server_settings, ExampleWriteCallback);
     addReadCallback(&server_settings, ExampleReadCallback);
 
-    MessageQueue queue;
+    //MessageQueue queue;
 
-    std::thread server_thread(modbus_server_thread, std::ref(queue), (void *)&server_settings);
+    std::thread server_thread(modbus_worker_thread, &server_settings);
     // if (pthread_create(&server_thread, NULL, modbus_rs485_server, &settings) != 0) {
     //     fprintf(stderr, "Failed to create RS485 server thread\n");
     //     return -1;
     // }
 
-    std::thread client_thread(modbus_client_thread, std::ref(queue), (void *)&client_settings);
+    std::thread client_thread(modbus_worker_thread, &client_settings);
 
     // Example of enqueueing a message
     std::vector<uint16_t> data = {0x1234, 0x5678};
-    enqueue_message(queue, 3, 10, data);
+    enqueue_message(&client_settings, 3, 10, data);
 
     // Join the thread when appropriate
     if(client_thread.joinable())client_thread.join();
@@ -581,24 +770,24 @@ void set_register_value(std::map<int, DataItem>& register_map, int address, uint
 }
 
 
-std::vector<uint8_t> pack_bits(const std::vector<uint8_t>& bits) {
-    size_t byte_count = (bits.size() + 7) / 8;
-    std::vector<uint8_t> packed(byte_count, 0);
-    for (size_t i = 0; i < bits.size(); ++i) {
-        if (bits[i]) {
-            packed[i / 8] |= (1 << (i % 8));
-        }
-    }
-    return packed;
-}
+// std::vector<uint8_t> pack_bits(const std::vector<uint8_t>& bits) {
+//     size_t byte_count = (bits.size() + 7) / 8;
+//     std::vector<uint8_t> packed(byte_count, 0);
+//     for (size_t i = 0; i < bits.size(); ++i) {
+//         if (bits[i]) {
+//             packed[i / 8] |= (1 << (i % 8));
+//         }
+//     }
+//     return packed;
+// }
 
-std::vector<uint8_t> unpack_bits(const uint8_t* data, size_t bit_count) {
-    std::vector<uint8_t> bits(bit_count);
-    for (size_t i = 0; i < bit_count; ++i) {
-        bits[i] = (data[i / 8] >> (i % 8)) & 0x01;
-    }
-    return bits;
-}
+// std::vector<uint8_t> unpack_bits(const uint8_t* data, size_t bit_count) {
+//     std::vector<uint8_t> bits(bit_count);
+//     for (size_t i = 0; i < bit_count; ++i) {
+//         bits[i] = (data[i / 8] >> (i % 8)) & 0x01;
+//     }
+//     return bits;
+// }
 
 void print_bits(const std::vector<uint8_t>& bits) {
     for (size_t i = 0; i < bits.size(); ++i) {
