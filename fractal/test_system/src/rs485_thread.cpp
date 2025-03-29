@@ -523,11 +523,11 @@ int process_client_message(ModbusRTUSettings* settings)
         }
         break;
         
-        // case MODBUS_FC_READ_REGISTERS: {
-        //     message.values.resize(num);
-        //     res = modbus_read_registers(settings->ctx, message.offset, message.data.size(), message.values.data());
-        //     break;
-        // }
+        case MODBUS_FC_READ_INPUT_REGISTERS: {
+            //message.values.resize(num);
+            res = modbus_read_input_registers(settings->ctx, message.offset, message.data.size(), message.data.data());
+            break;
+        }
 
         case MODBUS_FC_READ_HOLDING_REGISTERS: {
             uint16_t value;
@@ -538,25 +538,26 @@ int process_client_message(ModbusRTUSettings* settings)
             }
             break;
         }
-//         case MODBUS_FC_READ_COILS: {
-// //            std::vector<uint8_t> coils(message.data.size());
-//             res = modbus_read_bits(settings->ctx, message.offset, message.data.size(), coils.data());
-//             if (res != -1) {
-//                 message.values.clear();
-//                 for (auto coil : coils) {
-//                     message.values.push_back(coil);
-//                 }
-//             }
-//             break;
-//         }
-//         case MODBUS_FC_READ_COIL: {
-//             uint8_t coil;
-//             res = modbus_read_bits(settings->ctx, message.offset, 1, &coil);
-//             if (res != -1) {
-//                 message.values.push_back(coil);
-//             }
-//             break;
-//         }
+        case MODBUS_FC_READ_COILS: {
+            std::vector<uint8_t> coils(message.data.size());
+            res = modbus_read_bits(settings->ctx, message.offset, message.data.size(), coils.data());
+            if (res != -1) {
+                message.data.clear();
+                for (auto coil : coils) {
+                    message.data.push_back(coil);
+                }
+            }
+            break;
+        }
+        // case MODBUS_FC_READ_SINGLE_COIL: {
+        //     uint8_t coil;
+        //     res = modbus_read_bits(settings->ctx, message.offset, 1, &coil);
+        //     if (res != -1) {
+        //         message.data.clear();
+        //         message.data.push_back(coil);
+        //     }
+        //     break;
+        // }
         default:
             fprintf(stderr, "Unsupported function code: %d\n", message.fc);
             break;
