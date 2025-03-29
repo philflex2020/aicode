@@ -1,0 +1,76 @@
+[
+    {
+        "Title": " Primary SBMS Memory Operations ",
+        "Description": " reference source for the data operations ",
+        "Release": "0.9.3",
+        "Version": "7",
+        "DateCreated": "02_05_2005 ",
+        "DateModified": "02_12_2005",
+        "CreatedBy": "Phil Wilshire",
+        "ModifiedBy": "Phil Wilshire",
+        "ApprovedBy": "John Calcagni (soon)"
+    },
+    { "Override":false, "note":"Make this true to disable the compiled in transfer operations"},
+    { "sequence":"close_contactors",
+        "enabled": false,
+        "items":[
+        {"trigger":"sbmi:bits:123=1", "enable":[
+                                                    {
+                                                        "and":[
+                                                                {"id":"sbmi:bits:124","op":"=","value":"0"},
+                                                                {"id":"sbmi:bits:120","op":"=","value":"1"},
+                                                                {"id":"sbmi:input:32","op":">", "value":"3456"}
+                                                            ]
+                                                    },
+                                                    {
+                                                        "or":[
+                                                                {"id":"sbmi:bits:124","op":"=","value":"0"},
+                                                                {"id":"sbmi:bits:120","op":"=","value":"1"},
+                                                                {"id":"sbmi:input:32","op":">","value":"3456"}
+                                                            ]
+                                                    }
+                                                ],
+                                                "action":"close_contactors:start"},
+        {"trigger":"sbmi:bits:123=0", 
+                            "enable":{
+                                "and": [
+                                    {"id": "sbmi:input:32", "op": ">", "value": "3456"},
+                                    {
+                                        "or": [
+                                                {"id": "sbmi:bits:124", "op": "=", "value": "0"},
+                                                {"id": "sbmi:input:32", "op": ">", "value": "3456"}
+                                            ]
+                                    }
+                                ]
+                            },
+                            "action":"close_contactors:stop"}
+        ]
+    },
+
+    { "table": "rack_input_complete", 
+        "enabled": false,
+        "items":[
+        {"src":"rtos:bits:terminal_overvoltage", "enabled": true, "debug":true,  "meth":"rackdata",  "dest":"sbmu:bits:summary_total_overvoltage",   "lim":"none",      "desc":"copy all rackdata"},
+        {"src":"rtos:bits:terminal_overvoltage", "enabled": false, "debug":true,  "meth":"3sum",  "dest":"sbmu:bits:summary_total_overvoltage",   "lim":"none",            "desc":"total_overvoltage"},
+        {"src":"rtos:bits:terminal_undervoltage", "enabled": false, "debug":true, "meth":"3sum",  "dest":"sbmu:bits:summary_total_undervoltage",   "lim":"none",            "desc":"total_undervoltage"},
+        {"src":"rtos:input:battery_volts", "rate":200,   "enabled": false, "debug":false, "meth":"block",  "dest":"sbmu:input:cell_voltage", "lim":"480:3000",  "desc":"cell_voltage"},
+        {"src":"rtos:input:battery_soc",   "rate":200,   "enabled": false, "debug":false, "meth":"block",  "dest":"sbmu:input:cell_SOC", "lim":"480:3000",  "desc":"cell_voltage"},
+        {"src":"rtos:bits:204",                  "enabled": false, "meth":"3sum",     "dest":"sbmu:bits:4",    "lim":"none",            "desc":"total_overvoltage"},
+        {"src":"rtos:bits:200",                  "enabled": false, "meth":"into",     "dest":"sbmu:bits:49",   "lim":"none",           "desc":"ESBCM_lost_communication"},
+        {"src":"rtos:input:120",   "debug":false, "enabled": false,  "meth":"3lim_max", "dest":"sbmu:bits:10",  "lim":"sbmu:hold:120",  "desc":"low_resistance"},
+        {"src":"rtos:input:117",                 "enabled": false, "meth":"x3lim_min", "dest":"sbmu:bits:13",    "lim":"sbmu:hold:121",  "desc":"module_low_temp"},
+        {"src":"rtos:input:117",                 "enabled": false, "meth":"x3lim_max", "dest":"sbmu:bits:16",    "lim":"sbmu:hold:122",  "desc":"module_high_temp"},
+        {"src":"rtos:input:min_volt",            "enabled": false, "meth":"xmin",      "dest":"sbmu:input:8",    "lim":"sbmu:input:min_battery_voltage",  "desc":"min_battery_voltage"},
+        {"src":"rtos:input:max_voltage",         "enabled": false, "meth":"xmax",      "dest":"sbmu:input:9",    "lim":"sbmu:input:max_battery_voltage",  "desc":"max_battery_voltage"},
+        {"src":"rtos:input:59",   "debug":false,  "enabled": false, "meth":"x2sum",     "dest":"sbmu:input:18",   "lim":"none",  "desc":"total_charge_cap"},
+        {"src":"rtos:input:61",   "debug":false,  "enabled": false, "meth":"x2sum",     "dest":"sbmu:input:20",   "lim":"none",  "desc":"total_discharge_cap"},
+        {"src":"rtos:input:max_voltage",         "enabled": false, "meth":"xmax",      "dest":"sbmu:input:9",    "lim":"sbmu:input:max_battery_voltage",  "desc":"max_battery_voltage"},
+        {"src":"rtos:input:101",                 "enabled": false, "meth":"xsum",     "dest":"sbmu:input:33",   "lim":"none",          "desc":"max_charge_power"},
+        {"src":"rtos:input:102",                 "enabled": false, "meth":"xsum",     "dest":"sbmu:input:32",   "lim":"none",          "desc":"max_discharge_power"},
+        {"src":"rtos:input:105",                 "enabled": false, "meth":"xsum",     "dest":"sbmu:input:35",   "lim":"none",          "desc":"max_charge_current"},
+        {"src":"rtos:input:106",                 "enabled": false, "meth":"xsum",     "dest":"sbmu:input:34",   "lim":"none",          "desc":"max_discharge_current"},
+        {"src":"rtos:input:0",                   "enabled": false, "meth":"xcount",   "dest":"sbmu:input:36",   "lim":"none",          "desc":"num_daily_charges"},
+        {"src":"rtos:input:0",                   "enabled": false, "meth":"xcount",   "dest":"sbmu:input:37",   "lim":"none",          "desc":"num_daily_discharges"}
+        ]
+    }
+]

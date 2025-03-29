@@ -1,0 +1,99 @@
+[
+  {
+      "Title": " Default SBMS Pub Sub Tables ",
+      "Description": "initial list of pub sub tables    ",
+      "Release": "0.9.3 ",
+      "Version": "11",
+      "DateCreated": "03_06_2025",
+      "DateModified": "03_06_2025",
+      "CreatedBy": "Phil Wilshire",
+      "ModifiedBy": "Phil Wilshire",
+      "ApprovedBy": "John Calcagni (soon)"
+  },
+  { "pub": "config", 
+        "items": [ 
+            { "table": "first", "rate":0,
+                "items":[
+                    {"name":"Configuration",
+                        "items": [
+                        { "name":"Number of Racks",  "src":"xsbmu:input:num_racks", "example":"4"},
+                        { "name":"CAN Enabled",      "src":"xsbmu:input:num_racks", "example": "Enabled"},
+                        { "name":"SD Card Enabled",  "src":"xsbmu:input:num_racks", "example": "Enabled"},
+                        { "name":"Clock",
+                            "items": [
+                            { "name":"Mode",             "src":"xsbmu:input:num_racks", "example": "NTP"},
+                            { "name":"NTP Server",       "src":"xsbmu:input:num_racks", "example": "216.239.35.12"},
+                            { "name":"NTP Port",         "src":"xsbmu:input:num_racks", "example": "123"},
+                            { "name":"Date",    "type":"date" , "fmt":"%Y-%m-%d","src":"sbmu:hold:year", "example": "2025-01-28"},
+                            { "name":"Hour",             "src":"sbmu:hold:hour", "example": "22"},
+                            { "name":"Minute",           "src":"sbmu:hold:minute", "example": "37"},
+                            { "name":"Second",           "src":"sbmu:hold:second", "example": "10"}
+                            ]
+                        },
+                        {"name":"Device Description",
+                            "items" :[
+                                { "name":"Customer Name",    "src":"xsbmu:input:num_racks", "example":  "KORE Partner"},
+                                { "name":"Device Name",      "src":"xsbmu:input:num_racks", "example":  "KPMC000058"},
+                                { "name":"Location ID",      "src":"xsbmu:input:num_racks", "example":  "NB"}
+                            ]
+                        },
+                        { "name":"Networking",
+                            "items":[
+                                { "name":"Mode",             "src":"xsbmu:input:num_racks", "example":  "Static"},
+                                { "name":"IP Address",       "src":"xsbmu:input:num_racks", "example":  "192.168.10.5"},
+                                { "name":"Gateway",          "src":"xsbmu:input:num_racks", "example":  "192.168.10.1"},
+                                { "name":"Subnet",           "src":"xsbmu:input:num_racks", "example":  "255.255.255.240"},
+                                { "name":"DNS Server",       "src":"xsbmu:input:num_racks", "example":  "192.168.10.1"}
+                            ]
+                        },
+                        { "name":"Control Mode",             "src":"xsbmu:input:num_racks", "example":  "Remote"},
+                        { "name":"Modbus Port",              "src":"xsbmu:input:num_racks", "example":  "502"},
+                        { "name":"CAN Logic",
+                            "items":[
+                                { "name":"Minimum Voltage",  "src":"xsbmu:input:num_racks", "example":  "1060"},
+                                { "name":"Voltage Range",    "src":"xsbmu:input:num_racks", "example":  "5"}
+                            ]
+                        },
+                        { "name":"Tv803 Enabled",             "src":"xsbmu:input:num_racks", "example":  "Disabled"},
+                        { "name":"V1Compat Enabled",          "src":"xsbmu:input:num_racks", "example":  "Disabled"},
+                        { "name":"FW_VER",                    "src":"xsbmu:input:num_racks", "example":  "1.6.5"}
+                        ]
+                    }
+                ]
+            },            
+        
+            { "table": "periodic", "rate":1000, 
+            "items":[
+                    { "name":"RackID",                     "src":"const:rack_num",              "example":"0"},
+                    { "name":"RBMSWarning1",               "src":"xrtos:input:rack_warning",          "example":"0"},
+                    { "name":"RBMSAlarm1",                 "src":"xrtos:input:rack_alarm1",           "example":"0"},
+                    { "name":"RBMSFault1",                 "src":"xrtos:input:rack_fault1",           "example":"0"},
+                    { "name":"RBMSFault2",                 "src":"xrtos:input:rack_fault2",           "example":"0"},
+                    { "name":"AvgCellV",                   "src":"rtos:input:avg_voltage",   "scale":0.001,   "rand_val":10.0, "fmt":"%3.2f", "type":"float",  "example":"3.880"},
+                    { "name":"MaxCellV",                   "src":"rtos:input:max_voltage",   "scale":0.001,    "rand_val":20.0,       "type":"float",   "example":"3.968"},
+                    { "name":"MinCellV",                   "src":"rtos:input:min_volt",         "rand_val":200, "example":"3.880"},
+                    { "name":"MinVModule",                 "src":"rtos:input:min_module_volt",          "example":"1"},
+                    { "name":"MaxVModule",                 "src":"rtos:input:max_module_volt",          "example":"2"},
+                    { "name":"TotalVoltage",               "src":"rtos:input:rack_voltage",            "example":"1071.30"},
+                    { "name":"TotalCurrent",               "src":"rtos:input:rack_current",         "example":"11.20"},
+                    { "name":"AvgCellT",                   "src":"rtos:input:avg_temp",         "example":"21"},
+                    { "name":"Online",                     "src":"const:rack_online",           "example":"17"},
+                    { "name":"MaxCellT",                   "src":"rtos:input:max_temp",   "offset":700, "scale":0.3,      "example":"22"},
+                    { "name":"MinCellT",                   "src":"rtos:input:min_temp",         "example":"20"},
+                    { "name":"MaxTModule",                 "src":"rtos:input:max_temp_mod",       "example":"5"},
+                    { "name":"MinTModule",                 "src":"rtos:input:min_temp_mod",       "example":" 16"},
+                    { "name":"RelayStatus",                "src":"rtos:input:state",                "example":"51"},
+                    { "name":"Heartbeat",                  "src":"rtos:input:heartbeat",             "example":"106"},
+                    { "name":"SOC",                        "src":"rtos:input:soc",              "example":"63.00"},
+                    { "name":"SOH",                        "src":"rtos:input:soh",              "example":"100.00"},
+                    { "name":"ChaCurrLimit",               "src":"rtos:input:chargeable_current",    "example":"100.00"},
+                    { "name":"DischCurrLimit",             "src":"rtos:input:dischargeable_current", "example":"150.00"},
+                    { "name":"ChaPLimit",                  "src":"xrtos:input:max_charge_power",      "example":"107.10"},
+                    { "name":"DischPLimit",                "src":"xrtos:input:max_discharge_power",   "example":"160.60"},
+                    { "name":"RackFW",                     "src":"xrtos:input:rack_fw",               "example":"00"},
+                    { "name":"RBMSInfo",                   "src":"xrtos:input:rack_info",              "example":"bad3"}
+                    ]
+            }
+        ]
+    }
+]
