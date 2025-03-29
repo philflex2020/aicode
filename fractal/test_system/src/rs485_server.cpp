@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <map>
 
-// concept is that we deinf a name that gives us a connection a data_server and a client or a server
+// concept is that we define a name that gives us a connection ,a data_server and a client or a server
 
 // Assuming hex_dump function and other relevant functions are already defined elsewhere in your code.
 //void hex_dump(const char *desc, const uint8_t *data, int len);
