@@ -25,8 +25,48 @@
 #include <thread>
 #include <atomic>
 
+
+#include <mutex>
+#include <queue>
+#include <condition_variable>
+#include <memory>
+
+// class ModbusMessage {
+// public:
+//     int id;
+//     std::vector<uint16_t> data;
+// };
+
+// class MessageQueue {
+// private:
+//     std::queue<std::shared_ptr<ModbusMessage>> queue;
+//     mutable std::mutex mutex;
+//     std::condition_variable cond;
+
+// public:
+//     void push(std::shared_ptr<ModbusMessage> message) {
+//         std::lock_guard<std::mutex> lock(mutex);
+//         queue.push(message);
+//         cond.notify_one();
+//     }
+
+//     std::shared_ptr<ModbusMessage> pop() {
+//         std::unique_lock<std::mutex> lock(mutex);
+//         cond.wait(lock, [this]{ return !queue.empty(); });
+//         auto message = queue.front();
+//         queue.pop();
+//         return message;
+//     }
+
+//     bool empty() const {
+//         std::lock_guard<std::mutex> lock(mutex);
+//         return queue.empty();
+//     }
+// };
+
 // for modbus rs485client
 struct ModbusMessage {
+    int seq;
     int offset;
     int fc;
     std::vector<uint16_t> data;
@@ -474,13 +514,49 @@ int process_client_message(ModbusRTUSettings* settings)
         case MODBUS_FC_WRITE_SINGLE_COIL:
             res = modbus_write_bit(settings->ctx, message.offset, message.data[0] ? TRUE : FALSE);
             break;
+      
         case MODBUS_FC_WRITE_MULTIPLE_COILS: {
             std::vector<uint8_t> bits(message.data.size());
             for (size_t i = 0; i < message.data.size(); i++)
                 bits[i] = message.data[i] ? TRUE : FALSE;
             res = modbus_write_bits(settings->ctx, message.offset, bits.size(), bits.data());
+        }
+        break;
+        
+        // case MODBUS_FC_READ_REGISTERS: {
+        //     message.values.resize(num);
+        //     res = modbus_read_registers(settings->ctx, message.offset, message.data.size(), message.values.data());
+        //     break;
+        // }
+
+        case MODBUS_FC_READ_HOLDING_REGISTERS: {
+            uint16_t value;
+            message.data.clear();
+            res = modbus_read_registers(settings->ctx, message.offset, 1, &value);
+            if (res != -1) {
+                message.data.push_back(value);
+            }
             break;
         }
+//         case MODBUS_FC_READ_COILS: {
+// //            std::vector<uint8_t> coils(message.data.size());
+//             res = modbus_read_bits(settings->ctx, message.offset, message.data.size(), coils.data());
+//             if (res != -1) {
+//                 message.values.clear();
+//                 for (auto coil : coils) {
+//                     message.values.push_back(coil);
+//                 }
+//             }
+//             break;
+//         }
+//         case MODBUS_FC_READ_COIL: {
+//             uint8_t coil;
+//             res = modbus_read_bits(settings->ctx, message.offset, 1, &coil);
+//             if (res != -1) {
+//                 message.values.push_back(coil);
+//             }
+//             break;
+//         }
         default:
             fprintf(stderr, "Unsupported function code: %d\n", message.fc);
             break;
@@ -570,15 +646,17 @@ void modbus_worker_thread(ModbusRTUSettings* settings) {
 
 }
 
-void enqueue_message(ModbusRTUSettings* settings, int fc, int offset, const std::vector<uint16_t>& data) {
-    ModbusMessage message{fc, offset, data};
+
+// todo, if this is a read we'll need a seq number and a way to track the response.
+void enqueue_message(ModbusRTUSettings* settings, int seq, int fc, int offset, const std::vector<uint16_t>& data) {
+    ModbusMessage message{seq, fc, offset, data};
     settings->queue.push(message);
 }
 
-void enqueue_message(ModbusRTUSettings* settings, int fc, int offset, uint16_t* data, int len) {
+void enqueue_message(ModbusRTUSettings* settings, int seq, int fc, int offset, uint16_t* data, int len) {
     // Construct a vector from the provided pointer and length
     std::vector<uint16_t> data_vector(data, data + len);
-    enqueue_message(settings, fc, offset, data_vector);
+    enqueue_message(settings, seq, fc, offset, data_vector);
 }
 
 void addWriteCallback(ModbusRTUSettings *settings, WriteCallback callback) {
@@ -658,8 +736,9 @@ int rs485_test(const std:: string & server, const std::string& client) {
     std::thread client_thread(modbus_worker_thread, &client_settings);
 
     // Example of enqueueing a message
+    int seq = 202;
     std::vector<uint16_t> data = {0x1234, 0x5678};
-    enqueue_message(&client_settings, 3, 10, data);
+    enqueue_message(&client_settings, seq, 3, 10, data);
 
     // Join the thread when appropriate
     if(client_thread.joinable())client_thread.join();
