@@ -1,0 +1,64 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fractal Dashboard Test Runner</title>
+  <style>
+    body { display: flex; }
+    iframe { width: 70%; height: 100vh; border: none; }
+    #testpanel { width: 30%; padding: 20px; background: #f9f9f9; overflow-y: auto; }
+    .teststep { margin-bottom: 20px; }
+    .teststep h3 { margin: 0 0 5px; }
+    .teststep p { margin: 0 0 5px; }
+  </style>
+</head>
+<body>
+  <iframe src="dynv6.html" id="dashboardFrame"></iframe>
+  <div id="testpanel">
+    <h1>Test Runner: FractalDashboard v6</h1>
+    <div id="testSteps">
+      <!-- Steps will be populated here dynamically -->
+    </div>
+  </div>
+
+<script>
+const steps = [
+  {
+    title: "Connect Behavior",
+    desc: "Disconnect any WS server. Reload the dashboard. It should fallback to fakeData and show tabs (connect, config, param, rack0...)"
+  },
+  {
+    title: "Tab Switching",
+    desc: "Click rack0 tab, edit a field. Switch to rack1 and back to rack0. Edited field should persist."
+  },
+  {
+    title: "Input Field Buttons",
+    desc: "Edit a config field manually. Try Clear ➔ Default ➔ Set. Watch field update properly."
+  },
+  {
+    title: "Reload Button",
+    desc: "Click Reload. Should redraw current tab frame with latest data."
+  },
+  {
+    title: "Table Switch",
+    desc: "On rack0, select between Volt, SOC, SOH, Temp tables. Should update display without crash."
+  },
+  {
+    title: "Manual WebSocket Connect",
+    desc: "Use Connect tab to input localhost and port (if mock server running). Should reconnect and load live data."
+  }
+];
+
+const panel = document.getElementById('testSteps');
+steps.forEach((s, idx) => {
+  const div = document.createElement('div');
+  div.className = "teststep";
+  div.innerHTML = `<h3>Step ${idx+1}: ${s.title}</h3><p>${s.desc}</p>`;
+  panel.appendChild(div);
+});
+</script>
+</body>
+</html>
