@@ -41,6 +41,9 @@
   <div id="topButtons">
     <button id="reloadButton" onclick="reloadData()">Reload</button>
     <button id="editButton" onclick="toggleEditMode()">Edit Mode: OFF</button>
+    <button id="loadButton" onclick="loadFrame()">Load</button>
+    <button id="saveButton" onclick="saveFrame()">Save</button>
+    <button id="saveAsButton" onclick="saveAsFrame()">Save As</button>
   </div>
   <div id="container">Connecting...</div>
 
@@ -83,6 +86,29 @@ for (let i = 0; i <= 12; i++) {
       "temp": Array(64).fill(25 + i)
     }
   };
+}
+function loadFrame() {
+  if (socket && connected) {
+    socket.send(JSON.stringify({ cmd: "load_frame" }));
+    console.log("Load frame request sent.");
+  }
+}
+
+function saveFrame() {
+  if (socket && connected && frameData) {
+    socket.send(JSON.stringify({ cmd: "save_frame", data: frameData }));
+    console.log("Save frame request sent.");
+  }
+}
+
+function saveAsFrame() {
+  if (socket && connected && frameData) {
+    const name = prompt("Enter new frame name:");
+    if (name) {
+      socket.send(JSON.stringify({ cmd: "saveas_frame", name: name, data: frameData }));
+      console.log("Save As frame request sent for name:", name);
+    }
+  }
 }
 function toggleEditMode() {
   editMode = !editMode;
