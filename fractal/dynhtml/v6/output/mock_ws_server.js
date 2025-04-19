@@ -65,6 +65,18 @@ wss.on('connection', function connection(ws) {
         // Optional: save under new filename
         fs.writeFileSync(parsed.name + '.json', JSON.stringify(currentFrame, null, 2));
       }
+      else if (parsed.cmd === "list_frames") {
+        console.log("Listing available frames...");
+        try {
+          const files = fs.readdirSync('.').filter(f => f.endsWith('.json'));
+          ws.send(JSON.stringify({ cmd: "list_frames", files: files }));
+          console.log("Sent file list:", files);
+        } catch (e) {
+          console.error("Error listing frame files:", e);
+          ws.send(JSON.stringify({ cmd: "list_frames", files: [] }));
+        }
+      }
+      
       else {
         console.warn("Unknown command received.");
       }

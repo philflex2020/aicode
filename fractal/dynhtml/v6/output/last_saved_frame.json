@@ -66,12 +66,6 @@
           "title": "Rack 0",
           "fields": [
             {
-              "name": "test",
-              "value": "test",
-              "input": true,
-              "default": "test"
-            },
-            {
               "name": "Rack Setting",
               "value": "Enabled",
               "input": true,

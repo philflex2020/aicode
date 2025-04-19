@@ -37,6 +37,11 @@
 </head>
 <body>
   <h1>Fractal SBMS Config</h1>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+  <div id="tabs" class="tabs"></div>
+  <div id="wsStatus" style="font-weight: bold; font-size: 1em; margin-left: 10px;">🔴 Disconnected</div>
+</div>
+
   <div class="tabs" id="tabs"></div>
   <div id="topButtons">
     <button id="reloadButton" onclick="reloadData()">Reload</button>
@@ -117,8 +122,101 @@ for (let i = 0; i <= 12; i++) {
   };
 }
 
+function popup(message, isSuccess = true) {
+  const div = document.createElement('div');
+  div.style.position = 'fixed';
+  div.style.top = '20px';
+  div.style.right = '20px';
+  div.style.padding = '10px 20px';
+  div.style.backgroundColor = isSuccess ? 'green' : 'red';
+  div.style.color = 'white';
+  div.style.fontWeight = 'bold';
+  div.style.borderRadius = '8px';
+  div.style.zIndex = 1000;
+  div.textContent = message;
+  document.body.appendChild(div);
+
+  setTimeout(() => {
+    div.remove();
+  }, 3000); // 3 seconds then disappear
+}
+
+function validateFrameData(data) {
+  if (!data || typeof data !== 'object') {
+    console.error("Validation Failed: frameData is not an object!");
+    return null;
+  }
+
+  if (!data.frames || typeof data.frames !== 'object') {
+    console.error("Validation Failed: Missing 'frames' object inside frameData.");
+    return null;
+  }
+
+  const frameNames = Object.keys(data.frames);
+  if (frameNames.length === 0) {
+    console.error("Validation Failed: 'frames' object is empty.");
+    return null;
+  }
+
+  frameNames.forEach(frameName => {
+    const frame = data.frames[frameName];
+    if (!frame.boxes || !Array.isArray(frame.boxes)) {
+      console.warn(`Frame '${frameName}' missing 'boxes'. Auto-creating empty array.`);
+      frame.boxes = [];
+    }
+
+    frame.boxes.forEach((box, boxIndex) => {
+      if (!box.fields || !Array.isArray(box.fields)) {
+        console.warn(`Box ${boxIndex} in frame '${frameName}' missing 'fields'. Auto-creating empty array.`);
+        box.fields = [];
+      }
+
+      box.fields = box.fields.filter((field, fieldIndex) => {
+        if (!field.name || (field.value === undefined && field.default === undefined)) {
+          console.warn(`Invalid field removed in frame '${frameName}', box ${boxIndex}, field ${fieldIndex}.`);
+          return false;
+        }
+        return true;
+      });
+    });
+  });
+
+  console.log("Validation Complete: frameData structure is now safe.");
+  return data;
+}
+
+function updateConnectionStatus(isConnected) {
+  const statusDiv = document.getElementById('wsStatus');
+  if (!statusDiv) return;
+
+  if (isConnected) {
+    statusDiv.innerHTML = "🟢 Connected";
+    statusDiv.style.color = "green";
+  } else {
+    statusDiv.innerHTML = "🔴 Disconnected";
+    statusDiv.style.color = "red";
+  }
+  // Now control button backgrounds
+  const buttons = ["loadButton", "saveButton", "saveAsButton"];
+  buttons.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.style.backgroundColor = isConnected ? "white" : "lightgrey";
+      btn.disabled = !isConnected;
+      btn.style.cursor = isConnected ? "pointer" : "not-allowed";
+    }
+  });
+}
 
 function loadFrame() {
+  if (socket && connected) {
+    socket.send(JSON.stringify({ cmd: "list_frames" }));
+  } else {
+    console.warn("WebSocket not connected. Cannot list frames.");
+  }
+}
+
+function xloadFrame() {
   if (socket && connected) {
     const name = prompt("Enter frame filename to load:", "default_frame.json");
     if (name) {
@@ -438,6 +536,41 @@ function applyColorCoding(cell, value, tableType) {
 }
 
 function reloadData() {
+  if (liveData && liveData.data) {
+    const validated = validateFrameData(liveData.data);
+    if (!validated) {
+      console.error("Live data invalid. Falling back to fakeData.");
+      frameData = fakeData.data;
+      currentFrame = "config";
+    } else {
+      frameData = validated;
+    }
+  } else {
+    const validated = validateFrameData(fakeData.data);
+    if (!validated) {
+      console.error("Fallback fakeData invalid. Critical error!");
+      document.getElementById('container').innerHTML = "<h2>Error: No valid data to display!</h2>";
+      return;
+    }
+    frameData = validated;
+    currentFrame = "config";
+  }
+
+  buildTabs(frameData);
+
+  if (typeof currentFrame !== 'string' || !(currentFrame in frameData.frames)) {
+    const availableFrames = Object.keys(frameData.frames);
+    currentFrame = availableFrames.length > 0 ? availableFrames[0] : null;
+  }
+
+  if (currentFrame && frameData.frames[currentFrame]) {
+    createBoxes(frameData.frames[currentFrame]);
+  } else {
+    document.getElementById('container').innerHTML = "<h2>Error: No valid frame found!</h2>";
+  }
+}
+
+function xreloadData() {
   if (liveData && liveData.data) { 
     frameData = liveData.data;
   } else { 
@@ -472,13 +605,55 @@ function reloadData() {
   createBoxes(frameData.frames[currentFrame]);
 }
 
+function popupFileList(files) {
+  const popup = document.createElement('div');
+  popup.style.position = 'fixed';
+  popup.style.top = '50px';
+  popup.style.right = '50px';
+  popup.style.backgroundColor = 'white';
+  popup.style.border = '2px solid black';
+  popup.style.padding = '20px';
+  popup.style.zIndex = 1000;
+  popup.style.borderRadius = '8px';
+
+  const title = document.createElement('div');
+  title.textContent = "Select a Frame to Load";
+  title.style.fontWeight = 'bold';
+  title.style.marginBottom = '10px';
+  popup.appendChild(title);
+
+  files.forEach(file => {
+    const fileButton = document.createElement('button');
+    fileButton.textContent = file;
+    fileButton.style.display = 'block';
+    fileButton.style.margin = '5px 0';
+    fileButton.onclick = () => {
+      socket.send(JSON.stringify({ cmd: "load_frame", file: file }));
+      popup.remove();
+    };
+    popup.appendChild(fileButton);
+  });
+
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = "Cancel";
+  cancelButton.style.marginTop = '10px';
+  cancelButton.onclick = () => popup.remove();
+  popup.appendChild(cancelButton);
+
+  document.body.appendChild(popup);
+}
 
 function connectWebSocket() {
   socket = new WebSocket(wsUrl);
   connected = false;
   //frameData = fakeData;
 
-  socket.onopen = () => { connected = true; console.log("Connected"); };
+  socket.onopen = () => { 
+    connected = true; 
+    console.log("Connected"); 
+    updateConnectionStatus(true);
+    popup("Connected to WebSocket ✅", true);
+  };
   socket.onmessage = (event) => {
     try { 
       const parsed = JSON.parse(event.data);
@@ -492,14 +667,25 @@ function connectWebSocket() {
         console.log("Built tabs");
         createBoxes(parsed.data.frames[currentFrame]); 
       }
+      else if (parsed.cmd === "list_frames" && parsed.files) {
+        popupFileList(parsed.files);
+      }
+
        // Future: can add confirmation messages for save/saveas
     }
     catch (e) { 
       console.error("Parsing WS failed:", e); 
     }
   };
-  socket.onerror = () => { console.warn("WebSocket error"); };
+  socket.onerror = () => { 
+    updateConnectionStatus(false);
+    console.warn("WebSocket error"); 
+    popup("WebSocket Error ❌", false);
+  }
+  ;
   socket.onclose = () => { 
+    updateConnectionStatus(false);
+    popup("WebSocket Disconnected ❌", false);
     if (!connected) { 
       liveData = null; 
       frameData = fakeData,data;
