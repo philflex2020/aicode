@@ -54,6 +54,8 @@
 
 <script>
 
+
+let frameRequestMode = "load"; // "load" or "saveas"
 let popupInsertMode = null; // "before" or "after"
 let frameData = null; // Global
 let contextField = null;    // Stores which field was right-clicked
@@ -210,38 +212,52 @@ function updateConnectionStatus(isConnected) {
 
 function loadFrame() {
   if (socket && connected) {
-    socket.send(JSON.stringify({ cmd: "list_frames" }));
+    frameRequestMode = "load"; // <- set mode
+    socket.send(JSON.stringify({ cmd: "list_frames" , requestor: "load" }));
   } else {
     console.warn("WebSocket not connected. Cannot list frames.");
   }
 }
 
-function xloadFrame() {
-  if (socket && connected) {
-    const name = prompt("Enter frame filename to load:", "default_frame.json");
-    if (name) {
-      socket.send(JSON.stringify({ cmd: "load_frame", name: name }));
-      console.log("Load frame request sent for file:", name);
-    }
-  }
-}
 
 function saveFrame() {
   if (socket && connected && frameData) {
-    socket.send(JSON.stringify({ cmd: "save_frame", data: frameData }));
+    socket.send(JSON.stringify({ cmd: "save_frame", requestor: "saveas" }));
     console.log("Save frame request sent.");
   }
 }
 
 function saveAsFrame() {
   if (socket && connected && frameData) {
-    const name = prompt("Enter new frame name:");
-    if (name) {
-      socket.send(JSON.stringify({ cmd: "saveas_frame", name: name, data: frameData }));
-      console.log("Save As frame request sent for name:", name);
-    }
+    frameRequestMode = "saveas"; // <- set mode
+    socket.send(JSON.stringify({ cmd: "list_frames",requestor: "saveas" }));
+    console.log("Requested file list for SaveAs selection.");
   }
 }
+
+
+function xsaveAsFrame() {
+  if (socket && connected && frameData) {
+    socket.send(JSON.stringify({ cmd: "list_frames" }));
+    console.log("Requested file list for SaveAs selection.");
+    // Then when list comes back, popupFileList(files) will handle the rest
+  } else {
+    console.warn("Cannot save as: WebSocket disconnected or frameData missing.");
+  }
+}
+
+// //triggers the saveas_frame
+// function saveAsFrame() {
+//   if (socket && connected && frameData) {
+//     const name = prompt("Enter new frame name:");
+//     if (name) {
+//       socket.send(JSON.stringify({ cmd: "saveas_frame", name: name, data: frameData }));
+//       console.log("Save As frame request sent for name:", name);
+//     }
+//   }
+// }
+
+
 function toggleEditMode() {
   editMode = !editMode;
   const editButton = document.getElementById('editButton');
@@ -605,7 +621,7 @@ function xreloadData() {
   createBoxes(frameData.frames[currentFrame]);
 }
 
-function popupFileList(files) {
+function popupFileList(files, mode = "load") {
   const popup = document.createElement('div');
   popup.style.position = 'fixed';
   popup.style.top = '50px';
@@ -628,8 +644,19 @@ function popupFileList(files) {
     fileButton.style.display = 'block';
     fileButton.style.margin = '5px 0';
     fileButton.onclick = () => {
-      socket.send(JSON.stringify({ cmd: "load_frame", file: file }));
-      popup.remove();
+
+      if (mode === "load") {
+        socket.send(JSON.stringify({ cmd: "load_frame", file: file }));
+        popup.remove();
+      } else if (mode === "saveas") {
+        confirmPopup(`Overwrite '${file}'?`, () => {
+          sendSaveAs(file);
+          popup.remove();
+        });
+      }
+
+      //socket.send(JSON.stringify({ cmd: "load_frame", file: file }));
+      //popup.remove();
     };
     popup.appendChild(fileButton);
   });
@@ -643,6 +670,48 @@ function popupFileList(files) {
   document.body.appendChild(popup);
 }
 
+function confirmPopup(message, yesCallback) {
+  const div = document.createElement('div');
+  div.style.position = 'fixed';
+  div.style.top = '50px';
+  div.style.right = '50px';
+  div.style.padding = '20px';
+  div.style.backgroundColor = 'white';
+  div.style.border = '2px solid black';
+  div.style.borderRadius = '8px';
+  div.style.zIndex = 1000;
+  div.style.textAlign = 'center';
+
+  const msg = document.createElement('div');
+  msg.style.marginBottom = '10px';
+  msg.textContent = message;
+  div.appendChild(msg);
+
+  const yesBtn = document.createElement('button');
+  yesBtn.textContent = 'Yes';
+  yesBtn.style.margin = '5px';
+  yesBtn.onclick = () => {
+    yesCallback();
+    div.remove();
+  };
+  div.appendChild(yesBtn);
+
+  const noBtn = document.createElement('button');
+  noBtn.textContent = 'No';
+  noBtn.style.margin = '5px';
+  noBtn.onclick = () => div.remove();
+  div.appendChild(noBtn);
+
+  document.body.appendChild(div);
+}
+
+function sendSaveAs(name) {
+  if (socket && connected && frameData) {
+    socket.send(JSON.stringify({ cmd: "saveas_frame", name: name, data: frameData }));
+    console.log("SaveAs frame sent:", name);
+  }
+}
+
 function connectWebSocket() {
   socket = new WebSocket(wsUrl);
   connected = false;
@@ -654,6 +723,7 @@ function connectWebSocket() {
     updateConnectionStatus(true);
     popup("Connected to WebSocket ✅", true);
   };
+
   socket.onmessage = (event) => {
     try { 
       const parsed = JSON.parse(event.data);
@@ -668,8 +738,15 @@ function connectWebSocket() {
         createBoxes(parsed.data.frames[currentFrame]); 
       }
       else if (parsed.cmd === "list_frames" && parsed.files) {
-        popupFileList(parsed.files);
+        popupFileList(parsed.files, parsed.requestor || "load");
       }
+      else if (parsed.cmd === "save_done") {
+        if (parsed.status === "ok") {
+          popup("Save Successful ✅", true);
+        } else {
+          popup("Save Failed ❌: " + (parsed.error || "Unknown Error"), false);
+      }
+    }
 
        // Future: can add confirmation messages for save/saveas
     }

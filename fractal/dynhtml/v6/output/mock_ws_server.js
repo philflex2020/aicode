@@ -29,6 +29,7 @@ const preloadFrame = {
   }
 };
 
+
 wss.on('connection', function connection(ws) {
   console.log('Client connected.');
 
@@ -53,30 +54,37 @@ wss.on('connection', function connection(ws) {
           ws.send(JSON.stringify({ cmd: "load_frame", data: preloadFrame }));
         }
       }
+
       else if (parsed.cmd === "save_frame") {
-        console.log("Frame saved in memory.");
-        currentFrame = parsed.data;
-        // Optional: write to file
-        fs.writeFileSync('last_saved_frame.json', JSON.stringify(currentFrame, null, 2));
+        try {
+          fs.writeFileSync('default_frame.json', JSON.stringify(parsed.data, null, 2));
+          ws.send(JSON.stringify({ cmd: "save_done", status: "ok" }));
+        } catch (error) {
+          console.error("Error saving frame:", error);
+          ws.send(JSON.stringify({ cmd: "save_done", status: "fail", "error": error.message }));
+        }
       }
       else if (parsed.cmd === "saveas_frame") {
-        console.log("Frame saved as", parsed.name);
-        currentFrame = parsed.data;
-        // Optional: save under new filename
-        fs.writeFileSync(parsed.name + '.json', JSON.stringify(currentFrame, null, 2));
+        try {
+          const filename = parsed.name || "new_frame.json";
+          fs.writeFileSync(filename, JSON.stringify(parsed.data, null, 2));
+          ws.send(JSON.stringify({ cmd: "save_done", status: "ok" }));
+        } catch (error) {
+          console.error("Error saving frame:", error);
+          ws.send(JSON.stringify({ cmd: "save_done", status: "fail", "error": error.message }));
+        }
       }
       else if (parsed.cmd === "list_frames") {
         console.log("Listing available frames...");
         try {
           const files = fs.readdirSync('.').filter(f => f.endsWith('.json'));
-          ws.send(JSON.stringify({ cmd: "list_frames", files: files }));
+          ws.send(JSON.stringify({ cmd: "list_frames", files: files,  requestor: parsed.requestor || "load" }));
           console.log("Sent file list:", files);
         } catch (e) {
           console.error("Error listing frame files:", e);
-          ws.send(JSON.stringify({ cmd: "list_frames", files: [] }));
+          ws.send(JSON.stringify({ cmd: "list_frames", files: [], requestor: parsed.requestor || "load" }));
         }
       }
-      
       else {
         console.warn("Unknown command received.");
       }
