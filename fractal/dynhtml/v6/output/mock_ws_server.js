@@ -1,37 +1,79 @@
 
 
-
 // mock_ws_server.js
-// Node.js WebSocket server to simulate FractalDashboard v6 backend
+//npm install ws
+//node mock_ws_server.js
 
 const WebSocket = require('ws');
+const fs = require('fs');
 
-const PORT = 8080;
-const wss = new WebSocket.Server({ port: PORT });
+const wss = new WebSocket.Server({ port: 8080 });
 
-console.log(`Mock WebSocket server running on ws://localhost:${PORT}`);
+console.log("Mock WebSocket Server running on ws://localhost:8080");
 
-wss.on('connection', (ws) => {
-  console.log("Client connected.");
+let currentFrame = null; // Last received frameData
 
-  // Send initial fake frame
-  const message = {
-    frames: {
-      config: { 
-        boxes: [
-          { title: "Config WS", fields: [{ name: "WS Field", value: "LIVE", input: true, default: "LIVE" }] }
-        ]
-      },
-      param: {
-        boxes: [
-          { title: "Param WS", fields: [{ name: "WS Param", value: "100", input: true, default: "100" }] }
-        ]
-      }
+// Optional: preload a fake frame to load
+const preloadFrame = {
+  frames: {
+    config: {
+      boxes: [
+        {
+          title: "Preloaded Config",
+          fields: [
+            { name: "Preloaded Setting", value: "123", input: true, default: "123" }
+          ]
+        }
+      ]
     }
-  };
-  ws.send(JSON.stringify(message));
+  }
+};
 
-  ws.on('close', () => {
-    console.log("Client disconnected.");
+wss.on('connection', function connection(ws) {
+  console.log('Client connected.');
+
+  ws.on('message', function incoming(message) {
+    console.log('Received:', message.toString());
+
+    try {
+      const parsed = JSON.parse(message);
+
+      if (parsed.cmd === "load_frame") {
+        const filename = parsed.name || 'default_frame.json';
+        console.log(`Attempting to load file: ${filename}`);
+
+        try {
+          const fileData = fs.readFileSync(filename, 'utf8');
+          const frame = JSON.parse(fileData);
+          console.log(`Loaded frame from ${filename}, sending back.`);
+          ws.send(JSON.stringify({ cmd: "load_frame", data: frame }));
+        } catch (e) {
+          console.error(`Error loading file ${filename}:`, e);
+          // If failed, send fallback
+          ws.send(JSON.stringify({ cmd: "load_frame", data: preloadFrame }));
+        }
+      }
+      else if (parsed.cmd === "save_frame") {
+        console.log("Frame saved in memory.");
+        currentFrame = parsed.data;
+        // Optional: write to file
+        fs.writeFileSync('last_saved_frame.json', JSON.stringify(currentFrame, null, 2));
+      }
+      else if (parsed.cmd === "saveas_frame") {
+        console.log("Frame saved as", parsed.name);
+        currentFrame = parsed.data;
+        // Optional: save under new filename
+        fs.writeFileSync(parsed.name + '.json', JSON.stringify(currentFrame, null, 2));
+      }
+      else {
+        console.warn("Unknown command received.");
+      }
+    } catch (e) {
+      console.error("Failed to parse incoming message:", e);
+    }
+  });
+
+  ws.on('close', function close() {
+    console.log('Client disconnected.');
   });
 });
