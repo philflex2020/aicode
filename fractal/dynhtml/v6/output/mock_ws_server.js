@@ -8,6 +8,8 @@ const WebSocket = require('ws');
 const fs = require('fs');
 
 const wss = new WebSocket.Server({ port: 8080 });
+// Global database for all IDs
+const globalIdValues = {};
 
 console.log("Mock WebSocket Server running on ws://localhost:8080");
 
@@ -40,7 +42,7 @@ function generateInitialValue(id) {
 wss.on('connection', function connection(ws) {
   console.log('Client connected.');
   ws.datasets = {}; // per client dataset registry
-  ws.idValues = {}; // per client value database
+ // ws.idValues = {}; // per client value database
 
   ws.on('message', function incoming(message) {
     console.log('Received:', message.toString());
@@ -101,13 +103,39 @@ wss.on('connection', function connection(ws) {
         // Initialize fake values for new IDs
         Object.values(ws.datasets).forEach(idList => {
             idList.forEach(id => {
-            if (!(id in ws.idValues)) {
-              ws.idValues[id] = generateInitialValue(id);
+            if (!(id in globalIdValues)) {
+              globalIdValues[id] = generateInitialValue(id);
             }
           });
         });
         console.log(`Stored ${Object.keys(ws.datasets).length} data sets and initialized values.`);
       }
+      else if (parsed.cmd === 'set_value') {
+        if (parsed.id && parsed.value !== undefined) {
+          // Single ID set
+          globalIdValues[parsed.id] = parsed.value;
+          console.log(`[Mock Server] Set ID '${parsed.id}' to value ${parsed.value}`);
+          ws.send(JSON.stringify({ cmd: "update_complete" })); // ✅ Send ack to client
+
+        } 
+        else if (parsed.values && typeof parsed.values === 'object') {
+         // Multiple IDs set
+          Object.entries(parsed.values).forEach(([id, value]) => {
+           globalIdValues[id] = value;
+           console.log(`[Mock Server] Set ID '${id}' to value ${value}`);
+          });
+          ws.send(JSON.stringify({ cmd: "update_complete" })); // ✅ Send ack to client
+        }
+        else {
+         console.warn(`[Mock Server] Malformed set_value command received.`);
+        }
+      }
+      else if (parsed.cmd === 'get_all_ids') {
+        ws.send(JSON.stringify({
+          cmd: "all_ids",
+          values: globalIdValues
+        }));
+      }     
       else if (parsed.cmd === 'get_data_set_values') {
         const setName = parsed.name;
         console.log("Available datasets:", Object.keys(ws.datasets));
@@ -118,7 +146,8 @@ wss.on('connection', function connection(ws) {
         let values = {};
         ids.forEach(id => {
           vcount++;
-          values[id] = ws.idValues[id] || 0; // Default fallback 0
+          values[id] = globalIdValues[id] ?? 0; // Default fallback 0
+          //values[id] = ws.idValues[id] || 0; // Default fallback 0
         });
       
         ws.send(JSON.stringify({
