@@ -1,0 +1,49 @@
+{
+  "blocks": [
+    {
+      "id": "id_wnu0wmk",
+      "type": "Constant",
+      "x": 68,
+      "y": 62,
+      "config": {
+        "value": 1
+      }
+    },
+    {
+      "id": "id_fh35yd0",
+      "type": "Output",
+      "x": 465,
+      "y": 53
+    },
+    {
+      "id": "id_2bmay36",
+      "type": "Input",
+      "x": 83,
+      "y": 170,
+      "idName": "input_id_2bmay36"
+    },
+    {
+      "id": "id_lc3s55j",
+      "type": "Output",
+      "x": 451,
+      "y": 157
+    }
+  ],
+  "wires": [
+    {
+      "from": "id_fh35yd0",
+      "to": "id_fh35yd0",
+      "input": 1
+    },
+    {
+      "from": "id_wnu0wmk",
+      "to": "id_fh35yd0",
+      "input": 1
+    },
+    {
+      "from": "id_2bmay36",
+      "to": "id_lc3s55j",
+      "input": 1
+    }
+  ]
+}

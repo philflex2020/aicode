@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FractalNode 4</title>
+<style>
+  body { font-family: sans-serif; margin: 20px; }
+  canvas { border: 1px solid #aaa; background: #fafafa; }
+  button { margin: 5px; }
+</style>
+</head>
+<body>
+
+<h2>FractalNode 4</h2>
+
+<div>
+  <button onclick="addBlock('Constant')">Add Constant</button>
+  <button onclick="addBlock('Input')">Add Input</button>
+  <button onclick="addBlock('Add')">Add Add</button>
+  <button onclick="addBlock('Subtract')">Add Subtract</button>
+  <button onclick="addBlock('Multiply')">Add Multiply</button>
+  <button onclick="addBlock('Divide')">Add Divide</button>
+  <button onclick="addBlock('Output')">Add Output</button>
+  <button onclick="toggleWiring()">Wire Mode</button>
+  <button onclick="runStep()">Run Step</button>
+  <button onclick="saveGraph()">Save</button>
+  <button onclick="saveGraphAs()">Save As</button>
+  <button onclick="loadGraphList()">Load</button>
+</div>
+<div id="loadPopup" style="display:none; position:fixed; top:100px; left:100px; background:white; border:1px solid black; padding:10px; z-index:1000;">
+    <h3>Select Graph to Load</h3>
+    <div id="loadPopupList"></div>
+    <button onclick="closeLoadPopup()">Cancel</button>
+  </div>
+  
+
+<canvas id="canvas" width="1200" height="800"></canvas>
+
+<script>
+let blocks = [];
+let wires = [];
+let wiringMode = false;
+let wiringStart = null;
+let inputVariables = {};  // For input block variables
+let socket = null;
+let lastSavedFilename = null;
+let fileList = [];
+
+let idCounters = {
+  Constant: 0,
+  Input: 0,
+  Add: 0,
+  Subtract: 0,
+  Multiply: 0,
+  Divide: 0,
+  Output: 0
+};
+
+function showLoadPopup(files) {
+  const popup = document.getElementById('loadPopup');
+  const list = document.getElementById('loadPopupList');
+  list.innerHTML = '';
+
+  files.forEach(filename => {
+    const btn = document.createElement('button');
+    btn.textContent = filename;
+    btn.onclick = () => {
+      socket.send(JSON.stringify({ cmd: "load_graph", filename: filename }));
+      closeLoadPopup();
+    };
+    list.appendChild(btn);
+    list.appendChild(document.createElement('br'));
+  });
+
+  popup.style.display = 'block';
+}
+
+function closeLoadPopup() {
+  document.getElementById('loadPopup').style.display = 'none';
+}
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const blockWidth = 120;
+const blockHeight = 50;
+let draggingBlock = null;
+let offsetX = 0;
+let offsetY = 0;
+
+let addBlockOffset = 0;
+
+canvas.onmousedown = (e) => {
+  if (e.button !== 0) return;  // Only react to LEFT click (button 0)
+
+  const clicked = blocks.find(b =>
+    e.offsetX >= b.x && e.offsetX <= b.x + blockWidth &&
+    e.offsetY >= b.y && e.offsetY <= b.y + blockHeight
+  );
+  if (clicked && !wiringMode) {
+    draggingBlock = clicked;
+    offsetX = e.offsetX - clicked.x;
+    offsetY = e.offsetY - clicked.y;
+  }
+};
+
+// canvas.onmousedown = (e) => {
+//   const clicked = blocks.find(b =>
+//     e.offsetX >= b.x && e.offsetX <= b.x + blockWidth &&
+//     e.offsetY >= b.y && e.offsetY <= b.y + blockHeight
+//   );
+//   if (clicked && !wiringMode) {
+//     draggingBlock = clicked;
+//     offsetX = e.offsetX - clicked.x;
+//     offsetY = e.offsetY - clicked.y;
+//   }
+// };
+
+canvas.onmousemove = (e) => {
+  if (draggingBlock) {
+    draggingBlock.x = e.offsetX - offsetX;
+    draggingBlock.y = e.offsetY - offsetY;
+    draw();
+  }
+};
+
+canvas.onmouseup = () => {
+  draggingBlock = null;
+};
+
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw wires
+  ctx.strokeStyle = 'black';
+  wires.forEach(w => {
+    const from = blocks.find(b => b.id === w.from);
+    const to = blocks.find(b => b.id === w.to);
+    if (from && to) {
+      ctx.beginPath();
+      ctx.moveTo(from.x + blockWidth, from.y + blockHeight/2);
+      const inputOffset = (w.input === 1) ? (blockHeight/3) : (2*blockHeight/3);
+      ctx.lineTo(to.x, to.y + inputOffset);
+      ctx.stroke();
+    }
+  });
+
+  // Draw blocks
+  blocks.forEach(b => {
+    ctx.fillStyle = (b.type === 'Input') ? '#ddf' : (b.type === 'Output') ? '#dfd' : '#ffd';
+    ctx.fillRect(b.x, b.y, blockWidth, blockHeight);
+    ctx.strokeRect(b.x, b.y, blockWidth, blockHeight);
+    ctx.fillStyle = 'black';
+    ctx.fillText(b.type, b.x + 10, b.y + 20);
+    if (b.idName) {
+      ctx.fillText(b.idName, b.x + 10, b.y + 40);
+    }
+    if (b.latestValue !== undefined) {
+      ctx.fillText("Val: " + b.latestValue, b.x + 10, b.y + 55);
+    }
+  });
+
+  if (wiringMode && wiringStart) {
+    ctx.fillStyle = 'red';
+    const from = blocks.find(b => b.id === wiringStart);
+    if (from) {
+      ctx.beginPath();
+      ctx.arc(from.x + blockWidth, from.y + blockHeight/2, 5, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+}
+
+//let addBlockOffset = 0;
+
+function addBlock(type) {
+  idCounters[type] = (idCounters[type] || 0) + 1;
+  const idName = type.toLowerCase() + "_" + idCounters[type].toString().padStart(2, '0');
+
+  const block = { id: idName, type: type, x: 100 + addBlockOffset, y: 100 + addBlockOffset };
+  if (type === 'Input') block.idName = "input_" + idName;
+  if (type === 'Constant') block.config = { value: 1.0 };
+  
+  blocks.push(block);
+  addBlockOffset += 30;  // Auto shift new blocks
+  draw();
+}
+function xaddBlock(type) {
+  const id = "id_" + Math.random().toString(36).substring(2,9);
+  const block = { id: id, type: type, x: 100 + addBlockOffset, y: 100 + addBlockOffset };
+  if (type === 'Input') block.idName = "input_" + id;
+  if (type === 'Constant') block.config = { value: 1.0 };
+  blocks.push(block);
+  addBlockOffset += 30;  // move each new block a bit
+  draw();
+}
+
+
+function toggleWiring() {
+  wiringMode = !wiringMode;
+  wiringStart = null;
+  draw();
+}
+function connect() {
+  socket = new WebSocket('ws://localhost:8080');
+
+  socket.onopen = () => {
+    console.log('Connected to mock_node_server');
+  };
+
+  socket.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.cmd === 'graph_list') {
+        fileList = msg.files || [];
+        showLoadPopup(fileList); // instead of prompt()
+
+        // const selected = prompt("Available graphs:\n" + fileList.join('\n') + "\n\nEnter filename to load:");
+        // if (selected) {
+        //     socket.send(JSON.stringify({ cmd: "load_graph", filename: selected }));
+        // }
+    }
+    else if (msg.cmd === 'xxgraph_list') {
+      fileList = msg.files;
+      const selected = prompt("Load which graph?\n" + fileList.join('\n'));
+      if (selected) {
+        socket.send(JSON.stringify({ cmd: "load_graph", filename: selected }));
+      }
+    }
+    else if (msg.cmd === 'graph_loaded') {
+      blocks = msg.graph.blocks || [];
+      wires = msg.graph.wires || [];
+      inputVariables = msg.graph.inputs || {};
+      lastSavedFilename = msg.filename;
+      draw();
+    }
+    else if (msg.cmd === 'step_complete') {
+        if (msg.blockValues) {
+            Object.entries(msg.blockValues).forEach(([id, val]) => {
+                const block = blocks.find(b => b.id === id);
+                if (block) {
+                    block.value = val; // <-- store new value in block!
+                }
+            });
+            draw(); // redraw blocks showing updated values
+        }
+    }
+    else if (msg.cmd === 'step_result') {
+      const results = msg.results || {};
+      blocks.forEach(b => {
+        if (results[b.id] !== undefined) {
+          b.latestValue = results[b.id];
+        }
+      });
+      draw();
+    }
+  };
+
+  socket.onclose = () => {
+    console.warn('Disconnected from mock_node_server');
+    socket = null;
+  };
+}
+
+function saveGraph() {
+  if (!socket) return;
+  if (!lastSavedFilename) {
+    saveGraphAs();
+    return;
+  }
+  socket.send(JSON.stringify({ cmd: "save_graph", filename: lastSavedFilename, graph: { blocks, wires } }));
+  console.log("Graph saved to", lastSavedFilename);
+}
+
+function saveGraphAs() {
+  if (!socket) return;
+  const name = prompt("Save graph as:");
+  if (name) {
+    lastSavedFilename = name;
+    saveGraph();
+  }
+}
+
+function loadGraphList() {
+  if (socket) {
+    socket.send(JSON.stringify({ cmd: "list_graph_files" }));
+  }
+}
+
+function runStep() {
+  if (!socket) return;
+  socket.send(JSON.stringify({ cmd: "run_step" }));
+}
+
+canvas.onclick = (e) => {
+  if (wiringMode) {
+    const clicked = blocks.find(b => 
+      e.offsetX >= b.x && e.offsetX <= b.x + blockWidth &&
+      e.offsetY >= b.y && e.offsetY <= b.y + blockHeight
+    );
+    if (clicked) {
+      if (!wiringStart) {
+        wiringStart = clicked.id;
+      } else {
+        const inputNum = (e.offsetY - clicked.y) < (blockHeight/2) ? 1 : 2;
+        wires.push({ from: wiringStart, to: clicked.id, input: inputNum });
+        wiringStart = null;
+      }
+    } else {
+      wiringStart = null;
+    }
+    draw();
+  } else {
+    const clicked = blocks.find(b => 
+      e.offsetX >= b.x && e.offsetX <= b.x + blockWidth &&
+      e.offsetY >= b.y && e.offsetY <= b.y + blockHeight
+    );
+    if (clicked) {
+      if (clicked.type === 'Input') {
+        const newVal = prompt(`Set value for ${clicked.idName}:`, inputVariables[clicked.idName] || 0);
+        if (newVal !== null) {
+          socket.send(JSON.stringify({ cmd: "set_input_variable", id: clicked.idName, value: parseFloat(newVal) }));
+          inputVariables[clicked.idName] = parseFloat(newVal); // update locally
+          draw();
+        }
+      }
+    }
+  }
+};
+canvas.oncontextmenu = (e) => {
+  e.preventDefault(); // Stop default right-click menu
+
+  const clicked = blocks.find(b =>
+    e.offsetX >= b.x && e.offsetX <= b.x + blockWidth &&
+    e.offsetY >= b.y && e.offsetY <= b.y + blockHeight
+  );
+
+  if (clicked) {
+    if (clicked.type === 'Constant') {
+      const newVal = prompt(`Edit value for ${clicked.type}:`, clicked.config?.value || 0);
+      if (newVal !== null) {
+        clicked.config.value = parseFloat(newVal);
+        draw();
+      }
+    }
+    else if (clicked.type === 'Input') {
+      const newIdName = prompt(`Edit name for ${clicked.type}:`, clicked.idName);
+      if (newIdName !== null) {
+        clicked.idName = newIdName;
+        draw();
+      }
+    }
+    else {
+      alert(`No editable fields for block type: ${clicked.type}`);
+    }
+  }
+};
+
+
+// Start connection automatically
+connect();
+</script>
+</body>
+</html>
+
+

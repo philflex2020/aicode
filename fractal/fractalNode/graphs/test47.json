@@ -1,0 +1,96 @@
+{
+  "blocks": [
+    {
+      "id": "node_1745172811717",
+      "type": "Constant",
+      "x": 18.80177497967233,
+      "y": 70.0637056703136,
+      "config": {
+        "value": 12
+      }
+    },
+    {
+      "id": "node_1745172816019",
+      "type": "Constant",
+      "x": 26.341261528180667,
+      "y": 194.83919621650853,
+      "config": {
+        "value": 134
+      }
+    },
+    {
+      "id": "node_1745172822894",
+      "type": "Multiply",
+      "x": 311.8306372536971,
+      "y": 114.36363442074685,
+      "config": {
+        "value": 0
+      }
+    },
+    {
+      "id": "node_1745172826889",
+      "type": "Output",
+      "x": 615.8017749796724,
+      "y": 220.0637056703136,
+      "config": {
+        "value": 0
+      }
+    },
+    {
+      "id": "subtract_01",
+      "type": "Subtract",
+      "x": 323,
+      "y": 236
+    },
+    {
+      "id": "constant_01",
+      "type": "Constant",
+      "x": 34,
+      "y": 291,
+      "config": {
+        "value": 1
+      }
+    },
+    {
+      "id": "input_01",
+      "type": "Input",
+      "x": 36,
+      "y": 409,
+      "idName": "input_input_01"
+    }
+  ],
+  "wires": [
+    {
+      "from": "node_1745172811717",
+      "to": "node_1745172822894"
+    },
+    {
+      "from": "node_1745172816019",
+      "to": "node_1745172822894"
+    },
+    {
+      "from": "node_1745172822894",
+      "to": "node_1745172826889"
+    },
+    {
+      "from": "input_01",
+      "to": "subtract_01",
+      "input": 2
+    },
+    {
+      "from": "subtract_01",
+      "to": "node_1745172826889",
+      "input": 1
+    },
+    {
+      "from": "node_1745172811717",
+      "to": "subtract_01",
+      "input": 2
+    },
+    {
+      "from": "input_01",
+      "to": "input_01",
+      "input": 1
+    }
+  ]
+}
