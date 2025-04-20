@@ -29,9 +29,18 @@ const preloadFrame = {
   }
 };
 
+function generateInitialValue(id) {
+  if (id.includes("volt")) return (3.6 + Math.random() * 0.6).toFixed(3);
+  if (id.includes("soc")) return (90 + Math.random() * 10).toFixed(1);
+  if (id.includes("soh")) return (85 + Math.random() * 15).toFixed(1);
+  if (id.includes("temp")) return (20 + Math.random() * 25).toFixed(1);
+  return Math.random().toFixed(3); // fallback generic
+}
 
 wss.on('connection', function connection(ws) {
   console.log('Client connected.');
+  ws.datasets = {}; // per client dataset registry
+  ws.idValues = {}; // per client value database
 
   ws.on('message', function incoming(message) {
     console.log('Received:', message.toString());
@@ -88,9 +97,38 @@ wss.on('connection', function connection(ws) {
       else if (parsed.cmd === 'register_data_sets') {
         console.log('Registering data sets from client...');
         ws.datasets = parsed.data_sets;
-        console.log(`Stored ${Object.keys(ws.datasets).length} data sets for this connection.`);
-      }
 
+        // Initialize fake values for new IDs
+        Object.values(ws.datasets).forEach(idList => {
+            idList.forEach(id => {
+            if (!(id in ws.idValues)) {
+              ws.idValues[id] = generateInitialValue(id);
+            }
+          });
+        });
+        console.log(`Stored ${Object.keys(ws.datasets).length} data sets and initialized values.`);
+      }
+      else if (parsed.cmd === 'get_data_set_values') {
+        const setName = parsed.name;
+        console.log("Available datasets:", Object.keys(ws.datasets));
+        console.log("Client requested dataset:", setName);
+        
+        const ids = ws.datasets[setName] || [];
+        let vcount = 0;
+        let values = {};
+        ids.forEach(id => {
+          vcount++;
+          values[id] = ws.idValues[id] || 0; // Default fallback 0
+        });
+      
+        ws.send(JSON.stringify({
+          cmd: "data_set_values",
+          name: setName,
+          values: values
+        }));
+      
+        console.log(`Sent values ${vcount} for dataset: ${setName}`);
+      }
       else {
         console.warn("Unknown command received.");
       }

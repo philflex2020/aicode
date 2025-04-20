@@ -49,12 +49,16 @@
     <button id="loadButton" onclick="loadFrame()">Load</button>
     <button id="saveButton" onclick="saveFrame()">Save</button>
     <button id="saveAsButton" onclick="saveAsFrame()">Save As</button>
+    <button id="pollingButton" onclick="togglePolling()" disabled>Start Polling</button>
+
   </div>
   <div id="container">Connecting...</div>
 
 <script>
+let pollingActive = false;
+let pollingInterval = null;
 
-let dataSets = {};
+//let dataSets = {};
 let popupInsertMode = null; // "before" or "after"
 let frameData = null; // Global
 let contextField = null;    // Stores which field was right-clicked
@@ -122,6 +126,49 @@ for (let i = 0; i <= 12; i++) {
     }
   };
 }
+
+function togglePolling() {
+  if (!connected) return; // Shouldn't happen, but safe
+
+  pollingActive = !pollingActive;
+
+  const btn = document.getElementById('pollingButton');
+  btn.textContent = pollingActive ? "Stop Polling" : "Start Polling";
+
+  if (pollingActive) {
+    startPollingData();
+  } else {
+    stopPollingData();
+  }
+}
+
+function startPollingData() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  
+  pollingInterval = setInterval(() => {
+    if (socket && connected && currentFrame && frameData && frameData.frames && frameData.frames[currentFrame]) {
+      const activeFrame = frameData.frames[currentFrame];
+
+      // Always poll the box data
+      const boxSetName = currentFrame + "_box_data_set";
+      socket.send(JSON.stringify({ cmd: "get_data_set_values", name: boxSetName }));
+
+      // Poll the table if any table is active
+      if (activeFrame.tables && currentTable) {
+        const tableSetName = currentFrame + "_table_" + currentTable + "_data_set";
+        socket.send(JSON.stringify({ cmd: "get_data_set_values", name: tableSetName }));
+      }
+    }
+  }, 1000); // Poll every second (adjust if needed)
+}
+
+function stopPollingData() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
 
 function popup(message, isSuccess = true) {
   const div = document.createElement('div');
@@ -375,6 +422,9 @@ function createBoxes(frameData) {
         input.type = "text";
         input.value = field.value;
         input.className = 'field-input';
+        if(field.id) {
+          input.setAttribute('data-id', field.id);
+        }
 
         if (field.dirty) {
           input.style.backgroundColor = "#ffffcc"; // Restore highlight when rebuilding
@@ -444,7 +494,7 @@ function createBoxes(frameData) {
 function buildDataSets(frameData) {
   let dataSets = {};
   Object.keys(frameData.frames).forEach(frameName => {
-    const frame = frames[frameName];
+    const frame = frameData.frames[frameName];
     if (!frame) return;
 
     // Boxes (fields)
@@ -559,7 +609,7 @@ function initializeFrameIDs(frameName, frameData) {
       box.fields.forEach(field => {
         if (!field.id) {
           field.id = sanitize(frameName) + "_" + sanitize(box.title) + "_" + sanitize(field.name);
-          console.log(`Auto-assigned Field ID [${field.id}]`);
+          //console.log(`Auto-assigned Field ID [${field.id}]`);
         }
       });
     });
@@ -577,7 +627,7 @@ function initializeFrameIDs(frameName, frameData) {
           value: entry
         };
       });
-      console.log(`Initialized Table [${frameName}.${tableName}]`);
+      //console.log(`Initialized Table [${frameName}.${tableName}]`);
     });
   }
 }
@@ -646,10 +696,13 @@ function renderTable(frameData) {
         let valEntry = data[rowStart + i];
 
         let val;
+        let id;
         if (typeof valEntry === 'object' && valEntry.hasOwnProperty('value')) {
           val = valEntry.value;
+          id = valEntry.id;
         } else {
           val = valEntry;
+          id = null;
         }
 
         if (typeof val === 'number') {
@@ -657,6 +710,10 @@ function renderTable(frameData) {
           applyColorCoding(cell, val, currentTable);
         } else {
           cell.textContent = val || "";
+        }
+
+        if (id) {
+          cell.setAttribute('data-id', id);
         }
 
       } else {
@@ -741,8 +798,8 @@ function reloadData() {
   }
 
   initializeAllFrames(frameData);
-  dataSets = buildDataSets(frameData);
-  register_dataSets(dataSets);
+  frameData.dataSets = buildDataSets(frameData);
+  register_dataSets(frameData.dataSets);
 
   buildTabs(frameData);
 
@@ -846,6 +903,48 @@ function sendSaveAs(name) {
   }
 }
 
+function xstartPollingData() {
+  setInterval(() => {
+    if (socket && connected && currentFrame && frameData && frameData.frames && frameData.frames[currentFrame]) {
+      const activeFrame = frameData.frames[currentFrame];
+
+      // Always ask for the box data
+      const boxSetName = currentFrame + "_box_data_set";
+      socket.send(JSON.stringify({ cmd: "get_data_set_values", name: boxSetName }));
+
+      // If a table is visible, ask for table data too
+      if (activeFrame.tables && currentTable) {
+        const tableSetName = currentFrame + "_table_" + currentTable + "_data_set";
+        socket.send(JSON.stringify({ cmd: "get_data_set_values", name: tableSetName }));
+      }
+    }
+  }, 1000); // 1 second polling rate (adjust as needed)
+}
+
+function applyIncomingValues(values) {
+  console.log(values);
+  for (const [id, value] of Object.entries(values)) {
+    const input = document.querySelector(`input[data-id='${id}']`);
+    if (input) {
+      input.value = value;
+      input.style.backgroundColor = "#d0ffd0"; // light green flash
+      setTimeout(() => input.style.backgroundColor = "", 500);
+    }
+
+    const tableCell = document.querySelector(`td[data-id='${id}']`);
+    if (tableCell) {
+      tableCell.textContent = parseFloat(value).toFixed(3);
+      tableCell.style.backgroundColor = "#d0ffd0"; // flash
+      setTimeout(() => {
+        // After green flash ends, re-apply alarm color coding!
+        const numericVal = parseFloat(value);
+        tableCell.style.backgroundColor = ""; // Reset first
+        applyColorCoding(tableCell, numericVal, currentTable);
+      }, 500);
+    }
+  }
+}
+
 function connectWebSocket() {
   socket = new WebSocket(wsUrl);
   connected = false;
@@ -855,6 +954,7 @@ function connectWebSocket() {
     connected = true; 
     console.log("Connected"); 
     updateConnectionStatus(true);
+    document.getElementById('pollingButton').disabled = false;
     popup("Connected to WebSocket ✅", true);
   };
 
@@ -868,8 +968,8 @@ function connectWebSocket() {
         frameData = parsed.data; 
 
         initializeAllFrames(frameData);
-        dataSets = buildDataSets(frameData);
-        register_dataSets(dataSets);
+        frameData.dataSets = buildDataSets(frameData);
+        register_dataSets(frameData.dataSets);
 
         buildTabs(parsed.data); 
         currentFrame = "config";  // Reset safely
@@ -884,8 +984,12 @@ function connectWebSocket() {
           popup("Save Successful ✅", true);
         } else {
           popup("Save Failed ❌: " + (parsed.error || "Unknown Error"), false);
+        }
       }
-    }
+      else if (parsed.cmd === 'data_set_values') {
+        //console.log("got values");
+        applyIncomingValues(parsed.values);
+      }
 
        // Future: can add confirmation messages for save/saveas
     }
@@ -901,13 +1005,17 @@ function connectWebSocket() {
   socket.onclose = () => { 
     updateConnectionStatus(false);
     popup("WebSocket Disconnected ❌", false);
+    document.getElementById('pollingButton').disabled = true;
+    pollingActive = false;
+    stopPollingData();
+    document.getElementById('pollingButton').textContent = "Start Polling";
     if (!connected) { 
       liveData = null; 
       frameData = fakeData,data;
       initializeAllFrames(frameData);
 
-      dataSets = buildDataSets(frameData);
-      register_dataSets(dataSets);
+      frameData.dataSets = buildDataSets(frameData);
+      register_dataSets(frameData.dataSets);
 
       buildTabs(frameData); 
       createBoxes(frameData.frames[currentFrame]); 
