@@ -85,6 +85,12 @@ wss.on('connection', function connection(ws) {
           ws.send(JSON.stringify({ cmd: "list_frames", files: [], requestor: parsed.requestor || "load" }));
         }
       }
+      else if (parsed.cmd === 'register_data_sets') {
+        console.log('Registering data sets from client...');
+        ws.datasets = parsed.data_sets;
+        console.log(`Stored ${Object.keys(ws.datasets).length} data sets for this connection.`);
+      }
+
       else {
         console.warn("Unknown command received.");
       }

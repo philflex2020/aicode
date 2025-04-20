@@ -54,8 +54,7 @@
 
 <script>
 
-
-let frameRequestMode = "load"; // "load" or "saveas"
+let dataSets = {};
 let popupInsertMode = null; // "before" or "after"
 let frameData = null; // Global
 let contextField = null;    // Stores which field was right-clicked
@@ -212,7 +211,6 @@ function updateConnectionStatus(isConnected) {
 
 function loadFrame() {
   if (socket && connected) {
-    frameRequestMode = "load"; // <- set mode
     socket.send(JSON.stringify({ cmd: "list_frames" , requestor: "load" }));
   } else {
     console.warn("WebSocket not connected. Cannot list frames.");
@@ -229,33 +227,11 @@ function saveFrame() {
 
 function saveAsFrame() {
   if (socket && connected && frameData) {
-    frameRequestMode = "saveas"; // <- set mode
     socket.send(JSON.stringify({ cmd: "list_frames",requestor: "saveas" }));
     console.log("Requested file list for SaveAs selection.");
   }
 }
 
-
-function xsaveAsFrame() {
-  if (socket && connected && frameData) {
-    socket.send(JSON.stringify({ cmd: "list_frames" }));
-    console.log("Requested file list for SaveAs selection.");
-    // Then when list comes back, popupFileList(files) will handle the rest
-  } else {
-    console.warn("Cannot save as: WebSocket disconnected or frameData missing.");
-  }
-}
-
-// //triggers the saveas_frame
-// function saveAsFrame() {
-//   if (socket && connected && frameData) {
-//     const name = prompt("Enter new frame name:");
-//     if (name) {
-//       socket.send(JSON.stringify({ cmd: "saveas_frame", name: name, data: frameData }));
-//       console.log("Save As frame request sent for name:", name);
-//     }
-//   }
-// }
 
 
 function toggleEditMode() {
@@ -465,6 +441,152 @@ function createBoxes(frameData) {
   }
 }
 
+function buildDataSets(frameData) {
+  let dataSets = {};
+  Object.keys(frameData.frames).forEach(frameName => {
+    const frame = frames[frameName];
+    if (!frame) return;
+
+    // Boxes (fields)
+    if (frame.boxes) {
+      let boxSetName = frameName + "_box_data_set";
+      dataSets[boxSetName] = [];
+      frame.boxes.forEach(box => {
+        box.fields.forEach(field => {
+          if (field.id) {
+            dataSets[boxSetName].push(field.id);
+          }
+        });
+      });
+    }
+
+    // Tables (volt, soc, soh, temp, etc.)
+    if (frame.tables) {
+      Object.keys(frame.tables).forEach(tableName => {
+        let tableSetName = frameName + "_table_" + tableName + "_data_set";
+        dataSets[tableSetName] = [];
+        frame.tables[tableName].forEach(item => {
+          if (item.id) {
+            dataSets[tableSetName].push(item.id);
+          }
+        });
+      });
+    }
+  });
+  
+  console.log(`dataSets:`);
+  console.log(dataSets);
+
+  return dataSets;
+}
+
+
+function register_dataSets(dataSets) {
+
+  // NEW: Immediately send to WebSocket if connected
+  if (socket && connected) {
+    socket.send(JSON.stringify({
+      cmd: "register_data_sets",
+      data_sets: dataSets
+    }));
+    console.log(`Sent register_data_sets with ${Object.keys(dataSets).length} sets.`);
+  } else {
+    console.warn("Socket not connected, cannot send data_sets yet.");
+  }
+
+}
+
+
+
+function sanitize(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+// function initializeFrameIDs(frameData) {
+//   console.log(`running initialize ids`);
+//   console.log(frameData);
+//   if (!frameData || !frameData.boxes) {
+//     console.log(`no boxes in frameData`);
+//     return;
+//   }
+//   frameData.boxes.forEach(box => {
+//     box.fields.forEach(field => {
+//       if (!field.id) {
+//         field.id = sanitize(box.title) + "_" + sanitize(field.name);
+//         console.log(`Auto-assigned ID [${field.id}]`);
+//       }
+//     });
+//   });
+// }
+function initializeAllFrames(frames) {
+  if (!frames) {
+    console.warn(`No frames to initialize.`);
+    return;
+  }
+
+  Object.keys(frames).forEach(frameName => {
+    const frameData = frames[frameName];
+
+    if (isFrame(frameData)) {
+      // Real frame object (has boxes or tables)
+      initializeFrameIDs(frameName, frameData);
+    } else if (typeof frameData === 'object') {
+      // It's a nested container, walk deeper
+      console.warn(`Nested structure detected in [${frameName}], descending...`);
+      initializeAllFrames(frameData);
+    }
+  });
+}
+
+// Helper to detect if it's a real frame
+function isFrame(obj) {
+  if (!obj) return false;
+  return obj.boxes || obj.tables;
+}
+
+
+function initializeFrameIDs(frameName, frameData) {
+  console.log(`Running initialize IDs for frame [${frameName}]`);
+
+  if (!frameData) {
+    console.warn(`FrameData missing for [${frameName}]`);
+    return;
+  }
+
+  // Initialize fields in boxes
+  if (frameData.boxes) {
+    frameData.boxes.forEach(box => {
+      box.fields.forEach(field => {
+        if (!field.id) {
+          field.id = sanitize(frameName) + "_" + sanitize(box.title) + "_" + sanitize(field.name);
+          console.log(`Auto-assigned Field ID [${field.id}]`);
+        }
+      });
+    });
+  }
+
+  // Initialize entries in tables
+  if (frameData.tables) {
+    Object.keys(frameData.tables).forEach(tableName => {
+      frameData.tables[tableName] = frameData.tables[tableName].map((entry, idx) => {
+        if (typeof entry === 'object' && entry.id !== undefined) {
+          return entry; // Already has id
+        }
+        return {
+          id: sanitize(frameName) + "_" + sanitize(tableName) + "_" + idx,
+          value: entry
+        };
+      });
+      console.log(`Initialized Table [${frameName}.${tableName}]`);
+    });
+  }
+}
+
+function sanitize(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+
 function showFieldPopup() {
   document.getElementById('popupFieldName').value = "";
   document.getElementById('popupFieldDefault').value = "";
@@ -500,7 +622,53 @@ function confirmNewField() {
   document.getElementById('fieldPopup').style.display = "none";
 }
 
+
 function renderTable(frameData) {
+  let table = document.getElementById('batteryTable');
+  if (table) table.remove();
+
+  table = document.createElement('table');
+  table.id = 'batteryTable';
+
+  const header = table.insertRow();
+  for (let i = 0; i < 8; i++) {
+    const cell = header.insertCell();
+    cell.textContent = `Cell ${i}`;
+  }
+
+  const data = frameData.tables[currentTable] || [];
+
+  for (let rowStart = 0; rowStart < data.length; rowStart += 8) {
+    const row = table.insertRow();
+    for (let i = 0; i < 8; i++) {
+      const cell = row.insertCell();
+      if (rowStart + i < data.length) {
+        let valEntry = data[rowStart + i];
+
+        let val;
+        if (typeof valEntry === 'object' && valEntry.hasOwnProperty('value')) {
+          val = valEntry.value;
+        } else {
+          val = valEntry;
+        }
+
+        if (typeof val === 'number') {
+          cell.textContent = val.toFixed(3);
+          applyColorCoding(cell, val, currentTable);
+        } else {
+          cell.textContent = val || "";
+        }
+
+      } else {
+        cell.textContent = "";
+      }
+    }
+  }
+
+  document.getElementById('container').appendChild(table);
+}
+
+function xrenderTable(frameData) {
   let table = document.getElementById('batteryTable');
   if (table) table.remove();
 
@@ -572,6 +740,10 @@ function reloadData() {
     currentFrame = "config";
   }
 
+  initializeAllFrames(frameData);
+  dataSets = buildDataSets(frameData);
+  register_dataSets(dataSets);
+
   buildTabs(frameData);
 
   if (typeof currentFrame !== 'string' || !(currentFrame in frameData.frames)) {
@@ -584,41 +756,6 @@ function reloadData() {
   } else {
     document.getElementById('container').innerHTML = "<h2>Error: No valid frame found!</h2>";
   }
-}
-
-function xreloadData() {
-  if (liveData && liveData.data) { 
-    frameData = liveData.data;
-  } else { 
-    frameData = fakeData.data;
-    currentFrame = "config";  // initial fallback guess
-  }
-
-  buildTabs(frameData);
-
-  // Validate currentFrame
-  if (typeof currentFrame !== 'string' || !(currentFrame in frameData.frames)) {
-    console.warn(`Warning: CurrentFrame [${currentFrame}] invalid. Attempting fallback to 'config'.`);
-    currentFrame = "config";
-  }
-
-  // Validate fallback 'config'
-  if (!(currentFrame in frameData.frames)) {
-    console.warn(`Warning: Fallback 'config' frame is missing. Trying to find any available frame.`);
-    const availableFrames = Object.keys(frameData.frames);
-    if (availableFrames.length > 0) {
-      currentFrame = availableFrames[0];
-      console.warn(`Using first available frame: [${currentFrame}]`);
-    } else {
-      console.error("Critical: No frames available in frameData!");
-      document.getElementById('container').innerHTML = "<h2>Error: No valid frames found!</h2>";
-      return;
-    }
-  }
-  console.log(currentFrame);
-  console.log(frameData.frames);
-
-  createBoxes(frameData.frames[currentFrame]);
 }
 
 function popupFileList(files, mode = "load") {
@@ -654,9 +791,6 @@ function popupFileList(files, mode = "load") {
           popup.remove();
         });
       }
-
-      //socket.send(JSON.stringify({ cmd: "load_frame", file: file }));
-      //popup.remove();
     };
     popup.appendChild(fileButton);
   });
@@ -732,6 +866,11 @@ function connectWebSocket() {
         console.log("parsed.data:", parsed.data); // <--- ADD THIS
         liveData = parsed.data;
         frameData = parsed.data; 
+
+        initializeAllFrames(frameData);
+        dataSets = buildDataSets(frameData);
+        register_dataSets(dataSets);
+
         buildTabs(parsed.data); 
         currentFrame = "config";  // Reset safely
         console.log("Built tabs");
@@ -758,16 +897,22 @@ function connectWebSocket() {
     updateConnectionStatus(false);
     console.warn("WebSocket error"); 
     popup("WebSocket Error ❌", false);
-  }
-  ;
+  };
   socket.onclose = () => { 
     updateConnectionStatus(false);
     popup("WebSocket Disconnected ❌", false);
     if (!connected) { 
       liveData = null; 
       frameData = fakeData,data;
+      initializeAllFrames(frameData);
+
+      dataSets = buildDataSets(frameData);
+      register_dataSets(dataSets);
+
       buildTabs(frameData); 
-      createBoxes(frameData.frames[currentFrame]); } };
+      createBoxes(frameData.frames[currentFrame]); 
+    }
+  };
 }
 
 // Start
