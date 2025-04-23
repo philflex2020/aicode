@@ -7,7 +7,7 @@
 const WebSocket = require('ws');
 const fs = require('fs');
 
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 8081 });
 // Global database for all IDs
 const globalIdValues = {};
 

@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cell Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    canvas { max-width: 100%; height: 400px; }
+    input { width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Battery Cell Simulator</h1>
+  <label for="current_slider">Current (A):</label>
+  <input type="range" id="current_slider" min="-5" max="5" step="0.1">
+  <div>
+    <canvas id="chart"></canvas>
+  </div>
+
+  <script>
+    const socket = new WebSocket("ws://localhost:8083");
+
+    const ctx = document.getElementById('chart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [
+          { label: 'Voltage (V)', yAxisID: 'y', borderColor: 'blue', data: [], fill: false },
+          { label: 'SOC (%)', yAxisID: 'y1', borderColor: 'green', data: [], fill: false },
+          { label: 'Temp (°C)', yAxisID: 'y2', borderColor: 'orange', data: [], fill: false },
+          { label: 'Current (A)', yAxisID: 'y3', borderColor: 'red', data: [], fill: false },
+          { label: 'Capacity (Ah)', yAxisID: 'y4', borderColor: 'purple', data: [], fill: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          x: { type: 'linear', title: { display: true, text: 'Time (s)' } },
+          y: { position: 'left', title: { display: true, text: 'Voltage (V)' } },
+          y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'SOC (%)' } },
+          y2: { position: 'left', offset: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Temp (°C)' } },
+          y3: { position: 'right', offset: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Current (A)' } },
+          y4: { position: 'right', offset: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Capacity (Ah)' } }
+        }
+      }
+    });
+
+    document.getElementById("current_slider").addEventListener("input", e => {
+      socket.send(JSON.stringify({ cmd: "set_current", value: parseFloat(e.target.value) }));
+    });
+
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ cmd: "get_scales" }));
+    };
+
+    socket.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.cmd === "scales") {
+        const s = msg.scales;
+        chart.options.scales.y.min = s.voltage.min;
+        chart.options.scales.y.max = s.voltage.max;
+        chart.options.scales.y1.min = s.soc.min;
+        chart.options.scales.y1.max = s.soc.max;
+        chart.options.scales.y2.min = s.temp.min;
+        chart.options.scales.y2.max = s.temp.max;
+        chart.options.scales.y3.min = s.current.min;
+        chart.options.scales.y3.max = s.current.max;
+        chart.options.scales.y4.min = s.capacity.min;
+        chart.options.scales.y4.max = s.capacity.max;
+        chart.update();
+      }
+
+      if (msg.cells) {
+        const t = msg.time;
+        const c = msg.cells[0];
+        chart.data.datasets[0].data.push({ x: t, y: c.voltage });
+        chart.data.datasets[1].data.push({ x: t, y: c.soc });
+        chart.data.datasets[2].data.push({ x: t, y: c.temp });
+        chart.data.datasets[3].data.push({ x: t, y: c.current });
+        chart.data.datasets[4].data.push({ x: t, y: c.capacity });
+        chart.update();
+      }
+    };
+  </script>
+</body>
+</html>
