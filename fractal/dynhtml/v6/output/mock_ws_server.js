@@ -7,7 +7,7 @@
 const WebSocket = require('ws');
 const fs = require('fs');
 
-const wss = new WebSocket.Server({ port: 8081 });
+const wss = new WebSocket.Server({ port: 8080 });
 // Global database for all IDs
 const globalIdValues = {};
 
@@ -51,7 +51,7 @@ wss.on('connection', function connection(ws) {
       const parsed = JSON.parse(message);
 
       if (parsed.cmd === "load_frame") {
-        const filename = parsed.name || 'default_frame.json';
+        const filename = parsed.file || parsed.name || 'default_frame.json';
         console.log(`Attempting to load file: ${filename}`);
 
         try {

@@ -39,6 +39,8 @@
   <h1>Fractal SBMS Config</h1>
   <div style="display: flex; justify-content: space-between; align-items: center;">
   <div id="tabs" class="tabs"></div>
+  <div id="currentFrameLabel" style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;"></div>
+
   <div id="wsStatus" style="font-weight: bold; font-size: 1em; margin-left: 10px;">🔴 Disconnected</div>
 </div>
 
@@ -50,14 +52,18 @@
     <button id="saveButton" onclick="saveFrame()">Save</button>
     <button id="saveAsButton" onclick="saveAsFrame()">Save As</button>
     <button id="pollingButton" onclick="togglePolling()" disabled>Start Polling</button>
+    <span id="currentFileLabel" style="margin-left: 20px; font-style: italic; color: #555;"></span>
+
 
   </div>
   <div id="container">Connecting...</div>
 
 <script>
+let highlightUpdates = false;
+
 let pollingActive = false;
 let pollingInterval = null;
-
+let currentFileName = "default_frame.json";
 //let dataSets = {};
 let popupInsertMode = null; // "before" or "after"
 let frameData = null; // Global
@@ -169,6 +175,12 @@ function stopPollingData() {
   }
 }
 
+function updateCurrentFileLabel() {
+  const label = document.getElementById('currentFileLabel');
+  if (label) {
+    label.textContent = `📄 ${currentFileName}`;
+  }
+}
 
 function popup(message, isSuccess = true) {
   const div = document.createElement('div');
@@ -231,6 +243,13 @@ function validateFrameData(data) {
 
   console.log("Validation Complete: frameData structure is now safe.");
   return data;
+}
+
+function updateCurrentFrameLabel() {
+  // const label = document.getElementById('currentFrameLabel');
+  // if (label && currentFrame) {
+  //   label.textContent = `Current Frame: ${currentFrame}`;
+  //  }
 }
 
 function updateConnectionStatus(isConnected) {
@@ -311,6 +330,7 @@ function buildTabs(data) {
     tab.onclick = () => {
       currentFrame = frame;
       buildTabs(data);
+      updateCurrentFrameLabel(); // ✅ Add this
       if (frame === "connect") showConnect();
       else createBoxes(data.frames[frame]);
     };
@@ -636,8 +656,22 @@ function sanitize(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
 
+function editField() {
+  if (contextField && contextBoxIndex !== null && contextFieldIndex !== null) {
+    showFieldPopup(true); // ✅ Trigger popup with edit mode
+    hideContextMenu();
+  }
+}
 
-function showFieldPopup() {
+function showFieldPopup(isEdit = false) {
+  document.getElementById('popupFieldName').value = isEdit ? contextField.name : "";
+  document.getElementById('popupFieldDefault').value = isEdit ? contextField.default : "";
+  document.getElementById('popupFieldInput').checked = isEdit ? contextField.input : true;
+  document.getElementById('fieldPopup').style.display = "block";
+  popupInsertMode = isEdit ? "edit" : popupInsertMode;
+}
+
+function xshowFieldPopup() {
   document.getElementById('popupFieldName').value = "";
   document.getElementById('popupFieldDefault').value = "";
   document.getElementById('popupFieldInput').checked = true;
@@ -665,6 +699,9 @@ function confirmNewField() {
       frameData.frames[currentFrame].boxes[contextBoxIndex].fields.splice(contextFieldIndex, 0, newField);
     } else if (popupInsertMode === "after") {
       frameData.frames[currentFrame].boxes[contextBoxIndex].fields.splice(contextFieldIndex + 1, 0, newField);
+    } else if (popupInsertMode === "edit") {
+      // ✅ Overwrite current field
+      Object.assign(frameData.frames[currentFrame].boxes[contextBoxIndex].fields[contextFieldIndex], newField);
     }
     createBoxes(frameData.frames[currentFrame]);
   }
@@ -783,6 +820,7 @@ function reloadData() {
       console.error("Live data invalid. Falling back to fakeData.");
       frameData = fakeData.data;
       currentFrame = "config";
+      updateCurrentFrameLabel(); // ✅ Add this
     } else {
       frameData = validated;
     }
@@ -806,6 +844,7 @@ function reloadData() {
   if (typeof currentFrame !== 'string' || !(currentFrame in frameData.frames)) {
     const availableFrames = Object.keys(frameData.frames);
     currentFrame = availableFrames.length > 0 ? availableFrames[0] : null;
+    updateCurrentFrameLabel(); // ✅ Add this
   }
 
   if (currentFrame && frameData.frames[currentFrame]) {
@@ -827,7 +866,8 @@ function popupFileList(files, mode = "load") {
   popup.style.borderRadius = '8px';
 
   const title = document.createElement('div');
-  title.textContent = "Select a Frame to Load";
+  //title.textContent = "Select a Frame to Load";
+  title.textContent = (mode === "saveas") ? "Select a Frame to Save As" : "Select a Frame to Load";
   title.style.fontWeight = 'bold';
   title.style.marginBottom = '10px';
   popup.appendChild(title);
@@ -840,10 +880,14 @@ function popupFileList(files, mode = "load") {
     fileButton.onclick = () => {
 
       if (mode === "load") {
+        currentFileName = file;            // ✅ Save selected name
+        updateCurrentFileLabel();  
         socket.send(JSON.stringify({ cmd: "load_frame", file: file }));
         popup.remove();
       } else if (mode === "saveas") {
         confirmPopup(`Overwrite '${file}'?`, () => {
+          currentFileName = file;            // ✅ Save selected name
+          updateCurrentFileLabel();  
           sendSaveAs(file);
           popup.remove();
         });
@@ -851,6 +895,62 @@ function popupFileList(files, mode = "load") {
     };
     popup.appendChild(fileButton);
   });
+  if (mode === "saveas") {
+    const newButton = document.createElement('button');
+    newButton.textContent = "🆕 New...";
+    newButton.style.marginTop = '10px';
+    newButton.style.fontWeight = 'bold';
+    newButton.onclick = () => {
+      popup.remove();
+        showNewFilePrompt();  // 👇 We'll define this next
+      };
+      popup.appendChild(newButton);
+  };
+
+  function showNewFilePrompt() {
+  const div = document.createElement('div');
+  div.style.position = 'fixed';
+  div.style.top = '50px';
+  div.style.right = '50px';
+  div.style.padding = '20px';
+  div.style.backgroundColor = 'white';
+  div.style.border = '2px solid black';
+  div.style.borderRadius = '8px';
+  div.style.zIndex = 1000;
+  div.style.textAlign = 'center';
+
+  const title = document.createElement('div');
+  title.textContent = "Enter New Filename:";
+  title.style.marginBottom = '10px';
+  div.appendChild(title);
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'example_frame.json';
+  input.style.width = '90%';
+  div.appendChild(input);
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = "Save";
+  saveBtn.style.margin = '10px 5px';
+  saveBtn.onclick = () => {
+    const name = input.value.trim();
+    if (name) {
+      sendSaveAs(name);
+      div.remove();
+    } else {
+      alert("Please enter a valid filename.");
+    }
+  };
+  div.appendChild(saveBtn);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.onclick = () => div.remove();
+  div.appendChild(cancelBtn);
+
+  document.body.appendChild(div);
+}
 
   const cancelButton = document.createElement('button');
   cancelButton.textContent = "Cancel";
@@ -927,20 +1027,27 @@ function applyIncomingValues(values) {
     const input = document.querySelector(`input[data-id='${id}']`);
     if (input) {
       input.value = value;
-      input.style.backgroundColor = "#d0ffd0"; // light green flash
-      setTimeout(() => input.style.backgroundColor = "", 500);
+      if (highlightUpdates) {
+        input.style.backgroundColor = "#d0ffd0"; // light green flash
+        setTimeout(() => input.style.backgroundColor = "", 500);
+      }
     }
 
     const tableCell = document.querySelector(`td[data-id='${id}']`);
     if (tableCell) {
-      tableCell.textContent = parseFloat(value).toFixed(3);
-      tableCell.style.backgroundColor = "#d0ffd0"; // flash
-      setTimeout(() => {
-        // After green flash ends, re-apply alarm color coding!
-        const numericVal = parseFloat(value);
-        tableCell.style.backgroundColor = ""; // Reset first
+      const numericVal = parseFloat(value);
+      tableCell.textContent = numericVal.toFixed(3);
+      //tableCell.textContent = parseFloat(value).toFixed(3);
+      
+      if (highlightUpdates) {
+        tableCell.style.backgroundColor = "#d0ffd0"; // flash green
+        setTimeout(() => {
+          tableCell.style.backgroundColor = ""; // clear highlight
+          applyColorCoding(tableCell, numericVal, currentTable);
+        }, 500);
+      } else {
         applyColorCoding(tableCell, numericVal, currentTable);
-      }, 500);
+      }
     }
   }
 }
@@ -973,6 +1080,7 @@ function connectWebSocket() {
 
         buildTabs(parsed.data); 
         currentFrame = "config";  // Reset safely
+        updateCurrentFrameLabel(); // ✅ Add this
         console.log("Built tabs");
         createBoxes(parsed.data.frames[currentFrame]); 
       }
@@ -1033,6 +1141,7 @@ function connectWebSocket() {
 
 <div id="contextMenu" style="display:none; position:absolute; background:white; border:1px solid black; z-index:1000;">
   <div onclick="deleteField()">Delete Field</div>
+  <div onclick="editField()">Edit Field</div>
   <div onclick="addFieldBefore()">Add Field Before</div>
   <div onclick="addFieldAfter()">Add Field After</div>
 </div>
