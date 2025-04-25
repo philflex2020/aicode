@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fractal Setter Console V2</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .connect-bar, .filter-bar, .control-bar { margin-bottom: 10px; }
+    .id-table { width: 100%; border-collapse: collapse; }
+    .id-table th, .id-table td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+    .id-table th { background-color: #eee; }
+    input[type="text"] { width: 100%; }
+    button { padding: 5px 10px; }
+    .status { font-weight: bold; }
+    .connected { color: green; }
+    .disconnected { color: red; }
+  </style>
+</head>
+<body>
+
+<h1>Fractal Setter Console V2</h1>
+
+<div class="connect-bar">
+  IP: <input type="text" id="ipInput" value="localhost" style="width: 150px;">
+  Port: <input type="text" id="portInput" value="8080" style="width: 80px;">
+  <button onclick="applyConnect()">Connect</button>
+  <span id="status" class="status disconnected">Disconnected</span>
+</div>
+
+<div class="control-bar">
+  <button id="pollButton" onclick="togglePolling()" disabled>Start Polling</button>
+  <button id="sendAllButton" onclick="sendBatch()" disabled>Send All Changes</button>
+  <button id="showBatchButton" onclick="showBatch()" disabled>Show Batch</button>
+</div>
+
+<div class="filter-bar">
+  <input type="text" id="filterInput" placeholder="Filter by ID (e.g., volt)" oninput="renderTable()">
+</div>
+
+<table class="id-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Current Value</th>
+      <th>New Value</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="idTableBody">
+    <!-- Populated dynamically -->
+  </tbody>
+</table>
+
+<script>
+
+let pendingBatch = {}; // id -> new value
+let socket = null;
+let connected = false;
+let polling = false;
+let idValues = {};
+let pollInterval = null;
+
+function applyConnect() {
+  if (socket) {
+    socket.close();
+  }
+  const ip = document.getElementById('ipInput').value;
+  const port = document.getElementById('portInput').value;
+  const url = `ws://${ip}:${port}`;
+  connectWebSocket(url);
+}
+
+function connectWebSocket(url) {
+  socket = new WebSocket(url);
+
+  socket.onopen = () => {
+    console.log("Connected to server");
+    connected = true;
+    updateStatus();
+    document.getElementById('pollButton').disabled = false;
+    requestAllIDs();
+  };
+
+  socket.onmessage = (event) => {
+    const parsed = JSON.parse(event.data);
+    if (parsed.cmd === "all_ids") {
+      idValues = parsed.values;
+      renderTable();
+    } else if (parsed.cmd === 'set_value_complete') {
+      console.log("Server confirmed batch update complete.");
+      pendingBatch = {};  // ✅ Now clear batch
+      document.getElementById('sendAllButton').disabled = true;
+      document.getElementById('showBatchButton').disabled = true;
+      requestAllIDs();    // ✅ Now refresh
+    }
+  };
+
+  socket.onerror = (err) => console.error("WebSocket error", err);
+
+  socket.onclose = () => {
+    console.warn("Disconnected from server");
+    connected = false;
+    updateStatus();
+    document.getElementById('pollButton').disabled = true;
+    stopPolling();
+  };
+}
+
+function updateStatus() {
+  const status = document.getElementById('status');
+  if (connected) {
+    status.textContent = "Connected";
+    status.className = "status connected";
+  } else {
+    status.textContent = "Disconnected";
+    status.className = "status disconnected";
+  }
+}
+
+function requestAllIDs() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ cmd: "get_all_ids" }));
+  }
+}
+
+function togglePolling() {
+  if (!polling) {
+    startPolling();
+  } else {
+    stopPolling();
+  }
+}
+
+function startPolling() {
+  polling = true;
+  document.getElementById('pollButton').textContent = "Stop Polling";
+  pollInterval = setInterval(requestAllIDs, 5000);
+}
+
+function stopPolling() {
+  polling = false;
+  document.getElementById('pollButton').textContent = "Start Polling";
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = null;
+}
+
+function sendSetValue(id, value) {
+  const numVal = parseFloat(value);
+  if (isNaN(numVal)) {
+    alert(`Invalid input for ID '${id}': must be a number`);
+    return;
+  }
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ cmd: "set_value", id: id, value: numVal }));
+    console.log(`Sent update: ${id} -> ${numVal}`);
+    requestAllIDs(); // Refresh after manual set
+  }
+}
+
+
+function sendBatch() {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+  const badEntries = Object.entries(pendingBatch).filter(([id, val]) => isNaN(parseFloat(val)));
+  if (badEntries.length > 0) {
+    alert(`Cannot send batch. Invalid values detected:\n` + badEntries.map(([id]) => `- ${id}`).join("\n"));
+    return;
+  }
+
+  if (Object.keys(pendingBatch).length > 0) {
+    socket.send(JSON.stringify({
+      cmd: "set_values",
+      values: pendingBatch
+    }));
+    console.log("Batch set:", pendingBatch);
+    pendingBatch = {}; // Clear batch
+    document.getElementById('sendAllButton').disabled = true;
+    //requestAllIDs();
+  }
+}
+
+
+
+
+function showBatch() {
+  if (Object.keys(pendingBatch).length === 0) {
+    alert("No pending changes.");
+    return;
+  }
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = 0;
+  overlay.style.left = 0;
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = 1000;
+
+  // Create dialog box
+  const dialog = document.createElement('div');
+  dialog.style.backgroundColor = 'white';
+  dialog.style.padding = '20px';
+  dialog.style.borderRadius = '10px';
+  dialog.style.minWidth = '400px';
+  dialog.style.maxHeight = '80%';
+  dialog.style.overflowY = 'auto';
+  dialog.style.boxShadow = '0 0 20px black';
+
+  dialog.innerHTML = '<h3>Pending Batch Changes</h3>';
+
+  // Batch table
+  const table = document.createElement('table');
+  table.style.width = '100%';
+  table.style.borderCollapse = 'collapse';
+
+  Object.entries(pendingBatch).forEach(([id, value]) => {
+    const row = document.createElement('tr');
+
+    const idCell = document.createElement('td');
+    idCell.textContent = id;
+    idCell.style.borderBottom = '1px solid #ccc';
+    row.appendChild(idCell);
+
+    const valueCell = document.createElement('td');
+    const valueInput = document.createElement('input');
+    valueInput.type = 'text';
+    valueInput.value = value;
+    valueInput.style.width = '80px';
+    valueInput.oninput = () => {
+      const newVal = parseFloat(valueInput.value);
+      if (!isNaN(newVal)) {
+        pendingBatch[id] = newVal;
+      } else {
+        valueInput.style.backgroundColor = '#fdd';
+      }
+    };
+    valueCell.appendChild(valueInput);
+    valueCell.style.borderBottom = '1px solid #ccc';
+    row.appendChild(valueCell);
+
+    table.appendChild(row);
+  });
+
+  dialog.appendChild(table);
+
+  // Action buttons
+  const buttons = document.createElement('div');
+  buttons.style.marginTop = '20px';
+  buttons.style.textAlign = 'center';
+
+  const sendBtn = document.createElement('button');
+  sendBtn.textContent = "Send Batch";
+  sendBtn.onclick = () => {
+    sendBatch();
+    document.body.removeChild(overlay);
+  };
+  sendBtn.style.marginRight = '10px';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = "Clear All";
+  clearBtn.onclick = () => {
+    if (confirm("Clear all pending changes?")) {
+      pendingBatch = {};
+      document.getElementById('sendAllButton').disabled = true;
+      document.getElementById('showBatchButton').disabled = true;
+      renderTable();
+      document.body.removeChild(overlay);
+    }
+  };
+  clearBtn.style.marginRight = '10px';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.onclick = () => {
+    document.body.removeChild(overlay);
+  };
+
+  buttons.appendChild(sendBtn);
+  buttons.appendChild(clearBtn);
+  buttons.appendChild(cancelBtn);
+  dialog.appendChild(buttons);
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+}
+
+
+
+function renderTable() {
+  const filter = document.getElementById('filterInput').value.toLowerCase();
+  const tbody = document.getElementById('idTableBody');
+  tbody.innerHTML = '';
+
+  Object.entries(idValues).forEach(([id, value]) => {
+    if (!id.toLowerCase().includes(filter)) return;
+
+    const existingRow = document.getElementById('row_' + id);
+    let oldValue = null;
+    if (existingRow) {
+      oldValue = parseFloat(existingRow.dataset.value);
+    }
+
+    const row = document.createElement('tr');
+    row.id = 'row_' + id;
+    row.dataset.value = value; // Store new server value
+
+    const idCell = document.createElement('td');
+    idCell.textContent = id;
+    row.appendChild(idCell);
+
+    const currentValueCell = document.createElement('td');
+    currentValueCell.textContent = value;
+    row.appendChild(currentValueCell);
+
+    const newValueCell = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = "text";
+    input.value = pendingBatch[id] !== undefined ? pendingBatch[id] : value;  // If pending edit, show that
+    input.oninput = () => {
+ 
+      const inputVal = parseFloat(input.value);
+      document.getElementById('showBatchButton').disabled = (Object.keys(pendingBatch).length === 0);
+      if (!isNaN(inputVal) && inputVal !== value) {
+        pendingBatch[id] = inputVal;
+        row.style.backgroundColor = '#ffe58a'; // yellow for local edit
+        document.getElementById('sendAllButton').disabled = false;
+      } else {
+        delete pendingBatch[id];
+        row.style.backgroundColor = '';
+        if (Object.keys(pendingBatch).length === 0) {
+          document.getElementById('sendAllButton').disabled = true;
+        }
+      }
+    };
+    newValueCell.appendChild(input);
+    row.appendChild(newValueCell);
+
+    const actionCell = document.createElement('td');
+    const setButton = document.createElement('button');
+    setButton.textContent = "Set";
+    setButton.onclick = () => {
+      sendSetValue(id, input.value);
+      currentValueCell.textContent = input.value;
+    };
+    actionCell.appendChild(setButton);
+    row.appendChild(actionCell);
+
+    tbody.appendChild(row);
+
+    // Flash highlight if server value changed (ignore local pending edits)
+    if (oldValue !== null && oldValue !== value && pendingBatch[id] === undefined) {
+      row.style.backgroundColor = '#c8f7c5'; // light green server update
+      setTimeout(() => {
+        row.style.backgroundColor = '';
+      }, 500);
+    }
+  });
+}
+
+
+</script>
+
+</body>
+</html>

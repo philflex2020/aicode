@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fractal Setter Console</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .filter-bar { margin-bottom: 10px; }
+    .id-table { width: 100%; border-collapse: collapse; }
+    .id-table th, .id-table td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+    .id-table th { background-color: #eee; }
+    input[type="text"] { width: 100%; }
+    button { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+
+<h1>Fractal Setter Console</h1>
+
+<div class="filter-bar">
+  <input type="text" id="filterInput" placeholder="Filter by ID (e.g., volt)" oninput="renderTable()">
+</div>
+
+<table class="id-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Current Value</th>
+      <th>New Value</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="idTableBody">
+    <!-- Populated dynamically -->
+  </tbody>
+</table>
+
+<script>
+let socket;
+let idValues = {};
+
+function connectWebSocket() {
+  socket = new WebSocket("ws://localhost:8080");
+
+  socket.onopen = () => {
+    console.log("Connected to server");
+    requestAllIDs();
+  };
+
+  socket.onmessage = (event) => {
+    const parsed = JSON.parse(event.data);
+    if (parsed.cmd === "all_ids") {
+      idValues = parsed.values;
+      renderTable();
+    }
+  };
+
+  socket.onerror = (err) => console.error("WebSocket error", err);
+  socket.onclose = () => console.warn("Disconnected from server");
+}
+
+function requestAllIDs() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ cmd: "get_all_ids" }));
+  }
+}
+
+function sendSetValue(id, value) {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ cmd: "set_value", id: id, value: parseFloat(value) }));
+    console.log(`Sent update: ${id} -> ${value}`);
+  }
+}
+
+function renderTable() {
+  const filter = document.getElementById('filterInput').value.toLowerCase();
+  const tbody = document.getElementById('idTableBody');
+  tbody.innerHTML = '';
+
+  Object.entries(idValues).forEach(([id, value]) => {
+    if (!id.toLowerCase().includes(filter)) return;
+
+    const row = document.createElement('tr');
+
+    const idCell = document.createElement('td');
+    idCell.textContent = id;
+    row.appendChild(idCell);
+
+    const currentValueCell = document.createElement('td');
+    currentValueCell.textContent = value;
+    row.appendChild(currentValueCell);
+
+    const newValueCell = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = "text";
+    input.value = value;
+    newValueCell.appendChild(input);
+    row.appendChild(newValueCell);
+
+    const actionCell = document.createElement('td');
+    const setButton = document.createElement('button');
+    setButton.textContent = "Set";
+    setButton.onclick = () => {
+      sendSetValue(id, input.value);
+      currentValueCell.textContent = input.value;
+    };
+    actionCell.appendChild(setButton);
+    row.appendChild(actionCell);
+
+    tbody.appendChild(row);
+  });
+}
+
+// Connect when page loads
+connectWebSocket();
+
+// Optionally refresh every 5 seconds to stay live
+setInterval(requestAllIDs, 5000);
+
+</script>
+
+</body>
+</html>

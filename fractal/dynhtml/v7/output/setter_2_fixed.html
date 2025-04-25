@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ID Value Setter</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; background: #f0f0f0; }
+    .header { display: flex; gap: 10px; margin-bottom: 10px; }
+    input[type="text"] { width: 100px; }
+    button { padding: 5px 10px; }
+    table { width: 100%; background: white; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 5px; }
+    #pollButton.connected { background: green; color: white; }
+  </style>
+</head>
+<body>
+
+<h1>Fractal Mock Setter</h1>
+
+<div class="header">
+  <input type="text" id="serverInput" value="ws://localhost:8080">
+  <button onclick="connectServer()">Connect</button>
+  <button id="pollButton" onclick="togglePolling()" disabled>Start Polling</button>
+  <input type="text" id="filterInput" placeholder="Filter IDs" oninput="renderTable()">
+  <button id="sendAllButton" onclick="sendBatch()" disabled>Send All Changes</button>
+  <button id="showBatchButton" onclick="showBatch()" disabled>Show Batch</button>
+</div>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>Current Value</th><th>New Value</th><th>Action</th></tr>
+  </thead>
+  <tbody id="idTableBody"></tbody>
+</table>
+
+<script>
+let socket = null;
+let connected = false;
+let idValues = {};
+let pendingBatch = {};
+let polling = false;
+let pollTimer = null;
+
+function connectServer() {
+  const url = document.getElementById('serverInput').value;
+  socket = new WebSocket(url);
+
+  socket.onopen = () => {
+    connected = true;
+    document.getElementById('pollButton').disabled = false;
+    console.log("Connected to server.");
+    requestAllIDs();
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const parsed = JSON.parse(event.data);
+
+      if (parsed.cmd === "all_ids") {
+        idValues = parsed.values;
+        renderTable();
+      } else if (parsed.cmd === 'set_value_complete') {
+        console.log("Server confirmed single value update.");
+        requestAllIDs();
+      } else if (parsed.cmd === 'update_complete') {
+        console.log("Server confirmed batch update complete.");
+        pendingBatch = {};    // ✅ Clear after server confirmation
+        document.getElementById('sendAllButton').disabled = true;
+        document.getElementById('showBatchButton').disabled = true;
+        requestAllIDs();       // ✅ Refresh after ack
+      } else {
+        console.log("Unknown message:", parsed);
+      }
+    } catch (e) {
+      console.error("Parsing WS failed:", e);
+    }
+  };
+
+  socket.onclose = () => {
+    connected = false;
+    document.getElementById('pollButton').disabled = true;
+    stopPolling();
+    console.warn("Disconnected from server.");
+  };
+}
+
+function requestAllIDs() {
+  if (socket && connected) {
+    socket.send(JSON.stringify({ cmd: "get_all_ids" }));
+  }
+}
+
+function renderTable() {
+  const filter = document.getElementById('filterInput').value.toLowerCase();
+  const tbody = document.getElementById('idTableBody');
+  tbody.innerHTML = '';
+
+  Object.entries(idValues).forEach(([id, value]) => {
+    if (!id.toLowerCase().includes(filter)) return;
+
+    const existingRow = document.getElementById('row_' + id);
+    let oldValue = null;
+    if (existingRow) {
+      oldValue = parseFloat(existingRow.dataset.value);
+    }
+
+    const row = document.createElement('tr');
+    row.id = 'row_' + id;
+    row.dataset.value = value;
+
+    const idCell = document.createElement('td');
+    idCell.textContent = id;
+    row.appendChild(idCell);
+
+    const currentValueCell = document.createElement('td');
+    currentValueCell.textContent = value;
+    row.appendChild(currentValueCell);
+
+    const newValueCell = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = "text";
+    input.value = value;
+    input.oninput = () => {
+      pendingBatch[id] = input.value;
+      document.getElementById('sendAllButton').disabled = false;
+      document.getElementById('showBatchButton').disabled = false;
+    };
+    newValueCell.appendChild(input);
+    row.appendChild(newValueCell);
+
+    const actionCell = document.createElement('td');
+    const setButton = document.createElement('button');
+    setButton.textContent = "Set";
+    setButton.onclick = () => {
+      sendSetValue(id, input.value);
+      currentValueCell.textContent = input.value;
+    };
+    actionCell.appendChild(setButton);
+    row.appendChild(actionCell);
+
+    tbody.appendChild(row);
+
+    // Flash if changed
+    if (oldValue !== null && oldValue !== value) {
+      row.style.backgroundColor = '#c8f7c5'; // light green
+      setTimeout(() => { row.style.backgroundColor = ''; }, 500);
+    }
+  });
+}
+
+function sendSetValue(id, value) {
+  if (socket && connected) {
+    socket.send(JSON.stringify({ cmd: "set_value", id: id, value: parseFloat(value) }));
+    console.log(`Sent set_value for ${id} = ${value}`);
+  }
+}
+
+function sendBatch() {
+  if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+  const badEntries = Object.entries(pendingBatch).filter(([id, val]) => isNaN(parseFloat(val)));
+  if (badEntries.length > 0) {
+    alert(`Cannot send batch. Invalid values detected:\n` + badEntries.map(([id]) => `- ${id}`).join("\n"));
+    return;
+  }
+
+  if (Object.keys(pendingBatch).length > 0) {
+    socket.send(JSON.stringify({
+      cmd: "set_values",
+      values: pendingBatch
+    }));
+    console.log("Batch set:", pendingBatch);
+    // ✅ No clear/reset here - wait for server response
+  }
+}
+
+function showBatch() {
+  alert("Pending batch changes:\n" + JSON.stringify(pendingBatch, null, 2));
+}
+
+function togglePolling() {
+  polling = !polling;
+  const btn = document.getElementById('pollButton');
+  if (polling) {
+    btn.textContent = "Stop Polling";
+    btn.classList.add('connected');
+    pollTimer = setInterval(requestAllIDs, 2000);
+  } else {
+    btn.textContent = "Start Polling";
+    btn.classList.remove('connected');
+    clearInterval(pollTimer);
+  }
+}
+
+function stopPolling() {
+  if (polling) togglePolling();
+}
+
+</script>
+
+</body>
+</html>
