@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FractalNode Phase 1.1</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; margin: 0; overflow: hidden; }
+    canvas { background: #fff; display: block; }
+    #controls { position: fixed; top: 10px; left: 10px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 8px; }
+    button { margin-right: 5px; }
+    #contextMenu { position:absolute; display:none; background:#eee; border:1px solid #333; padding:5px; z-index:1000; }
+    #contextMenu div { padding:5px; cursor:pointer; }
+    #contextMenu div:hover { background:#ccc; }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <button onclick="addBlock('Constant')">Add Constant</button>
+  <button onclick="addBlock('Add')">Add Add</button>
+  <button onclick="addBlock('Subtract')">Add Subtract</button>
+  <button onclick="addBlock('Multiply')">Add Multiply</button>
+  <button onclick="addBlock('Divide')">Add Divide</button>
+  <button onclick="addBlock('Output')">Add Output</button>
+  <button onclick="startWiring()">Start Wiring</button>
+  <button onclick="saveGraph()">Save</button>
+  <button onclick="saveGraphAs()">Save As</button>
+  <button onclick="loadGraph()">Load</button>
+  <button onclick="sendGraph()">Send Graph</button>
+  <button onclick="runStep()">Run Step</button>
+</div>
+
+<div id="contextMenu">
+  <div onclick="editBlock()">Edit</div>
+  <div onclick="deleteBlock()">Delete</div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let blocks = [];
+let wires = [];
+let draggingBlock = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+let rightClickBlock = null;
+const contextMenu = document.getElementById('contextMenu');
+
+let socket = null;
+connectWebSocket();
+
+// --- Block Management ---
+
+function addBlock(type) {
+  const block = {
+    id: 'node_' + Date.now(),
+    type: type,
+    x: Math.random() * (canvas.width - 150) + 50,
+    y: Math.random() * (canvas.height - 150) + 50,
+    config: { value: (type === 'Constant' ? 1 : 0) }
+  };
+  blocks.push(block);
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw wires
+  ctx.strokeStyle = '#000';
+  wires.forEach(w => {
+    const fromBlock = blocks.find(b => b.id === w.from);
+    const toBlock = blocks.find(b => b.id === w.to);
+    if (fromBlock && toBlock) {
+      ctx.beginPath();
+      ctx.moveTo(fromBlock.x + 75, fromBlock.y + 25);
+      ctx.lineTo(toBlock.x + 75, toBlock.y + 25);
+      ctx.stroke();
+    }
+  });
+
+  // Draw blocks
+  blocks.forEach(b => {
+    ctx.fillStyle = '#ddd';
+    ctx.fillRect(b.x, b.y, 150, 50);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(b.x, b.y, 150, 50);
+
+    ctx.fillStyle = '#000';
+    ctx.fillText(b.type, b.x + 10, b.y + 20);
+
+    // Draw ID smaller
+    ctx.font = '10px sans-serif';
+    ctx.fillText(b.id, b.x + 5, b.y + 45);
+    ctx.font = '16px sans-serif'; // Reset font
+
+    // Placeholder for inputs
+    if (b.type !== 'Constant') {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y + 15, 5, 0, 2*Math.PI);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(b.x, b.y + 35, 5, 0, 2*Math.PI);
+      ctx.fill();
+    }
+  });
+}
+
+// --- Mouse Handling ---
+
+canvas.onmousedown = (e) => {
+  hideContextMenu();
+  const mx = e.offsetX;
+  const my = e.offsetY;
+  draggingBlock = blocks.find(b => mx >= b.x && mx <= b.x+150 && my >= b.y && my <= b.y+50);
+  if (e.button === 2 && draggingBlock) {
+    // Right click
+    e.preventDefault();
+    rightClickBlock = draggingBlock;
+    showContextMenu(e.pageX, e.pageY);
+  } else if (draggingBlock) {
+    dragOffsetX = mx - draggingBlock.x;
+    dragOffsetY = my - draggingBlock.y;
+  }
+};
+
+canvas.onmousemove = (e) => {
+  if (draggingBlock) {
+    draggingBlock.x = e.offsetX - dragOffsetX;
+    draggingBlock.y = e.offsetY - dragOffsetY;
+    draw();
+  }
+};
+
+canvas.onmouseup = () => {
+  draggingBlock = null;
+};
+
+canvas.oncontextmenu = (e) => {
+  e.preventDefault(); // disable browser context menu
+};
+
+// --- Context Menu Functions ---
+
+function showContextMenu(x, y) {
+  contextMenu.style.left = x + 'px';
+  contextMenu.style.top = y + 'px';
+  contextMenu.style.display = 'block';
+}
+
+function hideContextMenu() {
+  contextMenu.style.display = 'none';
+}
+
+function editBlock() {
+  hideContextMenu();
+  if (!rightClickBlock) return;
+  if (rightClickBlock.type === 'Constant') {
+    const newVal = prompt('Enter new constant value:', rightClickBlock.config.value);
+    if (newVal !== null) {
+      rightClickBlock.config.value = parseFloat(newVal);
+    }
+  }
+  draw();
+}
+
+function deleteBlock() {
+  hideContextMenu();
+  if (!rightClickBlock) return;
+  blocks = blocks.filter(b => b.id !== rightClickBlock.id);
+  wires = wires.filter(w => w.from !== rightClickBlock.id && w.to !== rightClickBlock.id);
+  draw();
+}
+
+// --- WebSocket ---
+
+function connectWebSocket() {
+  socket = new WebSocket('ws://localhost:8080');
+  socket.onopen = () => console.log('WebSocket Connected');
+  socket.onmessage = (event) => {
+    const parsed = JSON.parse(event.data);
+    if (parsed.cmd === 'update_outputs') {
+      parsed.values && updateOutputs(parsed.values);
+    }
+  };
+}
+
+// --- Save / Load ---
+
+function saveGraph() {
+  const graph = { blocks, wires };
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph, null, 2));
+  const link = document.createElement('a');
+  link.href = dataStr;
+  link.download = "fractalnode_graph.json";
+  link.click();
+}
+
+function loadGraph() {
+  const input = document.createElement('input');
+  input.type = "file";
+  input.onchange = e => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = e2 => {
+      const loaded = JSON.parse(e2.target.result);
+      blocks = loaded.blocks || [];
+      wires = loaded.wires || [];
+      draw();
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function sendGraph() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ cmd: "load_graph", graph: { blocks, wires } }));
+  }
+}
+
+function runStep() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ cmd: "run_step" }));
+  }
+}
+
+function updateOutputs(values) {
+  blocks.forEach(b => {
+    if (values[b.id] !== undefined) {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(b.x, b.y + 55, 150, 20);
+      ctx.fillStyle = '#000';
+      ctx.fillText("Val: " + values[b.id].toFixed(2), b.x + 10, b.y + 70);
+    }
+  });
+}
+</script>
+
+</body>
+</html>
