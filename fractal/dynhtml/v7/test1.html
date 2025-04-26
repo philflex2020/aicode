@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Template Expansion and Download</title>
+</head>
+<body>
+
+
+<h2>Downloads</h2>
+<button onclick="downloadFrames()">Download Frames (frames.json)</button>
+<button onclick="downloadExpanded()">Download Expanded (expanded.json)</button>
+<button onclick="downloadDatapoints()">Download Datapoints (datapoints.txt)</button>
+
+<h2>Expanded Output</h2>
+<pre id="output"></pre>
+
+<script>
+//--------------------------------------
+// Embedded default_frame.json
+//--------------------------------------
+const frameData = {
+  frames: {
+    structure: [
+      { name: "site", count: 2, template: "site", keys: { "##SN##": "site" } },
+      { name: "rack", count: 2, template: "rack", keys: { "##SN##": "site", "##RN##": "rack" } },
+      { name: "cell", count: 4, template: "cell", keys: { "##SN##": "site", "##RN##": "rack", "##CN##": "cell" } }
+    ],
+    templates: {
+      site: {
+        boxes: [
+          {
+            title: "Site ##SN## - ##SITE_NAME##",
+            fields: [
+              { name: "Site ID", value: "Site_##SN##", input: false },
+              { name: "Location", value: "HQ ##SN##", input: true }
+            ]
+          }
+        ]
+      },
+      rack: {
+        boxes: [
+          {
+            title: "Rack ##RN## at Site ##SN##",
+            fields: [
+              { name: "Rack Serial", value: "Rack_##SN##_##RN##", input: false }
+            ]
+          }
+        ]
+      },
+      cell: {
+        boxes: [
+          {
+            title: "Cell ##CN## in Rack ##RN## at Site ##SN##",
+            fields: [
+              { name: "Voltage", value: "3.7", input: false },
+              { name: "SOC", value: "95", input: false },
+              { name: "Temp", value: "25", input: false }
+            ]
+          }
+        ]
+      }
+    }
+  }
+};
+
+//--------------------------------------
+// Global Variables
+//--------------------------------------
+let fullData = {};
+let datapointsList = [];
+
+//--------------------------------------
+// Function: Generate from Template
+//--------------------------------------
+function generateFromTemplate(template, substitutions) {
+  const copy = JSON.parse(JSON.stringify(template));
+
+  function recursiveReplace(obj) {
+    if (typeof obj === 'string') {
+      let str = obj;
+      for (const [marker, value] of Object.entries(substitutions)) {
+        str = str.replaceAll(marker, value);
+      }
+      return str;
+    } else if (Array.isArray(obj)) {
+      return obj.map(recursiveReplace);
+    } else if (typeof obj === 'object' && obj !== null) {
+      const newObj = {};
+      for (const key in obj) {
+        newObj[key] = recursiveReplace(obj[key]);
+      }
+      return newObj;
+    } else {
+      return obj;
+    }
+  }
+
+  return recursiveReplace(copy);
+}
+
+//--------------------------------------
+// Function: Expand Frames Using Templates
+//--------------------------------------
+function expandFramesUsingTemplates(structureList, templates) {
+  const expanded = {};
+
+  function expandLevel(parentObj, substitutions, levelIndex, context) {
+    if (levelIndex >= structureList.length) {
+      return;
+    }
+
+    const config = structureList[levelIndex];
+    const template = templates[config.template];
+
+    if (!template) {
+      console.error(`Template '${config.template}' not found.`);
+      return;
+    }
+
+    for (let i = 0; i < config.count; i++) {
+      const newSubs = { ...substitutions };
+      const newContext = { ...context };
+
+      if (config.keys) {
+        for (const [keyMarker, contextName] of Object.entries(config.keys)) {
+          newSubs[keyMarker] = i;
+          newContext[contextName] = i;
+        }
+      }
+
+      const newObj = generateFromTemplate(template, newSubs);
+      const objName = `${config.name}${i}`;
+
+      parentObj[objName] = newObj;
+
+      if (levelIndex + 1 < structureList.length) {
+        const nextLevelName = structureList[levelIndex + 1].name + "s";
+        newObj[nextLevelName] = {};
+        expandLevel(newObj[nextLevelName], newSubs, levelIndex + 1, newContext);
+      }
+    }
+  }
+
+  expandLevel(expanded, {}, 0, {});
+  return expanded;
+}
+
+//--------------------------------------
+// Function: Extract Unique Datapoints
+//--------------------------------------
+function extractDatapoints(expanded) {
+  const datapoints = new Set();
+
+  function walk(obj, path) {
+    if (!obj) return;
+    if (obj.boxes) {
+      obj.boxes.forEach(box => {
+        if (box.fields) {
+          box.fields.forEach(field => {
+            if (field.name) {
+              datapoints.add(`${path}.${field.name}`);
+            }
+          });
+        }
+      });
+    }
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && key !== "boxes") {
+        walk(obj[key], path ? `${path}.${key}` : key);
+      }
+    }
+  }
+
+  walk(expanded, "");
+  return Array.from(datapoints).sort();
+}
+
+//--------------------------------------
+// Function: Download Helpers
+//--------------------------------------
+function downloadFile(filename, content) {
+  const blob = new Blob([content], { type: 'application/octet-stream' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
+function downloadFrames() {
+  downloadFile('frames.json', JSON.stringify(fullData.frames, null, 2));
+}
+
+function downloadExpanded() {
+  downloadFile('expanded.json', JSON.stringify(fullData.expanded, null, 2));
+}
+
+function downloadDatapoints() {
+  downloadFile('datapoints.txt', datapointsList.join('\n'));
+}
+
+//--------------------------------------
+// Main Runner
+//--------------------------------------
+function runTest() {
+  fullData = {
+    frames: frameData.frames,
+    expanded: expandFramesUsingTemplates(frameData.frames.structure, frameData.frames.templates)
+  };
+
+  datapointsList = extractDatapoints(fullData.expanded);
+
+  const output = document.getElementById('output');
+  output.textContent = 
+    "Full Data (frames + expanded):\n" + JSON.stringify(fullData, null, 2) +
+    "\n\nDatapoints List:\n" + datapointsList.join('\n');
+}
+
+// Run the test
+runTest();
+
+</script>
+
+</body>
+</html>
