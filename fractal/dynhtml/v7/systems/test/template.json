@@ -1,0 +1,36 @@
+{
+    "site":{
+        "boxes":[
+            {
+                "title":"Site ##SN## - ##SITE_NAME##",
+                "fields":[
+                    {"name":"Site ID","value":"Site_##SN##","input":false},
+                    {"name":"Location","value":"HQ ##SN##","input":true},
+                    {"name":"Model","value":"base","input":false}
+                ]
+            }
+        ]
+    },
+    "rack":{
+        "boxes":[
+            {
+                "title":"Rack ##RN## at Site ##SN##",
+                "fields":[
+                    {"name":"Rack Serial","value":"Rack_##SN##_##RN##","input":false}
+                ]
+            }
+        ]
+    },
+    "cell":{
+        "boxes":[
+            {
+                "title":"Cell ##CN## in Rack ##RN## at Site ##SN##",
+                "fields":[
+                    {"name":"Voltage","value":"3.7","input":false},
+                    {"name":"SOC","value":"95","input":false},
+                    {"name":"Temp","value":"25","input":false}
+                ]
+            }
+        ]
+    }
+}
