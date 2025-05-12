@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Battery Viewer</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: right; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Battery Viewer</h1>
+    <p>Rack: <input id="rack" type="number" value="0" min="0" max="19">
+       Module: <input id="module" type="number" value="0" min="0" max="9">
+       <button onclick="queryData()">Load</button></p>
+    <table id="dataTable">
+        <thead>
+            <tr><th>Cell</th><th>Voltage</th><th>Current</th><th>Temp (°C)</th><th>SOC (%)</th><th>Resistance (mΩ)</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        const socket = new WebSocket("ws://192.168.86.20:9001");
+
+        socket.onopen = () => {
+            console.log("WebSocket connected");
+        };
+
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            const tbody = document.querySelector("#dataTable tbody");
+            tbody.innerHTML = "";
+            if (msg.cells) {
+                msg.cells.forEach(cell => {
+                    const row = `<tr>
+                        <td>${cell.index}</td>
+                        <td>${cell.voltage.toFixed(3)}</td>
+                        <td>${cell.current.toFixed(3)}</td>
+                        <td>${cell.temperature.toFixed(1)}</td>
+                        <td>${cell.soc.toFixed(1)}</td>
+                        <td>${cell.resistance.toFixed(3)}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            }
+        };
+
+        function queryData() {
+            const rack = parseInt(document.getElementById("rack").value);
+            const module = parseInt(document.getElementById("module").value);
+            socket.send(JSON.stringify({ action: "get", rack, module }));
+        }
+    </script>
+</body>
+</html>

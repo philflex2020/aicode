@@ -1,0 +1,1 @@
+g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread

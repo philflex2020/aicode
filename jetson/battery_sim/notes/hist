@@ -1,0 +1,313 @@
+    1  top
+    2  ctop
+    3  df -h
+    4  ifconfig
+    5  sudo apt-get install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran
+    6  sudo apt-get install python3-pip
+    7  sudo pip3 install -U pip testresources setuptools=49.6.0
+    8  sudo pip3 install -U pip testresources setuptools=?
+    9  sudo pip3 install -U pip testresources setuptools
+   10  sudo pip3 install -U numpy==1.19.4 future==0.18.2 mock==3.0.5 h5py==2.10.0 keras_preprocessing==1.1.1 keras_applications==1.0.8 gast==0.2.2 futures protobuf pybind11
+   11  sudo pip3 install -U numpy==1.19.4 future==0.18.2 mock==3.0.5 h5py keras_preprocessing==1.1.1 keras_applications==1.0.8 gast==0.2.2 futures protobuf pybind11
+   12  mkdir work
+   13  cd work/
+   14  git clone --recursive https://github.com/dusty-nv/jetson-inference
+   15  cd jetson-inference/
+   16  docker/run.sh
+   17  more docker/run.sh
+   18  g++ -v
+   19  sudo apt update
+   20  sudo apt dist-upgrade
+   21  sudo apt install nvidia-jetpack
+   22  ifconfig
+   23  ls work
+   24  mkdir -p work/fractalems
+   25  mkdir -p work/aicode
+   26  ifconfig
+   27  mkdir -p work/fractalems/
+   28  ls work/fractalems/
+   29  ls work/fractalems/vendor-esbcm/
+   30  cd work/fractalems/vendor-esbcm/
+   31  make clean
+   32  make
+   33  cp -a /tmp/nlohmann /usr/include
+   34  sudo cp -a /tmp/nlohmann /usr/include
+   35  make
+   36  sudo apt install libmodbus-dev
+   37  make
+   38  sudo cp -a /tmp/uwebsockets /usr/include
+   39  make
+   40  sudo cp -a /tmp/libusockets.h /usr/include
+   41  make
+   42  top
+   43  nvcc
+   44  cd work/
+   45  mkdir pattern_match
+   46  cd pattern_match/
+   47  nano pattern_match_cuda.cpp
+   48  nano Makefile
+   49  [200~wget https://www.taosdata.com/assets-download/TDengine-server-3.0.3.0-Linux-arm64.tar.gz
+   50  ~
+   51  wget https://www.taosdata.com/assets-download/TDengine-server-3.0.3.0-Linux-arm64.tar.gz
+   52  ls
+   53  nano pattern_match_cuda_notd.cpp
+   54  more Makefi;le
+   55  more Makefile
+   56  nvcc -std=c++17 -O3 -o pattern_match_cuda pattern_match_cuda.cpp -lcuda -lcudart
+   57  ls
+   58  nvcc -std=c++17 -O3 -o pattern_match_pattrn_match_cuda_notd.cpp  -lcuda -lcudart
+   59  nvcc -std=c++17 -O3 -o pattern_match_pattern_match_cuda_notd.cpp  -lcuda -lcudart
+   60  nvcc
+   61  nvcc -std=c++17 -O3 -o pattern_match pattern_match_cuda_notd.cpp  -lcuda -lcudart
+   62  nvcc --version
+   63  nvcc -std=c++17 -O3 -o pattern_match pattern_match_cuda_notd.cpp  -lcuda -lcudart
+   64  sudo apt install nvidia-cuda-toolkit
+   65  nvcc -std=c++17 -O3 -o pattern_match pattern_match_cuda_notd.cpp  -lcuda -lcudart
+   66  mv pattern_match_cuda_notd.cpp pm.cu
+   67  nvcc -std=c++17 -O3 -o pattern_match pm.cu  -lcuda -lcudart
+   68  ls -l
+   69  nvcc -std=c++17 -O3 -Xcompiler="-Wall -Wno-psabi" -o pattern_match pm.cu -lcudart
+   70  sudo apt install g++-10
+   71  sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
+   72  nvcc -std=c++17 -O3 -Xcompiler="-Wall -Wno-psabi" -o pattern_match pm.cu -lcudart
+   73  [200~nvcc -ccbin g++-10 -std=c++17 -O3 -o pattern_match pattern_match_cuda.cu -lcudart
+   74  nvcc -ccbin g++-10 -std=c++17 -O3 -o pattern_match pm.cu -lcudart
+   75  ls -l
+   76  echo 'nvcc -ccbin g++-10 -std=c++17 -O3 -o pattern_match pm.cu -lcudart' > buildit
+   77  ./pattern_match 
+   78  ./pattern_match  -h
+   79  ./pattern_match &
+   80  htop
+   81  sudo pip3 install -U jetson-stats
+   82  tegrastats 
+   83  nvidia-smi 
+   84  cd ../aicode/nvidia/test/src/
+   85  g++ simple_start.cpp -o ss
+   86  ls
+   87  igconfig
+   88  ifconfig
+   89  top
+   90  nano add.cpp
+   91  ls
+   92  g++ add.cpp -o add
+   93  ./add
+   94  nano add.cu
+   95  nvcc add.cu -o add_cuda
+   96  ./add_cuda 
+   97  nvprof add_cuda 
+   98  timex add_cuda
+   99  time add_cuda
+  100  time ./add_cuda
+  101  cp add.cu add2.cu
+  102  nano add2.cu
+  103  nvcc add2.cu -o add2_cuda
+  104  time ./add2_cuda
+  105  nano add2.cu
+  106  nvcc add2.cu -o add2_cuda
+  107  time ./add2_cuda
+  108  nano add2.cu
+  109  nvcc add2.cu -o add2_cuda
+  110  time ./add2_cuda
+  111  nano add2.cu
+  112  nvcc add2.cu -o add2_cuda
+  113  time ./add2_cuda
+  114  cp add2.cu add3.cu
+  115  nano add3.cu
+  116  nvcc add3.cu -o add3_cuda
+  117  time ./add2_cuda
+  118  time ./add3_cuda
+  119  time ./add
+  120  ls add*
+  121  more add.cpp
+  122  g++ add.cpp -o ad
+  123  time ./add
+  124  time ./add3_cuda 
+  125  time ./add2_cuda 
+  126  time ./add_cuda 
+  127  nano sax.cu
+  128  nvcc -o sax sax.cu 
+  129  ./sax
+  130  tikme ./sax
+  131  time ./sax
+  132  nano sax.cu
+  133  nvcc -o sax sax.cu 
+  134  ./sax
+  135  nano sax.cu
+  136  nvcc -o sax sax.cu 
+  137  ./sax
+  138  time ./sax
+  139  sudo apt install anydesk
+  140  ping 192.168.86.41
+  141  ping 192.168.86.40
+  142  ping 192.168.86.42
+  143  ssh phil@192.168.86.42
+  144  uname -a
+  145  top
+  146  nano philgpt.sh
+  147  sh philgpt.sh 
+  148  nano philgptcmake.sh
+  149  sh  philgptcmake.sh
+  150  nano philgptcmake.sh
+  151  sh  philgptcmake.sh
+  152  ls
+  153  ls llama.cpp/
+  154  more  llama.cpp/CMakeLists.txt 
+  155  mv llama.cpp origllama.cpp
+  156  sh  philgptcmake.sh
+  157  mv llama.cpp orig2llama.cpp
+  158  nano philgptcmake.sh
+  159  sh  philgptcmake.sh
+  160  ./run_philgpt_web.sh
+  161  ls llama.cpp/build
+  162  ls llama.cpp/build/bin/
+  163  find llama.cpp/build -type f -executable
+  164  cd llama.cpp/
+  165  make -S . -B build -DGGML_CUDA=on -DLLAMA_BUILD_SERVER=on       -DCMAKE_CUDA_STANDARD=14 -DCMAKE_CXX_STANDARD=14       -DCMAKE_CUDA_FLAGS="--expt-relaxed-constexpr"
+  166  cmake -S . -B build -DGGML_CUDA=on -DLLAMA_BUILD_SERVER=on
+  167  cmake --build build --target server -j$(nproc)
+  168  find build -type f -executable
+  169  rm -rf build
+  170  mkdir build && cd build
+  171  cmake .. -DGGML_CUDA=on -DLLAMA_BUILD_SERVER=on
+  172  cmake --build . --target llama -j$(nproc)
+  173  cd ..
+  174  rm -rf build
+  175  mkdir build && cd build
+  176  cd ../
+  177  rm -rf build
+  178  mkdir build && cd build
+  179  cd ../
+  180  cmake -S . -B build -DGGML_CUDA=on -DLLAMA_BUILD_SERVER=on       -DCMAKE_CUDA_STANDARD=14 -DCMAKE_CXX_STANDARD=14       -DCMAKE_CUDA_FLAGS="--expt-relaxed-constexpr"
+  181  ls build
+  182  ls build/bin
+  183  cd build
+  184  cmake --build . --target llama -j$(nproc)
+  185  ls bin
+  186  cd ..
+  187  history
+  188  rm -rf build
+  189  mkdir build && cd build
+  190  cd ../
+  191  cmake -S . -B build -DGGML_CUDA=on -DLLAMA_BUILD_SERVER=on       -DCMAKE_CUDA_STANDARD=17 -DCMAKE_CXX_STANDARD=17       -DCMAKE_CUDA_FLAGS="--expt-relaxed-constexpr"
+  192  cd build
+  193  cmake --build . --target llama -j1
+  194  sudo apt install gcc-10 g++-10
+  195  cd ../
+  196  rm -rf build
+  197  mkdir build && cd build
+  198  cmake ..   -DGGML_CUDA=on   -DLLAMA_BUILD_SERVER=on   -DCMAKE_C_COMPILER=/usr/bin/gcc-10   -DCMAKE_CXX_COMPILER=/usr/bin/g++-10   -DCMAKE_CUDA_ARCHITECTURES=72   -DCMAKE_CUDA_STANDARD=17   -DCMAKE_CXX_STANDARD=17
+  199  cmake --build . --target llama -j$(nproc)
+  200  cd ../
+  201  rm -rf build
+  202  mkdir build && cd build
+  203  cmake ..   -DGGML_CUDA=on   -DLLAMA_BUILD_SERVER=on   -DCMAKE_C_COMPILER=/usr/bin/gcc-10   -DCMAKE_CXX_COMPILER=/usr/bin/g++-10   -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/gcc-10   -DCMAKE_CUDA_ARCHITECTURES=72   -DCMAKE_CUDA_STANDARD=17   -DCMAKE_CXX_STANDARD=17
+  204  cmake --build . --target llama -j$(nproc)
+  205  ls bin
+  206  ls
+  207  cmake --build . -j$(nproc)
+  208  ls -l bin
+  209  history
+  210  cd ..
+  211  #!/bin/bash
+  212  ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   --prompt-cache   --system-prompt "$(cat prompt.txt)"
+  213  bash ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   --prompt-cache   --system-prompt "$(cat prompt.txt)"
+  214  ls
+  215  llama.cpp/build/bin/llama-server 
+  216  bin/bash
+  217  ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   --prompt-cache   --system-prompt "$(cat prompt.txt)"
+  218  ls 
+  219  more prompt.txt 
+  220  ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   --prompt-cache   --system-prompt "$(cat prompt.txt)"
+  221  ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000     --system-prompt "$(cat prompt.txt)"
+  222  ./llama.cpp/build/bin/llama-server --help
+  223  ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   
+  224  ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   --host 0.0.0.0
+  225  ./llama.cpp/build/bin/llama-cli   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   --host 0.0.0.0
+  226  ./llama.cpp/build/bin/llama-cli   -m models/philgpt.gguf   --ctx-size 4096   
+  227  ./llama.cpp/build/bin/llama-server   -m models/philgpt.gguf   --ctx-size 4096   --port 8000   --host 0.0.0.0
+  228  top
+  229  ls work/
+  230  ls work/pattern_match/
+  231  more work/pattern_match/buildit 
+  232  pwd
+  233  cd work
+  234  sudo apt install libssl-dev
+  235  git clone https://github.com/uNetworking/uWebSockets.git
+  236  cd uWebSockets
+  237  make
+  238  sudo make install
+  239  sudo apt update
+  240  sudo apt install cmake libssl-dev zlib1g-dev
+  241  git status
+  242  git submodule update --init
+  243  cd uSockets
+  244  mkdir build
+  245  cd build
+  246  cmake ..
+  247  make
+  248  sudo make install
+  249  cd .
+  250  cd ..
+  251  make
+  252  sudo cp libuSockets.a /usr/local/lib/
+  253  sudo mkdir -p /usr/local/include/uWebSockets
+  254  sudo cp -r ../src/* /usr/local/include/uWebSockets/
+  255  ls
+  256  cp uSockets.a libuSockets.a 
+  257  sudo cp libuSockets.a /usr/local/lib/
+  258  cd ../../battery_sim/
+  259  mkdir src
+  260  cd src
+  261  nano battery_server.cpp
+  262  nano buildit
+  263  . buildit 
+  264  gcc -version
+  265  gcc --version
+  266  nano buildit
+  267  g++-11
+  268  nano buildit
+  269  . buildit 
+  270  ls
+  271  ./battery_server `
+  272  ./battery_server 
+  273  g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luWS -lssl -lcrypto -lz -lpthread
+  274  grep -r WebSocketBehavior /usr/local/include/uWebSockets
+  275  g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luWS -lssl -lcrypto -lz -lpthread
+  276  more buildit 
+  277  g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread
+  278  ./full_battery_server 
+  279  g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread
+  280  ./full_battery_server 
+  281  g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread
+  282  echo 'g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread' > buildfull
+  283  ./full_battery_server 
+  284  echo 'g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread' > buildfull
+  285  g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread
+  286  ./full_battery_server 
+  287  g++-11 -std=c++17 full_battery_server.cpp -o full_battery_server     -I../inc -luSockets -lssl -lcrypto -lz -lpthread
+  288  ./full_battery_server 
+  289  nvcc -std=c++17 -ccbin g++-11 battery_cuda_sim.cpp -o battery_cuda_sim
+  290  nvcc -std=c++17 -ccbin g++-11 -I ../inc battery_cuda_sim.cpp -o battery_cuda_sim
+  291  nvcc -std=c++17 -ccbin g++-11 -I ../inc battery_cuda_sim.cu -o battery_cuda_sim
+  292  ./full_battery_server 
+  293  bg
+  294  ./battery_cuda_sim 
+  295  bg
+  296  tegrastats 
+  297  sudo -H pip3 install -U jetson-stats
+  298  python3 -m pip install --upgrade pip
+  299  sudo -H pip3 install -U jetson-stats
+  300  sudo apt-get update
+  301  sudo apt-get install python3-pip python3-setuptools python3-wheel
+  302  sudo -H pip3 install --upgrade pip setuptools
+  303  sudo -H pip3 install -U jetson-stats
+  304  sudo -H pip3 install "packaging<21" "setuptools<60"
+  305  sudo -H pip3 install -U jetson-stats
+  306  jtop
+  307  ls work
+  308  ls work/battery_sim/
+  309  ls work/battery_sim/notes
+  310  more work/battery_sim/notes
+  311  more work/battery_sim/notes/battery_sim.md 
+  312  history
+  313  history > hist
