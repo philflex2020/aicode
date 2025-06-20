@@ -15,11 +15,24 @@
 #include <atomic>
 #include <cstring>
 #include <chrono>
+#include <thread>
+#include <random>
+
 #include <poll.h>
 
 #include <chrono>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+constexpr size_t MEM_SIZE = 32764;
+constexpr size_t MAX_SM_MEMORY = 0x8000;
+std::atomic<bool> sim_running{false};
+std::thread sim_thread;
+
+
+uint16_t *sim_memory;
+uint16_t *ref_memory;
+
 
 
 double ref_time_dbl_wall() {
@@ -50,7 +63,151 @@ std::string image_file = "image.bin";
 void handle_signal(int signum) {
     std::cerr << "\nSignal " << signum << " received. Shutting down...\n";
     shutdown_requested = true;
+    sim_running = false;
+
 }
+
+void xencode_diffs(const uint16_t* current, uint16_t* previous,size_t mem_size, 
+                  std::vector<uint16_t>& control,
+                  std::vector<uint16_t>& data) {
+    control.clear();
+    data.clear();
+
+    //uint16_t base_offset = 0;
+    uint16_t last_written = 0xFFFF;
+
+    for (uint16_t i = 0; i < mem_size/2; ++i) {
+        if (current[i] != previous[i]) {
+            std::cout << " change detected i ["<< i 
+                      << "] previous " << previous[i] 
+                      << " current "<< current[i] 
+                      << std::endl;
+            // Start of diff block
+            uint16_t run_start = i;
+            uint16_t run_count = 0;
+
+            // Measure how many consecutive diffs
+            while (i < mem_size/2 && current[i] != previous[i]) {
+                ++run_count;
+                ++i;
+            }
+
+            // Compute relative offset
+            uint16_t rel = (last_written == 0xFFFF) ? run_start : run_start - last_written;
+
+            while (rel >= MAX_SM_MEMORY) {
+                 control.push_back(MAX_SM_MEMORY);  // spacing marker
+                 control.push_back(0);  // spacing marker
+                 rel -= MAX_SM_MEMORY;
+            }
+            control.push_back(rel);
+            control.push_back(run_count);
+            // Add data values but need to check for MAX_SM_MEMORY
+            for (uint16_t j = 0; j < run_count; ++j) {
+                data.push_back(current[run_start + j]);
+                previous[run_start + j] = current[run_start + j];
+            }
+            last_written = run_start + run_count - 1;
+        }
+        else
+        {
+            i++;
+        }
+    }
+}
+
+void encode_diffs(const uint16_t* current, uint16_t* previous, size_t mem_size,
+                  std::vector<uint16_t>& control,
+                  std::vector<uint16_t>& data) {
+    control.clear();
+    data.clear();
+
+    uint16_t last_written = 0xFFFF;
+
+    for (uint16_t i = 0; i < mem_size / 2;) {
+        if (current[i] != previous[i]) {
+            uint16_t run_start = i;
+            uint16_t run_count = 0;
+
+            // Count how many consecutive changes
+            while (i < mem_size / 2 && current[i] != previous[i]) {
+                ++run_count;
+                ++i;
+            }
+
+            // Compute relative offset from last write
+            uint16_t rel = (last_written == 0xFFFF) ? run_start : (run_start - last_written);
+
+            // Insert spacing markers for large gaps
+            while (rel >= MAX_SM_MEMORY) {
+                control.push_back(MAX_SM_MEMORY);  // zero block marker
+                control.push_back(0);
+                rel -= MAX_SM_MEMORY;
+            }
+
+            // Store relative offset and run count
+            control.push_back(rel);
+            control.push_back(run_count);
+
+            for (uint16_t j = 0; j < run_count; ++j) {
+                uint16_t idx = run_start + j;
+                data.push_back(current[idx]);
+                previous[idx] = current[idx];  // update ref
+            }
+
+            last_written = run_start + run_count - 1;
+        } else {
+            ++i;
+        }
+    }
+}
+
+
+
+void run_simulator() {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> offset_dist(0, 65535);
+    std::uniform_int_distribution<int> value_dist(2000, 4000);
+    std::uniform_int_distribution<int> count_dist(100, 400);
+    std::cout << "[simulator] started"<<std::endl;
+    std::vector<uint16_t> control_vec, data_vec;
+    for (int i = 0; i < (int)MEM_SIZE/2; ++i)
+    {
+        sim_memory[i] = 0;
+        ref_memory[i] = 0;
+    }
+    std::cout << "[simulator] memory cleared"<<std::endl;
+    while (sim_running.load()) {
+
+        int count = count_dist(rng);
+        std::cout << "[simulator] count " << count <<std::endl;
+
+        for (int i = 0; i < count; ++i) {
+            int offset = offset_dist(rng);
+            int value = value_dist(rng);
+            sim_memory[offset] = value;
+        }
+
+        // generate diffs
+
+        if(1){
+            encode_diffs(sim_memory, ref_memory, MEM_SIZE, control_vec, data_vec);
+
+            //if (!control_vec.empty()) 
+            {
+                std::cout << "[simulator] " << control_vec.size() << " changes\n";
+                // optionally send to a socket, log buffer, or apply_diffs()
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+
+    std::cout << "[simulator] stopped\n";
+}
+
+
 
 void flush_image_to_disk() {
     std::lock_guard<std::mutex> lg(mem_lock);
@@ -96,6 +253,7 @@ int process_message(int fd, uint8_t* buf, int len)
         "Available commands:\n"
         "  Q                 - Quit the connection\n"
         "  h or H            - Show this help message\n"
+        "  {\"cmd\":\"start_sim\"} - JSON: Start Sim\n"
         "  {\"cmd\":\"status\"} - JSON: Show logger status\n"
         "  {\"cmd\":\"quit\"}   - JSON: Close the connection\n"
         "  {\"cmd\":\"get\", \"offset\": <n>} - JSON: Read value from memory\n"
@@ -126,7 +284,22 @@ int process_message(int fd, uint8_t* buf, int len)
                 send(fd, "\n", 1, 0);
                 return -1;
             }
-
+            else if (cmd == "start_sim") {
+                if (!sim_running.exchange(true)) {
+                    sim_thread = std::thread(run_simulator);
+                    std::cout << "[simulator] started\n";
+                    json out = {{"msg", "simulator started"}};
+                    std::string reply = out.dump();
+                    send(fd, reply.c_str(), reply.size(), 0);
+                    send(fd, "\n", 1, 0);
+                } else {
+                    json out = {{"msg", "simulator already running"}};
+                    std::string reply = out.dump();
+                    send(fd, reply.c_str(), reply.size(), 0);
+                    send(fd, "\n", 1, 0);
+                }
+                return 0;
+            }
             else {
                 std::string out = R"({"error":"unknown command"})";
                 send(fd, out.c_str(), out.size(), 0);
@@ -245,6 +418,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+
+    sim_memory = (uint16_t*)malloc(MEM_SIZE);
+    ref_memory = (uint16_t*)malloc(MEM_SIZE);
+
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
@@ -268,6 +445,11 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Logger listening on port " << port << "\n";
     std::thread flusher(periodic_flusher);
+
+    sim_running = true;
+    std::cout << "start [simulator]\n";
+    sim_thread = std::thread(run_simulator);
+
 
     while (!shutdown_requested.load()) {
         struct pollfd pfd;
@@ -298,11 +480,19 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    std::cout << "Waiting for sim to complete...\n";
+
+    if (sim_running.load()) {
+        sim_running.store(false);
+    }
+    if (sim_thread.joinable()) sim_thread.join();
 
     std::cout << "Waiting for flusher to complete...\n";
     flusher.join();
-    flush_image_to_disk();
+    //flush_image_to_disk();
     close(server_fd);
+    poll(nullptr, 0, 1000);
     std::cout << "Logger shut down cleanly.\n";
+
     return 0;
 }

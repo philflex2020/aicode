@@ -140,4 +140,22 @@ struct LogBuffer {
 // };
 
 
+typedef struct
+{
+    uint16_t ID_1;
+    uint16_t ID_2;
+    uint32_t len;
+    uint32_t nlen;
+    uint16_t xbms_num;
+    uint16_t rack_num;
+    uint16_t seq;    // this is now a sequence number
+    uint16_t ack;    // this is now the ack
+    uint8_t cmd;     // 
+    uint8_t mtype;   // 0 rtos, 1 rack 
+
+    uint16_t control_size;
+    uint16_t data_size;
+    uint32_t crc;  // put crc in here 
+} Header;
+
 #endif
