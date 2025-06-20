@@ -18,6 +18,8 @@
 #include <poll.h>
 
 #include <chrono>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 
 double ref_time_dbl_wall() {
@@ -75,33 +77,149 @@ void periodic_flusher() {
     flush_image_to_disk();  // Final flush on exit
 }
 
+
+int process_message(int fd, uint8_t* buf, int len)
+{
+    if (len <= 0) return 0;
+
+    std::string input(reinterpret_cast<char*>(buf), len);
+    input.erase(std::remove(input.begin(), input.end(), '\r'), input.end());
+    input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
+
+    if ((buf[0] == 'Q') || (buf[0] == 'q')) {
+        std::string goodbye = "Goodbye.\n";
+        send(fd, goodbye.c_str(), goodbye.size(), 0);
+        return -1;  // signal to break connection loop
+     }
+    if ((buf[0] == 'H') || (buf[0] == 'h')) {
+         const char* help =
+        "Available commands:\n"
+        "  Q                 - Quit the connection\n"
+        "  h or H            - Show this help message\n"
+        "  {\"cmd\":\"status\"} - JSON: Show logger status\n"
+        "  {\"cmd\":\"quit\"}   - JSON: Close the connection\n"
+        "  {\"cmd\":\"get\", \"offset\": <n>} - JSON: Read value from memory\n"
+        "  {\"cmd\":\"dump\", \"range\": [start, end]} - JSON: Dump memory range\n";
+        send(fd, help, strlen(help), 0);
+        return 0;  // signal to break connection loop
+     }
+
+    try {
+        auto j = json::parse(input);
+
+        if (j.contains("cmd")) {
+            std::string cmd = j["cmd"];
+
+            if (cmd == "status") {
+                json reply;
+                reply["msg"] = "ok";
+                reply["uptime"] = ref_time_dbl(); // or your own uptime function
+                std::string out = reply.dump();
+                send(fd, out.c_str(), out.size(), 0);
+                send(fd, "\n", 1, 0);
+                return 0;
+            }
+
+            else if (cmd == "quit") {
+                std::string out = R"({"msg":"bye"})";
+                send(fd, out.c_str(), out.size(), 0);
+                send(fd, "\n", 1, 0);
+                return -1;
+            }
+
+            else {
+                std::string out = R"({"error":"unknown command"})";
+                send(fd, out.c_str(), out.size(), 0);
+                send(fd, "\n", 1, 0);
+                return 0;
+            }
+        } else {
+            std::string out = R"({"error":"missing cmd"})";
+            send(fd, out.c_str(), out.size(), 0);
+            send(fd, "\n", 1, 0);
+            return 0;
+        }
+    }
+    catch (json::parse_error& e) {
+        std::string out = R"({"error":"invalid json"})";
+        send(fd, out.c_str(), out.size(), 0);
+        send(fd, "\n", 1, 0);
+        return 0;
+    }
+}
+
+// int process_message(int fd, uint8_t* buf, int len)
+// {
+//     if (len <= 0) return 0;
+
+//     // If the message starts with 'Q', then quit (signal caller to close the socket)
+//     if (buf[0] == 'Q') {
+//         std::string goodbye = "Goodbye.\n";
+//         send(fd, goodbye.c_str(), goodbye.size(), 0);
+//         return -1;  // signal to break connection loop
+//     }
+
+//     // Otherwise, respond with "hello: " + original message
+//     std::string hello = "hello: ";
+//     send(fd, hello.c_str(), hello.size(), 0);
+//     send(fd, buf, len, 0);
+//     send(fd, "\n", 1, 0);
+
+//     return 0;  // continue connection
+// }
+
 void handle_client(int client_fd) {
     std::ofstream out(log_file, std::ios::binary | std::ios::app);
 
     while (!shutdown_requested.load()) {
         uint32_t len;
-        if (recv(client_fd, &len, sizeof(len), MSG_WAITALL) != sizeof(len)) break;
-
-        std::vector<uint8_t> buf(len);
-        if (recv(client_fd, buf.data(), len, MSG_WAITALL) != (ssize_t)len) break;
-
-        //DataPacket pkt = deserialize_packet(buf);
-
-        // Log to file
+        uint8_t bytes[256];
+        if (recv(client_fd, bytes, 1, MSG_WAITALL) != 1) break;
+        if ( bytes[0]!= 0)
         {
-            std::lock_guard<std::mutex> lg(file_lock);
-            out.write(reinterpret_cast<char*>(&len), sizeof(len));
-            out.write(reinterpret_cast<char*>(buf.data()), buf.size());
+            int idx = 1;
+            while (idx < (int)sizeof(bytes) - 1) {
+            ssize_t r = recv(client_fd, &bytes[idx], 1, MSG_DONTWAIT);
+            if (r == 1) {
+                if (bytes[idx] == '\n') break;
+                idx++;
+            }
+            }        
+            bytes[idx + 1] = 0;  // null-terminate just in case
+            auto rc  = process_message (client_fd, bytes, idx+1);
+            if (rc < 0)
+            {
+                break;
+            }
+        }
+        else
+        {
+            if (recv(client_fd, bytes, 3, MSG_WAITALL) != 3) break;
+
+            if (recv(client_fd, &len, sizeof(len), MSG_WAITALL) != sizeof(len)) break;
+
+            std::vector<uint8_t> buf(len);
+            if (recv(client_fd, buf.data(), len, MSG_WAITALL) != (ssize_t)len) break;
+
+            //DataPacket pkt = deserialize_packet(buf);
+
+            // Log to file
+            {
+                std::lock_guard<std::mutex> lg(file_lock);
+                out.write(reinterpret_cast<char*>(&len), sizeof(len));
+                out.write(reinterpret_cast<char*>(buf.data()), buf.size());
+            }
+
+            // Apply to memory
+            // {
+            //     std::lock_guard<std::mutex> lg(mem_lock);
+            //     for (size_t i = 0; i < pkt.control.size(); ++i) {
+            //         if (pkt.control[i] < 65536)
+            //             memory_image[pkt.control[i]] = pkt.data[i];
+            //     }
+            // }
         }
 
-        // Apply to memory
-        // {
-        //     std::lock_guard<std::mutex> lg(mem_lock);
-        //     for (size_t i = 0; i < pkt.control.size(); ++i) {
-        //         if (pkt.control[i] < 65536)
-        //             memory_image[pkt.control[i]] = pkt.data[i];
-        //     }
-        // }
     }
 
     close(client_fd);
