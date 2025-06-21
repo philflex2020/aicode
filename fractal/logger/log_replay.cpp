@@ -17,12 +17,25 @@ struct LogHeader {
     uint8_t data[1];  // [Header][control][data]
 };
 
-struct Header {
-    uint8_t cmd;
-    uint8_t mytype;
-    uint8_t seq;
-    uint8_t reserved;
-};
+
+typedef struct
+{
+    uint16_t ID_1;
+    uint16_t ID_2;
+    uint32_t len;
+    uint32_t nlen;
+    uint16_t xbms_num;
+    uint16_t rack_num;
+    uint16_t seq;    // this is now a sequence number
+    uint16_t ack;    // this is now the ack
+    uint8_t cmd;     // 
+    uint8_t mtype;   // 0 rtos, 1 rack 
+
+    uint16_t control_size;
+    uint16_t data_size;
+    uint32_t crc;  // put crc in here 
+} Header;
+
 #pragma pack(pop)
 
 int main(int argc, char* argv[]) {
@@ -51,20 +64,19 @@ int main(int argc, char* argv[]) {
             std::cerr << "Corrupt payload\n";
             break;
         }
-        // TODO header will have control size and data size
-        //const Header* hdr = reinterpret_cast<const Header*>(payload.data());
+        const Header* hdr = reinterpret_cast<const Header*>(payload.data());
 
-        size_t control_bytes = payload.size() - sizeof(Header);
-        size_t control_words = control_bytes / sizeof(uint16_t);
-        size_t control_vec_size = 0;
+        // size_t control_bytes = payload.size() - sizeof(Header);
+        // size_t control_words = control_bytes / sizeof(uint16_t);
+       //size_t control_vec_size = 0;
 
-        if (control_words >= 2) {
-            // Estimate size by assuming well-formed alternating control + data
-            control_vec_size = control_words / 2;
-        }
+        // if (control_words >= 2) {
+        //     // Estimate size by assuming well-formed alternating control + data
+        //     control_vec_size = control_words / 2;
+        // }
 
         std::cout << "ts: " << log.timestamp_us
-                  << " μs | control_vec size: " << control_vec_size << "\n";
+                  << " μs | control_vec size: " << hdr->control_size << "\n";
     }
 
     return 0;

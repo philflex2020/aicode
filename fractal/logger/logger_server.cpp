@@ -152,7 +152,7 @@ void encode_diffs(const uint16_t* current, uint16_t* previous, size_t mem_size,
     }
 }
 
-int  build_log_packet( std::vector<uint8_t>&buf, const Header& hdr, const std::vector<uint16_t>& control, const std::vector<uint16_t>& data, uint64_t timestamp_us) {
+int  build_log_packet( std::vector<uint8_t>&buf, Header& hdr, const std::vector<uint16_t>& control, const std::vector<uint16_t>& data, uint64_t timestamp_us) {
     // Calculate sizes
     const size_t hdr_size      = sizeof(Header);
     const size_t control_size  = control.size() * sizeof(uint16_t);
@@ -167,6 +167,8 @@ int  build_log_packet( std::vector<uint8_t>&buf, const Header& hdr, const std::v
     log->packet_hdr  = 0;  // log packet marker
     log->packet_size = total_size;
     log->timestamp_us = timestamp_us;
+    hdr.control_size = control.size();
+    hdr.data_size = data.size();
 
     // Copy Header + control + data
     size_t offset = 0;
