@@ -7,6 +7,10 @@ OBJS := $(SRCS:.cpp=.o)
 
 TARGET := logger_server
 
+# Test tool
+REPLAY_SRC := log_replay.cpp
+REPLAY_BIN := log_replay
+
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
@@ -15,5 +19,11 @@ $(TARGET): $(OBJS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# 't' = build log_replay
+t: $(REPLAY_BIN)
+
+$(REPLAY_BIN): $(REPLAY_SRC)
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGET) $(REPLAY_BIN) $(OBJS)

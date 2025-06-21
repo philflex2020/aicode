@@ -17,6 +17,11 @@
 #include <chrono>
 #include <thread>
 #include <random>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
 
 #include <poll.h>
 
@@ -32,8 +37,10 @@ std::thread sim_thread;
 
 uint16_t *sim_memory;
 uint16_t *ref_memory;
+//static uint16_t sim_memory[MEM_SIZE] = {0};
+//static uint16_t ref_memory[MEM_SIZE] = {0};
 
-
+int myfd = -1;
 
 double ref_time_dbl_wall() {
     using Clock = std::chrono::system_clock;
@@ -48,6 +55,10 @@ double ref_time_dbl() {
     auto now = Clock::now();
     std::chrono::duration<double> elapsed = now - start_time;
     return elapsed.count();  // seconds with sub-second resolution
+}
+
+uint64_t ref_time_us() {
+    return static_cast<uint64_t>(ref_time_dbl() * 1'000'000);
 }
 
 std::atomic<bool> shutdown_requested{false};
@@ -67,53 +78,32 @@ void handle_signal(int signum) {
 
 }
 
-void xencode_diffs(const uint16_t* current, uint16_t* previous,size_t mem_size, 
-                  std::vector<uint16_t>& control,
-                  std::vector<uint16_t>& data) {
-    control.clear();
-    data.clear();
-
-    //uint16_t base_offset = 0;
-    uint16_t last_written = 0xFFFF;
-
-    for (uint16_t i = 0; i < mem_size/2; ++i) {
-        if (current[i] != previous[i]) {
-            std::cout << " change detected i ["<< i 
-                      << "] previous " << previous[i] 
-                      << " current "<< current[i] 
-                      << std::endl;
-            // Start of diff block
-            uint16_t run_start = i;
-            uint16_t run_count = 0;
-
-            // Measure how many consecutive diffs
-            while (i < mem_size/2 && current[i] != previous[i]) {
-                ++run_count;
-                ++i;
-            }
-
-            // Compute relative offset
-            uint16_t rel = (last_written == 0xFFFF) ? run_start : run_start - last_written;
-
-            while (rel >= MAX_SM_MEMORY) {
-                 control.push_back(MAX_SM_MEMORY);  // spacing marker
-                 control.push_back(0);  // spacing marker
-                 rel -= MAX_SM_MEMORY;
-            }
-            control.push_back(rel);
-            control.push_back(run_count);
-            // Add data values but need to check for MAX_SM_MEMORY
-            for (uint16_t j = 0; j < run_count; ++j) {
-                data.push_back(current[run_start + j]);
-                previous[run_start + j] = current[run_start + j];
-            }
-            last_written = run_start + run_count - 1;
-        }
-        else
-        {
-            i++;
-        }
+// Returns connected socket or -1 on failure
+int connect_to_input_socket(const char* hostname, int port) {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("socket");
+        return -1;
     }
+
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, hostname, &server_addr.sin_addr) <= 0) {
+        std::cerr << "Invalid address: " << hostname << "\n";
+        close(sock);
+        return -1;
+    }
+
+    if (connect(sock, (sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        perror("connect");
+        close(sock);
+        return -1;
+    }
+
+    std::cout << "[startup] connected to " << hostname << ":" << port << "\n";
+    return sock;
 }
 
 void encode_diffs(const uint16_t* current, uint16_t* previous, size_t mem_size,
@@ -162,6 +152,36 @@ void encode_diffs(const uint16_t* current, uint16_t* previous, size_t mem_size,
     }
 }
 
+int  build_log_packet( std::vector<uint8_t>&buf, const Header& hdr, const std::vector<uint16_t>& control, const std::vector<uint16_t>& data, uint64_t timestamp_us) {
+    // Calculate sizes
+    const size_t hdr_size      = sizeof(Header);
+    const size_t control_size  = control.size() * sizeof(uint16_t);
+    const size_t data_size     = data.size() * sizeof(uint16_t);
+    const size_t payload_size  = hdr_size + control_size + data_size;
+    const size_t total_size    = sizeof(LogHeader) - 1 + payload_size;
+
+    buf.resize(total_size);
+
+    // Build LogHeader
+    LogHeader* log = reinterpret_cast<LogHeader*>(buf.data());
+    log->packet_hdr  = 0;  // log packet marker
+    log->packet_size = total_size;
+    log->timestamp_us = timestamp_us;
+
+    // Copy Header + control + data
+    size_t offset = 0;
+    uint8_t* payload = log->data;
+
+    std::memcpy(payload + offset, &hdr, hdr_size);
+    offset += hdr_size;
+
+    std::memcpy(payload + offset, control.data(), control_size);
+    offset += control_size;
+
+    std::memcpy(payload + offset, data.data(), data_size);
+
+    return (int)buf.size();
+}
 
 
 void run_simulator() {
@@ -193,6 +213,20 @@ void run_simulator() {
 
         if(1){
             encode_diffs(sim_memory, ref_memory, MEM_SIZE, control_vec, data_vec);
+// now we have to create the message 
+            Header hdr;
+            std::vector<uint8_t> log_buf;
+            int rc;
+            int log_len = build_log_packet(log_buf, hdr, control_vec, data_vec, ref_time_us());
+            std::cout << " sending len " << log_len << std::endl; 
+            if(myfd> 0)
+            {
+                rc = write(myfd, log_buf.data(), log_len);
+                if(rc <0)
+                {
+                    std::cerr << " write faiuled " << std::endl;
+                }
+            }
 
             //if (!control_vec.empty()) 
             {
@@ -206,7 +240,6 @@ void run_simulator() {
 
     std::cout << "[simulator] stopped\n";
 }
-
 
 
 void flush_image_to_disk() {
@@ -321,26 +354,6 @@ int process_message(int fd, uint8_t* buf, int len)
     }
 }
 
-// int process_message(int fd, uint8_t* buf, int len)
-// {
-//     if (len <= 0) return 0;
-
-//     // If the message starts with 'Q', then quit (signal caller to close the socket)
-//     if (buf[0] == 'Q') {
-//         std::string goodbye = "Goodbye.\n";
-//         send(fd, goodbye.c_str(), goodbye.size(), 0);
-//         return -1;  // signal to break connection loop
-//     }
-
-//     // Otherwise, respond with "hello: " + original message
-//     std::string hello = "hello: ";
-//     send(fd, hello.c_str(), hello.size(), 0);
-//     send(fd, buf, len, 0);
-//     send(fd, "\n", 1, 0);
-
-//     return 0;  // continue connection
-// }
-
 void handle_client(int client_fd) {
     std::ofstream out(log_file, std::ios::binary | std::ios::app);
 
@@ -370,16 +383,25 @@ void handle_client(int client_fd) {
             if (recv(client_fd, bytes, 3, MSG_WAITALL) != 3) break;
 
             if (recv(client_fd, &len, sizeof(len), MSG_WAITALL) != sizeof(len)) break;
+            std::cout << " received len " << len << std::endl;
 
             std::vector<uint8_t> buf(len);
-            if (recv(client_fd, buf.data(), len, MSG_WAITALL) != (ssize_t)len) break;
+            uint8_t* rbuf = buf.data();
+            LogHeader* log = reinterpret_cast<LogHeader*>(buf.data());
+            log->packet_hdr  = 0;  // log packet marker
+            log->packet_size = len;
+            len -= sizeof(uint32_t) * 2;
 
+            if(len > 32000) break;
+            if (recv(client_fd, &rbuf[sizeof(uint32_t) * 2], len, MSG_WAITALL) != (ssize_t)len) break;
+            std::cout << " received buf " << buf.size() << std::endl;
+            
             //DataPacket pkt = deserialize_packet(buf);
 
             // Log to file
             {
                 std::lock_guard<std::mutex> lg(file_lock);
-                out.write(reinterpret_cast<char*>(&len), sizeof(len));
+//                out.write(reinterpret_cast<char*>(&len), sizeof(len));
                 out.write(reinterpret_cast<char*>(buf.data()), buf.size());
             }
 
@@ -418,9 +440,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-
-    sim_memory = (uint16_t*)malloc(MEM_SIZE);
-    ref_memory = (uint16_t*)malloc(MEM_SIZE);
+    sim_memory = new uint16_t[MEM_SIZE]();
+    ref_memory = new uint16_t[MEM_SIZE]();
+    // sim_memory = (uint16_t*)malloc(MEM_SIZE);
+    // ref_memory = (uint16_t*)malloc(MEM_SIZE);
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
@@ -444,6 +467,16 @@ int main(int argc, char* argv[]) {
         perror("listen");
     }
     std::cout << "Logger listening on port " << port << "\n";
+
+
+    myfd = connect_to_input_socket("127.0.0.1", port);
+
+    if (myfd < 0) {
+        std::cerr << "Failed to connect to input socket\n";
+    } else {
+        // You can now send log packets, queries, etc.
+    }
+
     std::thread flusher(periodic_flusher);
 
     sim_running = true;
