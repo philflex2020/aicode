@@ -1,12 +1,37 @@
 #ifndef _LOGGER_H
 #define _LOGGER_H
 
+#include <netinet/in.h>   // for sockaddr_in
+
 #include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <vector>
 #include <functional>
 
+#include <thread>
+#include <vector>
+#include <mutex>
+#include <fstream>
+#include <iostream>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <csignal>
+#include <atomic>
+#include <cstring>
+#include <chrono>
+#include <thread>
+#include <random>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+
+#include <poll.h>
+
+#include <chrono>
+#include <nlohmann/json.hpp>
 
 
 constexpr size_t LOG_BUF_SIZE = 1024 * 1024; // 1 MB
@@ -158,5 +183,12 @@ typedef struct
     uint16_t data_size;
     uint32_t crc;  // put crc in here 
 } Header;
+
+struct ClientInfo {
+    int fd;
+    sockaddr_in addr;
+};
+
+
 
 #endif

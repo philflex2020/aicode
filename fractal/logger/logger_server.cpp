@@ -4,35 +4,17 @@
 // ./logger_server 9000 log.bin image.bin
 
 #include "Logger.h"
-#include <thread>
-#include <vector>
-#include <mutex>
-#include <fstream>
-#include <iostream>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <csignal>
-#include <atomic>
-#include <cstring>
-#include <chrono>
-#include <thread>
-#include <random>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 
-
-#include <poll.h>
-
-#include <chrono>
-#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 constexpr size_t MEM_SIZE = 32764;
 constexpr size_t MAX_SM_MEMORY = 0x8000;
 std::atomic<bool> sim_running{false};
 std::thread sim_thread;
+
+
+std::vector<ClientInfo> clients;
+std::mutex clients_mutex;
 
 
 uint16_t *sim_memory;
@@ -152,7 +134,7 @@ void encode_diffs(const uint16_t* current, uint16_t* previous, size_t mem_size,
     }
 }
 
-int  build_log_packet( std::vector<uint8_t>&buf, Header& hdr, const std::vector<uint16_t>& control, const std::vector<uint16_t>& data, uint64_t timestamp_us) {
+int  build_log_packet(std::vector<uint8_t>&buf, Header& hdr, const std::vector<uint16_t>& control, const std::vector<uint16_t>& data, uint64_t timestamp_us) {
     // Calculate sizes
     const size_t hdr_size      = sizeof(Header);
     const size_t control_size  = control.size() * sizeof(uint16_t);
@@ -423,6 +405,53 @@ void handle_client(int client_fd) {
     std::cout << "Client disconnected\n";
 }
 
+void broadcast_to_clients(const uint8_t* data, size_t len) {
+    std::lock_guard<std::mutex> lock(clients_mutex);
+
+    auto it = clients.begin();
+    while (it != clients.end()) {
+        int sent = send(it->fd, data, len, 0);
+        if (sent <= 0) {
+            std::cerr << "Removing disconnected client fd " << it->fd << "\n";
+            close(it->fd);
+            it = clients.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+int server_fd = -1;
+void server_thread_fn(int server_fd) {
+    while (!shutdown_requested.load()) {
+        struct pollfd pfd;
+        pfd.fd = server_fd;
+        pfd.events = POLLIN;
+
+        int ret = poll(&pfd, 1, 500);
+        if (ret < 0) {
+            if (errno == EINTR) continue;
+            perror("poll");
+            break;
+        }
+
+        if (ret == 0) continue;
+
+        if (pfd.revents & POLLIN) {
+            sockaddr_in client_addr{};
+            socklen_t client_len = sizeof(client_addr);
+            int client_fd = accept(server_fd, (sockaddr*)&client_addr, &client_len);
+
+            if (client_fd >= 0) {
+                std::lock_guard<std::mutex> lock(clients_mutex);
+                clients.push_back({client_fd, client_addr});
+                std::cout << "Client connected: fd " << client_fd << "\n";
+            }
+        }
+    }
+}
+
+
 int main(int argc, char* argv[]) {
     int port = 9000;
 
@@ -450,6 +479,9 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
+    std::thread server_thread;
+    if(0)
+        server_thread = std::thread(server_thread_fn, server_fd);
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -515,6 +547,16 @@ int main(int argc, char* argv[]) {
         }
     }
 
+if (0)server_thread.join();
+
+// // Clean up remaining clients
+    if(0) {
+     std::lock_guard<std::mutex> lock(clients_mutex);
+     for (auto& client : clients) {
+         close(client.fd);
+     }
+     clients.clear();
+    }
     std::cout << "Waiting for sim to complete...\n";
 
     if (sim_running.load()) {
