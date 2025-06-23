@@ -37,8 +37,12 @@
 constexpr size_t LOG_BUF_SIZE = 1024 * 1024; // 1 MB
 
 #pragma pack(push, 1)
-
-
+struct LogHeader {
+    uint32_t packet_hdr;    // should be 0 for log packet
+    uint32_t packet_size;   // bytes after this header
+    uint64_t timestamp_us;
+    uint8_t data[1];        // variable-length payload
+};
 #pragma pack(pop)
 
 struct LogBuffer {
@@ -183,6 +187,8 @@ struct ClientInfo {
     sockaddr_in addr;
 };
 
-
+double ref_time_dbl_wall();
+double ref_time_dbl();
+uint64_t ref_time_us();
 
 #endif
