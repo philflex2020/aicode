@@ -1,18 +1,4 @@
-#include <iostream>
-#include <cstring>
-#include <cstdlib>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-
-#pragma pack(push, 1)
-struct LogHeader {
-    uint32_t packet_hdr;    // should be 0 for log packet
-    uint32_t packet_size;   // bytes after this header
-    uint64_t timestamp_us;
-    uint8_t data[1];        // variable-length payload
-};
-#pragma pack(pop)
+#include "Logger.h"
 
 constexpr size_t MAX_BUFFER = 65536;
 
