@@ -37,12 +37,6 @@
 constexpr size_t LOG_BUF_SIZE = 1024 * 1024; // 1 MB
 
 #pragma pack(push, 1)
-struct LogHeader {
-    uint32_t packet_hdr;  // set this to 0 fir a log packet
-    uint32_t packet_size;  // bytes after this header
-    uint64_t timestamp_us;
-    uint8_t data[1];       // start of the packed payload in herfe is the header , control plus data
-};
 
 
 #pragma pack(pop)
