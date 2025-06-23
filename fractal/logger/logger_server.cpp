@@ -1,7 +1,13 @@
-// ere’s the concept for `logger_server.cpp`:
+// here’s the concept for `logger_server.cpp`:
 // ./logger_server <port> <log_file> <image_file>
 // g++ logger_server.cpp -std=c++17 -pthread -o logger_server
 // ./logger_server 9000 log.bin image.bin
+
+
+// bit of a mixture here. we need a logger client as well
+// this server will accept clients and give them what they want
+// for now they want everything.
+// this is a server and accepts connections from clients 
 
 #include "Logger.h"
 
@@ -59,6 +65,33 @@ void handle_signal(int signum) {
     sim_running = false;
 
 }
+
+std::string get_log_directory(const std::string& root = "log") {
+    time_t raw_time = static_cast<time_t>(ref_time_dbl_wall());
+    struct tm timeinfo;
+    localtime_r(&raw_time, &timeinfo);
+
+    std::ostringstream oss;
+    oss << root << "/"
+        << std::setfill('0') << std::setw(4) << (1900 + timeinfo.tm_year) << "/"
+        << std::setw(2) << (1 + timeinfo.tm_mon) << "/"
+        << std::setw(2) << timeinfo.tm_mday << "/"
+        << std::setw(2) << timeinfo.tm_hour << "/"
+        << std::setw(2) << timeinfo.tm_min;
+
+    return oss.str();
+}
+
+
+bool ensure_directory_exists(const std::string& dir_path) {
+    try {
+        return std::filesystem::create_directories(dir_path);
+    } catch (const std::exception& e) {
+        std::cerr << "Error creating directories: " << e.what() << "\n";
+        return false;
+    }
+}
+
 
 // Returns connected socket or -1 on failure
 int connect_to_input_socket(const char* hostname, int port) {
