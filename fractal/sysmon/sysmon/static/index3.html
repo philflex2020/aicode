@@ -1,0 +1,57 @@
+<html>
+<head>
+  <title>System Monitor</title>
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background: #eee; }
+    .up { color: green; font-weight: bold; }
+    .down { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>System Monitor</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Uptime</th>
+        <th>CPU %</th>
+        <th>Temp °C</th>
+        <th>fractal_esbcm CPU %</th>
+        <th>eth0 RX</th>
+        <th>eth0 TX</th>
+      </tr>
+    </thead>
+    <tbody id="systems">
+    </tbody>
+  </table>
+  <script>
+    async function update() {
+      try {
+        const res = await fetch('/status');
+        const data = await res.json();
+        const out = data.map(sys => `
+          <tr>
+            <td>${sys.name}</td>
+            <td class="${sys.status}">${sys.status}</td>
+            <td>${sys.uptime || "--"}</td>
+            <td>${sys.cpu || "--"}</td>
+            <td>${sys.temp || "--"}</td>
+            <td>${sys.task_cpu || "0.0"}</td>
+            <td>${sys.net_rx || "?"}</td>
+            <td>${sys.net_tx || "?"}</td>
+          </tr>
+        `).join("");
+        document.getElementById('systems').innerHTML = out;
+      } catch (err) {
+        console.error("Update failed:", err);
+      }
+    }
+    setInterval(update, 5000);
+    update();
+  </script>
+</body>
+</html>

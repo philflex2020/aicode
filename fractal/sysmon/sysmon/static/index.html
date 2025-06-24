@@ -1,0 +1,51 @@
+<html>
+<head>
+  <title>System Monitor</title>
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ccc; }
+    .up { color: green; font-weight: bold; }
+    .down { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>System Monitor</h1>
+  <table id="sysTable">
+    <thead>
+      <tr>
+        <th>System</th>
+        <th>Status</th>
+        <th>Uptime</th>
+        <th>CPU</th>
+        <th>Temp (°C)</th>
+        <th>Task CPU</th>
+        <th>eth0 RX (MB/s)</th>
+        <th>eth0 TX (MB/s)</th>
+      </tr>
+    </thead>
+    <tbody id="systems"></tbody>
+  </table>
+  <script>
+    async function update() {
+      const res = await fetch('/status');
+      const data = await res.json();
+      const out = data.map(sys => `
+        <tr>
+          <td>${sys.name}</td>
+          <td class="${sys.status}">${sys.status}</td>
+          <td>${sys.uptime || "--"}</td>
+          <td>${sys.cpu || "--"}%</td>
+          <td>${sys.temp || "--"}</td>
+          <td>${sys.task_cpu || "0.0"}%</td>
+          <td>${sys.net_rx_mbps || "0.00"}</td>
+          <td>${sys.net_tx_mbps || "0.00"}</td>
+        </tr>
+      `).join("");
+      document.getElementById('systems').innerHTML = out;
+    }
+    setInterval(update, 5000);
+    update();
+  </script>
+</body>
+</html>

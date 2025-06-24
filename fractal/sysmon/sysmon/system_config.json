@@ -1,0 +1,10 @@
+[
+  { "disabled": false, "name": "rack_1", "host": "192.168.86.26",  "user": "root", "tasks": ["fractal_esbcm"], "interfaces": ["eth0"]},
+  { "disabled": false, "name": "rack_2", "host": "192.168.86.28",  "user": "root", "tasks": ["fractal_esbcm"], "interfaces": ["eth0"]},
+  { "disabled": false, "name": "rack_3", "host": "192.168.86.128", "user": "root", "tasks": ["fractal_esbcm"], "interfaces": ["eth0"]},
+  { "disabled": false, "name": "rack_4", "host": "192.168.86.32",  "user": "root", "tasks": ["fractal_esbcm"], "interfaces": ["eth0"]},
+  { "disabled": false, "name": "rack_5", "host": "192.168.86.30",  "user": "root", "tasks": ["fractal_esbcm"], "interfaces": ["eth0"]},
+  { "disabled": false, "name": "rack_6", "host": "192.168.86.120", "user": "root", "tasks": ["fractal_esbcm"], "interfaces": ["eth0"]},
+  { "disabled": false, "name": "rack_7", "host": "192.168.86.132", "user": "root", "tasks": ["fractal_esbcm"], "interfaces": ["eth0"]}
+
+]
