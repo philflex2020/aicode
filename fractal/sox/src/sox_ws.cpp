@@ -263,7 +263,7 @@ void update_shared_memory() {
         max_soc = std::max(max_soc, c.true_soc);
     }
 
-    shm_ptr->stats.total_voltage_dV = (uint16_t)std::round(total_voltage * 100.0);
+    shm_ptr->stats.total_voltage_dV = (uint32_t)std::round(total_voltage * 100.0);
     shm_ptr->stats.pack_current_dA  = (int16_t)std::round(pack_current_setpoint * 10.0);
 
     shm_ptr->stats.min_voltage_mV = (uint16_t)std::round(min_v * 1000.0);

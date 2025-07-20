@@ -13,7 +13,7 @@ struct SharedCell {
 };
 
 struct SharedStats {
-    uint16_t total_voltage_dV; // e.g. 158052 = 1580.52 V
+    uint32_t total_voltage_dV; // e.g. 158052 = 1580.52 V
     int16_t  pack_current_dA;  // signed: -123 = -12.3A
     uint16_t min_voltage_mV;
     uint16_t max_voltage_mV;
