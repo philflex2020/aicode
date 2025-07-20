@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Battery Cell Monitor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    h1 { text-align: center; }
+    table {
+      width: 80%;
+      margin: auto;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background: #1976d2;
+      color: #fff;
+    }
+    tr:nth-child(even) { background: #eef; }
+    .good { color: green; }
+    .warn { color: orange; }
+    .bad  { color: red; }
+  </style>
+</head>
+<body>
+
+  <h1>LiFePO₄ Cell Monitor</h1>
+
+  <table id="cellTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>SOC (%)</th>
+        <th>Voltage (V)</th>
+        <th>Temp (°C)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function fetchCellData() {
+      try {
+        const response = await fetch('/cells');
+        const data = await response.json();
+        updateTable(data.cells);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
+    }
+
+    function updateTable(cells) {
+      const tbody = document.querySelector("#cellTable tbody");
+      tbody.innerHTML = ''; // clear
+
+      cells.forEach(cell => {
+        const row = document.createElement("tr");
+
+        const socClass = cell.soc < 20 ? "bad" : (cell.soc < 40 ? "warn" : "good");
+        const tempClass = cell.temp > 45 ? "bad" : (cell.temp > 35 ? "warn" : "good");
+
+        row.innerHTML = `
+          <td>${cell.id}</td>
+          <td class="${socClass}">${cell.soc.toFixed(1)}</td>
+          <td>${cell.voltage.toFixed(3)}</td>
+          <td class="${tempClass}">${cell.temp.toFixed(1)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // refresh every 1 second
+    setInterval(fetchCellData, 1000);
+    fetchCellData();
+  </script>
+
+</body>
+</html>

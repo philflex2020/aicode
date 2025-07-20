@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SOX Simulation Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #ddd;
+      border: 1px solid #bbb;
+      margin-right: 5px;
+      border-radius: 5px 5px 0 0;
+    }
+    .tab.active {
+      background: #2196f3;
+      color: white;
+      font-weight: bold;
+    }
+    .tab-content {
+      display: none;
+      background: white;
+      border: 1px solid #bbb;
+      border-top: none;
+      padding: 20px;
+      border-radius: 0 5px 5px 5px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      margin: 20px 0;
+    }
+    .metric {
+      font-size: 1.1em;
+      text-align: center;
+      flex: 1 1 200px;
+      padding: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background: #2196f3;
+      color: white;
+    }
+    .controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+    input[type="number"] {
+      padding: 5px;
+      font-size: 1em;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 1em;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>SOX Simulation Dashboard</h1>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="cellsTab">Cells</div>
+    <div class="tab" data-tab="statsTab">Stats</div>
+    <div class="tab" data-tab="alarmsTab">Alarms</div>
+  </div>
+
+  <!-- CELLS TAB -->
+  <div id="cellsTab" class="tab-content active">
+    <div class="metrics">
+      <div class="metric">
+        <strong>Total Voltage:</strong><br><span id="totalVoltage">0.00</span> V
+      </div>
+      <div class="metric">
+        <strong>Current Setpoint:</strong><br><span id="currentSetpoint">0.0</span> A
+      </div>
+    </div>
+
+    <div class="controls">
+      <label for="currentInput">Set Pack Current (A): </label>
+      <input type="number" id="currentInput" step="0.1" value="0">
+      <button onclick="sendCurrentCommand()">Apply</button>
+    </div>
+
+    <h2>Sample Cells</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Cell #</th>
+          <th>Voltage (V)</th>
+          <th>True SOC (%)</th>
+          <th>Estimated SOC (%)</th>
+          <th>Temp (°C)</th>
+        </tr>
+      </thead>
+      <tbody id="cellTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- STATS TAB -->
+  <div id="statsTab" class="tab-content">
+    <h2>Pack Summary Statistics</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Min</th>
+          <th>Avg</th>
+          <th>Max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Voltage (V)</td>
+          <td id="minVolt">0.00</td>
+          <td id="avgVolt">0.00</td>
+          <td id="maxVolt">0.00</td>
+        </tr>
+        <tr>
+          <td>Temperature (°C)</td>
+          <td id="minTemp">0.0</td>
+          <td id="avgTemp">0.0</td>
+          <td id="maxTemp">0.0</td>
+        </tr>
+        <tr>
+          <td>SOC (%)</td>
+          <td id="minSOC">0.0</td>
+          <td id="avgSOC">0.0</td>
+          <td id="maxSOC">0.0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ALARMS TAB (placeholder for now) -->
+  <div id="alarmsTab" class="tab-content">
+    <h2>Alarms</h2>
+    <p>No alarms implemented yet.</p>
+  </div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    async function fetchCellData() {
+      try {
+        const response = await fetch('/sm_cells');
+        const data = await response.json();
+
+        // Main pack metrics
+        document.getElementById('totalVoltage').textContent = data.total_voltage.toFixed(2);
+        document.getElementById('currentSetpoint').textContent = data.current_setpoint.toFixed(1);
+
+        // Stats table
+        document.getElementById('maxVolt').textContent = data.stats.max_voltage.toFixed(3);
+        document.getElementById('minVolt').textContent = data.stats.min_voltage.toFixed(3);
+        document.getElementById('avgVolt').textContent = data.stats.avg_voltage.toFixed(3);
+
+        document.getElementById('maxTemp').textContent = data.stats.max_temp.toFixed(1);
+        document.getElementById('minTemp').textContent = data.stats.min_temp.toFixed(1);
+        document.getElementById('avgTemp').textContent = data.stats.avg_temp.toFixed(1);
+
+        document.getElementById('maxSOC').textContent = (data.stats.max_soc * 100).toFixed(1);
+        document.getElementById('minSOC').textContent = (data.stats.min_soc * 100).toFixed(1);
+        document.getElementById('avgSOC').textContent = (data.stats.avg_soc * 100).toFixed(1);
+
+        // Show first 10 cells
+        const tableBody = document.getElementById('cellTableBody');
+        tableBody.innerHTML = '';
+        data.cells.slice(0, 10).forEach((cell, idx) => {
+          const row = `<tr>
+            <td>${idx}</td>
+            <td>${cell.voltage.toFixed(3)}</td>
+            <td>${(cell.true_soc * 100).toFixed(1)}</td>
+            <td>${(cell.est_soc * 100).toFixed(1)}</td>
+            <td>${cell.temp.toFixed(1)}</td>
+          </tr>`;
+          tableBody.innerHTML += row;
+        });
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    }
+
+    async function sendCurrentCommand() {
+      const current = parseFloat(document.getElementById('currentInput').value);
+      await fetch('/set_current', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current: current })
+      });
+      fetchCellData();
+    }
+
+    setInterval(fetchCellData, 1000);
+    fetchCellData();
+  </script>
+</body>
+</html>
