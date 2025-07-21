@@ -90,6 +90,30 @@
 <body>
   <h1>SOX Simulation Dashboard</h1>
 
+  <div>
+    <h3>Control Mode</h3>
+    <label><input type="radio" name="mode" value="CC" checked> Constant Current</label>
+    <input type="number" id="cc_current" value="10" step="1"> A
+  
+    <br>
+  
+    <label><input type="radio" name="mode" value="CV"> Constant Voltage</label>
+    <input type="number" id="cv_voltage" value="1536" step="1"> V
+  
+    <br>
+    <button onclick="sendMode()">Apply</button>
+  </div>
+  
+  <div id="mode_status" style="padding:10px; border:1px solid #ddd; margin-top:10px;">
+    <h4>Live Mode Status</h4>
+    <p>Mode: <span id="live_mode">-</span></p>
+    <p>Target Voltage: <span id="target_voltage">-</span> V</p>
+    <p>Target Current: <span id="target_current">-</span> A</p>
+    <hr>
+    <p><b>Actual Pack Voltage:</b> <span id="actual_voltage">-</span> V</p>
+    <p><b>Actual Pack Current:</b> <span id="actual_current">-</span> A</p>
+  </div>
+  
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" data-tab="cellsTab">Cells</div>
@@ -171,6 +195,9 @@
   </div>
 
   <script>
+    
+
+
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -180,6 +207,46 @@
         document.getElementById(tab.dataset.tab).classList.add('active');
       });
     });
+
+    async function updateModeStatus() {
+      const res = await fetch("/mode");
+      const data = await res.json();
+
+      document.getElementById("live_mode").textContent =
+        data.mode === "CC" ? "Constant Current" : "Constant Voltage";
+
+      document.getElementById("target_voltage").textContent =
+        data.pack_voltage_target.toFixed(2);
+      document.getElementById("target_current").textContent =
+        data.pack_current_setpoint.toFixed(2);
+
+      document.getElementById("actual_voltage").textContent =
+        data.pack_voltage_actual.toFixed(2);
+      document.getElementById("actual_current").textContent =
+        data.pack_current_actual.toFixed(2);
+    }
+
+    // Refresh every 2s
+    setInterval(updateModeStatus, 2000);
+    async function sendMode() {
+        const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+        if (selectedMode === "CC") {
+          const current = parseFloat(document.getElementById("cc_current").value);
+          await fetch("/set_mode", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({mode: "CC", current: current})
+          });
+        } else {
+          const voltage = parseFloat(document.getElementById("cv_voltage").value);
+          await fetch("/set_mode", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({mode: "CV", voltage: voltage})
+          });
+        }
+        alert("Mode updated!");
+    }
 
     async function fetchCellData() {
       try {

@@ -37,6 +37,7 @@ constexpr double NOMINAL_CAPACITY_AH = 280.0;
 constexpr double NOMINAL_IR = 0.0005;     // 0.5 mΩ
 constexpr double SIM_DT_S = 0.1;          // 100 ms simulation timestep
 
+
 // =====================================================
 // Shared Memory Handling
 SharedMemoryLayout *shm_ptr = nullptr;
@@ -232,6 +233,11 @@ struct Cell {
 std::vector<Cell> cells;
 std::mutex sim_mutex;
 double pack_current_setpoint = 0.0;
+enum class Mode { CONSTANT_CURRENT, CONSTANT_VOLTAGE };
+Mode sim_mode = Mode::CONSTANT_CURRENT;
+//double pack_voltage_target;  // in volts, e.g. 1536.0
+double pack_voltage_target = 480 * 3.2;  // default 1536V
+double pack_current = 0;
 
 // =====================================================
 // Shared Memory Update
@@ -279,6 +285,9 @@ void update_shared_memory() {
     shm_ptr->stats.avg_soc_d1 = (uint16_t)std::round((sum_soc / NUM_CELLS) * 1000.0 / 10.0);
 }
 
+
+
+
 // =====================================================
 // Simulation Loop (runs at 10Hz)
 void sim_loop() {
@@ -290,10 +299,45 @@ void sim_loop() {
         {
             std::lock_guard<std::mutex> lock(sim_mutex);
 
-            for (auto &cell : cells) {
-                cell.apply_current(pack_current_setpoint, SIM_DT_S);
-                cell.kalman_update(pack_current_setpoint, SIM_DT_S);
+            if (sim_mode == Mode::CONSTANT_CURRENT) {
+                // All cells see the same current_setpoint
+                for (auto &cell : cells) {
+                    cell.apply_current(pack_current_setpoint, SIM_DT_S);
+                    cell.kalman_update(pack_current_setpoint, SIM_DT_S);
+                }
+            } else if (sim_mode == Mode::CONSTANT_VOLTAGE) {
+                // Total pack voltage (open-circuit) = sum of OCV + IR drops from prev step
+                double v_total = 0.0;
+                for (auto &c : cells)
+                    v_total += lookup_ocv(c.true_soc);
+
+                // Total internal resistance (sum of all cells)
+                double total_R = 0.0;
+                for (auto &c : cells)
+                    total_R += c.ir_ohm;
+
+                // Control current = voltage error / R
+                double voltage_error = v_total - pack_voltage_target;
+                pack_current = voltage_error / total_R;
+
+                // Limit current realistically
+                if (pack_current > 200.0) pack_current = 200.0;
+                if (pack_current < -200.0) pack_current = -200.0;
             }
+
+
+
+            //     double v_target_per_cell = pack_voltage_target / NUM_CELLS;
+            //     double total_pack_current = 0.0;
+            //     for (auto &cell : cells) {
+            //         double Icell = (lookup_ocv(cell.true_soc) - v_target_per_cell) / cell.ir_ohm;
+            //         total_pack_current += Icell;
+            //         cell.apply_current(Icell, SIM_DT_S);
+            //         cell.kalman_update(Icell, SIM_DT_S);
+            //     }
+            //     pack_current = total_pack_current; // report net current
+            // }
+
             update_shared_memory();
         }
 
@@ -326,6 +370,47 @@ void run_http_server() {
     svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
         serve_index(res);
     });
+        // Get current mode
+    svr.Get("/mode", [&](const httplib::Request&, httplib::Response& res) {
+        // compute total pack voltage live
+        double total_v = 0.0;
+        for (auto &c : cells) total_v += c.voltage;
+
+        nlohmann::json j;
+        j["mode"] = (sim_mode == Mode::CONSTANT_CURRENT) ? "CC" : "CV";
+        j["pack_voltage_target"] = pack_voltage_target;
+        j["pack_current_setpoint"] = pack_current_setpoint;
+        j["pack_voltage_actual"] = total_v;
+        j["pack_current_actual"] = pack_current; // actual current from sim loop
+        res.set_content(j.dump(2), "application/json");
+    });
+
+
+    // Set mode
+    svr.Post("/set_mode", [&](const httplib::Request &req, httplib::Response &res) {
+        auto j = nlohmann::json::parse(req.body, nullptr, false);
+        if (j.is_discarded()) {
+            res.status = 400;
+            res.set_content("{\"error\":\"invalid JSON\"}", "application/json");
+            return;
+        }
+
+        std::string mode = j.value("mode", "CC");
+        std::cout << " setting mode to "<< mode << std::endl;
+        if (mode == "CC") {
+            sim_mode = Mode::CONSTANT_CURRENT;
+            pack_current_setpoint = j.value("current", 0.0);
+            res.set_content("{\"status\":\"mode set to CC\"}", "application/json");
+        } else if (mode == "CV") {
+            sim_mode = Mode::CONSTANT_VOLTAGE;
+            pack_voltage_target = j.value("voltage", 1536.0);
+            res.set_content("{\"status\":\"mode set to CV\"}", "application/json");
+        } else {
+            res.status = 400;
+            res.set_content("{\"error\":\"unknown mode\"}", "application/json");
+        }
+    });
+
 
     svr.Get("/sm_cells", [](const httplib::Request &, httplib::Response &res) {
         json j;
