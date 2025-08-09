@@ -1,4 +1,191 @@
 
+Here’s how to create and use a **Python 3 virtual environment** for your ZeroMQ battery simulation.
+
+---
+
+## ✅ 1. Make sure Python 3 and `venv` are installed
+
+On Ubuntu / Jetson Orin Nano:
+
+```bash
+sudo apt update
+sudo apt install python3 python3-venv python3-pip -y
+```
+
+Check version:
+
+```bash
+python3 --version
+```
+Python 3.12.3
+
+---
+
+## ✅ 2. Create a virtual environment
+
+Pick a folder for your project, e.g. `battery_sim`:
+
+```bash
+mkdir battery_sim
+cd battery_sim
+python3 -m venv venv
+```
+
+This creates a folder `venv/` with an isolated Python environment.
+
+---
+
+## ✅ 3. Activate the venv
+
+```bash
+source venv/bin/activate
+```
+
+You should see your prompt change, e.g.:
+
+```
+(venv) user@orin-nano:~/battery_sim$
+```
+
+While active, `python` and `pip` refer to this environment only.
+
+---
+
+## ✅ 4. Install needed packages inside the venv
+
+Now install ZeroMQ and any other dependencies **inside** the venv:
+
+```bash
+pip install --upgrade pip
+pip install pyzmq numpy
+```
+
+If later you want AI inference:
+
+```bash
+pip install torch
+```
+
+---
+
+## ✅ 5. Run your scripts
+
+While the venv is active:
+
+```bash
+python battery_simulator.py
+```
+
+Then in another terminal (also `source venv/bin/activate`):
+
+```bash
+python battery_processor.py
+```
+
+They will communicate via ZeroMQ.
+
+---
+
+## ✅ 6. Deactivate when done
+
+To exit the virtual environment:
+
+```bash
+deactivate
+```
+
+Your prompt will return to normal.
+
+---
+
+## ✅ Quick one-liner summary
+
+```bash
+sudo apt install python3-venv
+python3 -m venv venv
+source venv/bin/activate
+pip install pyzmq numpy
+```
+
+---
+
+Would you like me to:
+
+✅ **Add a `requirements.txt`** so you can just `pip install -r requirements.txt` inside the venv?
+✅ Or give you a **single test script** that simulates + processes in one file (no need for 2 terminals yet)?
+
+You can install **ZeroMQ** for Python using `pip`. The Python binding is called **pyzmq**.
+
+Here’s how to do it:
+
+---
+
+## ✅ 1. Install `pyzmq`
+
+### Standard Python environment
+
+```bash
+pip install pyzmq
+```
+
+### If you’re using Python 3 explicitly
+
+```bash
+pip3 install pyzmq
+```
+
+### If you’re inside a virtualenv or venv
+
+```bash
+python -m pip install pyzmq
+```
+
+---
+
+## ✅ 2. Verify installation
+
+After installing, open a Python shell and run:
+
+```python
+import zmq
+print(zmq.__version__)
+```
+
+You should see a version number like `25.1.0` (latest).
+
+---
+
+## ✅ 3. Special case: Jetson / Orin Nano
+
+On NVIDIA Jetson Orin Nano running Ubuntu, you might need dev headers first:
+
+```bash
+sudo apt update
+sudo apt install libzmq3-dev
+pip3 install pyzmq
+```
+
+This ensures the native ZeroMQ library is available before installing Python bindings.
+
+---
+
+## ✅ 4. Quick test
+
+Once installed, you can do a quick PUB/SUB test:
+
+```python
+import zmq
+ctx = zmq.Context()
+print("ZeroMQ OK!")
+```
+
+---
+
+Would you like me to:
+
+✅ **Include a quick PUB/SUB test script** so you can verify the producer/consumer communication after installing?
+✅ Or give a **requirements.txt** for the whole battery simulation so you can install all dependencies in one go?
+
 
 Got it! Let’s **clean up and restructure** this code to make it:
 
