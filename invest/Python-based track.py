@@ -1466,6 +1466,7 @@ You need a broker that:
 * TD Ameritrade, E\*TRADE, Robinhood — possible but API access is limited compared to Alpaca/IBKR.
 
 For speed, **Alpaca** is the simplest to get going.
+1fca74d2-3703-476c-aa56-0efbcd1424ed
 
 ---
 
@@ -1999,7 +2000,7 @@ def main():
     # Alerts / trailing
     ap.add_argument("--auto_activate_trailing", action="store_true")
 
-    # SMTP
+    # SMTPtfa
     ap.add_argument("--smtp_server", default=os.getenv("SMTP_SERVER", ""))
     ap.add_argument("--smtp_port", type=int, default=int(os.getenv("SMTP_PORT", "587")))
     ap.add_argument("--smtp_user", default=os.getenv("SMTP_USER", ""))
