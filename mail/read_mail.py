@@ -77,10 +77,18 @@ def _snippet(text, n=160):
     text = text.replace("\r", "").replace("\n", " ")
     return (text[:n] + "…") if len(text) > n else text
 
+#RG_EMAIL   = "@gmail.com"
+#FROM_EMAIL  = "sdcsiot" + ORG_EMAIL
+#JUNK        ="lovt"
+#FROM_PWD    = "eegvbsaznjzh"
+#SMTP_SERVER = "imap.gmail.com"
+#SMTP_PORT   = 993
 
 def fetch_latest():
-    email_addr = os.getenv("GMAIL_ADDRESS") or input("Gmail address: ").strip()
-    app_pwd    = os.getenv("GMAIL_APP_PASSWORD") or getpass.getpass("App password (16 chars): ")
+    email_addr = "sdcsiot@gmail.com"
+    #os.getenv("GMAIL_ADDRESS") or input("Gmail address: ").strip()
+    app_pwd    = "zoadgrtyqgoxxfko"
+    #os.getenv("GMAIL_APP_PASSWORD") or getpass.getpass("App password (16 chars): ")
 
     print("Connecting to IMAP…")
     m = imaplib.IMAP4_SSL(IMAP_SERVER)
