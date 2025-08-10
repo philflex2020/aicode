@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fractal SBMS Config</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    .tabs { display: flex; overflow-x: auto; margin-bottom: 20px; }
+    .tab { background: #ddd; padding: 10px 20px; margin-right: 5px; border-radius: 5px; cursor: pointer; white-space: nowrap; }
+    .tab.active { background: #666; color: white; }
+    .box { background: white; border: 2px solid #333; padding: 10px; margin: 10px 0; border-radius: 8px; }
+    .field-row { display: flex; align-items: center; margin-bottom: 8px; }
+    .field-label { width: 150px; font-weight: bold; }
+    .field-default { margin-left: 10px; font-style: italic; color: #666; width: 120px; }
+    .field-input { flex: 1; margin: 0 5px; }
+    .field-buttons button { margin-left: 5px; font-size: 0.9em; }
+    #reloadButton { margin-bottom: 20px; padding: 10px 20px; font-size: 1em; }
+    #tableSelector { margin-bottom: 10px; padding: 5px; }
+    table { width: 100%; background: white; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Fractal SBMS Config</h1>
+  <div class="tabs" id="tabs"></div>
+  <button id="reloadButton" onclick="reloadData()">Reload</button>
+  <div id="container">Connecting...</div>
+
+<script>
+let wsUrl = "ws://localhost:8080";
+let socket = null;
+let connected = false;
+let liveData = null;
+let frameData = null;
+let currentFrame = "connect";
+
+const fakeData = { /* your corrected fakeData structure goes here */ };
+
+function validateFrameData(data) {
+  if (!data || typeof data !== 'object') {
+    console.error("Validation Failed: frameData is not an object!");
+    return null;
+  }
+  if (!data.frames || typeof data.frames !== 'object') {
+    console.error("Validation Failed: Missing 'frames' object inside frameData.");
+    return null;
+  }
+  const frameNames = Object.keys(data.frames);
+  if (frameNames.length === 0) {
+    console.error("Validation Failed: 'frames' object is empty.");
+    return null;
+  }
+  frameNames.forEach(frameName => {
+    const frame = data.frames[frameName];
+    if (!frame.boxes || !Array.isArray(frame.boxes)) {
+      console.warn(`Frame '${frameName}' missing 'boxes'. Auto-creating empty array.`);
+      frame.boxes = [];
+    }
+    frame.boxes.forEach((box, boxIndex) => {
+      if (!box.fields || !Array.isArray(box.fields)) {
+        console.warn(`Box ${boxIndex} in frame '${frameName}' missing 'fields'. Auto-creating empty array.`);
+        box.fields = [];
+      }
+      box.fields = box.fields.filter((field, fieldIndex) => {
+        if (!field.name || (field.value === undefined && field.default === undefined)) {
+          console.warn(`Invalid field removed in frame '${frameName}', box ${boxIndex}, field ${fieldIndex}.`);
+          return false;
+        }
+        return true;
+      });
+    });
+  });
+  console.log("Validation Complete: frameData structure is now safe.");
+  return data;
+}
+
+function reloadData() {
+  if (liveData && liveData.data) {
+    const validated = validateFrameData(liveData.data);
+    frameData = validated ? validated : fakeData.data;
+  } else {
+    const validated = validateFrameData(fakeData.data);
+    frameData = validated ? validated : null;
+  }
+
+  if (!frameData) {
+    document.getElementById('container').innerHTML = "<h2>Error: No valid data to display!</h2>";
+    return;
+  }
+
+  buildTabs(frameData);
+
+  if (typeof currentFrame !== 'string' || !(currentFrame in frameData.frames)) {
+    const availableFrames = Object.keys(frameData.frames);
+    currentFrame = availableFrames.length > 0 ? availableFrames[0] : null;
+  }
+
+  if (currentFrame && frameData.frames[currentFrame]) {
+    createBoxes(frameData.frames[currentFrame]);
+  } else {
+    document.getElementById('container').innerHTML = "<h2>Error: No valid frame found!</h2>";
+  }
+}
+
+function connectWebSocket() {
+  socket = new WebSocket(wsUrl);
+  connected = false;
+
+  socket.onopen = () => { connected = true; console.log("Connected to WebSocket"); };
+  socket.onmessage = (event) => {
+    try {
+      const parsed = JSON.parse(event.data);
+      if (parsed.cmd === "load_frame") {
+        liveData = parsed;
+        reloadData();
+      }
+    } catch (e) {
+      console.error("Parsing WS failed:", e);
+    }
+  };
+  socket.onerror = () => { console.warn("WebSocket error"); };
+  socket.onclose = () => {
+    if (!connected) {
+      console.warn("WebSocket disconnected, falling back to fake data.");
+      reloadData();
+    }
+  };
+}
+
+connectWebSocket();
+</script>
+</body>
+</html>

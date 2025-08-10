@@ -1487,7 +1487,32 @@ If using Alpaca:
 
 ---
 
+https://paper-api.alpaca.markets/v2
+PK42ICUJSYD80MVDZ1KR
+secret
+3dBbSvRZDLv9JxdpNKhl4OrI3V36luOWLjk8Aiyv
+
+
+
 ## **3️⃣ Install SDK**
+
+
+ curl -H "APCA-API-KEY-ID: PK42ICUJSYD80MVDZ1KR"  -H "APCA-API-SECRET-KEY:3dBbSvRZDLv9JxdpNKhl4OrI3V36luOWLjk8Aiyv"  https://paper-api.alpaca.markets/
+v2/account
+
+{"id":"46a1423c-f5eb-4470-954c-878bd49ffcfa","admin_configurations":{},"user_configurations":null,
+"account_number":"PA3IZCAO05JG","status":"ACTIVE","crypto_status":"ACTIVE","options_approved_level":3,
+"options_trading_level":3,"currency":"USD","buying_power":"40001","regt_buying_power":"40001",
+"daytrading_buying_power":"0","effective_buying_power":"40001","non_marginable_buying_power":"18000.5",
+"options_buying_power":"20000.5","bod_dtbp":"0","cash":"100000","accrued_fees":"0",
+"portfolio_value":"100000","pattern_day_trader":false,"trading_blocked":false,
+"transfers_blocked":false,"account_blocked":false,"created_at":"2025-08-09T15:20:32.301385Z",
+"trade_suspended_by_user":false,"multiplier":"2","shorting_enabled":true,"equity":"100000",
+"last_equity":"100000","long_market_value":"0","short_market_value":"0",
+"position_market_value":"0","initial_margin":"79999.5","maintenance_margin":"0",
+"last_maintenance_margin":"0","sma":"0","daytrade_count":0,"balance_asof":"2025-08-08",
+"crypto_tier":0,"intraday_adjustments":"0","pending_reg_taf_fees":"0"}
+
 
 ```bash
 pip install alpaca-trade-api

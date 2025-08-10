@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fractal SBMS Config</title>
+  <style>
+    #topButtons {
+      margin-bottom: 20px;
+    }
+
+    #topButtons button {
+      padding: 10px 20px;
+      font-size: 1em;
+      border: 2px solid black;
+      border-radius: 5px;
+      background-color: white;
+      color: black;
+      font-weight: normal;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    .tabs { display: flex; overflow-x: auto; margin-bottom: 20px; }
+    .tab { background: #ddd; padding: 10px 20px; margin-right: 5px; border-radius: 5px; cursor: pointer; white-space: nowrap; }
+    .tab.active { background: #666; color: white; }
+    .box { background: white; border: 2px solid #333; padding: 10px; margin: 10px 0; border-radius: 8px; }
+    .field-row { display: flex; align-items: center; margin-bottom: 8px; }
+    .field-label { width: 150px; font-weight: bold; }
+    .field-default { margin-left: 10px; font-style: italic; color: #666; width: 120px; }
+    .field-input { flex: 1; margin: 0 5px; }
+    .field-buttons button { margin-left: 5px; font-size: 0.9em; }
+    #reloadButton { margin-bottom: 20px; padding: 10px 20px; font-size: 1em; }
+    #tableSelector { margin-bottom: 10px; padding: 5px; }
+    table { width: 100%; background: white; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Fractal SBMS Config</h1>
+  <div class="tabs" id="tabs"></div>
+  <div id="topButtons">
+    <button id="reloadButton" onclick="reloadData()">Reload</button>
+    <button id="editButton" onclick="toggleEditMode()">Edit Mode: OFF</button>
+    <button id="loadButton" onclick="loadFrame()">Load</button>
+    <button id="saveButton" onclick="saveFrame()">Save</button>
+    <button id="saveAsButton" onclick="saveAsFrame()">Save As</button>
+  </div>
+  <div id="container">Connecting...</div>
+
+<script>
+
+let popupInsertMode = null; // "before" or "after"
+let frameData = null; // Global
+let contextField = null;    // Stores which field was right-clicked
+let contextBoxIndex = null; // Box containing the field
+let contextFieldIndex = null; // Index of the field inside the box
+let editMode = false;
+let wsUrl = "ws://localhost:8080";
+let wsIp = "localhost";
+let wsPort = "8080";
+let socket = null;
+let connected = false;
+let liveData = null;
+let currentFrame = "config";
+let currentTable = "volt";
+
+const fakeData = { 
+  "cmd": "load_frame",
+  "data": {
+    "frames": { 
+      "config": {
+        "boxes": [
+          {
+            "title": "Config",
+            "fields": [
+              { "name":"Setting 1", "value":"Value1", "input":true, "default":"Value1" },
+              { "name": "Max Charge Current (A)", "value": "100", "input": true, "default": "100" },
+              { "name": "Max Discharge Current (A)", "value": "120", "input": true, "default": "120" },
+              { "name": "Nominal Voltage (V)", "value": "3.700", "input": true, "default": "3.700" },
+              { "name": "Nominal Capacity (Ah)", "value": "200", "input": true, "default": "200" },
+              { "name": "Balance Threshold (mV)", "value": "10", "input": true, "default": "10" }
+            ]
+          }
+        ]
+      },
+      "param": {
+        "boxes": [
+          {
+            "title": "Parameters",
+            "fields": [
+              { "name": "Param A", "value": "10", "input": true, "default": "10" }
+            ]
+          }
+        ]
+      }
+    }
+  }
+};
+
+// Add the racks inside data.frames
+for (let i = 0; i <= 12; i++) {
+  fakeData.data.frames["rack" + i] = {
+    "boxes": [
+      {
+        "title": "Rack " + i,
+        "fields": [
+          { "name": "Rack Setting", "value": "Enabled", "input": true, "default": "Enabled" }
+        ]
+      }
+    ],
+    "tables": {
+      "volt": Array(64).fill(+(3.7 + 0.01 * i).toFixed(3)),
+      "soc": Array(64).fill(95 + (i % 5)),
+      "soh": Array(64).fill(90 + (i % 5)),
+      "temp": Array(64).fill(25 + i)
+    }
+  };
+}
+
+
+function loadFrame() {
+  if (socket && connected) {
+    const name = prompt("Enter frame filename to load:", "default_frame.json");
+    if (name) {
+      socket.send(JSON.stringify({ cmd: "load_frame", name: name }));
+      console.log("Load frame request sent for file:", name);
+    }
+  }
+}
+
+function saveFrame() {
+  if (socket && connected && frameData) {
+    socket.send(JSON.stringify({ cmd: "save_frame", data: frameData }));
+    console.log("Save frame request sent.");
+  }
+}
+
+function saveAsFrame() {
+  if (socket && connected && frameData) {
+    const name = prompt("Enter new frame name:");
+    if (name) {
+      socket.send(JSON.stringify({ cmd: "saveas_frame", name: name, data: frameData }));
+      console.log("Save As frame request sent for name:", name);
+    }
+  }
+}
+function toggleEditMode() {
+  editMode = !editMode;
+  const editButton = document.getElementById('editButton');
+  if (editMode) {
+    editButton.textContent = "Edit Mode: ON";
+    editButton.style.backgroundColor = "#ffd700"; // Strong Gold-Yellow
+    editButton.style.color = "black"; // Black text
+    editButton.style.fontWeight = "bold"; // Bold font
+    editButton.style.border = "2px solid black"; // Stronger button border
+  } else {
+    editButton.textContent = "Edit Mode: OFF";
+    editButton.style.backgroundColor = "";
+    editButton.style.color = "";
+    editButton.style.fontWeight = "";
+    editButton.style.border = "";
+  }
+}
+
+function buildTabs(data) {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  const frames = ["connect", ...Object.keys(data.frames)];
+  frames.forEach(frame => {
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.textContent = frame;
+    if (frame === currentFrame) tab.classList.add('active');
+    tab.onclick = () => {
+      currentFrame = frame;
+      buildTabs(data);
+      if (frame === "connect") showConnect();
+      else createBoxes(data.frames[frame]);
+    };
+    tabs.appendChild(tab);
+  });
+}
+
+function showConnect() {
+  const container = document.getElementById('container');
+  container.innerHTML = `
+    <div class="box">
+      <h2>Connect to WebSocket</h2>
+      <label>IP:</label> <input id="wsIp" value="${wsIp}"><br><br>
+      <label>Port:</label> <input id="wsPort" value="${wsPort}"><br><br>
+      <button onclick="applyConnect()">Connect</button>
+    </div>
+  `;
+}
+
+function applyConnect() {
+  wsIp = document.getElementById('wsIp').value;
+  wsPort = document.getElementById('wsPort').value;
+  wsUrl = "ws://" + wsIp + ":" + wsPort;
+  connectWebSocket();
+}
+
+function showContextMenu(x, y) {
+  const menu = document.getElementById('contextMenu');
+  menu.style.left = x + "px";
+  menu.style.top = y + "px";
+  menu.style.display = "block";
+}
+
+function hideContextMenu() {
+  const menu = document.getElementById('contextMenu');
+  menu.style.display = "none";
+}
+
+
+// Hide menu if click elsewhere
+document.addEventListener("click", function() {
+  hideContextMenu();
+});
+
+function deleteField() {
+  console.log("Delete clicked frameData", frameData);
+  console.log("Delete clicked", contextBoxIndex, contextFieldIndex);
+  if (contextBoxIndex !== null && contextFieldIndex !== null) {
+    frameData.frames[currentFrame].boxes[contextBoxIndex].fields.splice(contextFieldIndex, 1);
+    hideContextMenu();
+    createBoxes(frameData.frames[currentFrame]);
+  }
+}
+
+function addFieldBefore() {
+  if (contextBoxIndex !== null && contextFieldIndex !== null) {
+    popupInsertMode = "before";
+    showFieldPopup();
+    hideContextMenu();
+  }
+}
+
+function addFieldAfter() {
+  if (contextBoxIndex !== null && contextFieldIndex !== null) {
+    popupInsertMode = "after";
+    showFieldPopup();
+    hideContextMenu();
+  }
+}
+
+function createBoxes(frameData) {
+  const container = document.getElementById('container');
+  container.innerHTML = '';
+
+  //frameData.frames[currentFrame].boxes.forEach((box, boxIndex) => {
+  frameData.boxes.forEach((box, boxIndex) => {
+      const div = document.createElement('div');
+    div.className = 'box';
+    const title = document.createElement('h2');
+    title.textContent = box.title;
+    div.appendChild(title);
+
+    box.fields.forEach((field, fieldIndex) => {
+      const row = document.createElement('div');
+      row.className = 'field-row';
+
+      // Add Right-Click (Context Menu) Only If Edit Mode Active
+      row.oncontextmenu = (e) => {
+        if (editMode) {
+          e.preventDefault(); // prevent default browser menu
+          contextField = field;
+          contextBoxIndex = boxIndex;
+          contextFieldIndex = fieldIndex;
+          showContextMenu(e.pageX, e.pageY);
+        }
+      };
+      const label = document.createElement('div');
+      label.className = 'field-label';
+      label.textContent = field.name + ":";
+      row.appendChild(label);
+
+      if (field.input) {
+        const defVal = document.createElement('div');
+        defVal.className = 'field-default';
+        defVal.textContent = "Default: " + field.default;
+        row.appendChild(defVal);
+
+        const input = document.createElement('input');
+        input.type = "text";
+        input.value = field.value;
+        input.className = 'field-input';
+
+        if (field.dirty) {
+          input.style.backgroundColor = "#ffffcc"; // Restore highlight when rebuilding
+        };
+
+        input.oninput = () => {
+          frameData.boxes[boxIndex].fields[fieldIndex].value = input.value;
+          frameData.boxes[boxIndex].fields[fieldIndex].dirty = (input.value !== field.default);
+          if (frameData.boxes[boxIndex].fields[fieldIndex].dirty) {
+            input.style.backgroundColor = "#ffffcc"; // Light yellow if dirty
+          } else {
+            input.style.backgroundColor = ""; // Clear highlight if matches default
+          }
+        };
+        row.appendChild(input);
+
+        const buttonSet = document.createElement('div');
+        buttonSet.className = 'field-buttons';
+        const setBtn = document.createElement('button');
+        setBtn.textContent = "Set";
+        setBtn.onclick = () => {
+          if (socket && connected) socket.send(JSON.stringify({ field: field.name, value: input.value }));
+          frameData.boxes[boxIndex].fields[fieldIndex].value = input.value;
+        };
+        buttonSet.appendChild(setBtn);
+        const clearBtn = document.createElement('button');
+        clearBtn.textContent = "Clear";
+        clearBtn.onclick = () => { input.value = ""; frameData.boxes[boxIndex].fields[fieldIndex].value = ""; };
+        buttonSet.appendChild(clearBtn);
+        const defaultBtn = document.createElement('button');
+        defaultBtn.textContent = "Default";
+        defaultBtn.onclick = () => { input.value = field.default; frameData.boxes[boxIndex].fields[fieldIndex].value = field.default; };
+        buttonSet.appendChild(defaultBtn);
+        row.appendChild(buttonSet);
+      } else {
+        const staticValue = document.createElement('div');
+        staticValue.className = 'field-default';
+        staticValue.textContent = field.value;
+        row.appendChild(staticValue);
+      }
+
+      div.appendChild(row);
+    });
+
+    container.appendChild(div);
+  });
+
+  if (frameData.tables) {
+    const tableSelect = document.createElement('select');
+    tableSelect.id = 'tableSelector';
+    ["volt", "soc", "soh", "temp"].forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t.toUpperCase();
+      if (t === currentTable) opt.selected = true;
+      tableSelect.appendChild(opt);
+    });
+    tableSelect.onchange = () => {
+      currentTable = tableSelect.value;
+      renderTable(frameData);
+    };
+    container.appendChild(tableSelect);
+    renderTable(frameData);
+  }
+}
+
+function showFieldPopup() {
+  document.getElementById('popupFieldName').value = "";
+  document.getElementById('popupFieldDefault').value = "";
+  document.getElementById('popupFieldInput').checked = true;
+  document.getElementById('fieldPopup').style.display = "block";
+}
+
+function cancelNewField() {
+  document.getElementById('fieldPopup').style.display = "none";
+}
+
+function confirmNewField() {
+  const name = document.getElementById('popupFieldName').value || "New Field";
+  const def = document.getElementById('popupFieldDefault').value || "";
+  const isInput = document.getElementById('popupFieldInput').checked;
+
+  const newField = {
+    name: name,
+    value: def,
+    input: isInput,
+    default: def
+  };
+
+  if (contextBoxIndex !== null && contextFieldIndex !== null) {
+    if (popupInsertMode === "before") {
+      frameData.frames[currentFrame].boxes[contextBoxIndex].fields.splice(contextFieldIndex, 0, newField);
+    } else if (popupInsertMode === "after") {
+      frameData.frames[currentFrame].boxes[contextBoxIndex].fields.splice(contextFieldIndex + 1, 0, newField);
+    }
+    createBoxes(frameData.frames[currentFrame]);
+  }
+
+  document.getElementById('fieldPopup').style.display = "none";
+}
+
+function renderTable(frameData) {
+  let table = document.getElementById('batteryTable');
+  if (table) table.remove();
+
+  table = document.createElement('table');
+  table.id = 'batteryTable';
+
+  const header = table.insertRow();
+  for (let i = 0; i < 8; i++) {
+    const cell = header.insertCell();
+    cell.textContent = `Cell ${i}`;
+  }
+
+  const data = frameData.tables[currentTable] || [];
+  for (let rowStart = 0; rowStart < data.length; rowStart += 8) {
+    const row = table.insertRow();
+    for (let i = 0; i < 8; i++) {
+      const cell = row.insertCell();
+      if (rowStart + i < data.length) {
+        const val = data[rowStart + i];
+        cell.textContent = val.toFixed(3);
+        applyColorCoding(cell, val, currentTable);
+      } else {
+        cell.textContent = "";
+      }
+    }
+  }
+
+  document.getElementById('container').appendChild(table);
+}
+
+function applyColorCoding(cell, value, tableType) {
+  if (tableType === "volt") {
+    if (value < 3.0 || value > 3.8) {
+      cell.style.background = "#ff9999"; // Light Red
+    }
+  } else if (tableType === "soc") {
+    if (value < 20 || value > 100) {
+      cell.style.background = "#ffcc66"; // Orange
+    }
+  } else if (tableType === "soh") {
+    if (value < 80) {
+      cell.style.background = "#ffff99"; // Yellow
+    }
+  } else if (tableType === "temp") {
+    if (value < 0 || value > 60) {
+      cell.style.background = "#ff9999"; // Light Red
+    }
+  }
+}
+
+function reloadData() {
+  if (liveData && liveData.data) { 
+    frameData = liveData.data;
+  } else { 
+    frameData = fakeData.data;
+    currentFrame = "config";  // initial fallback guess
+  }
+
+  buildTabs(frameData);
+
+  // Validate currentFrame
+  if (typeof currentFrame !== 'string' || !(currentFrame in frameData.frames)) {
+    console.warn(`Warning: CurrentFrame [${currentFrame}] invalid. Attempting fallback to 'config'.`);
+    currentFrame = "config";
+  }
+
+  // Validate fallback 'config'
+  if (!(currentFrame in frameData.frames)) {
+    console.warn(`Warning: Fallback 'config' frame is missing. Trying to find any available frame.`);
+    const availableFrames = Object.keys(frameData.frames);
+    if (availableFrames.length > 0) {
+      currentFrame = availableFrames[0];
+      console.warn(`Using first available frame: [${currentFrame}]`);
+    } else {
+      console.error("Critical: No frames available in frameData!");
+      document.getElementById('container').innerHTML = "<h2>Error: No valid frames found!</h2>";
+      return;
+    }
+  }
+  console.log(currentFrame);
+  console.log(frameData.frames);
+
+  createBoxes(frameData.frames[currentFrame]);
+}
+
+
+function connectWebSocket() {
+  socket = new WebSocket(wsUrl);
+  connected = false;
+  //frameData = fakeData;
+
+  socket.onopen = () => { connected = true; console.log("Connected"); };
+  socket.onmessage = (event) => {
+    try { 
+      const parsed = JSON.parse(event.data);
+      if (parsed.cmd === "load_frame") {
+        console.log("Received frame from server");
+        console.log("parsed.data:", parsed.data); // <--- ADD THIS
+        liveData = parsed.data;
+        frameData = parsed.data; 
+        buildTabs(parsed.data); 
+        currentFrame = "config";  // Reset safely
+        console.log("Built tabs");
+        createBoxes(parsed.data.frames[currentFrame]); 
+      }
+       // Future: can add confirmation messages for save/saveas
+    }
+    catch (e) { 
+      console.error("Parsing WS failed:", e); 
+    }
+  };
+  socket.onerror = () => { console.warn("WebSocket error"); };
+  socket.onclose = () => { 
+    if (!connected) { 
+      liveData = null; 
+      frameData = fakeData,data;
+      buildTabs(frameData); 
+      createBoxes(frameData.frames[currentFrame]); } };
+}
+
+// Start
+  frameData = fakeData.data;
+  currentFrame = "config";  // Reset safely
+  reloadData();  // cleaner
+  connectWebSocket();
+</script>
+
+
+<div id="contextMenu" style="display:none; position:absolute; background:white; border:1px solid black; z-index:1000;">
+  <div onclick="deleteField()">Delete Field</div>
+  <div onclick="addFieldBefore()">Add Field Before</div>
+  <div onclick="addFieldAfter()">Add Field After</div>
+</div>
+<div id="fieldPopup" style="display:none; position:fixed; top:30%; left:30%; width:300px; background:white; border:2px solid black; padding:20px; z-index:1001;">
+  <h3>New Field Setup</h3>
+  <label>Name:</label><br>
+  <input id="popupFieldName" type="text"><br><br>
+
+  <label>Default Value:</label><br>
+  <input id="popupFieldDefault" type="text"><br><br>
+
+  <label><input id="popupFieldInput" type="checkbox" checked> Input Field (editable)</label><br><br>
+
+  <button onclick="confirmNewField()">Confirm</button>
+  <button onclick="cancelNewField()">Cancel</button>
+</div>
+
+</body>
+</html>

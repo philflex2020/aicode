@@ -1,0 +1,46 @@
+[
+  {
+    "name": "site",
+    "count": 2,
+    "template": "site",
+    "keys": {
+      "##SN##": "site"
+    }
+  },
+  {
+    "name": "cluster",
+    "count": [
+      1,
+      2
+    ],
+    "template": "cluster",
+    "keys": {
+      "##SN##": "site",
+      "##CL##": "cluster"
+    }
+  },
+  {
+    "name": "rack",
+    "count": 2,
+    "template": "rack",
+    "keys": {
+      "##SN##": "site",
+      "##CL##": "cluster",
+      "##RN##": "rack"
+    }
+  },
+  {
+    "name": "cell",
+    "count": [
+      4,
+      8
+    ],
+    "template": "cell",
+    "keys": {
+      "##SN##": "site",
+      "##CL##": "cluster",
+      "##RN##": "rack",
+      "##CN##": "cell"
+    }
+  }
+]

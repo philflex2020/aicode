@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fractal Dashboard Editor (Full Version)</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+h2, h3 {
+  margin-top: 30px;
+}
+
+pre {
+  background: #f4f4f4;
+  padding: 10px;
+  overflow-x: auto;
+  max-height: 400px;
+}
+
+button {
+  margin: 2px 5px;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+#popup, #connectPopup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 450px;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 2px solid black;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+#popup textarea {
+  width: 100%;
+  height: 250px;
+}
+
+#treeview div {
+  margin-left: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<h2>Connection</h2>
+<div id="connection">
+  <button onclick="connectServer()">Connect</button>
+  <button onclick="disconnectServer()">Disconnect</button>
+  <span id="connectionStatus" style="margin-left:10px; color:red;">Disconnected</span>
+</div>
+
+<!-- Connect Popup -->
+<div id="connectPopup">
+  <h3>Connect to Server</h3>
+  <label>Host:</label><br>
+  <input type="text" id="connectHost" value="localhost" style="width:200px;"><br><br>
+  <label>Port:</label><br>
+  <input type="text" id="connectPort" value="8080" style="width:200px;"><br><br>
+  <button onclick="confirmConnect()">Connect</button>
+  <button onclick="closeConnectPopup()">Cancel</button>
+</div>
+
+<h2>System Management</h2>
+<button onclick="loadSystem()">Load System</button>
+<button onclick="saveSystem()">Save System</button>
+<button onclick="saveAsSystem()">Save As (New System)</button>
+
+<h2>Fractal Dashboard Module loader</h2>
+<button onclick="requestModule('editor')">Load Editor Module</button>
+<button onclick="requestModule('structure_edit')">Load Structure Editor</button>
+<button onclick="requestModule('template_edit')">Load Template Editor</button>
+
+
+<h2>Fractal Dashboard Editor</h2>
+
+<div id="editor"></div>
+
+<h2>Expanded Output</h2>
+<pre id="output"></pre>
+
+<h2>Downloads</h2>
+<button onclick="downloadFrames()">Download Frames (frames.json)</button>
+<button onclick="downloadExpanded()">Download Expanded (expanded.json)</button>
+<button onclick="downloadDatapoints()">Download Datapoints (datapoints.txt)</button>
+
+<h2>Live Tree View</h2>
+<div id="treeview" style="margin-top:10px;"></div>
+
+<!-- Popup Editor for Editing JSON -->
+<div id="popup">
+  <h3 id="popupTitle">Edit Item</h3>
+  <textarea id="popupContent"></textarea><br><br>
+  <button onclick="savePopup()">Save</button>
+  <button onclick="closePopup()">Cancel</button>
+</div>
+
+<script>
+//--------------------------------------
+// Globals
+//--------------------------------------
+let socket = null;
+let isConnected = false;
+
+let frameData = {
+  frames: {
+    structure: [
+      { name: "site", count: 2, template: "site", keys: { "##SN##": "site" } },
+      { name: "rack", count: 2, template: "rack", keys: { "##SN##": "site", "##RN##": "rack" } },
+      { name: "cell", count: [4, 6], template: "cell", keys: { "##SN##": "site", "##RN##": "rack", "##CN##": "cell" } }
+    ],
+    templates: {
+      site: {
+        boxes: [
+          {
+            title: "Site ##SN## - ##SITE_NAME##",
+            fields: [
+              { name: "Site ID", value: "Site_##SN##", input: false },
+              { name: "Location", value: "HQ ##SN##", input: true }
+            ]
+          }
+        ]
+      },
+      rack: {
+        boxes: [
+          {
+            title: "Rack ##RN## at Site ##SN##",
+            fields: [
+              { name: "Rack Serial", value: "Rack_##SN##_##RN##", input: false }
+            ]
+          }
+        ]
+      },
+      cell: {
+        boxes: [
+          {
+            title: "Cell ##CN## in Rack ##RN## at Site ##SN##",
+            fields: [
+              { name: "Voltage", value: "3.7", input: false },
+              { name: "SOC", value: "95", input: false },
+              { name: "Temp", value: "25", input: false }
+            ]
+          }
+        ]
+      }
+    }
+  }
+};
+
+let fullData = {};
+let datapointsList = [];
+let popupSaveCallback = null;
+
+//--------------------------------------
+// Connection Handling
+//--------------------------------------
+function connectServer() {
+  if (isConnected) {
+    alert("Already connected.");
+    return;
+  }
+  document.getElementById('connectPopup').style.display = 'block';
+}
+
+function confirmConnect() {
+  const host = document.getElementById('connectHost').value.trim();
+  const port = document.getElementById('connectPort').value.trim();
+
+  if (!host || !port) {
+    alert("Please enter both host and port.");
+    return;
+  }
+
+  window.requestModule = function(name) {
+    if (!isConnected) {
+      alert("Not connected to server!");
+      return;
+    }
+    alert("Sending request to server!");
+    socket.send(JSON.stringify({ cmd: "request_module", module_name: name }));
+  }
+
+  const url = `ws://${host}:${port}`;
+  socket = new WebSocket(url);
+
+  socket.onopen = () => {
+    console.log("Connected to server.");
+    isConnected = true;
+    updateConnectionStatus();
+    closeConnectPopup();
+  };
+
+  socket.onclose = () => {
+    console.log("Disconnected from server.");
+    isConnected = false;
+    socket = null;
+    updateConnectionStatus();
+  };
+
+  socket.onerror = (err) => {
+    console.error("WebSocket error:", err);
+    alert("Failed to connect.");
+    isConnected = false;
+    socket = null;
+    updateConnectionStatus();
+    closeConnectPopup();
+  };
+
+  socket.onmessage = (event) => {
+    handleServerMessage(event.data);
+  };
+}
+
+
+window.activeSystemName = "default";  // Start with default
+
+function loadSystem() {
+  if (!isConnected) {
+    alert("Not connected to server!");
+    return;
+  }
+  const systemName = prompt("Enter system name to load:", activeSystemName);
+  if (!systemName) return;
+
+  socket.send(JSON.stringify({ cmd: "load_system", system_name: systemName }));
+}
+
+function saveSystem() {
+  if (!isConnected) {
+    alert("Not connected to server!");
+    return;
+  }
+  socket.send(JSON.stringify({
+    cmd: "save_system",
+    system_name: activeSystemName,
+    structure: frameData.frames.structure,
+    templates: frameData.frames.templates
+  }));
+}
+
+function saveAsSystem() {
+  if (!isConnected) {
+    alert("Not connected to server!");
+    return;
+  }
+  const newSystemName = prompt("Enter new system name:");
+  if (!newSystemName) return;
+
+  socket.send(JSON.stringify({
+    cmd: "saveas_system",
+    system_name: newSystemName,
+    structure: frameData.frames.structure,
+    templates: frameData.frames.templates
+  }));
+
+  activeSystemName = newSystemName; // Switch active system name
+}
+
+function closeConnectPopup() {
+  document.getElementById('connectPopup').style.display = 'none';
+}
+
+function disconnectServer() {
+  if (socket) {
+    socket.close();
+  }
+}
+
+function updateConnectionStatus() {
+  const statusSpan = document.getElementById('connectionStatus');
+  statusSpan.innerText = isConnected ? "Connected" : "Disconnected";
+  statusSpan.style.color = isConnected ? "green" : "red";
+}
+
+// function handleServerMessage(message) {
+//   console.log("Received:", message);
+// }
+
+function handleServerMessage(message) {
+  //console.log("Received:", message);
+  try {
+    const msg = JSON.parse(message);
+
+    if (msg.cmd === "upload_module") {
+      console.log(`Uploading module: ${msg.module_name}...`);
+      const newModule = new Function(msg.code);
+      newModule();
+      console.log(newModule);
+      console.log(`Module '${msg.module_name}' updated dynamically!`);
+      if (typeof renderEditor === "function") {
+        console.log(`Module '${msg.module_name}' running new render editor!`);
+        renderEditor();
+        console.log(newModule);
+      }
+    }
+    else {
+      console.log("Unhandled command:", msg.cmd);
+    }
+
+  } catch (e) {
+    console.error("Error processing message:", e);
+  }
+}
+
+//--------------------------------------
+// Popup Editor
+//--------------------------------------
+function openPopup(title, initialContent, saveCallback) {
+  document.getElementById('popupTitle').innerText = title;
+  document.getElementById('popupContent').value = initialContent;
+  popupSaveCallback = saveCallback;
+  document.getElementById('popup').style.display = 'block';
+}
+
+function savePopup() {
+  if (popupSaveCallback) {
+    popupSaveCallback(document.getElementById('popupContent').value);
+  }
+  closePopup();
+}
+
+function closePopup() {
+  popupSaveCallback = null;
+  document.getElementById('popup').style.display = 'none';
+}
+
+//--------------------------------------
+// Editor Functions
+//--------------------------------------
+function renderEditor() {
+  const editorDiv = document.getElementById('editor');
+  editorDiv.innerHTML = "";
+
+  const structHeader = document.createElement('h3');
+  structHeader.innerText = "Structure:";
+  editorDiv.appendChild(structHeader);
+
+  const addStructBtn = createButton('Add New Structure', addNewStructure);
+  editorDiv.appendChild(addStructBtn);
+
+  frameData.frames.structure.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.style.margin = "5px";
+    div.style.paddingLeft = "10px";
+    div.innerHTML = `<b>${item.name}</b>`;
+
+    const editBtn = createButton('Edit', () => editStructureItem(idx));
+    const addBeforeBtn = createButton('Add Before', () => addStructureBefore(idx));
+    const addAfterBtn = createButton('Add After', () => addStructureAfter(idx));
+    const deleteBtn = createButton('Delete', () => deleteStructureItem(idx));
+    const moveUpBtn = createButton('Move Up', () => moveStructureUp(idx));
+    const moveDownBtn = createButton('Move Down', () => moveStructureDown(idx));
+
+    div.appendChild(editBtn);
+    div.appendChild(addBeforeBtn);
+    div.appendChild(addAfterBtn);
+    div.appendChild(deleteBtn);
+    div.appendChild(moveUpBtn);
+    div.appendChild(moveDownBtn);
+
+    editorDiv.appendChild(div);
+  });
+
+  const tmplHeader = document.createElement('h3');
+  tmplHeader.innerText = "Templates:";
+  editorDiv.appendChild(tmplHeader);
+
+  const addTemplateBtn = createButton('Add New Template', addNewTemplate);
+  editorDiv.appendChild(addTemplateBtn);
+
+  for (const key in frameData.frames.templates) {
+    const div = document.createElement('div');
+    div.style.margin = "5px";
+    div.style.paddingLeft = "10px";
+    div.innerHTML = `<b>${key}</b>`;
+
+    const editBtn = createButton('Edit', () => editTemplateItem(key));
+    const deleteBtn = createButton('Delete', () => deleteTemplateItem(key));
+
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
+
+    editorDiv.appendChild(div);
+  }
+}
+
+function createButton(label, onClick) {
+  const btn = document.createElement('button');
+  btn.innerText = label;
+  btn.onclick = onClick;
+  return btn;
+}
+//
+//--------------------------------------
+// Structure Editing Functions
+//--------------------------------------
+function editStructureItem(idx) {
+  openPopup(`Edit Structure [${frameData.frames.structure[idx].name}]`, JSON.stringify(frameData.frames.structure[idx], null, 2), (newContent) => {
+    try {
+      frameData.frames.structure[idx] = JSON.parse(newContent);
+      afterEditorChange();
+    } catch (e) {
+      alert("Invalid JSON!");
+    }
+  });
+}
+
+function addStructureBefore(idx) {
+  openPopup(`Add Structure Before`, '{\n\n}', (newContent) => {
+    try {
+      frameData.frames.structure.splice(idx, 0, JSON.parse(newContent));
+      afterEditorChange();
+    } catch (e) {
+      alert("Invalid JSON!");
+    }
+  });
+}
+
+function addStructureAfter(idx) {
+  openPopup(`Add Structure After`, '{\n\n}', (newContent) => {
+    try {
+      frameData.frames.structure.splice(idx + 1, 0, JSON.parse(newContent));
+      afterEditorChange();
+    } catch (e) {
+      alert("Invalid JSON!");
+    }
+  });
+}
+
+function deleteStructureItem(idx) {
+  if (confirm(`Delete structure item ${frameData.frames.structure[idx].name}?`)) {
+    frameData.frames.structure.splice(idx, 1);
+    afterEditorChange();
+  }
+}
+
+function moveStructureUp(idx) {
+  if (idx > 0) {
+    const temp = frameData.frames.structure[idx];
+    frameData.frames.structure[idx] = frameData.frames.structure[idx - 1];
+    frameData.frames.structure[idx - 1] = temp;
+    afterEditorChange();
+  }
+}
+
+function moveStructureDown(idx) {
+  if (idx < frameData.frames.structure.length - 1) {
+    const temp = frameData.frames.structure[idx];
+    frameData.frames.structure[idx] = frameData.frames.structure[idx + 1];
+    frameData.frames.structure[idx + 1] = temp;
+    afterEditorChange();
+  }
+}
+
+function addNewStructure() {
+  openPopup('Add New Structure', '{\n\n}', (newContent) => {
+    try {
+      frameData.frames.structure.push(JSON.parse(newContent));
+      afterEditorChange();
+    } catch (e) {
+      alert("Invalid JSON!");
+    }
+  });
+}
+
+//--------------------------------------
+// Template Editing Functions
+//--------------------------------------
+function editTemplateItem(key) {
+  openPopup(`Edit Template [${key}]`, JSON.stringify(frameData.frames.templates[key], null, 2), (newContent) => {
+    try {
+      frameData.frames.templates[key] = JSON.parse(newContent);
+      afterEditorChange();
+    } catch (e) {
+      alert("Invalid JSON!");
+    }
+  });
+}
+
+function deleteTemplateItem(key) {
+  if (confirm(`Delete template '${key}'?`)) {
+    delete frameData.frames.templates[key];
+    afterEditorChange();
+  }
+}
+
+function addNewTemplate() {
+  openPopup('Add New Template (format: {"templateName":{}})', '{\n"templateName": {}\n}', (newContent) => {
+    try {
+      const temp = JSON.parse(newContent);
+      const keys = Object.keys(temp);
+      if (keys.length !== 1) {
+        alert("Template must have exactly one top-level key.");
+        return;
+      }
+      const key = keys[0];
+      frameData.frames.templates[key] = temp[key];
+      afterEditorChange();
+    } catch (e) {
+      alert("Invalid JSON!");
+    }
+  });
+}
+
+function afterEditorChange() {
+  renderEditor();
+  runTest();
+}
+
+//--------------------------------------
+// Frame Expansion + Datapoints Extraction
+//--------------------------------------
+function generateFromTemplate(template, substitutions) {
+  const copy = JSON.parse(JSON.stringify(template));
+  function recursiveReplace(obj) {
+    if (typeof obj === 'string') {
+      let str = obj;
+      for (const [marker, value] of Object.entries(substitutions)) {
+        str = str.replaceAll(marker, value);
+      }
+      return str;
+    } else if (Array.isArray(obj)) {
+      return obj.map(recursiveReplace);
+    } else if (typeof obj === 'object' && obj !== null) {
+      const newObj = {};
+      for (const key in obj) {
+        newObj[key] = recursiveReplace(obj[key]);
+      }
+      return newObj;
+    } else {
+      return obj;
+    }
+  }
+  return recursiveReplace(copy);
+}
+
+function expandFramesUsingTemplates(structureList, templates) {
+  const expanded = {};
+  function expandLevel(parentObj, substitutions, levelIndex, context) {
+    if (levelIndex >= structureList.length) return;
+    const config = structureList[levelIndex];
+    const template = templates[config.template];
+    let howMany = 0;
+    if (Array.isArray(config.count)) {
+      const parentIdx = context[structureList[levelIndex - 1]?.name] ?? 0;
+      howMany = config.count[parentIdx] ?? 0;
+    } else {
+      howMany = config.count;
+    }
+    for (let i = 0; i < howMany; i++) {
+      const newSubs = { ...substitutions };
+      if (config.keys) {
+        for (const [marker, ctxName] of Object.entries(config.keys)) {
+          newSubs[marker] = i;
+        }
+      }
+      const newObj = generateFromTemplate(template, newSubs);
+      const objName = `${config.name}${i}`;
+      parentObj[objName] = newObj;
+      if (levelIndex + 1 < structureList.length) {
+        const nextLevelName = structureList[levelIndex + 1].name + "s";
+        newObj[nextLevelName] = {};
+        expandLevel(newObj[nextLevelName], newSubs, levelIndex + 1, { ...context, [config.name]: i });
+      }
+    }
+  }
+  expandLevel(expanded, {}, 0, {});
+  return expanded;
+}
+
+function extractDatapoints(expanded) {
+  const datapoints = new Set();
+  function walk(obj, path) {
+    if (!obj) return;
+    if (obj.boxes) {
+      obj.boxes.forEach(box => {
+        if (box.fields) {
+          box.fields.forEach(field => {
+            datapoints.add(`${path}.${field.name}`);
+          });
+        }
+      });
+    }
+    for (const key in obj) {
+      if (typeof obj[key] === 'object' && key !== "boxes") {
+        walk(obj[key], path ? `${path}.${key}` : key);
+      }
+    }
+  }
+  walk(expanded, "");
+  return Array.from(datapoints).sort();
+}
+
+//--------------------------------------
+// Downloads
+//--------------------------------------
+function downloadFile(filename, content) {
+  const blob = new Blob([content], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function downloadFrames() {
+  const framesOnly = {
+    version: "1.0",
+    frames: frameData.frames
+  };
+  downloadFile('frames.json', JSON.stringify(framesOnly, null, 2));
+}
+
+function downloadExpanded() {
+  downloadFile('expanded.json', JSON.stringify(fullData.expanded, null, 2));
+}
+
+function downloadDatapoints() {
+  downloadFile('datapoints.txt', datapointsList.join('\n'));
+}
+
+//--------------------------------------
+// Tree View
+//--------------------------------------
+function buildTreeView(data, container) {
+  container.innerHTML = '';
+  function createNode(name, obj) {
+    const node = document.createElement('div');
+    node.style.marginLeft = '20px';
+    const title = document.createElement('div');
+    title.innerText = name;
+    title.style.cursor = 'pointer';
+    title.style.userSelect = 'none';
+    title.style.fontWeight = 'bold';
+    title.style.margin = '2px 0';
+    const childrenContainer = document.createElement('div');
+    childrenContainer.style.display = 'none';
+    title.onclick = () => {
+      childrenContainer.style.display = (childrenContainer.style.display === 'none') ? 'block' : 'none';
+    };
+    node.appendChild(title);
+    if (obj && typeof obj === 'object') {
+      for (const key in obj) {
+        if (key !== 'boxes') {
+          const child = createNode(key, obj[key]);
+          childrenContainer.appendChild(child);
+        }
+      }
+    }
+    node.appendChild(childrenContainer);
+    return node;
+  }
+  for (const key in data) {
+    const topNode = createNode(key, data[key]);
+    container.appendChild(topNode);
+  }
+}
+
+function updateTreeView() {
+  const treeContainer = document.getElementById('treeview');
+  buildTreeView(fullData.expanded, treeContainer);
+}
+
+//--------------------------------------
+// Test Runner
+//--------------------------------------
+function runTest() {
+  fullData = {
+    version: "1.0",
+    frames: frameData.frames,
+    expanded: expandFramesUsingTemplates(frameData.frames.structure, frameData.frames.templates)
+  };
+  datapointsList = extractDatapoints(fullData.expanded);
+  const output = document.getElementById('output');
+  output.textContent =
+    "Full Data (frames + expanded):\n" + JSON.stringify(fullData, null, 2) +
+    "\n\nDatapoints List:\n" + datapointsList.join('\n');
+  updateTreeView();
+}
+
+//--------------------------------------
+// Startup
+//--------------------------------------
+renderEditor();
+runTest();
+</script>
+
+</body>
+</html>
+
+// (continued in next message – hitting message limit)

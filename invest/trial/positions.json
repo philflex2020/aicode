@@ -1,0 +1,12 @@
+{
+  "High_Risk": [
+    {"name": "Leveraged Nasdaq", "ticker": "TQQQ", "entry_price": 50.00, "allocation_usd": 600, "stop_loss_pct": -0.15, "take_profit_pct": 0.40, "trail_pct": 0.10},
+    {"name": "Emerging Mkts", "ticker": "EEM", "entry_price": 40.00, "allocation_usd": 200, "stop_loss_pct": -0.12, "take_profit_pct": 0.25},
+    {"name": "Ethereum", "ticker": "ETH-USD", "entry_price": 3200.00, "allocation_usd": 200, "stop_loss_pct": -0.20, "take_profit_pct": 0.50, "trail_pct": 0.12}
+  ],
+  "Medium_Risk": [
+    {"name": "Dividend ETF", "ticker": "SCHD", "entry_price": 75.00, "allocation_usd": 400, "stop_loss_pct": -0.10, "take_profit_pct": 0.15},
+    {"name": "S&P 500 ETF", "ticker": "VOO", "entry_price": 500.00, "allocation_usd": 400, "stop_loss_pct": -0.10, "take_profit_pct": 0.15},
+    {"name": "ST Corp Bonds", "ticker": "VCSH", "entry_price": 80.00, "allocation_usd": 200}
+  ]
+}
