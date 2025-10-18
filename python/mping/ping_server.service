@@ -1,0 +1,13 @@
+[Unit]
+Description=Ping Server Daemon
+After=network.target
+
+[Service]
+User=phil
+Group=phil
+WorkingDirectory=/home/phil/work/python/mping
+ExecStart=/home/phil/work/python/mping/start_ping_server.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

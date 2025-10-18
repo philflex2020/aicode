@@ -1,0 +1,7 @@
+sudo cp ping_server.service  /etc/systemd/system/
+ 2005  sudo systemctl daemon-reload
+ 2006  sudo systemctl enable ping_server.service
+ 2007  sudo systemctl start ping_server.service
+ 2008  sudo systemctl status ping_server.service
+ 2009  history | grep systemctl
+ 2010  history | grep systemctl >> README.start 
