@@ -1,9 +1,3 @@
-/ widgets.js
-// Widget rendering and management for RBMS Dashboard
-
-// ------------------------------------------------------------------
-// Canvas drawing utilities
-// ------------------------------------------------------------------
 function drawLine(canvas, points, yMin=0, yMax=1, color='#9bd') {
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -47,17 +41,8 @@ function drawDial(canvas, value, min=0, max=100, label='') {
   ctx.font='600 16px system-ui'; ctx.fillText(String((+value).toFixed(2)), cx, cy+12);
 }
 
-// ------------------------------------------------------------------
-// Base Widget class
-// ------------------------------------------------------------------
 class BaseWidget {
-  constructor(node, cfg){ 
-    this.node=node; 
-    this.cfg=cfg; 
-    this.body=null; 
-    this.head=null; 
-    this.initFrame(); 
-  }
+  constructor(node, cfg){ this.node=node; this.cfg=cfg; this.body=null; this.head=null; this.initFrame(); }
   initFrame(){
     this.node.className='widget';
     const head=document.createElement('div'); head.className='whead';
@@ -68,13 +53,9 @@ class BaseWidget {
     this.node.appendChild(head); this.node.appendChild(body);
     this.body = body; this.head = head; this.tools = tools;
   }
-  onShow(){} 
-  onHide(){}
+  onShow(){} onHide(){}
 }
 
-// ------------------------------------------------------------------
-// TableWidget - displays metrics in a table with column selection
-// ------------------------------------------------------------------
 class TableWidget extends BaseWidget {
   constructor(node,cfg){
     super(node,cfg);
@@ -95,13 +76,8 @@ class TableWidget extends BaseWidget {
     this.buildTools(defaultCompact);
     this.tbl=null; this.tbody=null;
   }
-  loadVisible(){ 
-    try { return JSON.parse(localStorage.getItem(this.storeKey)||'null'); } 
-    catch(_) { return null; } 
-  }
-  saveVisible(){ 
-    localStorage.setItem(this.storeKey, JSON.stringify(this.visible)); 
-  }
+  loadVisible(){ try { return JSON.parse(localStorage.getItem(this.storeKey)||'null'); } catch(_) { return null; } }
+  saveVisible(){ localStorage.setItem(this.storeKey, JSON.stringify(this.visible)); }
   buildTools(defaultCompact){
     const btn = document.createElement('button'); btn.className='wbtn'; btn.textContent='Columns';
     const menu = document.createElement('div'); menu.className='menu';
@@ -181,16 +157,8 @@ class TableWidget extends BaseWidget {
   }
 }
 
-// ------------------------------------------------------------------
-// LineWidget - displays time-series line chart
-// ------------------------------------------------------------------
 class LineWidget extends BaseWidget {
-  constructor(node, cfg){ 
-    super(node,cfg); 
-    this.canvas=document.createElement('canvas'); 
-    this.body.appendChild(this.canvas); 
-    this.last=[]; 
-  }
+  constructor(node, cfg){ super(node,cfg); this.canvas=document.createElement('canvas'); this.body.appendChild(this.canvas); this.last=[]; }
   async tick(seriesCache){
     const name = (this.cfg.series&&this.cfg.series[0]&&this.cfg.series[0].name) || '';
     const pts = (seriesCache && seriesCache[name]) || [];
@@ -202,15 +170,8 @@ class LineWidget extends BaseWidget {
   }
 }
 
-// ------------------------------------------------------------------
-// DialWidget - displays circular gauge
-// ------------------------------------------------------------------
 class DialWidget extends BaseWidget {
-  constructor(node, cfg){ 
-    super(node,cfg); 
-    this.canvas=document.createElement('canvas'); 
-    this.body.appendChild(this.canvas); 
-  }
+  constructor(node, cfg){ super(node,cfg); this.canvas=document.createElement('canvas'); this.body.appendChild(this.canvas); }
   async tick(seriesCache){
     const name = (this.cfg.series&&this.cfg.series[0]&&this.cfg.series[0].name) || '';
     const pts = (seriesCache && seriesCache[name]) || [];
@@ -221,9 +182,6 @@ class DialWidget extends BaseWidget {
   }
 }
 
-// ------------------------------------------------------------------
-// VarTableWidget - displays and edits variables
-// ------------------------------------------------------------------
 class VarTableWidget extends BaseWidget {
   constructor(node, cfg){
     super(node,cfg);
@@ -277,7 +235,7 @@ class VarTableWidget extends BaseWidget {
   
     const rsp = await getJSON(`/vars?names=${encodeURIComponent(names)}&rack=${rack}`);
   
-    // If the table already exists, just refresh current-value cells
+    // 🟢 If the table already exists, just refresh current‑value cells
     if (this.tbody && this.tbody.children.length) {
       for (const nm of (this.cfg.names || [])) {
         const td = document.getElementById(`var_curr_${nm}`);
@@ -286,10 +244,11 @@ class VarTableWidget extends BaseWidget {
           td.textContent = Array.isArray(v) ? v.join(', ') : (v == null ? '—' : v);
         }
       }
+      // Skip rebuilding rows or inputs
       return;
     }
   
-    // First-time build (no rows yet)
+    // 🟡 First‑time build (no rows yet)
     this.tbody.innerHTML = '';
     for (const nm of (this.cfg.names || [])) {
       const currVal = rsp[nm];
@@ -333,6 +292,137 @@ class VarTableWidget extends BaseWidget {
       this.tbody.appendChild(tr);
     }
   }
+  async tick2(){
+    const names = (this.cfg.names || []).join(',');
+    const rack = (this.cfg.rack != null ? this.cfg.rack : 0);
+    if (!names) return;
+  
+    // 1) Capture current “new values” before redraw
+    const savedInputs = {};
+    for (const nm of (this.cfg.names || [])) {
+      const inp = document.getElementById(`var_new_${nm}`);
+      if (inp) savedInputs[nm] = inp.value;
+    }
+  
+    const rsp = await getJSON('/vars?names=' + encodeURIComponent(names) + '&rack=' + rack);
+    this.tbody.innerHTML = '';
+  
+    for (const nm of (this.cfg.names || [])) {
+      const currVal = rsp[nm];
+      const displayVal = Array.isArray(currVal) ? currVal.join(', ') : (currVal == null ? '—' : currVal);
+  
+      if (!(nm in this.defaults)) {
+        this.defaults[nm] = currVal;
+      }
+  
+      const tr = document.createElement('tr');
+  
+      // Name
+      const tdName = document.createElement('td');
+      tdName.textContent = nm;
+      tr.appendChild(tdName);
+  
+      // New value input
+      const tdNew = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'var-input';
+      input.id = `var_new_${nm}`;
+      input.placeholder = 'Enter new value';
+      input.style.width = '100%';
+      input.style.background = '#0b1126';
+      input.style.color = '#e8eef6';
+      input.style.border = '1px solid #1e2a43';
+      input.style.borderRadius = '4px';
+      input.style.padding = '4px 6px';
+      input.style.fontSize = '12px';
+      tdNew.appendChild(input);
+      tr.appendChild(tdNew);
+  
+      // Current value
+      const tdCurr = document.createElement('td');
+      tdCurr.id = `var_curr_${nm}`;
+      tdCurr.textContent = displayVal;
+      tr.appendChild(tdCurr);
+  
+      // Action
+      const tdAction = document.createElement('td');
+      const sendBtn = document.createElement('button');
+      sendBtn.className = 'wbtn';
+      sendBtn.textContent = 'Send';
+      sendBtn.onclick = () => this.sendOne(nm);
+      tdAction.appendChild(sendBtn);
+      tr.appendChild(tdAction);
+  
+      this.tbody.appendChild(tr);
+    }
+  
+    // 2) Restore saved “new values” after redraw
+    for (const [nm, val] of Object.entries(savedInputs)) {
+      const inp = document.getElementById(`var_new_${nm}`);
+      if (inp) inp.value = val;
+    }
+  }
+  
+  async tick1(){
+    const names = (this.cfg.names || []).join(',');
+    const rack = (this.cfg.rack != null ? this.cfg.rack : 0);
+    if (!names) return;
+    
+    const rsp = await getJSON('/vars?names=' + encodeURIComponent(names) + '&rack=' + rack);
+    this.tbody.innerHTML = '';
+    
+    for (const nm of (this.cfg.names || [])) {
+      const currVal = rsp[nm];
+      const displayVal = Array.isArray(currVal) ? currVal.join(', ') : (currVal == null ? '—' : currVal);
+      
+      // Store default if not already set
+      if (!(nm in this.defaults)) {
+        this.defaults[nm] = currVal;
+      }
+      
+      const tr = document.createElement('tr');
+      
+      // Name column
+      const tdName = document.createElement('td');
+      tdName.textContent = nm;
+      tr.appendChild(tdName);
+      
+      // New Value input column
+      const tdNew = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'var-input';
+      input.id = `var_new_${nm}`;
+      input.placeholder = 'Enter new value';
+      input.style.width = '100%';
+      input.style.background = '#0b1126';
+      input.style.color = '#e8eef6';
+      input.style.border = '1px solid #1e2a43';
+      input.style.borderRadius = '4px';
+      input.style.padding = '4px 6px';
+      input.style.fontSize = '12px';
+      tdNew.appendChild(input);
+      tr.appendChild(tdNew);
+      
+      // Current Value column
+      const tdCurr = document.createElement('td');
+      tdCurr.id = `var_curr_${nm}`;
+      tdCurr.textContent = displayVal;
+      tr.appendChild(tdCurr);
+      
+      // Action button column
+      const tdAction = document.createElement('td');
+      const sendBtn = document.createElement('button');
+      sendBtn.className = 'wbtn';
+      sendBtn.textContent = 'Send';
+      sendBtn.onclick = () => this.sendOne(nm);
+      tdAction.appendChild(sendBtn);
+      tr.appendChild(tdAction);
+      
+      this.tbody.appendChild(tr);
+    }
+  }
   
   async sendOne(name){
     const input = document.getElementById(`var_new_${name}`);
@@ -344,9 +434,14 @@ class VarTableWidget extends BaseWidget {
     const newValue = input.value.trim();
     
     try {
+      // POST to /vars endpoint with the new value
       const payload = { [name]: newValue };
       await postJSON('/vars', payload);
+      
+      // Refresh to show updated current value
       await this.tick();
+      
+      // Clear the input after successful send
       input.value = '';
     } catch (e) {
       alert(`Failed to send ${name}: ${e.message}`);
@@ -396,63 +491,56 @@ class VarTableWidget extends BaseWidget {
   }
 }
 
-// ------------------------------------------------------------------
-// Widget registry
-// ------------------------------------------------------------------
-const WidgetTypes = {
-  table: (node,cfg)=>new TableWidget(node,cfg),
-  line:  (node,cfg)=>new LineWidget(node,cfg),
-  dial:  (node,cfg)=>new DialWidget(node,cfg),
-  vartable: (node,cfg)=>new VarTableWidget(node,cfg)
-};
+class VarTableWidget2 extends BaseWidget {
+  constructor(node, cfg){
+    super(node,cfg);
+    this.tbl=document.createElement('table');
+    const thead=document.createElement('thead'), tr=document.createElement('tr');
+    (this.cfg.columns || ['name','value']).forEach(h=>{
+      const th=document.createElement('th'); th.textContent=h; tr.appendChild(th);
+    });
+    thead.appendChild(tr); this.tbl.appendChild(thead);
+    this.tbody=document.createElement('tbody'); this.tbl.appendChild(this.tbody);
+    this.body.innerHTML=''; this.body.appendChild(this.tbl);
+  }
+  async tick(){
+    const names = (this.cfg.names||[]).join(',');
+    const rack  = (this.cfg.rack!=null ? this.cfg.rack : 0);
+    if (!names) return;
+    const rsp = await getJSON('/vars?names='+encodeURIComponent(names)+'&rack='+rack);
+    this.tbody.innerHTML = '';
+    for (const nm of (this.cfg.names||[])) {
+      const tr=document.createElement('tr');
+      const v = rsp[nm];
+      tr.innerHTML = `<td>${nm}</td><td>${(Array.isArray(v)? v.join(', ') : (v==null?'—':v))}</td>`;
+      this.tbody.appendChild(tr);
+    }
+  }
+}
 
-// ------------------------------------------------------------------
-// Profile Control Widget
-// ------------------------------------------------------------------
+/* ---- Profile Control Widget ---- */
 WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
   const card = document.createElement("div");
-  card.className = "widget";
-  
-  // Build frame similar to BaseWidget
-  const head = document.createElement('div'); 
-  head.className = 'whead';
-  const ttl = document.createElement('div'); 
-  ttl.className = 'wtitle'; 
-  ttl.textContent = cfg.title || "Profile Control";
-  const tools = document.createElement('div'); 
-  tools.className = 'wtools';
-  head.appendChild(ttl); 
-  head.appendChild(tools);
-  
-  const body = document.createElement('div'); 
-  body.className = 'wbody';
-  
-  body.innerHTML = `
-    <div class="form-row">
-      <label>Name</label>
-      <input id="profile-name" type="text" placeholder="default">
-    </div>
-    <div class="form-row">
-      <label>Build</label>
+  card.className = "card";
+  card.innerHTML = `
+    <h3>${cfg.title || "Profile Control"}</h3>
+    <div class="form-row"><label>Name</label>
+      <input id="profile-name" type="text" placeholder="default"></div>
+    <div class="form-row"><label>Build</label>
       <select id="profile-build">
         <option value="hatteras">Hatteras</option>
         <option value="warwick">Warwick</option>
         <option value="factory">Factory</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <label>Version</label>
-      <input id="profile-version" value="0.3.34">
-    </div>
-    <div class="form-row">
-      <label>Target</label>
-      <input id="profile-target" placeholder="optional">
-    </div>
+      </select></div>
+    <div class="form-row"><label>Version</label>
+      <input id="profile-version" value="0.3.34"></div>
+    <div class="form-row"><label>Target</label>
+      <input id="profile-target" placeholder="optional"></div>
 
     <div class="btn-row">
-      <button class="wbtn" id="save-profile">💾 Save</button>
-      <button class="wbtn" id="select-profile">✅ Active</button>
-      <button class="wbtn" id="clone-profile">🧬 Clone</button>
+      <button id="save-profile">💾 Save</button>
+      <button id="select-profile">✅ Active</button>
+      <button id="clone-profile">🧬 Clone</button>
     </div>
 
     <div class="form-row">
@@ -463,12 +551,9 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
     </div>
     <p id="profile-msg" class="status"></p>
   `;
-  
-  card.appendChild(head);
-  card.appendChild(body);
   parent.appendChild(card);
 
-  // Helper functions
+  // --- helper functions (can move to utils.js if reused) ---
   async function getJSON(url) { return (await fetch(url)).json(); }
   async function postJSON(url, data) {
     return (await fetch(url, {
@@ -479,13 +564,13 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
   }
 
   const els = {
-    name: body.querySelector("#profile-name"),
-    build: body.querySelector("#profile-build"),
-    version: body.querySelector("#profile-version"),
-    target: body.querySelector("#profile-target"),
-    list: body.querySelector("#profile-list"),
-    active: body.querySelector("#active-profile"),
-    msg: body.querySelector("#profile-msg")
+    name: card.querySelector("#profile-name"),
+    build: card.querySelector("#profile-build"),
+    version: card.querySelector("#profile-version"),
+    target: card.querySelector("#profile-target"),
+    list: card.querySelector("#profile-list"),
+    active: card.querySelector("#active-profile"),
+    msg: card.querySelector("#profile-msg")
   };
 
   async function refreshList() {
@@ -498,73 +583,56 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
         opt.textContent = `${p.name} (${p.build}, ${p.version})`;
         els.list.appendChild(opt);
       });
-    } catch(e) {
-      console.error("Failed to load profiles:", e);
-    }
+    } catch {}
   }
-  
   async function refreshActive() {
-    try { 
-      const ap = await getJSON("/api/active_profile");
-      els.active.textContent = ap.name;
-    } catch(e) { 
-      els.active.textContent = "(none)"; 
-    }
+    try { els.active.textContent = (await getJSON("/api/active_profile")).name; }
+    catch { els.active.textContent = "(none)"; }
   }
 
   async function save() {
-    const bodyData = {
+    const body = {
       name: els.name.value || "default",
       build: els.build.value,
       version: els.version.value,
       target: els.target.value || null
     };
-    try {
-      await postJSON("/api/profiles", bodyData);
-      els.msg.textContent = "Profile saved ✓";
-      setTimeout(() => els.msg.textContent = "", 3000);
-      refreshList();
-      refreshActive();
-    } catch(e) {
-      els.msg.textContent = "Save failed: " + e.message;
-    }
+    await postJSON("/api/profiles", body);
+    els.msg.textContent = "Profile saved";
+    refreshList();
+    refreshActive();
   }
-
   async function select() {
     const name = els.name.value || els.list.value;
-    try {
-      const r = await postJSON("/api/profiles/select", { name });
-      els.msg.textContent = `Active: ${r.active} ✓`;
-      setTimeout(() => els.msg.textContent = "", 3000);
-      refreshActive();
-    } catch(e) {
-      els.msg.textContent = "Select failed: " + e.message;
-    }
+    const r = await postJSON("/api/profiles/select", { name });
+    els.msg.textContent = `Active: ${r.active}`;
+    refreshActive();
   }
-
   async function clone() {
     const src = els.name.value || els.list.value;
     const newName = prompt("New profile name?");
     if (!newName) return;
-    try {
-      await postJSON("/api/profiles/clone", {
-        source_name: src,
-        new_name: newName,
-        new_version: els.version.value,
-        new_target: els.target.value
-      });
-      els.msg.textContent = `Cloned → ${newName} ✓`;
-      setTimeout(() => els.msg.textContent = "", 3000);
-      refreshList();
-    } catch(e) {
-      els.msg.textContent = "Clone failed: " + e.message;
-    }
+    await postJSON("/api/profiles/clone", {
+      source_name: src,
+      new_name: newName,
+      new_version: els.version.value,
+      new_target: els.target.value
+    });
+    els.msg.textContent = `Cloned → ${newName}`;
+    refreshList();
   }
 
-  body.querySelector("#save-profile").onclick = save;
-  body.querySelector("#select-profile").onclick = select;
-  body.querySelector("#clone-profile").onclick = clone;
+  card.querySelector("#save-profile").onclick = save;
+  card.querySelector("#select-profile").onclick = select;
+  card.querySelector("#clone-profile").onclick = clone;
 
   refreshList();
   refreshActive();
+};
+const WidgetTypes = {
+  table: (node,cfg)=>new TableWidget(node,cfg),
+  line:  (node,cfg)=>new LineWidget(node,cfg),
+  dial:  (node,cfg)=>new DialWidget(node,cfg),
+  vartable: (node,cfg)=>new VarTableWidget(node,cfg),
+  //profile_control: (node,cfg)=>new profile_control(node,cfg),
 };
