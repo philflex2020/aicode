@@ -1,0 +1,52 @@
+
+{
+    "tabs": [
+      {"id": "overview", "title": "Overview"},
+      {"id": "controls", "title": "Controls"},
+      {"id": "values",   "title": "Values"}
+    ],
+    "grid": {"cols": 12, "gap": 10, "rowHeight": 90},
+    "widgets": [
+      {"id": "metrics1", "type": "table", "title": "Links", "tab": "overview", "pos": {"row":1,"col":1,"w":12,"h":4}},
+      {"id": "line1",    "type": "line",  "title": "Throughput", "tab": "overview", "pos": {"row":5,"col":1,"w":8,"h":4},
+        "series": [{"name":"mbps","windowSec":60}]},
+      {"id": "dial1",    "type": "dial",  "title": "CPU %", "tab": "overview", "pos": {"row":5,"col":9,"w":4,"h":4},
+        "series": [{"name":"cpu","windowSec":60}], "opts": {"min":0, "max":100}},
+      {"id": "vars_edit", "type": "vartable", "title": "Variables", "tab": "overview",
+        "pos": {"row":9,"col":1,"w":12,"h":4},
+        "names": ["username","mode","gain","threshold","phase","enabled","status"],
+        "rack": 0}
+    ],
+    "controls": {
+      "layout": {"cols": 12, "gap": 10, "rowHeight": 90},
+      "cards": [
+        {"title": "Text & Select", "pos": {"row":1,"col":1,"w":6,"h":3},
+         "elements": [
+           {"type":"text",   "id":"username", "label":"User Name", "placeholder":"alice"},
+           {"type":"select", "id":"mode", "label":"Mode", "options":[{"label":"Auto","value":"auto"},{"label":"Manual","value":"manual"}]}
+         ],
+         "readbacks": [
+           {"id":"status", "label":"Status"}
+         ]
+        },
+        {"title": "Sliders & Knob", "pos": {"row":1,"col":7,"w":6,"h":3},
+         "elements": [
+           {"type":"slider", "id":"gain", "label":"Gain", "min":0, "max":100, "step":1, "default":50},
+           {"type":"slider", "id":"threshold", "label":"Threshold", "min":-50, "max":50, "step":1, "default":0},
+           {"type":"knob",   "id":"phase", "label":"Phase", "min":0, "max":360, "step":5, "default":180}
+         ]
+        },
+        {"title": "Toggles & Action", "pos": {"row":4,"col":1,"w":12,"h":2},
+         "elements": [
+           {"type":"checkbox", "id":"enabled", "label":"Enabled", "default": true},
+           {"type":"button",   "id":"apply", "label":"Apply", "action":"set_state", "fields":["username","mode","gain","threshold","phase","enabled"]},
+           {"type":"action",   "id":"ping",  "label":"Ping", "action":"button", "name":"ping"}
+         ]
+        }
+      ]
+    },
+    "values": {
+      "columns": ["name","value","readback"],
+      "fields": ["username","mode","gain","threshold","phase","enabled","status"]
+    }
+  }
