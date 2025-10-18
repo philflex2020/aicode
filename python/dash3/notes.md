@@ -827,3 +827,388 @@ Open DevTools → Network → select `/vars`:
 Restart your data server (8081) → refresh dashboard (CTRL + SHIFT + R) → try editing a New Value → hit “Send.”  
 You’ll now see the **Current Value** cell update immediately, and **Refresh All** keeps it consistent.
 ==================================
+
+Great—let’s start simple and set the foundation so we can grow into the full model editor later. I’ll outline:
+
+1) Minimal database schema (SQLite to start; easy to swap to Postgres)
+2) Data server changes: models, CRUD, and endpoints
+3) Frontend controls: select build/version/target and send to server
+4) “Clone” action semantics
+5) How variables will be stored (mem_area/mem_type/offset) to future-proof UI
+
+We’ll implement the simple flow first: persist selections (build/version/target) and let you clone version/target entries. Variables table will be defined but not yet exposed in UI.
+
+1) Minimal database schema
+Use SQLite for dev (file: rbms.db). Tables:
+
+- env_profiles: stores build/version/target triplets (the active “specs” you select)
+  - id INTEGER PK
+  - name TEXT UNIQUE (optional label, can be “default”)
+  - build TEXT CHECK(build IN ('hatteras','warwick','factory'))
+  - version TEXT
+  - target TEXT NULL
+
+- profile_history: audit for changes (optional but helpful)
+  - id INTEGER PK
+  - profile_id INTEGER FK -> env_profiles(id)
+  - action TEXT CHECK(action IN ('create','update','clone','select'))
+  - data JSON
+  - created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+- variables: future-proof table keyed by (profile_id, mem_area, mem_type, offset)
+  - id INTEGER PK
+  - profile_id INTEGER FK -> env_profiles(id)
+  - mem_area TEXT CHECK(mem_area IN ('rtos','rack','sbmu'))  -- extensible later
+  - mem_type TEXT  -- sm16, sm8, hold, input, bits, coils, etc.
+  - offset TEXT     -- can be int, hex, or name (store as string; UI will format)
+  - value TEXT      -- generic text for now (can add typed columns later)
+  - updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+2) Data server changes (FastAPI + SQLAlchemy)
+We’ll add:
+- DB init with SQLAlchemy (sqlite:///rbms.db)
+- Models + Pydantic schemas
+- Endpoints:
+  - GET /api/profiles        -> list profiles
+  - POST /api/profiles       -> create or update a profile
+  - POST /api/profiles/select -> set “active” profile (if you want a single active, we’ll track it in a meta table or config)
+  - POST /api/profiles/clone -> clone an existing profile into a new one (optionally change version/target)
+  - GET /api/active_profile  -> fetch active selection
+  - (future) variables endpoints; for now we’ll just persist capability
+
+We’ll keep your existing endpoints intact.
+
+Drop-in code for data_server.py (added parts only; keep your current mock endpoints too)
+
+Add imports and DB setup at top:
+
+```python
+from fastapi import FastAPI, Request, HTTPException
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, List
+from sqlalchemy import (create_engine, Column, Integer, String, Text, JSON, TIMESTAMP,
+                        ForeignKey, CheckConstraint, func)
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
+import os
+
+DB_URL = os.environ.get("RBMS_DB_URL", "sqlite:///rbms.db")
+
+engine = create_engine(DB_URL, connect_args={"check_same_thread": False} if DB_URL.startswith("sqlite") else {})
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+Base = declarative_base()
+```
+
+Define models:
+
+```python
+class EnvProfile(Base):
+    __tablename__ = "env_profiles"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)  # e.g., "default" or "lab-A"
+    build = Column(String, nullable=False)              # hatteras|warwick|factory
+    version = Column(String, nullable=False)            # e.g., "0.3.34"
+    target = Column(String, nullable=True)              # install name
+
+    __table_args__ = (
+        CheckConstraint("build in ('hatteras','warwick','factory')", name="ck_build"),
+    )
+
+
+class ProfileHistory(Base):
+    __tablename__ = "profile_history"
+    id = Column(Integer, primary_key=True)
+    profile_id = Column(Integer, ForeignKey("env_profiles.id"), nullable=False)
+    action = Column(String, nullable=False)  # create|update|clone|select
+    data = Column(JSON, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+    profile = relationship("EnvProfile")
+
+
+class Variable(Base):
+    __tablename__ = "variables"
+    id = Column(Integer, primary_key=True)
+    profile_id = Column(Integer, ForeignKey("env_profiles.id"), nullable=False)
+    mem_area = Column(String, nullable=False)   # rtos|rack|sbmu (extensible later)
+    mem_type = Column(String, nullable=False)   # sm16|sm8|hold|input|bits|coils|...
+    offset = Column(String, nullable=False)     # int/hex/name stored as text
+    value = Column(Text, nullable=True)
+    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+```
+
+Create tables and initialize a default profile if none:
+
+```python
+def init_db():
+    Base.metadata.create_all(engine)
+    with SessionLocal() as db:
+        # ensure a default profile exists
+        prof = db.query(EnvProfile).filter_by(name="default").first()
+        if not prof:
+            prof = EnvProfile(name="default", build="hatteras", version="0.3.34", target=None)
+            db.add(prof)
+            db.add(ProfileHistory(profile=prof, action="create", data={"build": prof.build, "version": prof.version, "target": prof.target}))
+            db.commit()
+
+init_db()
+```
+
+Pydantic schemas:
+
+```python
+class ProfileIn(BaseModel):
+    name: str = Field(..., description="Profile label, e.g. 'default'")
+    build: str = Field(..., regex="^(hatteras|warwick|factory)$")
+    version: str = Field(..., description="e.g. 0.3.34")
+    target: Optional[str] = None
+
+class ProfileOut(BaseModel):
+    id: int
+    name: str
+    build: str
+    version: str
+    target: Optional[str]
+
+class CloneIn(BaseModel):
+    source_name: str
+    new_name: str
+    new_version: Optional[str] = None
+    new_target: Optional[str] = None
+
+class SelectIn(BaseModel):
+    name: str
+```
+
+Active profile tracking
+Simplest: “active” is the profile named “default”. To change active, either:
+- switch what “default” points to (rename swap), or
+- keep a meta table. Let’s add a tiny meta table.
+
+Add:
+
+```python
+from sqlalchemy import UniqueConstraint
+
+class MetaKV(Base):
+    __tablename__ = "meta_kv"
+    id = Column(Integer, primary_key=True)
+    k = Column(String, unique=True, nullable=False)
+    v = Column(String, nullable=True)
+
+def set_active_profile(db: Session, name: str):
+    kv = db.query(MetaKV).filter_by(k="active_profile").first()
+    if not kv:
+        kv = MetaKV(k="active_profile", v=name)
+        db.add(kv)
+    else:
+        kv.v = name
+    db.commit()
+
+def get_active_profile_name(db: Session) -> str:
+    kv = db.query(MetaKV).filter_by(k="active_profile").first()
+    if kv and kv.v:
+        return kv.v
+    # fallback to 'default'
+    return "default"
+```
+
+Ensure meta table exists:
+
+```python
+def init_db():
+    Base.metadata.create_all(engine)
+    with SessionLocal() as db:
+        if not db.query(EnvProfile).filter_by(name="default").first():
+            prof = EnvProfile(name="default", build="hatteras", version="0.3.34", target=None)
+            db.add(prof)
+            db.add(ProfileHistory(profile=prof, action="create", data={"build": prof.build, "version": prof.version, "target": prof.target}))
+            db.commit()
+        # set active if missing
+        if get_active_profile_name(db) is None:
+            set_active_profile(db, "default")
+```
+
+Endpoints for profiles:
+
+```python
+@app.get("/api/profiles", response_model=List[ProfileOut])
+def list_profiles():
+    with SessionLocal() as db:
+        rows = db.query(EnvProfile).all()
+        return [ProfileOut(id=r.id, name=r.name, build=r.build, version=r.version, target=r.target) for r in rows]
+
+@app.get("/api/active_profile", response_model=ProfileOut)
+def active_profile():
+    with SessionLocal() as db:
+        name = get_active_profile_name(db)
+        prof = db.query(EnvProfile).filter_by(name=name).first()
+        if not prof:
+            raise HTTPException(404, "Active profile not found")
+        return ProfileOut(id=prof.id, name=prof.name, build=prof.build, version=prof.version, target=prof.target)
+
+@app.post("/api/profiles", response_model=ProfileOut)
+def upsert_profile(p: ProfileIn):
+    with SessionLocal() as db:
+        prof = db.query(EnvProfile).filter_by(name=p.name).first()
+        if prof:
+            prof.build = p.build
+            prof.version = p.version
+            prof.target = p.target
+            db.add(ProfileHistory(profile=prof, action="update", data=p.dict()))
+        else:
+            prof = EnvProfile(name=p.name, build=p.build, version=p.version, target=p.target)
+            db.add(prof)
+            db.flush()
+            db.add(ProfileHistory(profile=prof, action="create", data=p.dict()))
+        db.commit()
+        return ProfileOut(id=prof.id, name=prof.name, build=prof.build, version=prof.version, target=prof.target)
+
+@app.post("/api/profiles/select")
+def select_profile(sel: SelectIn):
+    with SessionLocal() as db:
+        prof = db.query(EnvProfile).filter_by(name=sel.name).first()
+        if not prof:
+            raise HTTPException(404, "Profile not found")
+        set_active_profile(db, sel.name)
+        db.add(ProfileHistory(profile=prof, action="select", data={"name": sel.name}))
+        db.commit()
+        return {"ok": True, "active": sel.name}
+
+@app.post("/api/profiles/clone", response_model=ProfileOut)
+def clone_profile(c: CloneIn):
+    with SessionLocal() as db:
+        src = db.query(EnvProfile).filter_by(name=c.source_name).first()
+        if not src:
+            raise HTTPException(404, "Source profile not found")
+        if db.query(EnvProfile).filter_by(name=c.new_name).first():
+            raise HTTPException(409, "New profile name already exists")
+
+        new_prof = EnvProfile(
+            name=c.new_name,
+            build=src.build,
+            version=c.new_version if c.new_version is not None else src.version,
+            target=c.new_target if c.new_target is not None else src.target
+        )
+        db.add(new_prof)
+        db.flush()
+        # Optional: clone variables for this profile
+        vars_src = db.query(Variable).filter_by(profile_id=src.id).all()
+        for v in vars_src:
+            db.add(Variable(
+                profile_id=new_prof.id,
+                mem_area=v.mem_area,
+                mem_type=v.mem_type,
+                offset=v.offset,
+                value=v.value
+            ))
+        db.add(ProfileHistory(profile=new_prof, action="clone",
+                              data={"from": src.name, "version": new_prof.version, "target": new_prof.target}))
+        db.commit()
+        return ProfileOut(id=new_prof.id, name=new_prof.name, build=new_prof.build, version=new_prof.version, target=new_prof.target)
+```
+
+Note: Your existing POST /vars can later write into Variable for the active profile. For now, we leave it unchanged or you can wire it to the active profile easily.
+
+3) Frontend (dash) control for build/version/target + clone
+Minimal UI additions (in your controls tab driven from dash.json):
+
+- Add a “Profile” card with:
+  - Select Build: hatteras/warwick/factory (dropdown)
+  - Version: text input default 0.3.34
+  - Target: text input (optional)
+  - Name: text input (profile name; defaults to “default”)
+  - Buttons: Save Profile, Set Active, Clone
+
+Wire to endpoints:
+- Save Profile -> POST /api/profiles with {name, build, version, target}
+- Set Active -> POST /api/profiles/select with {name}
+- Clone -> prompt for new name/version/target -> POST /api/profiles/clone
+
+Example JS helpers:
+
+```js
+async function saveProfile({name, build, version, target}) {
+  return postJSON('/api/profiles', { name, build, version, target });
+}
+async function setActiveProfile(name) {
+  return postJSON('/api/profiles/select', { name });
+}
+async function cloneProfile({source_name, new_name, new_version, new_target}) {
+  return postJSON('/api/profiles/clone', { source_name, new_name, new_version, new_target });
+}
+async function getActiveProfile() {
+  return getJSON('/api/active_profile');
+}
+async function listProfiles() {
+  return getJSON('/api/profiles');
+}
+```
+
+UI logic suggestion:
+- On load, call getActiveProfile() and set the dropdowns/inputs.
+- “Save Profile” updates/creates (by name).
+- “Set Active” switches active.
+- “Clone” opens a small dialog with new name and optional new version/target.
+
+4) Clone semantics
+- Cloning copies the profile metadata and all variables for that profile (so edits are isolated per version/target).
+- You can choose to auto-select the new profile post-clone (optional).
+
+5) Variables storage model (future-ready)
+We’ve created the variables table keyed by profile_id + mem_area + mem_type + offset, with flexible offset type and value as TEXT. Later, the UI editor can:
+- filter by mem_area and mem_type
+- show offsets with display modes (int/hex/name)
+- edit values in-place
+- batch upload/download
+
+Hooking /vars to DB (optional now, simple path)
+If you want /vars GET/POST to read/write Variable for the active profile immediately:
+
+Add helpers:
+
+```python
+def resolve_active_profile(db: Session) -> EnvProfile:
+    name = get_active_profile_name(db)
+    prof = db.query(EnvProfile).filter_by(name=name).first()
+    if not prof:
+        raise HTTPException(404, "Active profile not found")
+    return prof
+```
+
+Replace POST /vars:
+
+```python
+@app.post("/vars")
+async def update_vars(request: Request):
+    payload = await request.json()
+    with SessionLocal() as db:
+        prof = resolve_active_profile(db)
+        # For simplicity, assume keys are "mem_area.mem_type.offset" or plain names you map later.
+        # For now, just store as named offsets under mem_area='rtos', mem_type='hold' by default (placeholder).
+        for k, v in payload.items():
+            row = db.query(Variable).filter_by(profile_id=prof.id, mem_area='rtos', mem_type='hold', offset=str(k)).first()
+            if not row:
+                row = Variable(profile_id=prof.id, mem_area='rtos', mem_type='hold', offset=str(k), value=str(v))
+                db.add(row)
+            else:
+                row.value = str(v)
+        db.commit()
+        return {"ok": True}
+```
+
+Replace GET /vars to prefer DB (active profile), falling back to your mocks when not found. Since you asked to “start simple,” you can keep mocks for now and wire this later.
+
+Frontend minimal changes summary
+- Add a Controls card to select build/version/target/name with buttons that call the above endpoints.
+- Optionally display the current active profile at the top of the page.
+
+Next steps I can deliver on request
+- Exact HTML/JS for a new “Profile” control card in your current dash (static or dash.json‑driven).
+- Fully wire /vars to the Variable table with mem_area/mem_type/offset parsing.
+- Migration to Postgres (SQLAlchemy URL + create tables).
+- Small toast notifications on save/select/clone.
+
+Tell me if you want me to:
+A) Paste the exact code blocks to drop into your existing data_server.py (full sections), and
+B) Provide the front-end widget code (HTML + JS) for the Profile selector and Clone button.
+
+=========================================================================================================
