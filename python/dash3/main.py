@@ -30,7 +30,7 @@ app = FastAPI(title="RBMS Dashboard Frontend")
 # Globals (will be overridden by CLI args or env vars)
 # -----------------------------------------------------------------
 DATA_SERVER_HOST = os.environ.get("DATA_SERVER_HOST", "localhost")
-DATA_SERVER_PORT = int(os.environ.get("DATA_SERVER_PORT", "8081"))
+DATA_SERVER_PORT = int(os.environ.get("DATA_SERVER_PORT", "8085"))
 DATA_SERVER_URL = f"http://{DATA_SERVER_HOST}:{DATA_SERVER_PORT}"
 
 # -----------------------------------------------------------------
@@ -61,6 +61,7 @@ async def proxy_to_data_server(path: str, request: Request):
     """Forward request to the configured data server."""
     async with httpx.AsyncClient() as client:
         url = f"{DATA_SERVER_URL}{path}"
+        print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>[DEBUG] proxying -> {url}")
         if request.method == "GET":
             params = dict(request.query_params)
             resp = await client.get(url, params=params)
@@ -113,6 +114,7 @@ async def button_proxy(name: str, request: Request):
 # -----------------------------------------------------------------
 @app.get("/api/profiles")
 async def profiles_list_proxy(request: Request):
+    print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>[DEBUG] get /api/profiles")
     return await proxy_to_data_server("/api/profiles", request)
 
 @app.get("/api/active_profile")

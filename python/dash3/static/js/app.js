@@ -1,4 +1,6 @@
 let DASH=null, ACTIVE_TAB=null, WIDGETS=[], POLL_T=null;
+let activeTabIndex = 0;       // currently‑visible tab index
+const tabs = [];              // collected tab descriptors
 
 function renderTabs(tabs){
   const el=document.getElementById('tabs'); el.innerHTML='';
@@ -12,6 +14,7 @@ function renderTabs(tabs){
 
 function switchTab(tabId){
   ACTIVE_TAB = tabId;
+  activeTabIndex = tabId;
   const container=document.getElementById('pages'); container.innerHTML='';
 
   if (tabId === 'controls') { controlsPage(container, DASH.controls); stopPolling(); return; }
@@ -37,7 +40,20 @@ function switchTab(tabId){
   startPolling();
 }
 
-function collectSeriesNamesForActiveTab(){
+function collectSeriesNamesForActiveTab() {
+  const active = tabs[activeTabIndex];
+  const names = [];
+  if (!active || !Array.isArray(active.widgets)) return names;
+
+  for (const w of active.widgets) {
+    if (w && w.cfg && Array.isArray(w.cfg.series)) {
+      for (const s of w.cfg.series) if (s?.name) names.push(s.name);
+    }
+  }
+  return names;
+}
+
+function xxcollectSeriesNamesForActiveTab(){
   const names=new Set();
   for (const w of WIDGETS){
     if (w.cfg.series) for (const s of w.cfg.series) if (s && s.name) names.add(s.name);
@@ -45,7 +61,65 @@ function collectSeriesNamesForActiveTab(){
   return Array.from(names);
 }
 
-async function pollOnce(){
+// ---------------------------------------------------------
+// Helper to append ?profile=<activeProfile> to any URL
+// ---------------------------------------------------------
+function withProfileURL(baseURL) {
+  const url = new URL(baseURL, window.location.origin);
+  if (window.activeProfile) url.searchParams.set('profile', window.activeProfile);
+  return url.toString();
+}
+
+async function pollOnce() {
+  // collect all active series names
+  const names = collectSeriesNamesForActiveTab();
+
+  // compute max window length safely across all widgets with valid cfg
+  const windowSec = Math.max(
+    ...(
+      WIDGETS
+        .filter(w => w && w.cfg && Array.isArray(w.cfg.series))
+        .flatMap(w =>
+          w.cfg.series.map(s => s.windowSec || 60)
+        )
+    ),
+    60 // default
+  );
+
+  let cache = {};
+
+  if (names.length) {
+    try {
+      const js = await getJSON(
+        withProfileURL('/series' + qparams({ names: names.join(','), window: windowSec }))
+      );
+      // const js = await getJSON('/series' + qparams({
+      //   names: names.join(','),
+      //   window: windowSec
+      // }));
+      cache = js.series || {};
+    } catch (err) {
+      console.warn('Polling failed:', err);
+    }
+  }
+
+  // tick each widget safely
+  for (const w of WIDGETS) {
+    if (!w || typeof w.tick !== 'function') continue;
+
+    try {
+      if (w.cfg && w.cfg.type === 'table') {
+        await w.tick();
+      } else {
+        await w.tick(cache);
+      }
+    } catch (err) {
+      console.warn('Widget tick error:', w, err);
+    }
+  }
+}
+
+async function pollOnce1(){
   const names = collectSeriesNamesForActiveTab();
   const windowSec = Math.max(...(WIDGETS.flatMap(w => (w.cfg.series||[]).map(s=>s.windowSec||60))), 60);
   let cache = {};

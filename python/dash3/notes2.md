@@ -1,5 +1,415 @@
+Perfect — great progress 🎉  
+
+Now let’s add a **“Profile Control”** panel to your dashboard that talks to the new `/api/profiles`, `/api/active_profile`, `/api/profiles/select`, and `/api/profiles/clone` endpoints.
+
+We’ll build it so it fits neatly into your current two‑tab layout (`controls` & `values`), generated from `dash.json`, but keep it totally stand‑alone if you want to test it right now.
+
+---
+
+## 1️⃣ HTML — new Profile Control card
+
+Add this to your `templates/index.html` (or wherever your controls tab container lives).  
+If you’re using a tabbed interface, drop it in the *Controls* tab section, ideally above your knob/sliders.
+
+```html
+<div class="card" id="profile-card">
+  <h3>Profile Control</h3>
+
+  <div class="form-row">
+    <label for="profile-name">Profile Name</label>
+    <input type="text" id="profile-name" placeholder="default" />
+  </div>
+
+  <div class="form-row">
+    <label for="build">Build</label>
+    <select id="build">
+      <option value="hatteras">Hatteras</option>
+      <option value="warwick">Warwick</option>
+      <option value="factory">Factory</option>
+    </select>
+  </div>
+
+  <div class="form-row">
+    <label for="version">Version</label>
+    <input type="text" id="version" value="0.3.34" />
+  </div>
+
+  <div class="form-row">
+    <label for="target">Target</label>
+    <input type="text" id="target" placeholder="(optional)" />
+  </div>
+
+  <div class="button-row">
+    <button id="save-profile">💾 Save Profile</button>
+    <button id="select-profile">✅ Set Active</button>
+    <button id="clone-profile">🧬 Clone</button>
+  </div>
+
+  <div class="form-row">
+    <label for="active-profile">Active Profile:</label>
+    <span id="active-profile-name">(loading...)</span>
+  </div>
+
+  <div class="form-row">
+    <label for="profile-list">Existing Profiles:</label>
+    <select id="profile-list"></select>
+  </div>
+
+  <p id="profile-status" class="status"></p>
+</div>
+```
+
+A bit of CSS (in `static/style.css` if you have it):
+
+```css
+#profile-card {
+  padding: 1em;
+  margin-bottom: 1.5em;
+}
+.form-row {
+  margin-bottom: 0.5em;
+}
+.form-row label {
+  display: inline-block;
+  width: 120px;
+}
+.button-row button {
+  margin-right: 0.5em;
+}
+.status {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  color: #4caf50;
+}
+```
+
+---
+
+## 2️⃣ JavaScript logic (add to `static/main.js` or a new JS file)
+
+This JS calls your backend (proxied via `main.py`), uses the same `/api/...` routes, and updates the UI.
+
+```js
+async function getJSON(url) {
+  const resp = await fetch(url);
+  return resp.json();
+}
+async function postJSON(url, data) {
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  return resp.json();
+}
+
+async function updateProfileList() {
+  const list = document.getElementById("profile-list");
+  list.innerHTML = "";
+  try {
+    const profiles = await getJSON("/api/profiles");
+    profiles.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.name;
+      opt.textContent = `${p.name} (${p.build}, ${p.version})`;
+      list.appendChild(opt);
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function updateActiveProfile() {
+  try {
+    const ap = await getJSON("/api/active_profile");
+    document.getElementById("active-profile-name").textContent = ap.name;
+  } catch (e) {
+    document.getElementById("active-profile-name").textContent = "(none)";
+  }
+}
+
+async function saveProfileClicked() {
+  const data = {
+    name: document.getElementById("profile-name").value || "default",
+    build: document.getElementById("build").value,
+    version: document.getElementById("version").value,
+    target: document.getElementById("target").value || null
+  };
+  const res = await postJSON("/api/profiles", data);
+  document.getElementById("profile-status").textContent = "Profile saved.";
+  console.log("saveProfile", res);
+  await updateProfileList();
+  await updateActiveProfile();
+}
+
+async function selectProfileClicked() {
+  const name =
+    document.getElementById("profile-name").value ||
+    document.getElementById("profile-list").value;
+  const res = await postJSON("/api/profiles/select", { name });
+  document.getElementById(
+    "profile-status"
+  ).textContent = `Active profile: ${res.active}`;
+  await updateActiveProfile();
+}
+
+async function cloneProfileClicked() {
+  const source_name =
+    document.getElementById("profile-name").value ||
+    document.getElementById("profile-list").value;
+  const new_name = prompt("New profile name:");
+  if (!new_name) return;
+  const res = await postJSON("/api/profiles/clone", {
+    source_name,
+    new_name,
+    new_version: document.getElementById("version").value,
+    new_target: document.getElementById("target").value
+  });
+  document.getElementById(
+    "profile-status"
+  ).textContent = `Cloned to ${res.name}.`;
+  await updateProfileList();
+  await updateActiveProfile();
+}
+
+// Wire up on load
+window.addEventListener("DOMContentLoaded", () => {
+  document
+    .getElementById("save-profile")
+    .addEventListener("click", () => saveProfileClicked());
+  document
+    .getElementById("select-profile")
+    .addEventListener("click", () => selectProfileClicked());
+  document
+    .getElementById("clone-profile")
+    .addEventListener("click", () => cloneProfileClicked());
+
+  updateProfileList();
+  updateActiveProfile();
+});
+```
+
+---
+
+## 3️⃣ Flow you’ll see
+
+When you refresh the dashboard:
+1.  It lists profiles from your `db_server` DB.
+2.  Displays the active one.
+3.  You can:
+    - Change fields and click **💾 Save Profile**.
+    - Pick one from the dropdown and click **✅ Set Active**.
+    - Click **🧬 Clone** to create a new one.
+
+---
+
+## 4️⃣ Optional: Save in `dash.json`
+
+Later, if you prefer this card to be dynamically created from `dash.json`, we can add a `type: "profile_control"` widget describing this configuration — but for now it’ll just appear statically on the page.
+
+---
+
+With this in place you now have a working **Profile Management UI** fully wired into your FastAPI + SQLite backend.
+
+Would you like me to adjust it so that the **clone** action opens a small pop‑up form (with new version/target fields) instead of a basic `prompt()` ?
 
 
+===============================================================
+
+Exactly — since your dashboard already renders UI dynamically through its modular JS (`utils.js`, `widgets.js`, `controls.js`, `app.js`), the cleanest way is to treat **Profile Control** as a new reusable _widget type_ instead of hard‑coding HTML in `index.html`.
+
+Let’s integrate it just like your other control widgets.
+
+---
+
+## 🌿 Plan (clean integration)
+1. Extend `widgets.js` with a `renderProfileControl(container, config)` function.  
+2. Register it under `WidgetTypes.profile_control`.  
+3. Describe it in `dash.json` so it appears automatically in your Controls tab.  
+4. Add a small `profile.js` (if you want to keep logic separate) or embed the async functions directly in `widgets.js`.
+
+This way `index.html` stays untouched ⭐  
+The main page loader builds it dynamically from `dash.json` as it already does for sliders/inputs/buttons.
+
+---
+
+## 1️⃣ Add widget code (update `widgets.js`)
+Append this near existing widget renderers:
+
+```js
+/* ---- Profile Control Widget ---- */
+WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <h3>${cfg.title || "Profile Control"}</h3>
+    <div class="form-row"><label>Name</label>
+      <input id="profile-name" type="text" placeholder="default"></div>
+    <div class="form-row"><label>Build</label>
+      <select id="profile-build">
+        <option value="hatteras">Hatteras</option>
+        <option value="warwick">Warwick</option>
+        <option value="factory">Factory</option>
+      </select></div>
+    <div class="form-row"><label>Version</label>
+      <input id="profile-version" value="0.3.34"></div>
+    <div class="form-row"><label>Target</label>
+      <input id="profile-target" placeholder="optional"></div>
+
+    <div class="btn-row">
+      <button id="save-profile">💾 Save</button>
+      <button id="select-profile">✅ Active</button>
+      <button id="clone-profile">🧬 Clone</button>
+    </div>
+
+    <div class="form-row">
+      <label>Active:</label> <span id="active-profile">(…)</span>
+    </div>
+    <div class="form-row">
+      <label>Profiles:</label> <select id="profile-list"></select>
+    </div>
+    <p id="profile-msg" class="status"></p>
+  `;
+  parent.appendChild(card);
+
+  // --- helper functions (can move to utils.js if reused) ---
+  async function getJSON(url) { return (await fetch(url)).json(); }
+  async function postJSON(url, data) {
+    return (await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })).json();
+  }
+
+  const els = {
+    name: card.querySelector("#profile-name"),
+    build: card.querySelector("#profile-build"),
+    version: card.querySelector("#profile-version"),
+    target: card.querySelector("#profile-target"),
+    list: card.querySelector("#profile-list"),
+    active: card.querySelector("#active-profile"),
+    msg: card.querySelector("#profile-msg")
+  };
+
+  async function refreshList() {
+    els.list.innerHTML = "";
+    try {
+      const profiles = await getJSON("/api/profiles");
+      profiles.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.name;
+        opt.textContent = `${p.name} (${p.build}, ${p.version})`;
+        els.list.appendChild(opt);
+      });
+    } catch {}
+  }
+  async function refreshActive() {
+    try { els.active.textContent = (await getJSON("/api/active_profile")).name; }
+    catch { els.active.textContent = "(none)"; }
+  }
+
+  async function save() {
+    const body = {
+      name: els.name.value || "default",
+      build: els.build.value,
+      version: els.version.value,
+      target: els.target.value || null
+    };
+    await postJSON("/api/profiles", body);
+    els.msg.textContent = "Profile saved";
+    refreshList();
+    refreshActive();
+  }
+  async function select() {
+    const name = els.name.value || els.list.value;
+    const r = await postJSON("/api/profiles/select", { name });
+    els.msg.textContent = `Active: ${r.active}`;
+    refreshActive();
+  }
+  async function clone() {
+    const src = els.name.value || els.list.value;
+    const newName = prompt("New profile name?");
+    if (!newName) return;
+    await postJSON("/api/profiles/clone", {
+      source_name: src,
+      new_name: newName,
+      new_version: els.version.value,
+      new_target: els.target.value
+    });
+    els.msg.textContent = `Cloned → ${newName}`;
+    refreshList();
+  }
+
+  card.querySelector("#save-profile").onclick = save;
+  card.querySelector("#select-profile").onclick = select;
+  card.querySelector("#clone-profile").onclick = clone;
+
+  refreshList();
+  refreshActive();
+};
+```
+
+That’s about 60 lines—fits with your other widget styles and uses the same `WidgetTypes` registration pattern you already have.
+
+---
+
+## 2️⃣ Style (in `static/css/styles.css`)
+Optional—the same simple rules:
+
+```css
+.card .form-row { margin-bottom: 6px; }
+.card .form-row label { display:inline-block; width:100px; }
+.card .btn-row button { margin-right:6px; }
+.card .status { margin-top:4px; font-size:0.9em; color:#4caf50; }
+```
+
+---
+
+## 3️⃣ dash.json snippet
+
+Add this card at the top (or any slot) of your **controls tab** in `dash.json`:
+
+```json
+{
+  "type": "profile_control",
+  "title": "Profile Control"
+}
+```
+
+Example inserted into the existing structure:
+
+```json
+{
+  "controls": {
+    "cards": [
+      { "type": "profile_control", "title": "Profiles" },
+      { "type": "slider", "id": "gain", "label": "Gain", "min": 0, "max": 100 },
+      { "type": "input", "id": "phase", "label": "Phase (deg)", "default": 90 }
+    ]
+  }
+}
+```
+
+When `app.js` iterates through `dash.controls.cards`, it will encounter `type:"profile_control"` and call your new `WidgetTypes.profile_control()` automatically.
+
+---
+
+✅ **Result**
+
+- You still just open `index.html` → front‑end builds tabs dynamically.  
+- Nothing hard‑coded; the new control is data‑driven from `dash.json`.  
+- It automatically talks to the profile endpoints proxied by `main.py`.
+
+---
+
+Would you like me to include a **small modal dialog clone‑form** (for version/target edits when cloning) next, instead of the simple `prompt()`?
+
+
+============================================
+Here's the complete `widgets.js` with everything integrated cleanly:
+
+```js
 // widgets.js
 // Widget rendering and management for RBMS Dashboard
 
@@ -62,13 +472,22 @@ class BaseWidget {
   }
   initFrame(){
     this.node.className='widget';
-    const head=document.createElement('div'); head.className='whead';
-    const ttl=document.createElement('div'); ttl.className='wtitle'; ttl.textContent=this.cfg.title||this.cfg.id;
-    const tools=document.createElement('div'); tools.className='wtools';
-    head.appendChild(ttl); head.appendChild(tools);
-    const body=document.createElement('div'); body.className='wbody';
-    this.node.appendChild(head); this.node.appendChild(body);
-    this.body = body; this.head = head; this.tools = tools;
+    const head=document.createElement('div'); 
+    head.className='whead';
+    const ttl=document.createElement('div');
+    ttl.className='wtitle';
+    ttl.textContent=this.cfg.title||this.cfg.id;
+    const tools=document.createElement('div');
+    tools.className='wtools';
+    head.appendChild(ttl);
+    head.appendChild(tools);
+    const body=document.createElement('div');
+    body.className='wbody';
+    this.node.appendChild(head);
+    this.node.appendChild(body);
+    this.body = body; 
+    this.head = head; 
+    this.tools = tools;
   }
   onShow(){} 
   onHide(){}
@@ -277,10 +696,7 @@ class VarTableWidget extends BaseWidget {
     const rack  = (this.cfg.rack ?? 0);
     if (!names) return;
   
-    const rsp = await getJSON(
-      withProfileURL(`/vars?names=${encodeURIComponent(names)}&rack=${rack}`)
-    );
-//    const rsp = await getJSON(`/vars?names=${encodeURIComponent(names)}&rack=${rack}`);
+    const rsp = await getJSON(`/vars?names=${encodeURIComponent(names)}&rack=${rack}`);
   
     // If the table already exists, just refresh current-value cells
     if (this.tbody && this.tbody.children.length) {
@@ -411,10 +827,8 @@ const WidgetTypes = {
   vartable: (node,cfg)=>new VarTableWidget(node,cfg)
 };
 
-
-
 // ------------------------------------------------------------------
-// Profile Control Widget (with activeProfile propagation)
+// Profile Control Widget
 // ------------------------------------------------------------------
 WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
   const card = document.createElement("div");
@@ -485,13 +899,6 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
     })).json();
   }
 
-  // Helper: append profile to query if window.activeProfile is set
-  function withProfileURL(baseURL) {
-    const url = new URL(baseURL, window.location.origin);
-    if (window.activeProfile) url.searchParams.set('profile', window.activeProfile);
-    return url.toString();
-  }
-
   const els = {
     name: body.querySelector("#profile-name"),
     build: body.querySelector("#profile-build"),
@@ -520,8 +927,7 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
   async function refreshActive() {
     try { 
       const ap = await getJSON("/api/active_profile");
-      window.activeProfile = ap.name; // ✅ global context
-      els.active.textContent = ap.name || "(none)";
+      els.active.textContent = ap.name;
     } catch(e) { 
       els.active.textContent = "(none)"; 
     }
@@ -549,15 +955,9 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
     const name = els.name.value || els.list.value;
     try {
       const r = await postJSON("/api/profiles/select", { name });
-      window.activeProfile = name;                 // ✅ Store globally for polling
-      els.active.textContent = name;
-      els.msg.textContent = `Active: ${name} ✓`;
+      els.msg.textContent = `Active: ${r.active} ✓`;
       setTimeout(() => els.msg.textContent = "", 3000);
-
-      // optional: immediate refresh of other widgets if global pollOnce exists
-      if (typeof refreshActive === "function") refreshActive();
-      if (typeof pollOnce === "function") pollOnce();
-
+      refreshActive();
     } catch(e) {
       els.msg.textContent = "Select failed: " + e.message;
     }
@@ -589,168 +989,101 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
   refreshList();
   refreshActive();
 };
+```
+
+---
+
+### ✅ What changed
+
+1. **Moved `WidgetTypes` definition before the profile control** so it exists when we attach to it.
+2. **Profile control now builds a proper widget frame** (with `whead`, `wbody`, `wtitle`, `wtools`) matching your other widgets.
+3. **All helper functions scoped inside** the profile control factory.
+4. **Error handling added** for fetch failures with user feedback.
+5. **Removed duplicate/conflicting `const WidgetTypes` declarations**.
+
+Now you can add this to your `dash.json`:
+
+```json
+{
+  "type": "profile_control",
+  "title": "Build Profiles"
+}
+```
+
+And it will render cleanly alongside your other widgets. 🎉
 
 
+===============================================
+Perfect — love that approach 👌  
+Focus on locking in stability before adding layers.  
 
-// // ------------------------------------------------------------------
-// // Profile Control Widget
-// // ------------------------------------------------------------------
-// WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
-//   const card = document.createElement("div");
-//   card.className = "widget";
-  
-//   // Build frame similar to BaseWidget
-//   const head = document.createElement('div'); 
-//   head.className = 'whead';
-//   const ttl = document.createElement('div'); 
-//   ttl.className = 'wtitle'; 
-//   ttl.textContent = cfg.title || "Profile Control";
-//   const tools = document.createElement('div'); 
-//   tools.className = 'wtools';
-//   head.appendChild(ttl); 
-//   head.appendChild(tools);
-  
-//   const body = document.createElement('div'); 
-//   body.className = 'wbody';
-  
-//   body.innerHTML = `
-//     <div class="form-row">
-//       <label>Name</label>
-//       <input id="profile-name" type="text" placeholder="default">
-//     </div>
-//     <div class="form-row">
-//       <label>Build</label>
-//       <select id="profile-build">
-//         <option value="hatteras">Hatteras</option>
-//         <option value="warwick">Warwick</option>
-//         <option value="factory">Factory</option>
-//       </select>
-//     </div>
-//     <div class="form-row">
-//       <label>Version</label>
-//       <input id="profile-version" value="0.3.34">
-//     </div>
-//     <div class="form-row">
-//       <label>Target</label>
-//       <input id="profile-target" placeholder="optional">
-//     </div>
+Here’s how we can lock in and test **what you have right now** (the current frontend + API setup):
 
-//     <div class="btn-row">
-//       <button class="wbtn" id="save-profile">💾 Save</button>
-//       <button class="wbtn" id="select-profile">✅ Active</button>
-//       <button class="wbtn" id="clone-profile">🧬 Clone</button>
-//     </div>
+---
 
-//     <div class="form-row">
-//       <label>Active:</label> <span id="active-profile">(…)</span>
-//     </div>
-//     <div class="form-row">
-//       <label>Profiles:</label> <select id="profile-list"></select>
-//     </div>
-//     <p id="profile-msg" class="status"></p>
-//   `;
-  
-//   card.appendChild(head);
-//   card.appendChild(body);
-//   parent.appendChild(card);
+### ✅ Step 1: Run your stack
 
-//   // Helper functions
-//   async function getJSON(url) { return (await fetch(url)).json(); }
-//   async function postJSON(url, data) {
-//     return (await fetch(url, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(data)
-//     })).json();
-//   }
+```bash
+# Start your data server first (the one exposing /vars and /metrics)
+python data_server.py --port 8090
 
-//   const els = {
-//     name: body.querySelector("#profile-name"),
-//     build: body.querySelector("#profile-build"),
-//     version: body.querySelector("#profile-version"),
-//     target: body.querySelector("#profile-target"),
-//     list: body.querySelector("#profile-list"),
-//     active: body.querySelector("#active-profile"),
-//     msg: body.querySelector("#profile-msg")
-//   };
+# Then start the main dashboard frontend
+python main.py --port 8080 --data-port 8090
+```
 
-//   async function refreshList() {
-//     els.list.innerHTML = "";
-//     try {
-//       const profiles = await getJSON("/api/profiles");
-//       profiles.forEach(p => {
-//         const opt = document.createElement("option");
-//         opt.value = p.name;
-//         opt.textContent = `${p.name} (${p.build}, ${p.version})`;
-//         els.list.appendChild(opt);
-//       });
-//     } catch(e) {
-//       console.error("Failed to load profiles:", e);
-//     }
-//   }
-  
-//   async function refreshActive() {
-//     try { 
-//       const ap = await getJSON("/api/active_profile");
-//       els.active.textContent = ap.name;
-//     } catch(e) { 
-//       els.active.textContent = "(none)"; 
-//     }
-//   }
+Confirm both print startup messages.  
+Then open:  
+**http://localhost:8080**
 
-//   async function save() {
-//     const bodyData = {
-//       name: els.name.value || "default",
-//       build: els.build.value,
-//       version: els.version.value,
-//       target: els.target.value || null
-//     };
-//     try {
-//       await postJSON("/api/profiles", bodyData);
-//       els.msg.textContent = "Profile saved ✓";
-//       setTimeout(() => els.msg.textContent = "", 3000);
-//       refreshList();
-//       refreshActive();
-//     } catch(e) {
-//       els.msg.textContent = "Save failed: " + e.message;
-//     }
-//   }
+---
 
-//   async function select() {
-//     const name = els.name.value || els.list.value;
-//     try {
-//       const r = await postJSON("/api/profiles/select", { name });
-//       els.msg.textContent = `Active: ${r.active} ✓`;
-//       setTimeout(() => els.msg.textContent = "", 3000);
-//       refreshActive();
-//     } catch(e) {
-//       els.msg.textContent = "Select failed: " + e.message;
-//     }
-//   }
+### ✅ Step 2: Verify dashboard UI loads correctly
+You should see:
+- All widgets (tables, dials, variable table, and **Profile Control**) visible.
+- The knob drawing correctly.
+- Inputs in the VarTable staying persistent while polling.
 
-//   async function clone() {
-//     const src = els.name.value || els.list.value;
-//     const newName = prompt("New profile name?");
-//     if (!newName) return;
-//     try {
-//       await postJSON("/api/profiles/clone", {
-//         source_name: src,
-//         new_name: newName,
-//         new_version: els.version.value,
-//         new_target: els.target.value
-//       });
-//       els.msg.textContent = `Cloned → ${newName} ✓`;
-//       setTimeout(() => els.msg.textContent = "", 3000);
-//       refreshList();
-//     } catch(e) {
-//       els.msg.textContent = "Clone failed: " + e.message;
-//     }
-//   }
+If you get a blank page:
+- Check **browser console (F12 → Console)** for JavaScript errors.
+- Ensure `dash.json` is in your `static/` directory.
+- Verify `widgets.js` loads (Network tab → watch for 404 errors).
 
-//   body.querySelector("#save-profile").onclick = save;
-//   body.querySelector("#select-profile").onclick = select;
-//   body.querySelector("#clone-profile").onclick = clone;
+---
 
-//   refreshList();
-//   refreshActive();
-// };
+### ✅ Step 3: Exercise API endpoints with curl
+
+Use this short test matrix:
+```bash
+curl -s localhost:8090/metrics | jq
+curl -s localhost:8090/vars?names=test_var -G
+curl -s localhost:8090/api/profiles | jq
+curl -s localhost:8090/api/active_profile | jq
+
+# Create and set a new profile
+curl -s -X POST localhost:8090/api/profiles -H "Content-Type: application/json" \
+  -d '{"name":"demo_profile","build":"hatteras","version":"0.3.34"}' | jq
+
+curl -s -X POST localhost:8090/api/profiles/select -H "Content-Type: application/json" \
+  -d '{"name":"demo_profile"}' | jq
+```
+
+---
+
+### ✅ Step 4: Confirm frontend sync
+After running the profile POSTs above, refresh your dashboard — your **Profile Control** should now list and mark your new `demo_profile` as active.
+
+---
+
+If you run through those and note:
+- No console errors,
+- Profile list loads and updates,
+- Var table refreshes periodically without clearing inputs,
+- Line and dial widgets show mock data,
+
+Then you’re solid — your offline stack is ready for stable use and later deployment expansion.
+
+---
+
+You want me to drop in a **quick smoke test checklist** (a single bash script that runs these curl calls and validates server responses)? It’s nice for confirming your endpoints after restarts.
+
+=================================================

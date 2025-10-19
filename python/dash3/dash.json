@@ -1,12 +1,14 @@
 
 {
     "tabs": [
+      {"id": "profile", "title": "Profile"},
       {"id": "overview", "title": "Overview"},
       {"id": "controls", "title": "Controls"},
       {"id": "values",   "title": "Values"}
     ],
     "grid": {"cols": 12, "gap": 10, "rowHeight": 90},
     "widgets": [
+      { "type": "profile_control", "title": "Build Profiles", "tab": "profile"},
       {"id": "metrics1", "type": "table", "title": "Links", "tab": "overview", "pos": {"row":1,"col":1,"w":12,"h":4}},
       {"id": "line1",    "type": "line",  "title": "Throughput", "tab": "overview", "pos": {"row":5,"col":1,"w":8,"h":4},
         "series": [{"name":"mbps","windowSec":60}]},

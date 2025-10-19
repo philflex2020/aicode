@@ -16,7 +16,7 @@
 
 # Configuration
 SERVER_HOST="localhost"
-SERVER_PORT="8084"
+SERVER_PORT="8085"
 BASE_URL="http://${SERVER_HOST}:${SERVER_PORT}"
 
 echo "--- Testing db_server.py endpoints ---"
