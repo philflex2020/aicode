@@ -115,6 +115,16 @@ class SelectIn(BaseModel):
 class VarUpdateIn(BaseModel):
     data: Dict[str, Any]
 
+# tlelmetry     
+class TelemetryMeta(Base):
+    __tablename__ = "telemetry_meta"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    label = Column(String, nullable=False)
+    unit = Column(String, nullable=True)
+    category = Column(String, nullable=True)
+
+
 # ------------------------------
 # State init from dash.json (compatibility)
 # ------------------------------
@@ -152,6 +162,17 @@ def init_db():
         if db.query(MetaKV).filter_by(k="active_profile").first() is None:
             db.add(MetaKV(k="active_profile", v="default"))
             db.commit()
+        # Seed telemetry_meta if empty
+        if db.query(TelemetryMeta).count() == 0:
+            seed = [
+                TelemetryMeta(name="mbps",      label="Throughput (Mb/s)",  unit="Mbps", category="network"),
+                TelemetryMeta(name="rtt_ms",    label="Round-trip (ms)",    unit="ms",   category="network"),
+                TelemetryMeta(name="temp_c",    label="Temperature (°C)",   unit="°C",   category="thermal"),
+                TelemetryMeta(name="errors",    label="Error Count",        unit="count",category="network"),
+                TelemetryMeta(name="drops",     label="Packet Drops",       unit="count",category="network"),
+                TelemetryMeta(name="link_state",label="Link Status",        unit="",     category="network"),
+            ]
+            db.add_all(seed)
 
 def set_active_profile(db: Session, name: str):
     kv = db.query(MetaKV).filter_by(k="active_profile").first()
@@ -272,11 +293,61 @@ async def set_state(request: Request):
 def button_action(name: str):
     STATE["buttonPressed"] = name
     return {"ok": True, "pressed": name, "state": STATE}
+#################################################
+@app.post("/vars")
+async def update_vars(request: Request, profile: Optional[str] = None):
+    """
+    Update one or more configuration variables.
+    If ?profile=<name> is given, apply changes to that profile.
+    Otherwise use the current active profile.
+    """
+    payload = await request.json()
+    if not isinstance(payload, dict):
+        raise HTTPException(400, "Expected JSON object {name: value, ...}")
+
+    with SessionLocal() as db:
+        if profile:
+            prof = db.query(EnvProfile).filter_by(name=profile).first()
+            if not prof:
+                raise HTTPException(404, f"Profile '{profile}' not found")
+        else:
+            prof = get_active_profile(db)
+
+        default_area, default_type = "rtos", "hold"
+        updated = {}
+
+        for k, v in payload.items():
+            key = str(k)
+            row = db.query(Variable).filter_by(
+                profile_id=prof.id,
+                mem_area=default_area,
+                mem_type=default_type,
+                offset=key
+            ).first()
+            if row is None:
+                row = Variable(profile_id=prof.id,
+                               mem_area=default_area,
+                               mem_type=default_type,
+                               offset=key,
+                               value=str(v))
+                db.add(row)
+            else:
+                row.value = str(v)
+            updated[key] = str(v)
+
+        db.commit()
+        STATE.update(payload)
+        return {"ok": True, "updated": updated, "profile": prof.name}
+################################################
+
+
+
+
 
 # ------------------------------
 # Vars with DB persistence tied to active profile
 # ------------------------------
-@app.post("/vars")
+@app.post("/xvars")
 async def update_vars(request: Request):
     payload = await request.json()  # e.g., {"gain":"42","phase":"180"}
     if not isinstance(payload, dict):
@@ -301,47 +372,105 @@ async def update_vars(request: Request):
         db.commit()
         STATE.update(payload)
         return {"ok": True, "updated": updated, "profile": prof.name}
-
+##############################################################################
 @app.get("/vars")
-def get_vars(names: str, rack: int = 0):
+def get_vars(names: str, rack: int = 0, profile: Optional[str] = None):
+    """
+    Read current config or telemetry-related variable values.
+    Only manipulates the profile-specific DB when applicable.
+    """
     name_list = [n.strip() for n in names.split(",") if n.strip()]
-    out = {}
+    out: Dict[str, Any] = {}
+
     with SessionLocal() as db:
-        prof = get_active_profile(db)
-        default_area = "rtos"
-        default_type = "hold"
+        if profile:
+            prof = db.query(EnvProfile).filter_by(name=profile).first()
+            if not prof:
+                raise HTTPException(404, f"Profile '{profile}' not found")
+        else:
+            prof = get_active_profile(db)
+
+        default_area, default_type = "rtos", "hold"
+
         for nm in name_list:
+            # --- profile‑specific config vars ---
             row = db.query(Variable).filter_by(
-                profile_id=prof.id, mem_area=default_area, mem_type=default_type, offset=nm
+                profile_id=prof.id,
+                mem_area=default_area,
+                mem_type=default_type,
+                offset=nm
             ).first()
             if row is not None:
                 out[nm] = row.value
                 STATE[nm] = row.value
                 continue
-            if nm in STATE:
-                out[nm] = STATE[nm]
-                db.add(Variable(profile_id=prof.id, mem_area=default_area, mem_type=default_type, offset=nm, value=str(STATE[nm])))
-                db.commit()
-            else:
-                if nm == "link_state":
-                    val = "UP" if random.random() > 0.2 else "DOWN"
-                elif nm == "errors":
-                    val = str(random.randint(0, 5))
-                elif nm == "drops":
-                    val = str(random.randint(0, 3))
-                else:
-                    val = None
+
+            # --- non‑profile system telemetry vars ---
+            if nm in ("link_state", "errors", "drops", "temp_c", "mbps", "rtt_ms"):
+                val = (
+                    "UP" if nm == "link_state" and random.random() > 0.2 else
+                    str(random.randint(0, 5)) if nm == "errors" else
+                    str(random.randint(0, 3)) if nm == "drops" else
+                    str(round(45 + 2 * random.random(), 2))
+                )
                 STATE[nm] = val
                 out[nm] = val
-                db.add(Variable(profile_id=prof.id, mem_area=default_area, mem_type=default_type, offset=nm, value=str(val) if val is not None else None))
-                db.commit()
+                continue
+
+            # --- default fallback / first creation ---
+            val = STATE.get(nm)
+            out[nm] = val
+            db.add(Variable(profile_id=prof.id,
+                            mem_area=default_area,
+                            mem_type=default_type,
+                            offset=nm,
+                            value=str(val) if val is not None else None))
+            db.commit()
+
     return out
+#################################################################################
+# @app.get("/xvars")
+# def get_vars(names: str, rack: int = 0):
+#     name_list = [n.strip() for n in names.split(",") if n.strip()]
+#     out = {}
+#     with SessionLocal() as db:
+#         prof = get_active_profile(db)
+#         default_area = "rtos"
+#         default_type = "hold"
+#         for nm in name_list:
+#             row = db.query(Variable).filter_by(
+#                 profile_id=prof.id, mem_area=default_area, mem_type=default_type, offset=nm
+#             ).first()
+#             if row is not None:
+#                 out[nm] = row.value
+#                 STATE[nm] = row.value
+#                 continue
+#             if nm in STATE:
+#                 out[nm] = STATE[nm]
+#                 db.add(Variable(profile_id=prof.id, mem_area=default_area, mem_type=default_type, offset=nm, value=str(STATE[nm])))
+#                 db.commit()
+#             else:
+#                 if nm == "link_state":
+#                     val = "UP" if random.random() > 0.2 else "DOWN"
+#                 elif nm == "errors":
+#                     val = str(random.randint(0, 5))
+#                 elif nm == "drops":
+#                     val = str(random.randint(0, 3))
+#                 else:
+#                     val = None
+#                 STATE[nm] = val
+#                 out[nm] = val
+#                 db.add(Variable(profile_id=prof.id, mem_area=default_area, mem_type=default_type, offset=nm, value=str(val) if val is not None else None))
+#                 db.commit()
+#     return out
 
 # ------------------------------
 # Metrics and series (unchanged mocks)
 # ------------------------------
+
 @app.get("/metrics")
-def metrics():
+def metrics(profile: Optional[str] = None):
+    # profile ignored intentionally
     rows = []
     for i in range(6):
         rows.append({
@@ -356,27 +485,254 @@ def metrics():
             "ewma_rtt_s": random.random()*0.2,
         })
     return rows
-
+#####################################################################################
 @app.get("/series")
-def series(names: str, window: int = 300):
-    now = int(time.time())
-    name_list = [n.strip() for n in names.split(",") if n.strip()]
-    series: Dict[str, List[List[float]]] = {}
-    for nm in name_list:
-        pts = []
-        for i in range(window // 2):
-            t = now - (window - i*2)
-            if nm == "mbps":
-                val = 50 + 30*math.sin(i/6.0) + random.random()*5
-            elif nm == "rtt_ms":
-                val = 20 + 5*math.sin(i/10.0) + random.random()*3
-            elif nm == "temp_c":
-                val = 45 + 2*math.sin(i/20.0) + random.random()*0.5
-            else:
-                val = random.random()*100
-            pts.append([t, float(val)])
-        series[nm] = pts
-    return {"series": series}
+def get_series(
+    names: Optional[str] = None,
+    window: int = 300,
+    profile: Optional[str] = None,
+):
+    """
+    Telemetry time-series endpoint.
+    - If 'names' is omitted: return metadata list from telemetry_meta table.
+    - Otherwise: generate mock data for requested telemetry names.
+    The 'profile' parameter is accepted but ignored (telemetry is global).
+    """
+    with SessionLocal() as db:
+        # --- Discovery mode ---
+        if not names:
+            rows = db.query(TelemetryMeta).order_by(TelemetryMeta.name).all()
+            return {
+                "available": [
+                    {
+                        "name": r.name,
+                        "label": r.label,
+                        "unit": r.unit,
+                        "category": r.category,
+                    }
+                    for r in rows
+                ]
+            }
+
+        # --- Data generation mode ---
+        now = int(time.time())
+        name_list = [n.strip() for n in names.split(",") if n.strip()]
+
+        # Preload valid telemetry names
+        known = {r.name for r in db.query(TelemetryMeta.name).all()}
+        series: Dict[str, List[List[float]]] = {}
+
+        for nm in name_list:
+            if nm not in known:
+                continue  # skip unknown telemetry name
+
+            pts: List[List[float]] = []
+            for i in range(window // 2):
+                t = now - (window - i * 2)
+                if nm == "mbps":
+                    val = 50 + 30 * math.sin(i / 6.0) + random.random() * 5
+                elif nm == "rtt_ms":
+                    val = 20 + 5 * math.sin(i / 10.0) + random.random() * 3
+                elif nm == "temp_c":
+                    val = 45 + 2 * math.sin(i / 20.0) + random.random() * 0.5
+                elif nm in ("errors", "drops"):
+                    val = random.randint(0, 5)
+                elif nm == "link_state":
+                    val = 1 if random.random() > 0.2 else 0
+                else:
+                    val = random.random() * 100
+                pts.append([t, float(val)])
+            series[nm] = pts
+
+        return {"series": series}
+
+
+
+###########################################################
+from pydantic import BaseModel
+
+# Schema for creating telemetry series entries
+class TelemetryMetaIn(BaseModel):
+    name: str
+    label: str
+    unit: Optional[str] = None
+    category: Optional[str] = None
+
+
+@app.post("/series")
+def create_series(meta: TelemetryMetaIn):
+    """
+    Create or update a telemetry series definition in the database.
+    Example payload:
+    {
+        "name": "voltage_v",
+        "label": "Input Voltage (V)",
+        "unit": "V",
+        "category": "power"
+    }
+    """
+    with SessionLocal() as db:
+        # Check for existing entry by name
+        row = db.query(TelemetryMeta).filter_by(name=meta.name).first()
+        if row:
+            # Update existing record
+            row.label = meta.label
+            row.unit = meta.unit
+            row.category = meta.category
+            action = "updated"
+        else:
+            # Create new record
+            row = TelemetryMeta(
+                name=meta.name,
+                label=meta.label,
+                unit=meta.unit,
+                category=meta.category,
+            )
+            db.add(row)
+            action = "created"
+
+        db.commit()
+        return {
+            "ok": True,
+            "action": action,
+            "name": row.name,
+            "label": row.label,
+            "unit": row.unit,
+            "category": row.category,
+        }
+########################################################
+# @app.get("/series")
+# def series(
+#     names: Optional[str] = None,
+#     window: int = 300,
+#     profile: Optional[str] = None,
+# ):
+#     """
+#     Telemetry time-series endpoint backed by DB metadata.
+#     - If 'names' is omitted, return list of telemetry types from telemetry_meta table.
+#     - Otherwise, generate mock data for the requested names.
+#     The 'profile' parameter is accepted but ignored (telemetry is global).
+#     """
+#     with SessionLocal() as db:
+#         # --- Discovery mode: no names provided ---
+#         if not names:
+#             rows = db.query(TelemetryMeta).order_by(TelemetryMeta.name).all()
+#             catalog = [
+#                 {
+#                     "name": r.name,
+#                     "label": r.label,
+#                     "unit": r.unit,
+#                     "category": r.category,
+#                 }
+#                 for r in rows
+#             ]
+#             return {"available": catalog}
+
+#         # --- Data generation mode ---
+#         now = int(time.time())
+#         name_list = [n.strip() for n in names.split(",") if n.strip()]
+#         series: Dict[str, List[List[float]]] = {}
+
+#         # Preload available telemetry names to guard against typos
+#         known = {r.name for r in db.query(TelemetryMeta.name).all()}
+
+#         for nm in name_list:
+#             pts: List[List[float]] = []
+#             if nm not in known:
+#                 # Gracefully skip unknown telemetry name
+#                 continue
+
+#             for i in range(window // 2):
+#                 t = now - (window - i * 2)
+#                 # Existing synthetic patterns
+#                 if nm == "mbps":
+#                     val = 50 + 30 * math.sin(i / 6.0) + random.random() * 5
+#                 elif nm == "rtt_ms":
+#                     val = 20 + 5 * math.sin(i / 10.0) + random.random() * 3
+#                 elif nm == "temp_c":
+#                     val = 45 + 2 * math.sin(i / 20.0) + random.random() * 0.5
+#                 elif nm in ("errors", "drops"):
+#                     val = random.randint(0, 5)
+#                 elif nm == "link_state":
+#                     val = 1 if random.random() > 0.2 else 0
+#                 else:
+#                     val = random.random() * 100
+#                 pts.append([t, float(val)])
+#             series[nm] = pts
+
+#         return {"series": series}
+# ##########################################################
+# @app.get("/xseries")
+# def series(
+#     names: Optional[str] = None,
+#     window: int = 300,
+#     profile: Optional[str] = None,
+# ):
+#     """
+#     Telemetry time-series endpoint.
+#     - If 'names' is omitted, return metadata list of available telemetry types.
+#     - Otherwise, generate mock sample data for the requested names.
+#     The 'profile' parameter is accepted but ignored.
+#     """
+#     # Discovery mode
+#     if not names:
+#         telemetry_catalog = [
+#             {"name": "mbps", "label": "Throughput (Mb/s)", "unit": "Mbps"},
+#             {"name": "rtt_ms", "label": "Round-trip Time (ms)", "unit": "ms"},
+#             {"name": "temp_c", "label": "Temperature (°C)", "unit": "°C"},
+#             {"name": "errors", "label": "Error Count", "unit": "count"},
+#             {"name": "drops", "label": "Packet Drops", "unit": "count"},
+#             {"name": "link_state", "label": "Link Up/Down", "unit": ""},
+#         ]
+#         return {"available": telemetry_catalog}
+
+#     # Data mode
+#     now = int(time.time())
+#     name_list = [n.strip() for n in names.split(",") if n.strip()]
+#     series: Dict[str, List[List[float]]] = {}
+
+#     for nm in name_list:
+#         pts = []
+#         for i in range(window // 2):
+#             t = now - (window - i * 2)
+#             if nm == "mbps":
+#                 val = 50 + 30 * math.sin(i / 6.0) + random.random() * 5
+#             elif nm == "rtt_ms":
+#                 val = 20 + 5 * math.sin(i / 10.0) + random.random() * 3
+#             elif nm == "temp_c":
+#                 val = 45 + 2 * math.sin(i / 20.0) + random.random() * 0.5
+#             elif nm in ("errors", "drops"):
+#                 val = random.randint(0, 5)
+#             elif nm == "link_state":
+#                 val = 1 if random.random() > 0.2 else 0
+#             else:
+#                 val = random.random() * 100
+#             pts.append([t, float(val)])
+#         series[nm] = pts
+
+#     return {"series": series}
+# #####################################################################################
+
+# @app.get("/xseries")
+# def series(names: str, window: int = 300, profile: Optional[str] = None):
+#     now = int(time.time())
+#     name_list = [n.strip() for n in names.split(",") if n.strip()]
+#     series: Dict[str, List[List[float]]] = {}
+#     for nm in name_list:
+#         pts = []
+#         for i in range(window // 2):
+#             t = now - (window - i*2)
+#             if nm == "mbps":
+#                 val = 50 + 30*math.sin(i/6.0) + random.random()*5
+#             elif nm == "rtt_ms":
+#                 val = 20 + 5*math.sin(i/10.0) + random.random()*3
+#             elif nm == "temp_c":
+#                 val = 45 + 2*math.sin(i/20.0) + random.random()*0.5
+#             else:
+#                 val = random.random()*100
+#             pts.append([t, float(val)])
+#         series[nm] = pts
+#     return {"series": series}
 
 # ------------------------------
 # Entry point with CLI for host/port

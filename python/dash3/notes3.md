@@ -345,3 +345,211 @@ The backend now decides which endpoints honor that query.
 
 Drop this in, restart your `db_server.py` tomorrow, and you’ll have complete **Option B** behavior:
 telemetry stays global, all configuration persists and loads correctly per profile.
+
+
+repeat
+==============================================================
+Excellent — your current `db_server.py` is already well‑architected, and it’s 90 % ready for Option B (server‑side awareness of profile‑specific data).  
+You just need a few light‑touch changes so telemetry always stays global, while config / variable endpoints pivot on `?profile=` automatically.
+
+Below is a **drop‑in, minimal diff patch** you can apply tomorrow.
+
+---
+
+## ✅ Profile‑routing integration plan
+
+### 1️⃣  Accept profile query param globally where useful
+Add to both `/vars` handlers → optional `profile`  
+Add to telemetry endpoints → optional but ignored  
+
+### 2️⃣  Use it in config‑related code (`/vars`)  
+When set, we locate `EnvProfile` by that name instead of `active_profile`.
+
+### 3️⃣  Keep `/series` `/metrics` untouched (ignore).  
+
+---
+
+## 🔧 **Patch block**
+
+Search for these sections in your file and edit them inline:
+
+---
+
+### 🔹 `get_active_profile()` – leave as is  
+(no change – this is our fallback)
+
+---
+
+### 🔹 `/vars` (updates and gets)
+
+**Replace this entire update endpoint:**
+
+```python
+@app.post("/vars")
+async def update_vars(request: Request):
+    payload = await request.json()  # e.g., {"gain":"42","phase":"180"}
+    if not isinstance(payload, dict):
+        raise HTTPException(400, "Expected JSON object {name: value, ...}")
+
+    with SessionLocal() as db:
+        prof = get_active_profile(db)
+        default_area = "rtos"
+        default_type = "hold"
+        updated = {}
+        ...
+```
+
+**with:**
+
+```python
+@app.post("/vars")
+async def update_vars(request: Request, profile: Optional[str] = None):
+    """
+    Update one or more configuration variables.
+    If ?profile=<name> is given, apply changes to that profile.
+    Otherwise use the current active profile.
+    """
+    payload = await request.json()
+    if not isinstance(payload, dict):
+        raise HTTPException(400, "Expected JSON object {name: value, ...}")
+
+    with SessionLocal() as db:
+        if profile:
+            prof = db.query(EnvProfile).filter_by(name=profile).first()
+            if not prof:
+                raise HTTPException(404, f"Profile '{profile}' not found")
+        else:
+            prof = get_active_profile(db)
+
+        default_area, default_type = "rtos", "hold"
+        updated = {}
+
+        for k, v in payload.items():
+            key = str(k)
+            row = db.query(Variable).filter_by(
+                profile_id=prof.id,
+                mem_area=default_area,
+                mem_type=default_type,
+                offset=key
+            ).first()
+            if row is None:
+                row = Variable(profile_id=prof.id,
+                               mem_area=default_area,
+                               mem_type=default_type,
+                               offset=key,
+                               value=str(v))
+                db.add(row)
+            else:
+                row.value = str(v)
+            updated[key] = str(v)
+
+        db.commit()
+        STATE.update(payload)
+        return {"ok": True, "updated": updated, "profile": prof.name}
+```
+
+---
+
+**Then replace `/vars` GET** with this version:
+
+```python
+@app.get("/vars")
+def get_vars(names: str, rack: int = 0, profile: Optional[str] = None):
+    """
+    Read current config or telemetry-related variable values.
+    Only manipulates the profile-specific DB when applicable.
+    """
+    name_list = [n.strip() for n in names.split(",") if n.strip()]
+    out: Dict[str, Any] = {}
+
+    with SessionLocal() as db:
+        if profile:
+            prof = db.query(EnvProfile).filter_by(name=profile).first()
+            if not prof:
+                raise HTTPException(404, f"Profile '{profile}' not found")
+        else:
+            prof = get_active_profile(db)
+
+        default_area, default_type = "rtos", "hold"
+
+        for nm in name_list:
+            # --- profile‑specific config vars ---
+            row = db.query(Variable).filter_by(
+                profile_id=prof.id,
+                mem_area=default_area,
+                mem_type=default_type,
+                offset=nm
+            ).first()
+            if row is not None:
+                out[nm] = row.value
+                STATE[nm] = row.value
+                continue
+
+            # --- non‑profile system telemetry vars ---
+            if nm in ("link_state", "errors", "drops", "temp_c", "mbps", "rtt_ms"):
+                val = (
+                    "UP" if nm == "link_state" and random.random() > 0.2 else
+                    str(random.randint(0, 5)) if nm == "errors" else
+                    str(random.randint(0, 3)) if nm == "drops" else
+                    str(round(45 + 2 * random.random(), 2))
+                )
+                STATE[nm] = val
+                out[nm] = val
+                continue
+
+            # --- default fallback / first creation ---
+            val = STATE.get(nm)
+            out[nm] = val
+            db.add(Variable(profile_id=prof.id,
+                            mem_area=default_area,
+                            mem_type=default_type,
+                            offset=nm,
+                            value=str(val) if val is not None else None))
+            db.commit()
+
+    return out
+```
+
+That makes config vars profile‑aware and telemetry vars global.
+
+---
+
+### 🔹 `/metrics` and `/series`
+
+No change required — just add a harmless signature so they accept the query param gracefully:
+
+```python
+@app.get("/metrics")
+def metrics(profile: Optional[str] = None):
+    # profile ignored intentionally
+    ...
+```
+
+```python
+@app.get("/series")
+def series(names: str, window: int = 300, profile: Optional[str] = None):
+    # profile ignored intentionally
+    ...
+```
+
+---
+
+## ✅ Behavior summary after patch
+
+| Endpoint | Profile param | Behavior |
+|-----------|----------------|-----------|
+| `/api/profiles/*` | used normally | Manage profiles |
+| `/vars` | optional | Reads / writes profile‑specific configs |
+| `/metrics`, `/series` | accepted, ignored | Always returns system telemetry |
+| `/api/state`, `/api/button` | unaffected | Local runtime state |
+
+---
+
+## 🔎 Client‑side impact
+Frontend (`widgets.js`, `app.js`) stays exactly as it is — always attaches `?profile=<active>`.  
+The backend now decides which endpoints honor that query.
+
+---
+
+Drop this in, restart your `db_server.py` tomorrow, and you’ll have complete **Option B** behavior:
+telemetry stays global, all configuration persists and loads correctly per profile.
