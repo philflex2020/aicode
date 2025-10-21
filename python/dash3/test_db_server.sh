@@ -101,6 +101,15 @@ curl -s -X POST "${BASE_URL}/api/profiles/select" \
          }' | jq .
 echo ""
 
+
+curl -s "http://127.0.0.1:8085/series" | jq .
+curl -s "http://127.0.0.1:8085/series?category=network" | jq .
+curl -s "http://127.0.0.1:8085/series?category=network,system" | jq .
+curl -s "http://127.0.0.1:8085/series?names=mbps,cpu&window=20" | jq .
+curl -s "http://127.0.0.1:8085/series?names=mbps,cpu&window=20"
+curl -s "http://127.0.0.1:8085/series?category=network&names=mbps,cpu&window=20" | jq .
+curl -s "http://127.0.0.1:8085/series?category=network&names=mbps,cpu&window=20"
+
 echo "--- Test script finished ---"
 # ```
 

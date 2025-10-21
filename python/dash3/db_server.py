@@ -173,6 +173,80 @@ def init_db():
                 TelemetryMeta(name="link_state",label="Link Status",        unit="",     category="network"),
             ]
             db.add_all(seed)
+    # ✅ Sync dash.json variables
+    sync_dash_variables()
+
+# ------------------------------
+# Variable init from dash.json (compatibility)
+# ------------------------------
+def sync_dash_variables():
+    """
+    Ensure all variables referenced in dash.json exist in the database
+    for the active profile with their default values.
+    """
+    try:
+        with open("dash.json", "r", encoding="utf-8") as f:
+            dash = json.load(f)
+    except Exception as e:
+        print(f"Warning: could not load dash.json for variable sync: {e}")
+        return
+
+    with SessionLocal() as db:
+        prof = get_active_profile(db)
+        default_area = "rtos"
+        default_type = "hold"
+        
+        # Collect all variable definitions from dash.json
+        var_defs = {}  # {name: default_value}
+        
+        # 1. From controls cards
+        if "controls" in dash and "cards" in dash["controls"]:
+            for card in dash["controls"]["cards"]:
+                for el in card.get("elements", []):
+                    if "id" in el and "default" in el:
+                        var_defs[el["id"]] = el["default"]
+        
+        # 2. From values fields (no defaults, just ensure they exist)
+        if "values" in dash and "fields" in dash["values"]:
+            for field in dash["values"]["fields"]:
+                if field not in var_defs:
+                    var_defs[field] = None  # No default specified
+        
+        # 3. From widgets (vartable names)
+        for widget in dash.get("widgets", []):
+            if widget.get("type") == "vartable" and "names" in widget:
+                for name in widget["names"]:
+                    if name not in var_defs:
+                        var_defs[name] = None
+        
+        # Now sync to database
+        synced = []
+        for var_name, default_val in var_defs.items():
+            row = db.query(Variable).filter_by(
+                profile_id=prof.id,
+                mem_area=default_area,
+                mem_type=default_type,
+                offset=var_name
+            ).first()
+            
+            if row is None:
+                # Create new variable with default value
+                row = Variable(
+                    profile_id=prof.id,
+                    mem_area=default_area,
+                    mem_type=default_type,
+                    offset=var_name,
+                    value=str(default_val) if default_val is not None else None
+                )
+                db.add(row)
+                synced.append(f"{var_name}={default_val}")
+        
+        if synced:
+            db.commit()
+            print(f"✅ Synced {len(synced)} variables from dash.json: {', '.join(synced)}")
+        else:
+            print("✅ All dash.json variables already exist in database")
+
 
 def set_active_profile(db: Session, name: str):
     kv = db.query(MetaKV).filter_by(k="active_profile").first()
@@ -273,6 +347,17 @@ def clone_profile(c: CloneIn):
                               data={"from": src.name, "version": new_prof.version, "target": new_prof.target}))
         db.commit()
         return ProfileOut.model_validate(new_prof, from_attributes=True)
+
+
+@app.post("/api/sync_dash")
+def sync_dash():
+    """
+    Manually trigger sync of dash.json variables to database.
+    Useful after editing dash.json.
+    """
+    sync_dash_variables()
+    return {"ok": True, "message": "dash.json variables synced to database"}
+
 
 # ------------------------------
 # State and button (compatibility)
@@ -488,6 +573,85 @@ def metrics(profile: Optional[str] = None):
 #####################################################################################
 @app.get("/series")
 def get_series(
+    names: Optional[str] = None,
+    category: Optional[str] = None,
+    window: int = 300,
+    profile: Optional[str] = None,
+):
+    """
+    Telemetry time-series endpoint.
+    - If no params: return all metadata from telemetry_meta table.
+    - If ?category=network: return metadata for that category only.
+    - If ?names=mbps,cpu: generate mock data for requested telemetry names.
+    - If ?category=network&names=...: filter by category, then generate data.
+    The 'profile' parameter is accepted but ignored (telemetry is global).
+    """
+    with SessionLocal() as db:
+        # --- Discovery mode ---
+        if not names:
+            query = db.query(TelemetryMeta)
+            
+            # Filter by category if provided
+            if category:
+                categories = [c.strip() for c in category.split(",") if c.strip()]
+                query = query.filter(TelemetryMeta.category.in_(categories))
+            
+            rows = query.order_by(TelemetryMeta.name).all()
+            return {
+                "available": [
+                    {
+                        "name": r.name,
+                        "label": r.label,
+                        "unit": r.unit,
+                        "category": r.category,
+                    }
+                    for r in rows
+                ]
+            }
+
+        # --- Data generation mode ---
+        now = int(time.time())
+        name_list = [n.strip() for n in names.split(",") if n.strip()]
+
+        # Preload valid telemetry names
+        query = db.query(TelemetryMeta.name)
+        
+        # Filter by category if provided
+        if category:
+            categories = [c.strip() for c in category.split(",") if c.strip()]
+            query = query.filter(TelemetryMeta.category.in_(categories))
+        
+        known = {r.name for r in query.all()}
+        series: Dict[str, List[List[float]]] = {}
+
+        for nm in name_list:
+            if nm not in known:
+                continue  # skip unknown telemetry name
+
+            pts: List[List[float]] = []
+            for i in range(window // 2):
+                t = now - (window - i * 2)
+                if nm == "mbps":
+                    val = 50 + 30 * math.sin(i / 6.0) + random.random() * 5
+                elif nm == "rtt_ms":
+                    val = 20 + 5 * math.sin(i / 10.0) + random.random() * 3
+                elif nm == "temp_c":
+                    val = 45 + 2 * math.sin(i / 20.0) + random.random() * 0.5
+                elif nm == "cpu":
+                    val = 60 + 20 * math.sin(i / 8.0) + random.random() * 10
+                elif nm in ("errors", "drops"):
+                    val = random.randint(0, 5)
+                elif nm == "link_state":
+                    val = 1 if random.random() > 0.2 else 0
+                else:
+                    val = random.random() * 100
+                pts.append([t, float(val)])
+            series[nm] = pts
+
+        return {"series": series}
+#####################################################################################
+@app.get("/xxseries")
+def get_xxseries(
     names: Optional[str] = None,
     window: int = 300,
     profile: Optional[str] = None,
