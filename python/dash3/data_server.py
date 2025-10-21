@@ -145,6 +145,26 @@ def series(names: str, window: int = 300):
         series[nm] = pts
     return {"series": series}
 
+@app.get("/series/category/{category}")
+def get_series_by_category(category: str):
+    """
+    Get all telemetry series names for a specific category.
+    Example: /series/category/network
+    """
+    with SessionLocal() as db:
+        rows = db.query(TelemetryMeta).filter_by(category=category).order_by(TelemetryMeta.name).all()
+        return {
+            "category": category,
+            "series": [
+                {
+                    "name": r.name,
+                    "label": r.label,
+                    "unit": r.unit,
+                }
+                for r in rows
+            ]
+        }
+
 if __name__ == "__main__":
     uvicorn.run("data_server:app", host="0.0.0.0", port=8081, reload=True)
 # ```

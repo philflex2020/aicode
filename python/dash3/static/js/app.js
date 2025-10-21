@@ -40,7 +40,7 @@ function switchTab(tabId){
   startPolling();
 }
 
-function collectSeriesNamesForActiveTab() {
+function xxcollectSeriesNamesForActiveTab() {
   const active = tabs[activeTabIndex];
   const names = [];
   if (!active || !Array.isArray(active.widgets)) return names;
@@ -53,26 +53,61 @@ function collectSeriesNamesForActiveTab() {
   return names;
 }
 
-function xxcollectSeriesNamesForActiveTab(){
-  const names=new Set();
-  for (const w of WIDGETS){
-    if (w.cfg.series) for (const s of w.cfg.series) if (s && s.name) names.add(s.name);
+function collectSeriesNamesForActiveTab() {
+  console.log('collectSeriesNamesForActiveTab called');
+  console.log('WIDGETS:', WIDGETS);
+  
+  const names = new Set();
+  for (const w of WIDGETS) {
+    // ✅ Skip undefined/null widgets
+    if (!w || !w.cfg) {
+      console.warn('Skipping invalid widget:', w);
+      continue;
+    }
+    
+    console.log('Widget:', w.cfg.type, 'Series:', w.cfg.series);
+    
+    if (w.cfg.series && Array.isArray(w.cfg.series)) {
+      for (const s of w.cfg.series) {
+        if (s && s.name) {
+          console.log('Adding series name:', s.name);
+          names.add(s.name);
+        }
+      }
+    }
   }
-  return Array.from(names);
+  
+  const result = Array.from(names);
+  console.log('Final series names:', result);
+  return result;
 }
 
-// ---------------------------------------------------------
-// Helper to append ?profile=<activeProfile> to any URL
-// ---------------------------------------------------------
-function withProfileURL(baseURL) {
-  const url = new URL(baseURL, window.location.origin);
-  if (window.activeProfile) url.searchParams.set('profile', window.activeProfile);
-  return url.toString();
-}
+// function collectSeriesNamesForActiveTab(){
+//   const names=new Set();
+//   for (const w of WIDGETS){
+//     if (w.cfg.series) for (const s of w.cfg.series) if (s && s.name) names.add(s.name);
+//   }
+//   return Array.from(names);
+// }
+
+// // ---------------------------------------------------------
+// // Helper to append ?profile=<activeProfile> to any URL
+// // ---------------------------------------------------------
+// function withProfileURL(baseURL) {
+//   const url = new URL(baseURL, window.location.origin);
+//   if (window.activeProfile) url.searchParams.set('profile', window.activeProfile);
+//   return url.toString();
+// }
 
 async function pollOnce() {
+
+  console.log('=== pollOnce START ===');
+  
   // collect all active series names
   const names = collectSeriesNamesForActiveTab();
+  console.log('Collected series names:', names);
+  // collect all active series names
+  //const names = collectSeriesNamesForActiveTab();
 
   // compute max window length safely across all widgets with valid cfg
   const windowSec = Math.max(
@@ -119,22 +154,26 @@ async function pollOnce() {
   }
 }
 
-async function pollOnce1(){
-  const names = collectSeriesNamesForActiveTab();
-  const windowSec = Math.max(...(WIDGETS.flatMap(w => (w.cfg.series||[]).map(s=>s.windowSec||60))), 60);
-  let cache = {};
-  if (names.length){
-    const js = await getJSON('/series' + qparams({ names:names.join(','), window:windowSec }));
-    cache = js.series||{};
-  }
-  for (const w of WIDGETS){
-    if (w.tick) {
-      if (w.cfg.type==='table') await w.tick();
-      else await w.tick(cache);
-    }
-  }
+// async function pollOnce1(){
+//   const names = collectSeriesNamesForActiveTab();
+//   const windowSec = Math.max(...(WIDGETS.flatMap(w => (w.cfg.series||[]).map(s=>s.windowSec||60))), 60);
+//   let cache = {};
+//   if (names.length){
+//     const js = await getJSON('/series' + qparams({ names:names.join(','), window:windowSec }));
+//     cache = js.series||{};
+//   }
+//   for (const w of WIDGETS){
+//     if (w.tick) {
+//       if (w.cfg.type==='table') await w.tick();
+//       else await w.tick(cache);
+//     }
+//   }
+// }
+function startPolling(){ 
+  if (POLL_T) clearInterval(POLL_T); 
+  POLL_T = setInterval(pollOnce, 1000); pollOnce(); 
+  console.log("POLL_T is ", POLL_T)
 }
-function startPolling(){ if (POLL_T) clearInterval(POLL_T); POLL_T = setInterval(pollOnce, 1000); pollOnce(); }
 function stopPolling(){ if (POLL_T) { clearInterval(POLL_T); POLL_T = null; } }
 
 async function loadDash(){

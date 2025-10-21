@@ -97,6 +97,10 @@ async def vars_post_proxy(request: Request):
 async def series_proxy(request: Request):
     return await proxy_to_data_server("/series", request)
 
+@app.get("/series/category/{category}")
+async def series_category_proxy(category: str, request: Request):
+    return await proxy_to_data_server(f"/series/category{category}", request)
+
 @app.get("/api/state")
 async def state_get_proxy(request: Request):
     return await proxy_to_data_server("/api/state", request)
