@@ -1,0 +1,32 @@
+{  
+  "notes_1":" this tests the DO settings using the mcor",
+  "notes_2":" We write a can code that the mcore turns into gpio settings   ",
+  "notes_3":" then we look at the modbus register to see what the value is in reg 101    ",
+  "target": "root@192.168.86.20",
+  "port": 22,
+  "background": {
+    "upload": { "src": "./orch/target_worker.sh", "dest": "/tmp/target_worker.sh" },
+    "chmod_x": true,
+    "cmd": "/tmp/target_worker.sh --listen 0.0.0.0:9009",
+    "workdir": "/tmp",
+    "env": { "FOO": "BAR" },
+    "pidfile": "/tmp/worker.pid",
+    "logfile": "/tmp/worker.log",
+    "stop_signal": "TERM",
+    "stop_timeout": 5.0
+  },
+  "host_test": {
+    "cmd": "python3 orch/can_ws_do_test.py",
+    "timeout": 120
+  },
+  "expect": {
+    "host": {
+      "contains": ["PASS"],
+      "not_contains": ["FAIL", "Traceback"]
+    },
+    "target": {
+      "not_contains": ["panic", "ERROR"]
+    }
+  },
+  "post_start_delay": 0.5
+}

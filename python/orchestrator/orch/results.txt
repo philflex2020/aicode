@@ -1,0 +1,71 @@
+"rc": 0,
+    "stdout": "\n=== Step 1/12 | CAN send pattern 0x00 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#0000000000000000  \u2705\n  WS data      : 192  (full [192])\n  Expect       : 192\n  Check        : \u2705 PASS\n\n=== Step 2/12 | CAN send pattern 0x01 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#0100000000000000  \u2705\n  WS data      : 193  (full [193])\n  Expect       : 193\n  Check        : \u2705 PASS\n\n=== Step 3/12 | CAN send pattern 0x02 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#0200000000000000  \u2705\n  WS data      : 194  (full [194])\n  Expect       : 194\n  Check        : \u2705 PASS\n\n=== Step 4/12 | CAN send pattern 0x04 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#0400000000000000  \u2705\n  WS data      : 196  (full [196])\n  Expect       : 196\n  Check        : \u2705 PASS\n\n=== Step 5/12 | CAN send pattern 0x08 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#0800000000000000  \u2705\n  WS data      : 200  (full [200])\n  Expect       : 200\n  Check        : \u2705 PASS\n\n=== Step 6/12 | CAN send pattern 0x10 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#1000000000000000  \u2705\n  WS data      : 208  (full [208])\n  Expect       : 208\n  Check        : \u2705 PASS\n\n=== Step 7/12 | CAN send pattern 0x20 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#2000000000000000  \u2705\n  WS data      : 224  (full [224])\n  Expect       : 224\n  Check        : \u2705 PASS\n\n=== Step 8/12 | CAN send pattern 0x30 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#3000000000000000  \u2705\n  WS data      : 240  (full [240])\n  Expect       : 240\n  Check        : \u2705 PASS\n\n=== Step 9/12 | CAN send pattern 0x40 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#4000000000000000  \u2705\n  WS data      : 128  (full [128])\n  Expect       : 128\n  Check        : \u2705 PASS\n\n=== Step 10/12 | CAN send pattern 0x60 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#6000000000000000  \u2705\n  WS data      : 160  (full [160])\n  Expect       : (none / skipped)\n\n=== Step 11/12 | CAN send pattern 0x80 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#8000000000000000  \u2705\n  WS data      : 64  (full [64])\n  Expect       : (none / skipped)\n\n=== Step 12/12 | CAN send pattern 0x00 on can0, id 1857EDF4 ===\n  CAN send     : 1857EDF4#0000000000000000  \u2705\n  WS data      : 192  (full [192])\n  Expect       : 192\n  Check        : \u2705 PASS\n",
+    "host": {
+        "rc": 0,
+        "stdout": "\n
+        === Step  1/12 | CAN send pattern 0x00 on can0, 1857EDF4#0000000000000000  WS data (0xc0) : 192  Expect : 192 PASS\n\n
+        === Step  2/12 | CAN send pattern 0x01 on can0, 1857EDF4#0100000000000000  WS data (0xc1) : 193  Expect : 193 PASS\n\n
+        === Step  3/12 | CAN send pattern 0x02 on can0, 1857EDF4#0200000000000000  WS data (0xc2) : 194  Expect : 194 PASS\n\n
+        === Step  4/12 | CAN send pattern 0x04 on can0, 1857EDF4#0400000000000000  WS data (0xc4) : 196  Expect : 196 PASS\n\n
+        === Step  5/12 | CAN send pattern 0x08 on can0, 1857EDF4#0800000000000000  WS data (0xc8) : 200  Expect : 200 PASS\n\n
+        === Step  6/12 | CAN send pattern 0x10 on can0, 1857EDF4#1000000000000000  WS data (0xd0) : 208  Expect : 208 PASS\n\n
+        === Step  7/12 | CAN send pattern 0x20 on can0, 1857EDF4#2000000000000000  WS data (0xe0) : 224  Expect : 224 PASS\n\n
+        === Step  8/12 | CAN send pattern 0x30 on can0, 1857EDF4#3000000000000000  WS data (0xf0) : 240  Expect : 240 PASS\n\n
+        === Step  9/12 | CAN send pattern 0x40 on can0, 1857EDF4#4000000000000000  WS data (0x08) : 128  Expect : 128 PASS\n\n
+        === Step 10/12 | CAN send pattern 0x60 on can0, 1857EDF4#6000000000000000  WS data (0xa0) : 160  Expect : 160 PASS\n\n
+        === Step 11/12 | CAN send pattern 0x80 on can0, 1857EDF4#8000000000000000  WS data (0x40) :  64  Expect :  64 PASS\n\n
+        === Step 12/12 | CAN send pattern 0x00 on can0, 1857EDF4#0000000000000000  WS data (0xc0):  192  Expect : 192 PASS\n",
+        "stderr": "",
+        "expect": {
+          "pass": true,
+          "failures": [],
+          "length": 2259
+        }
+      },
+
+typical input test
+root@fractalbms-02:/home/fractalbms# python3 send_waveshare.py 192.168.100.6 128
+Wrote 12 coils with value 128
+root@fractalbms-02:/home/fractalbms# wscat --no-color -c ws://192.168.100.100:9001 -x ' {"action":"get", "seq": 126, "sm_name": "rtos", "reg_type": "mb_input", "offset":9, "num":4}'
+{ "seq": 126, "offset": 9, "data": [234,240,288,650] }
+
+System inputs
+ws_value   mb_input[9]
+0           234 (0xea)
+255         149 (0x95)
+1           235 (0xeb)
+2           238 (0xe8)
+4           226 (0xee)
+8           240 (0xf0)
+16          202 (0xca)
+32          170 (0xaa)
+64          234 (0xea)Wrote 12 coils with value 128
+128         234 (0xea)
+
+The binary values for the provided decimal and hexadecimal numbers are as follows:
+Decimal 	Hexadecimal	Binary
+234	0xea	11101010
+235	0xeb	11101011
+232	0xe8	11101000
+238	0xee	11101110
+226	0xe2	11100010
+240	0xf0	11110000
+202	0xca	11001010
+170	0xaa	10101010
+255	0x95	11111111
+149	0x95	10010101
+
+system output test
+ can note the E8F4 address                        moxa
+ cansend can1 1857E8F4#0000000000000000           all off
+ cansend can1 1857E8F4#0100000000000000           DI-00 on
+ cansend can1 1857E8F4#0200000000000000           DI-01 on
+ cansend can1 1857E8F4#0400000000000000           DI-02 on
+ cansend can1 1857E8F4#0800000000000000           DI-08 on
+ cansend can1 1857E8F4#1000000000000000           DI-09 on
+ cansend can1 1857E8F4#2000000000000000           DI-10 on
+ cansend can1 1857E8F4#4000000000000000           DI-06 on
+ cansend can1 1857E8F4#8000000000000000           DI-07 on
+
+
+ uuu -lsusb
