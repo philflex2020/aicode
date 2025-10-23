@@ -1498,8 +1498,7 @@ secret
 ## **3️⃣ Install SDK**
 
 
- curl -H "APCA-API-KEY-ID: PK42ICUJSYD80MVDZ1KR"  -H "APCA-API-SECRET-KEY:3dBbSvRZDLv9JxdpNKhl4OrI3V36luOWLjk8Aiyv"  https://paper-api.alpaca.markets/
-v2/account
+ curl -H "APCA-API-KEY-ID: PK42ICUJSYD80MVDZ1KR"  -H "APCA-API-SECRET-KEY:3dBbSvRZDLv9JxdpNKhl4OrI3V36luOWLjk8Aiyv"  https://paper-api.alpaca.markets/v2/account
 
 {"id":"46a1423c-f5eb-4470-954c-878bd49ffcfa","admin_configurations":{},"user_configurations":null,
 "account_number":"PA3IZCAO05JG","status":"ACTIVE","crypto_status":"ACTIVE","options_approved_level":3,
@@ -2252,6 +2251,8 @@ if __name__ == "__main__":
 ### Install + run
 
 ```bash
+pip install --upgrade pip setuptools wheel
+pip install "PyYAML>=6.0.1,<7"   # e.g., 6.0.1 or 6.0.2
 pip install yfinance pandas tabulate alpaca-trade-api
 ```
 
