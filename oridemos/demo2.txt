@@ -1,0 +1,2 @@
+ ./build/bin/llama-cli -m ../models/mistral-7b-instruct-v0.2.Q4_K_M.gguf -p "produce a python script to periodically put random numbers int a sqlite3 database and another to server up a wab page showing then  numbers  and  metrics" -n 700 --top-p 0.9 -sys "OK"  > /home/phil/work/out3.txt
+
