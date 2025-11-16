@@ -8,15 +8,21 @@
     ],
     "grid": {"cols": 12, "gap": 10, "rowHeight": 90},
     "widgets": [
-      { "type": "profile_control", "title": "Build Profiles", "tab": "profile"},
-      {"id": "metrics1", "type": "table", "title": "Links", "tab": "overview", "pos": {"row":1,"col":1,"w":12,"h":4}},
-      {"id": "line1",    "type": "line",  "title": "Throughput", "tab": "overview", "pos": {"row":5,"col":1,"w":8,"h":4},
-        "series": [{"name":"mbps","windowSec":60}]},
-      {"id": "dial1",    "type": "dial",  "title": "CPU %", "tab": "overview", "pos": {"row":5,"col":9,"w":4,"h":4},
+      { "type": "profile_control", "title": "Select Profiles", "tab": "profile"},
+      {"id": "metrics1", "type": "table", "title": "Rack Communications", "tab": "overview", "pos": {"row":1,"col":1,"w":12,"h":4}},
+      {"id": "line1",    "type": "line",  "title": "Rack Volts", "tab": "overview", "pos": {"row":4,"col":1,"w":4,"h":2},
+        "series": [{"name":"mbps","windowSec":600}]},
+      {"id": "line2",    "type": "line",  "title": "Rack Temp", "tab": "overview", "pos": {"row":4,"col":5,"w":4,"h":2},
+        "series": [{"name":"mbps","windowSec":600}]},
+      {"id": "dial1",    "type": "dial",  "title": "CPU %", "tab": "overview", "pos": {"row":4,"col":9,"w":2,"h":2},
         "series": [{"name":"cpu","windowSec":60}], "opts": {"min":0, "max":100}},
-      {"id": "vars_edit", "type": "vartable", "title": "Variables", "tab": "overview",
-        "pos": {"row":9,"col":1,"w":12,"h":4},
-        "names": ["username","mode","gain","threshold","phase","enabled","status"],
+      {"id": "config_edit", "type": "vartable", "title": "System Config", "tab": "overview",
+        "pos": {"row":6,"col":1,"w":12,"h":4},
+        "names": ["username","mode","gain","threshold","phase","enabled","status", "test1", "test2"],
+        "rack": 0},
+        {"id": "config_limits", "type": "vartable", "title": "System Limits", "tab": "overview",
+        "pos": {"row":10,"col":1,"w":12,"h":4},
+        "names": ["MaxVolts","MinVolts","MaxTemp","MinTemp","MaxChargePower","MaxDischargePower","Capacity"],
         "rack": 0}
     ],
     "controls": {
@@ -24,25 +30,36 @@
       "cards": [
         {"title": "Text & Select", "pos": {"row":1,"col":1,"w":6,"h":3},
          "elements": [
-           {"type":"text",   "id":"username", "label":"User Name", "placeholder":"alice"},
-           {"type":"select", "id":"mode", "label":"Mode", "options":[{"label":"Auto","value":"auto"},{"label":"Manual","value":"manual"}]}
+           {"type":"text",   "id":"username", "label":"User Name", "placeholder":"admin"},
+           {"type":"select", "id":"mode", "label":"Mode", "options":[{"label":"Online","value":"online"},{"label":"Offline","value":"offline"}]}
          ],
          "readbacks": [
-           {"id":"status", "label":"Status"}
+           {"id":"status", "label":"Status"},
+           {"id":"Alarms", "label":"Alarms"}
          ]
         },
         {"title": "Sliders & Knob", "pos": {"row":1,"col":7,"w":6,"h":3},
          "elements": [
            {"type":"slider", "id":"gain", "label":"Gain", "min":0, "max":100, "step":1, "default":50},
            {"type":"slider", "id":"threshold", "label":"Threshold", "min":-50, "max":50, "step":1, "default":0},
-           {"type":"knob",   "id":"phase", "label":"Phase", "min":0, "max":360, "step":5, "default":180}
+           {"type":"knob",   "id":"current_limit", "label":"Current_Limit", "min":0, "max":360, "step":5, "default":240}
          ]
         },
-        {"title": "Toggles & Action", "pos": {"row":4,"col":1,"w":12,"h":2},
+        {"title": "System Controls", "pos": {"row":4,"col":1,"w":5,"h":2},
          "elements": [
            {"type":"checkbox", "id":"enabled", "label":"Enabled", "default": true},
+           {"type":"checkbox", "id":"positive_contactor", "label":"Positive_Contactor", "action":"close_positive","default": false},
+           {"type":"checkbox", "id":"negative_contactor", "label":"Negative_Contactor", "action":"close_negative","default": false},
            {"type":"button",   "id":"apply", "label":"Apply", "action":"set_state", "fields":["username","mode","gain","threshold","phase","enabled"]},
            {"type":"action",   "id":"ping",  "label":"Ping", "action":"button", "name":"ping"}
+         ]
+        },
+        {"title": "Rack Controls", "pos": {"row":4,"col":6,"w":5,"h":2},
+         "elements": [
+           {"type":"checkbox", "id":"enabled", "label":"Enabled", "default": true},
+           {"type":"checkbox", "id":"positive_contactor", "label":"Positive_Contactor", "action":"close_positive","default": false},
+           {"type":"checkbox", "id":"negative_contactor", "label":"Negative_Contactor", "action":"close_negative","default": false},
+           {"type":"button",   "id":"apply", "label":"Apply", "action":"set_state", "fields":["username","mode","gain","threshold","phase","enabled"]}
          ]
         }
       ]

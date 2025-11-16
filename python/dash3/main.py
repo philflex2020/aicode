@@ -43,12 +43,28 @@ def load_dash_config():
     with open("dash.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
+async def get_active_profile_name():
+    """Fetch the active profile name from the data server."""
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"{DATA_SERVER_URL}/api/active_profile"
+            resp = await client.get(url, timeout=2.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("name", "Unknown")
+    except Exception as e:
+        print(f"[WARNING] Could not fetch active profile: {e}")
+    return "Unknown"
 # -----------------------------------------------------------------
 # Routes
 # -----------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def index(request: Request):
+    profile_name = await get_active_profile_name()   # ← called here    
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "profile_name": profile_name}
+        )
 
 @app.get("/dash.json")
 def dash_json():

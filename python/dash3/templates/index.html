@@ -3,18 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>RBMS Dashboard</title>
+  <title>FractalBMS System Configuration</title>
   <link rel="stylesheet" href="/static/css/styles.css?v=2">
 </head>
 <body>
+  <!-- NEW: Title header with profile name -->
+  <header class="page-header">
+    <h1>FractalBMS Configuration
+     <class="deployment-info" >  System : <strong id="profile-name-label">{{ profile_name }}</strong>
+    </h1>
+</header>
+
   <div class="wrap">
     <div class="tabs" id="tabs"></div>
     <div id="pages"></div>
   </div>
 
   <script src="/static/js/utils.js?v=2"></script>
-  <script src="/static/js/widgets.js?v=3"></script>
+  <script src="/static/js/widgets.js?v=4"></script>
   <script src="/static/js/controls.js?v=2"></script>
-  <script src="/static/js/app.js?v=2"></script>
+  <script src="/static/js/app.js?v=10"></script>
 </body>
 </html>

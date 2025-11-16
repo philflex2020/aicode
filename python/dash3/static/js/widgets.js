@@ -8,9 +8,13 @@
 // ------------------------------------------------------------------
 function drawLine(canvas, points, yMin=0, yMax=1, color='#9bd') {
   const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth, h = canvas.clientHeight;
+  //const 
+  w = canvas.clientWidth, h = canvas.clientHeight;
   if (!w || !h) return;
-  canvas.width = Math.floor(w*dpr); canvas.height = Math.floor(h*dpr);
+  //console.log(" line orig height ", h); //h -= 40;
+  //console.log(" line new height ", h);
+  canvas.width = Math.floor(w*dpr);
+  canvas.height = Math.floor(h*dpr);
   const ctx = canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   if (!points || points.length < 2) return;
@@ -28,6 +32,7 @@ function drawLine(canvas, points, yMin=0, yMax=1, color='#9bd') {
   ctx.stroke();
   ctx.strokeStyle = '#2a3b5c'; ctx.lineWidth = 1;
   ctx.strokeRect(0.5,0.5,w-1,h-1);
+  //ctx.strokeRect(0.5,0.5,w,h);
 }
 
 function drawDial(canvas, value, min=0, max=100, label='') {
@@ -213,6 +218,7 @@ class DialWidget extends BaseWidget {
     this.canvas=document.createElement('canvas'); 
     this.body.appendChild(this.canvas); 
   }
+
   async tick(seriesCache){
     const name = (this.cfg.series&&this.cfg.series[0]&&this.cfg.series[0].name) || '';
     const pts = (seriesCache && seriesCache[name]) || [];
@@ -518,6 +524,7 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
   }
   
   async function refreshActive() {
+    console.log("refresh active");
     try { 
       const ap = await getJSON("/api/active_profile");
       window.activeProfile = ap.name; // ✅ global context
@@ -547,13 +554,20 @@ WidgetTypes.profile_control = function renderProfileControl(parent, cfg) {
 
   async function select() {
     const name = els.name.value || els.list.value;
+    console.log(" select  profile name ", name);
     try {
       const r = await postJSON("/api/profiles/select", { name });
       window.activeProfile = name;                 // ✅ Store globally for polling
+      window.profile_name = name;  // ✅ if you want this global as well
       els.active.textContent = name;
       els.msg.textContent = `Active: ${name} ✓`;
       setTimeout(() => els.msg.textContent = "", 3000);
-
+      // 🔄 Update the header title without reloading
+      const label = document.getElementById("profile-name-label");
+      if (label) {
+        label.textContent = name;
+        console.log(" set profile name ", name);
+      }
       // optional: immediate refresh of other widgets if global pollOnce exists
       if (typeof refreshActive === "function") refreshActive();
       if (typeof pollOnce === "function") pollOnce();

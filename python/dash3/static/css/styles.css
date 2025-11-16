@@ -60,3 +60,29 @@ canvas{width:100%;height:100%}
   font-size: 0.9em;
   color: #4caf50;
 }
+
+.page-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: white;
+  padding: 20px 30px;
+  text-align: center;
+  border-bottom: 3px solid #60a5fa;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.page-header .deployment-info {
+  margin: 8px 0 0 0;
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+.page-header .deployment-info strong {
+  color: #fbbf24;
+  font-weight: 700;
+}

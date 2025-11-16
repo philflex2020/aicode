@@ -54,14 +54,14 @@ function xxcollectSeriesNamesForActiveTab() {
 }
 
 function collectSeriesNamesForActiveTab() {
-  console.log('collectSeriesNamesForActiveTab called');
-  console.log('WIDGETS:', WIDGETS);
+  //console.log('collectSeriesNamesForActiveTab called');
+  //console.log('WIDGETS:', WIDGETS);
   
   const names = new Set();
   for (const w of WIDGETS) {
     // ✅ Skip undefined/null widgets
     if (!w || !w.cfg) {
-      console.warn('Skipping invalid widget:', w);
+      //console.warn('Skipping invalid widget:', w);
       continue;
     }
     
@@ -78,7 +78,7 @@ function collectSeriesNamesForActiveTab() {
   }
   
   const result = Array.from(names);
-  console.log('Final series names:', result);
+  //console.log('Final series names:', result);
   return result;
 }
 
@@ -90,22 +90,22 @@ function collectSeriesNamesForActiveTab() {
 //   return Array.from(names);
 // }
 
-// // ---------------------------------------------------------
-// // Helper to append ?profile=<activeProfile> to any URL
-// // ---------------------------------------------------------
-// function withProfileURL(baseURL) {
-//   const url = new URL(baseURL, window.location.origin);
-//   if (window.activeProfile) url.searchParams.set('profile', window.activeProfile);
-//   return url.toString();
-// }
+// ---------------------------------------------------------
+// Helper to append ?profile=<activeProfile> to any URL
+// ---------------------------------------------------------
+function withProfileURL(baseURL) {
+  const url = new URL(baseURL, window.location.origin);
+  if (window.activeProfile) url.searchParams.set('profile', window.activeProfile);
+  return url.toString();
+}
 
 async function pollOnce() {
 
-  console.log('=== pollOnce START ===');
+  //console.log('=== pollOnce START ===');
   
   // collect all active series names
   const names = collectSeriesNamesForActiveTab();
-  console.log('Collected series names:', names);
+  //console.log('Collected series names:', names);
   // collect all active series names
   //const names = collectSeriesNamesForActiveTab();
 
@@ -174,6 +174,7 @@ function startPolling(){
   POLL_T = setInterval(pollOnce, 1000); pollOnce(); 
   console.log("POLL_T is ", POLL_T)
 }
+
 function stopPolling(){ if (POLL_T) { clearInterval(POLL_T); POLL_T = null; } }
 
 async function loadDash(){

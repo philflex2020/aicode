@@ -559,9 +559,9 @@ def metrics(profile: Optional[str] = None):
     rows = []
     for i in range(6):
         rows.append({
-            "name": f"peer{i}",
-            "host": f"10.0.0.{i+10}",
-            "port": 7000 + i,
+            "name": f"rack_{i}",
+            "host": f"192.168.100.{i+10}",
+            "port": 6500 + i,
             "tx_msgs": random.randint(1000, 50000),
             "rx_msgs": random.randint(1000, 50000),
             "tx_bytes": random.randint(10**6, 10**8),
