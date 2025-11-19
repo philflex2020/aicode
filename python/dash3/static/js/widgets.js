@@ -408,13 +408,330 @@ class VarTableWidget extends BaseWidget {
 }
 
 // ------------------------------------------------------------------
+// IndexGridWidget - generic array metrics viewer (cells, modules, etc.)
+// Displays items in blocks, e.g., 100 per block
+// seriesCache expected shape: { metricName: [v0, v1, v2, ...] }
+// ------------------------------------------------------------------
+class IndexGridWidget extends BaseWidget {
+  constructor(node, cfg) {
+    super(node, cfg);
+
+    const opts = cfg.opts || {};
+    this.totalItems    = opts.totalItems    || 480;    // e.g., number of cells
+    this.itemsPerBlock = opts.itemsPerBlock || 100;    // e.g., 100 per block
+    this.indexLabel    = opts.indexLabel    || "Index";
+
+    // Metrics/series configuration
+    // Each item: { name: "cell_volts", label: "Volts", unit: "V" }
+    this.metrics = (cfg.series || []).map(s => ({
+      name:  s.name,
+      label: s.label || s.name,
+      unit:  s.unit  || ""
+    }));
+
+    // Visible metrics (for selector menu)
+    this.storeKey = `ui2.indexgrid.visible.${cfg.id || "default"}`;
+    this.visible  = this.loadVisible() || this.metrics.map(m => m.name);
+
+    this.buildTools();
+    this.container = null;
+    this.buildLayout();
+  }
+
+  loadVisible() {
+    try {
+      return JSON.parse(localStorage.getItem(this.storeKey) || "null");
+    } catch (_) {
+      return null;
+    }
+  }
+
+  saveVisible() {
+    localStorage.setItem(this.storeKey, JSON.stringify(this.visible));
+  }
+
+  buildTools() {
+    // "Metrics" button and menu (similar to TableWidget)
+    const btn = document.createElement("button");
+    btn.className = "wbtn";
+    btn.textContent = "Metrics";
+
+    const menu = document.createElement("div");
+    menu.className = "menu";
+
+    const h4 = document.createElement("h4");
+    h4.textContent = "Show metrics";
+    menu.appendChild(h4);
+
+    const metricSet = document.createElement("div");
+    for (const m of this.metrics) {
+      const lab = document.createElement("label");
+      const cb  = document.createElement("input");
+      cb.type    = "checkbox";
+      cb.checked = this.visible.includes(m.name);
+      cb.onchange = () => {
+        const i = this.visible.indexOf(m.name);
+        if (cb.checked) {
+          if (i < 0) this.visible.push(m.name);
+        } else {
+          if (i >= 0) this.visible.splice(i, 1);
+        }
+        this.saveVisible();
+        if (this.lastData) this.renderBlocks(this.lastData);
+      };
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(m.label));
+      metricSet.appendChild(lab);
+    }
+    menu.appendChild(metricSet);
+
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const allBtn = document.createElement("button");
+    allBtn.className = "wbtn";
+    allBtn.textContent = "All";
+    allBtn.onclick = () => {
+      this.visible = this.metrics.map(m => m.name);
+      this.saveVisible();
+      const labels = metricSet.children;
+      for (let i = 0; i < labels.length; i++) {
+        labels[i].querySelector("input").checked = true;
+      }
+      if (this.lastData) this.renderBlocks(this.lastData);
+    };
+
+    const noneBtn = document.createElement("button");
+    noneBtn.className = "wbtn";
+    noneBtn.textContent = "None";
+    noneBtn.onclick = () => {
+      this.visible = [];
+      this.saveVisible();
+      const labels = metricSet.children;
+      for (let i = 0; i < labels.length; i++) {
+        labels[i].querySelector("input").checked = false;
+      }
+      if (this.lastData) this.renderBlocks(this.lastData);
+    };
+
+    row.appendChild(allBtn);
+    row.appendChild(noneBtn);
+    menu.appendChild(row);
+
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      menu.classList.toggle("show");
+    };
+    document.addEventListener("click", () => menu.classList.remove("show"));
+
+    this.tools.appendChild(btn);
+    this.head.appendChild(menu);
+  }
+
+  buildLayout() {
+    this.container = document.createElement("div");
+    this.container.className = "indexgrid-container";
+    this.body.innerHTML = "";
+    this.body.appendChild(this.container);
+  }
+
+  // seriesCache: e.g., { cell_volts: [[t, [v0,v1,...]]], cell_temp: [[t, [...]]], ... }
+async tick(seriesCache) {
+  if (!seriesCache) return;
+
+  const data = {};
+  for (const m of this.metrics) {
+    const pts = seriesCache[m.name] || [];
+    if (!pts.length) {
+      // No data for this metric
+      data[m.name] = new Array(this.totalItems).fill(null);
+      continue;
+    }
+
+    // Extract the last sample: [timestamp, arrayOfValues]
+    const last = pts[pts.length - 1][1];
+    let arr;
+
+    if (Array.isArray(last)) {
+      // Expected case: backend sent [[t, [v0, v1, ...]]]
+      arr = last.slice();
+    } else {
+      // Fallback: if backend sent scalar time-series instead
+      arr = pts.map(p => p[1]);
+    }
+
+    // Pad or truncate to totalItems
+    const vals = new Array(this.totalItems);
+    for (let i = 0; i < this.totalItems; i++) {
+      vals[i] = (i < arr.length) ? arr[i] : null;
+    }
+    data[m.name] = vals;
+  }
+
+  this.lastData = data;
+  this.renderBlocks(data);
+}
+  // // seriesCache: e.g., { cell_volts: [3.21,3.22,...], cell_temp: [25,26,...], ... }
+  // async tick(seriesCache) {
+  //   if (!seriesCache) return;
+
+  //   // Normalize: we already have arrays per metric (your format), so just clone.
+  //   const data = {};
+  //   for (const m of this.metrics) {
+  //     const arr = seriesCache[m.name] || [];
+  //     // Ensure we have at least totalItems slots, pad with null
+  //     const vals = new Array(this.totalItems);
+  //     for (let i = 0; i < this.totalItems; i++) {
+  //       vals[i] = (i < arr.length) ? arr[i] : null;
+  //     }
+  //     data[m.name] = vals;
+  //   }
+
+  //   this.lastData = data;
+  //   this.renderBlocks(data);
+  // }
+  renderBlocks(data) {
+    // Clear root
+    this.body.innerHTML = "";
+  
+    // Root container for this widget’s grid
+    const root = document.createElement("div");
+    root.className = "ixg-root";
+  
+    // Shared horizontal scroll container
+    const scroll = document.createElement("div");
+    scroll.className = "ixg-scroll";
+  
+    // Helper to build one row (index or metric)
+    const makeRow = (label, unit, values) => {
+      const row = document.createElement("div");
+      row.className = "ixg-row";
+  
+      const head = document.createElement("div");
+      head.className = "ixg-row-head";
+      head.textContent = unit ? `${label} (${unit})` : label;
+  
+      const cellsWrap = document.createElement("div");
+      cellsWrap.className = "ixg-row-cells";  // NO overflow here
+  
+      for (let i = 0; i < this.totalItems; i++) {
+        const v = values[i];
+        const cell = document.createElement("div");
+        cell.className = "ixg-cell";
+  
+        if (v == null || Number.isNaN(v)) {
+          cell.classList.add("ixg-cell-empty");
+          cell.textContent = "";
+        } else {
+          cell.textContent = v;
+        }
+  
+        cellsWrap.appendChild(cell);
+      }
+  
+      row.appendChild(head);
+      row.appendChild(cellsWrap);
+      return row;
+    };
+  
+    // 1) Index row
+    const indexVals = [];
+    for (let i = 0; i < this.totalItems; i++) indexVals.push(i + 1);
+    scroll.appendChild(makeRow(this.indexLabel, "", indexVals));
+  
+    // 2) Metric rows
+    for (const m of this.metrics) {
+      if (!this.visible.includes(m.name)) continue;
+  
+      const vals = data[m.name] || [];
+      const rowVals = new Array(this.totalItems);
+  
+      for (let i = 0; i < this.totalItems; i++) {
+        rowVals[i] = i < vals.length ? vals[i] : null;
+      }
+  
+      scroll.appendChild(makeRow(m.label, m.unit || "", rowVals));
+    }
+  
+    // Assemble
+    root.appendChild(scroll);
+    this.body.appendChild(root);
+  }
+  xrenderBlocks(data) {
+    if (!this.container) return;
+    this.container.innerHTML = "";
+
+    const total = this.totalItems;
+    const per   = this.itemsPerBlock;
+    const blocks = Math.ceil(total / per);
+
+    for (let b = 0; b < blocks; b++) {
+      const startIdx = b * per;           // 0-based
+      const endIdx   = Math.min(startIdx + per, total);
+
+      const block = document.createElement("div");
+      block.className = "indexgrid-block";
+
+      // 1) Index number row (Cell # / Module # / etc.)
+      const rowIndex = document.createElement("div");
+      rowIndex.className = "indexgrid-row indexgrid-row-header";
+
+      const labelIndex = document.createElement("div");
+      labelIndex.className = "indexgrid-row-label";
+      labelIndex.textContent = `${this.indexLabel} ${startIdx + 1}..${endIdx}`;
+      rowIndex.appendChild(labelIndex);
+
+      const valuesIndex = document.createElement("div");
+      valuesIndex.className = "indexgrid-row-values";
+      for (let idx = startIdx; idx < endIdx; idx++) {
+        const span = document.createElement("span");
+        span.className = "indexgrid-val indexgrid-val-header";
+        span.textContent = String(idx + 1);
+        valuesIndex.appendChild(span);
+      }
+      rowIndex.appendChild(valuesIndex);
+      block.appendChild(rowIndex);
+
+      // 2) Metric rows
+      for (const m of this.metrics) {
+        if (!this.visible.includes(m.name)) continue;
+        const vals = data[m.name] || [];
+        const row = document.createElement("div");
+        row.className = "indexgrid-row";
+
+        const label = document.createElement("div");
+        label.className = "indexgrid-row-label";
+        label.textContent = m.unit ? `${m.label} (${m.unit})` : m.label;
+        row.appendChild(label);
+
+        const valsDiv = document.createElement("div");
+        valsDiv.className = "indexgrid-row-values";
+
+        for (let idx = startIdx; idx < endIdx; idx++) {
+          const span = document.createElement("span");
+          span.className = "indexgrid-val";
+          const v = vals[idx];
+          span.textContent = (v == null ? "—" : String(v));
+          valsDiv.appendChild(span);
+        }
+
+        row.appendChild(valsDiv);
+        block.appendChild(row);
+      }
+
+      this.container.appendChild(block);
+    }
+  }
+}
+// ------------------------------------------------------------------
 // Widget registry
 // ------------------------------------------------------------------
 const WidgetTypes = {
   table: (node,cfg)=>new TableWidget(node,cfg),
   line:  (node,cfg)=>new LineWidget(node,cfg),
   dial:  (node,cfg)=>new DialWidget(node,cfg),
-  vartable: (node,cfg)=>new VarTableWidget(node,cfg)
+  vartable: (node,cfg)=>new VarTableWidget(node,cfg),
+  indexgrid:(node,cfg)=>new IndexGridWidget(node,cfg)   // 👈 new
 };
 
 

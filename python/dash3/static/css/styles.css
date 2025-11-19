@@ -86,3 +86,109 @@ canvas{width:100%;height:100%}
   color: #fbbf24;
   font-weight: 700;
 }
+.indexgrid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;      /* scroll if many blocks */
+  padding-right: 4px;
+}
+
+.indexgrid-block {
+  border: 1px solid #1e2a43;
+  border-radius: 4px;
+  padding: 4px;
+  background: #020617;
+}
+
+.indexgrid-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+
+.indexgrid-row-header {
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.indexgrid-row-label {
+  flex: 0 0 120px;
+  padding-right: 6px;
+  text-align: right;
+  color: #9ca3af;
+}
+
+.indexgrid-row-values {
+  flex: 1 1 auto;
+  overflow-x: auto;       /* horizontal scroll across many items */
+  white-space: nowrap;
+}
+
+.indexgrid-val {
+  display: inline-block;
+  min-width: 40px;
+  text-align: right;
+  padding: 1px 4px;
+  color: #e5e7eb;
+}
+
+.indexgrid-val-header {
+  font-weight: 600;
+  color: #fef9c3;
+}
+
+/* Root container for the whole grid */
+.ixg-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;      /* optional, depending on your widget layout */
+}
+
+/* Single shared scroll container */
+.ixg-scroll {
+  flex: 1 1 auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;    /* so rows’ cells line up horizontally */
+}
+
+/* Each logical row (index or metric) */
+.ixg-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* Left label column */
+.ixg-row-head {
+  flex: 0 0 auto;
+  width: 120px;       /* choose a width that fits your labels */
+  font-weight: 600;
+  padding-right: 8px;
+}
+
+/* Row cells container – stretches wide but does NOT scroll */
+.ixg-row-cells {
+  flex: 0 0 auto;
+  display: flex;
+}
+
+/* Individual cells */
+.ixg-cell {
+  min-width: 40px;    /* adjust for column width */
+  padding: 2px 4px;
+  text-align: right;
+  border-right: 1px solid #ddd;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.ixg-cell-empty {
+  opacity: 0.3;
+}

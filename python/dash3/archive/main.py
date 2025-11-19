@@ -8,6 +8,7 @@
 # ✅ Propagate those options to the proxy URLs dynamically.  
 # ✅ Keep everything else unchanged.
 
+# Here’s the updated, ready‑to‑drop‑in replacement for your **`main.py`**:
 
 # ```python
 # main.py
@@ -29,9 +30,8 @@ app = FastAPI(title="RBMS Dashboard Frontend")
 # Globals (will be overridden by CLI args or env vars)
 # -----------------------------------------------------------------
 DATA_SERVER_HOST = os.environ.get("DATA_SERVER_HOST", "localhost")
-DATA_SERVER_PORT = int(os.environ.get("DATA_SERVER_PORT", "8084"))
-#DATA_SERVER_URL = f"http://{DATA_SERVER_HOST}:8084"
-DS_URL = "http://127.0.0.1:8084"
+DATA_SERVER_PORT = int(os.environ.get("DATA_SERVER_PORT", "8085"))
+DATA_SERVER_URL = f"http://{DATA_SERVER_HOST}:{DATA_SERVER_PORT}"
 
 # -----------------------------------------------------------------
 # Static + templates
@@ -47,7 +47,7 @@ async def get_active_profile_name():
     """Fetch the active profile name from the data server."""
     try:
         async with httpx.AsyncClient() as client:
-            url = f"{DS_URL}/api/active_profile"
+            url = f"{DATA_SERVER_URL}/api/active_profile"
             resp = await client.get(url, timeout=2.0)
             if resp.status_code == 200:
                 data = resp.json()
@@ -76,7 +76,7 @@ def dash_json():
 async def proxy_to_data_server(path: str, request: Request):
     """Forward request to the configured data server."""
     async with httpx.AsyncClient() as client:
-        url = f"{DS_URL}{path}"
+        url = f"{DATA_SERVER_URL}{path}"
         print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>[DEBUG] proxying -> {url}")
         if request.method == "GET":
             params = dict(request.query_params)
@@ -163,8 +163,8 @@ if __name__ == "__main__":
         help="Frontend host to bind (default 0.0.0.0)"
     )
     parser.add_argument(
-        "--port", type=int, default=int(os.environ.get("PORT", "8081")),
-        help="Frontend port (default 8081)"
+        "--port", type=int, default=int(os.environ.get("PORT", "8080")),
+        help="Frontend port (default 8080)"
     )
     parser.add_argument(
         "--data-host", default=DATA_SERVER_HOST,
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--data-port", type=int, default=DATA_SERVER_PORT,
-        help="Data server port (default 8084)"
+        help="Data server port (default 8081)"
     )
     parser.add_argument(
         "--reload", action="store_true", help="Enable uvicorn reload"
@@ -180,9 +180,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Compose backend URL dynamically
-    #DATA_SERVER_URL = f"http://{args.data_host}:{args.data_port}"
+    DATA_SERVER_URL = f"http://{args.data_host}:{args.data_port}"
     print(f"🚀 Starting RBMS Dashboard Frontend on {args.host}:{args.port}")
-    print(f"↔️  Proxying to data server at {DS_URL}")
+    print(f"↔️  Proxying to data server at {DATA_SERVER_URL}")
 
     uvicorn.run("main:app", host=args.host, port=args.port, reload=args.reload)
 # ```

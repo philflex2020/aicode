@@ -171,6 +171,11 @@ def init_db():
                 TelemetryMeta(name="errors",    label="Error Count",        unit="count",category="network"),
                 TelemetryMeta(name="drops",     label="Packet Drops",       unit="count",category="network"),
                 TelemetryMeta(name="link_state",label="Link Status",        unit="",     category="network"),
+                # New: synthetic cell-level metrics
+                TelemetryMeta(name="cell_volts", label="Cell Voltage", unit="V",   category="power"),
+                TelemetryMeta(name="cell_temp",  label="Cell Temp",    unit="°C",  category="thermal"),
+                TelemetryMeta(name="cell_soc",   label="Cell SOC",     unit="%",   category="state"),
+                TelemetryMeta(name="cell_soh",   label="Cell SOH",     unit="%",   category="state"),
             ]
             db.add_all(seed)
     # ✅ Sync dash.json variables
@@ -612,6 +617,7 @@ def get_series(
         # --- Data generation mode ---
         now = int(time.time())
         name_list = [n.strip() for n in names.split(",") if n.strip()]
+        print("name_list:",name_list)
 
         # Preload valid telemetry names
         query = db.query(TelemetryMeta.name)
@@ -626,9 +632,45 @@ def get_series(
 
         for nm in name_list:
             if nm not in known:
-                continue  # skip unknown telemetry name
+
+                print("unknown name:",nm)
+                #continue  # skip unknown telemetry name
 
             pts: List[List[float]] = []
+
+            # --- Special: synthetic array-type telemetry for cells ---
+            if nm in ("cell_volts", "cell_temp", "cell_soc", "cell_soh"):
+                TOTAL = 480   # number of cells; match dash.json opts.totalItems
+
+                if nm == "cell_volts":
+                    arr = [
+                        round(3.20 + 0.05 * math.sin((i / 10.0) + (now % 60) / 10.0), 3)
+                        for i in range(TOTAL)
+                    ]
+                elif nm == "cell_temp":
+                    arr = [
+                        round(25.0 + 5.0 * math.sin((i / 30.0) + (now % 120) / 20.0), 1)
+                        for i in range(TOTAL)
+                    ]
+                elif nm == "cell_soc":
+                    arr = [
+                        round(90.0 + 5.0 * math.sin((i / 50.0) + (now % 300) / 40.0), 1)
+                        for i in range(TOTAL)
+                    ]
+                elif nm == "cell_soh":
+                    arr = [
+                        round(98.0 - 0.01 * i, 2)
+                        for i in range(TOTAL)
+                    ]
+                else:
+                    arr = [0.0] * TOTAL
+
+                # single time sample: [timestamp, array-of-values]
+                pts.append([now, arr])
+                series[nm] = pts
+                continue
+
+            # --- Normal scalar time-series as before ---
             for i in range(window // 2):
                 t = now - (window - i * 2)
                 if nm == "mbps":
@@ -929,3 +971,261 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     uvicorn.run("db_server:app", host=args.host, port=args.port, reload=args.reload)
+
+
+
+
+    
+#     You don’t need to change the `/series` endpoint shape at all for the IndexGridWidget I gave you; you just need to *add* some synthetic “array” series for things like `cell_volts`, `cell_temp`, etc., and then flatten them on the frontend.
+
+# Right now `/series` returns time-series like:
+
+# ```json
+# {
+#   "series": {
+#     "mbps": [[t1, v1], [t2, v2], ...],
+#     "temp_c": [[t1, v1], ...]
+#   }
+# }
+# ```
+
+# We’ll treat **cell-style metrics** as:
+
+# ```json
+# "cell_volts": [[t_last, [v0, v1, v2, ...]]]
+# ```
+
+# Then the `IndexGridWidget.tick()` will detect the array in the last sample and turn it into `[v0, v1, ...]`.
+
+# Below are the minimal changes you need.
+
+# ---
+
+# ### 1. Extend `/series` to generate cell/module arrays
+
+# In `get_series` (your active `/series` handler), inside the `for nm in name_list:` loop, add special handling for `cell_volts`, `cell_temp`, `cell_soc`, `cell_soh`, etc.
+
+# Find this part (near the bottom of `get_series`):
+
+# ```python
+#         for nm in name_list:
+#             if nm not in known:
+#                 continue  # skip unknown telemetry name
+
+#             pts: List[List[float]] = []
+#             for i in range(window // 2):
+#                 t = now - (window - i * 2)
+#                 if nm == "mbps":
+#                     val = 50 + 30 * math.sin(i / 6.0) + random.random() * 5
+#                 elif nm == "rtt_ms":
+#                     val = 20 + 5 * math.sin(i / 10.0) + random.random() * 3
+#                 elif nm == "temp_c":
+#                     val = 45 + 2 * math.sin(i / 20.0) + random.random() * 0.5
+#                 elif nm == "cpu":
+#                     val = 60 + 20 * math.sin(i / 8.0) + random.random() * 10
+#                 elif nm in ("errors", "drops"):
+#                     val = random.randint(0, 5)
+#                 elif nm == "link_state":
+#                     val = 1 if random.random() > 0.2 else 0
+#                 else:
+#                     val = random.random() * 100
+#                 pts.append([t, float(val)])
+#             series[nm] = pts
+# ```
+
+# Replace it with a version that also handles the cell/module arrays:
+
+# ```python
+#         for nm in name_list:
+#             if nm not in known:
+#                 continue  # skip unknown telemetry name
+
+#             pts: List[List[float]] = []
+
+#             # --- Special: synthetic array-type telemetry (cells/modules) ---
+#             if nm in ("cell_volts", "cell_temp", "cell_soc", "cell_soh"):
+#                 # Total items – match your widget config (e.g. 480 cells)
+#                 TOTAL = 480
+
+#                 # Build a fake array of values at "now"
+#                 if nm == "cell_volts":
+#                     arr = [
+#                         round(3.20 + 0.05 * math.sin((i / 10.0) + (now % 60) / 10.0), 3)
+#                         for i in range(TOTAL)
+#                     ]
+#                 elif nm == "cell_temp":
+#                     arr = [
+#                         round(25.0 + 5.0 * math.sin((i / 30.0) + (now % 120) / 20.0), 1)
+#                         for i in range(TOTAL)
+#                     ]
+#                 elif nm == "cell_soc":
+#                     arr = [
+#                         round(90.0 + 5.0 * math.sin((i / 50.0) + (now % 300) / 40.0), 1)
+#                         for i in range(TOTAL)
+#                     ]
+#                 elif nm == "cell_soh":
+#                     arr = [
+#                         round(98.0 - 0.01 * i, 2)   # gently decreasing with index
+#                         for i in range(TOTAL)
+#                     ]
+#                 else:
+#                     arr = [0.0] * TOTAL
+
+#                 # Store as a single time-sample: [timestamp, array-of-values]
+#                 pts.append([now, arr])
+#                 series[nm] = pts
+#                 continue
+
+#             # --- Normal scalar time-series as before ---
+#             for i in range(window // 2):
+#                 t = now - (window - i * 2)
+#                 if nm == "mbps":
+#                     val = 50 + 30 * math.sin(i / 6.0) + random.random() * 5
+#                 elif nm == "rtt_ms":
+#                     val = 20 + 5 * math.sin(i / 10.0) + random.random() * 3
+#                 elif nm == "temp_c":
+#                     val = 45 + 2 * math.sin(i / 20.0) + random.random() * 0.5
+#                 elif nm == "cpu":
+#                     val = 60 + 20 * math.sin(i / 8.0) + random.random() * 10
+#                 elif nm in ("errors", "drops"):
+#                     val = random.randint(0, 5)
+#                 elif nm == "link_state":
+#                     val = 1 if random.random() > 0.2 else 0
+#                 else:
+#                     val = random.random() * 100
+#                 pts.append([t, float(val)])
+
+#             series[nm] = pts
+# ```
+
+# Everything else in `get_series` stays the same.
+
+# You *also* need to register these names in `TelemetryMeta` or `known` won’t include them.
+
+# Add them to the seed in `init_db()`:
+
+# ```python
+#         # Seed telemetry_meta if empty
+#         if db.query(TelemetryMeta).count() == 0:
+#             seed = [
+#                 TelemetryMeta(name="mbps",      label="Throughput (Mb/s)",  unit="Mbps", category="network"),
+#                 TelemetryMeta(name="rtt_ms",    label="Round-trip (ms)",    unit="ms",   category="network"),
+#                 TelemetryMeta(name="temp_c",    label="Temperature (°C)",   unit="°C",   category="thermal"),
+#                 TelemetryMeta(name="errors",    label="Error Count",        unit="count",category="network"),
+#                 TelemetryMeta(name="drops",     label="Packet Drops",       unit="count",category="network"),
+#                 TelemetryMeta(name="link_state",label="Link Status",        unit="",     category="network"),
+
+#                 # NEW: cell/module-like arrays
+#                 TelemetryMeta(name="cell_volts", label="Cell Voltage", unit="V",   category="power"),
+#                 TelemetryMeta(name="cell_temp",  label="Cell Temp",    unit="°C",  category="thermal"),
+#                 TelemetryMeta(name="cell_soc",   label="Cell SOC",     unit="%",   category="state"),
+#                 TelemetryMeta(name="cell_soh",   label="Cell SOH",     unit="%",   category="state"),
+#             ]
+#             db.add_all(seed)
+# ```
+
+# Or add them later via the POST `/series` meta API; either is fine, but they must exist in `telemetry_meta` so the “known” set sees them.
+
+# ---
+
+# ### 2. Make sure the `IndexGridWidget` flattens correctly
+
+# The `tick()` I gave you already supports the `[t, array]` shape; double-check you have this code in `IndexGridWidget.tick`:
+
+# ```js
+# // seriesCache: e.g., { cell_volts: [[t, [..vals..]]], ... }
+# async tick(seriesCache) {
+#   if (!seriesCache) return;
+
+#   const data = {};
+#   for (const m of this.metrics) {
+#     const pts = seriesCache[m.name] || [];
+#     if (!pts.length) {
+#       data[m.name] = new Array(this.totalItems).fill(null);
+#       continue;
+#     }
+#     const last = pts[pts.length - 1][1];
+#     let arr;
+#     if (Array.isArray(last)) {
+#       // Our expected case: [t, [v0..]]
+#       arr = last.slice();
+#     } else {
+#       // Fallback: if you ever send scalar series instead
+#       arr = pts.map(p => p[1]);
+#     }
+
+#     const vals = new Array(this.totalItems);
+#     for (let i = 0; i < this.totalItems; i++) {
+#       vals[i] = i < arr.length ? arr[i] : null;
+#     }
+#     data[m.name] = vals;
+#   }
+
+#   this.lastData = data;
+#   this.renderBlocks(data);
+# }
+# ```
+
+# That matches:
+
+# - Backend: `cell_volts: [[now, [3.21, 3.22, ...]]]`
+# - Frontend: `IndexGridWidget` sees the `last[1]` as an array and turns it into the `[v0..vN-1]` shape the grid renderer expects.
+
+# ---
+
+# ### 3. `dash.json` widget entry
+
+# Your new widget in `dash.json` can look like:
+
+# ```json
+# {
+#   "id": "cells1",
+#   "type": "indexgrid",
+#   "title": "Cell Data",
+#   "tab": "values",
+#   "pos": {"row": 1, "col": 1, "w": 12, "h": 5},
+#   "opts": {
+#     "totalItems": 480,
+#     "itemsPerBlock": 100,
+#     "indexLabel": "Cell #"
+#   },
+#   "series": [
+#     {"name": "cell_volts", "label": "Volts", "unit": "V"},
+#     {"name": "cell_temp",  "label": "Temp",  "unit": "°C"},
+#     {"name": "cell_soc",   "label": "SOC",   "unit": "%"},
+#     {"name": "cell_soh",   "label": "SOH",   "unit": "%"}
+#   ]
+# }
+# ```
+
+# And keep the registry entry:
+
+# ```js
+# indexgrid: (node,cfg)=>new IndexGridWidget(node,cfg)
+# ```
+
+# ---
+
+# ### 4. Quick sanity checks
+
+# 1. Hit `/series?names=cell_volts,cell_temp&window=10` directly:
+
+#    You should see:
+
+#    ```json
+#    {
+#      "series": {
+#        "cell_volts": [[ 1731875000, [3.21, 3.22, ...] ]],
+#        "cell_temp":  [[ 1731875000, [25.1, 25.3, ...] ]]
+#      }
+#    }
+#    ```
+
+# 2. Confirm that `names` for the indexgrid widget are included in the poller’s `names` query (your existing `collectSeriesNamesForActiveTab` should already do it).
+
+# 3. Watch console logs; if the widget’s `tick` is called but no values appear, log `seriesCache` and ensure keys match exactly (`cell_volts` vs `cell_volts `).
+
+# ---
+
+# If you paste how your polling function constructs `seriesCache` (the object passed into `tick(seriesCache)`), I can confirm it’s aligned with this shape so you don’t lose time stitching that up.
+

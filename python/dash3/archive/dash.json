@@ -3,8 +3,7 @@
       {"id": "profile", "title": "Profile"},
       {"id": "overview", "title": "Overview"},
       {"id": "controls", "title": "Controls"},
-      {"id": "values",   "title": "Values"},
-      {"id": "cells",    "title": "Cells"}
+      {"id": "values",   "title": "Values"}
     ],
     "grid": {"cols": 12, "gap": 10, "rowHeight": 90},
     "widgets": [
@@ -20,24 +19,10 @@
         "pos": {"row":6,"col":1,"w":12,"h":4},
         "names": ["username","mode","gain","threshold","phase","enabled","status", "test1", "test2"],
         "rack": 0},
-      {"id": "config_limits", "type": "vartable", "title": "System Limits", "tab": "overview",
+        {"id": "config_limits", "type": "vartable", "title": "System Limits", "tab": "overview",
         "pos": {"row":10,"col":1,"w":12,"h":4},
         "names": ["MaxVolts","MinVolts","MaxTemp","MinTemp","MaxChargePower","MaxDischargePower","Capacity"],
-        "rack": 0},
-      {"id": "cells1", "type": "indexgrid", "title": "Cell Data", "tab": "cells",
-        "pos": {"row":1,"col":1,"w":12,"h":6},
-        "opts": {
-          "totalItems": 480,
-          "itemsPerBlock": 100,
-          "indexLabel": "Cell #"
-        },
-        "series": [
-          {"name": "cell_volts", "label": "Volts", "unit": "V"},
-          {"name": "cell_temp",  "label": "Temp",  "unit": "°C"},
-          {"name": "cell_soc",   "label": "SOC",   "unit": "%"},
-          {"name": "cell_soh",   "label": "SOH",   "unit": "%"}
-        ]
-      }
+        "rack": 0}
     ],
     "controls": {
       "layout": {"cols": 12, "gap": 10, "rowHeight": 90},
