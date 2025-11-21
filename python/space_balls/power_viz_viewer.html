@@ -26,6 +26,55 @@
             font-size: 14px;
             max-width: 300px;
         }
+        #breadcrumb {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid #4CAF50;
+        }
+        .breadcrumb-item {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+        .breadcrumb-item:hover {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        .breadcrumb-separator {
+            color: #888;
+        }
+        .breadcrumb-current {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        #back-button {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: none;
+        }
+        #back-button:hover {
+            background: rgba(76, 175, 80, 1);
+        }
         #status {
             position: absolute;
             top: 10px;
@@ -38,6 +87,19 @@
         }
         .connected { color: #0f0; }
         .disconnected { color: #f00; }
+        #system-details {
+            position: absolute;
+            top: 150px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 13px;
+            max-width: 280px;
+            display: none;
+            border: 2px solid #ffff00;
+        }
         #legend {
             position: absolute;
             bottom: 10px;
@@ -63,49 +125,24 @@
 </head>
 <body>
     <div id="container"></div>
+    
     <div id="info">
         <h3 style="margin-top: 0;">Power System Visualization</h3>
         <div id="poc-info">Connecting...</div>
     </div>
-    <!-- ADD THIS NEW DIV -->
-    <div id="system-details" style="
-        position: absolute;
-        top: 150px;
-        left: 10px;
-        color: white;
-        background: rgba(0, 0, 0, 0.8);
-        padding: 15px;
-        border-radius: 5px;
-        font-size: 13px;
-        max-width: 280px;
-        display: none;
-        border: 2px solid #ffff00;
-    ">
-    <!-- Details will be populated by JS -->
-</div>
+    
+    <div id="breadcrumb">
+        <span class="breadcrumb-item breadcrumb-current" id="breadcrumb-content">Systems</span>
+    </div>
+    
+    <button id="back-button">← Back</button>
+    
+    <div id="system-details"></div>
+    
     <div id="status">
         <span id="connection-status" class="disconnected">● Disconnected</span>
     </div>
-    <!-- <div id="legend">
-        <strong>Legend:</strong>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #ff0000;"></div>
-            <span>Discharging (to grid)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #00ff00;"></div>
-            <span>Charging (from grid)</span>
-        </div>
-        <div class="legend-item">
-            <span style="margin-left: 40px;">Sphere size = Capacity</span>
-        </div>
-        <div class="legend-item">
-            <span style="margin-left: 40px;">Line thickness = Power flow</span>
-        </div>
-        <div class="legend-item">
-            <span style="margin-left: 40px;">Distance from POC = Capacity</span>
-        </div>
-    </div> -->
+    
     <div id="legend">
         <strong>Legend:</strong>
         <div class="legend-item">
@@ -121,32 +158,36 @@
             <span>Idle / Low power</span>
         </div>
         <div class="legend-item">
-            <span style="margin-left: 40px;"><strong>Sphere size</strong> = Capacity</span>
+            <span style="margin-left: 40px;"><strong>Right-click</strong> to drill down</span>
         </div>
         <div class="legend-item">
-            <span style="margin-left: 40px;"><strong>Distance from POC</strong> = Capacity</span>
-        </div>
-        <div class="legend-item">
-            <span style="margin-left: 40px;"><strong>Line brightness</strong> = Power flow</span>
+            <span style="margin-left: 40px;"><strong>Left-click</strong> to select</span>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Configuration
-        const NUM_SYSTEMS = 6;  // Should match server
 
         // Three.js setup
         let scene, camera, renderer;
         let pocMesh;
-        let systemObjects = {};
+        let itemObjects = {};
         let ws;
-
+        
         // Raycasting for picking
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
-        let hoveredObject = null;
         let selectedObject = null;
+        
+        // Navigation state
+        let currentViewPath = [];
+        let currentViewData = null;
+
+        let pocLabelSprite = null;
+        
+        // Camera control
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
 
         function init() {
             // Scene
@@ -181,19 +222,21 @@
             pocMesh = new THREE.Mesh(pocGeometry, pocMaterial);
             scene.add(pocMesh);
 
-            // Add POC label
-            createTextSprite('POC', 0, -25, 0);
+            pocLabelSprite = createTextSprite('Grid POC', 0, -25, 0);
 
             // Grid helper
             const gridHelper = new THREE.GridHelper(400, 20, 0x444444, 0x222222);
             gridHelper.position.y = -50;
             scene.add(gridHelper);
 
-            // Mouse controls (simple orbit)
+            // Event listeners
             setupControls();
 
             // Handle window resize
             window.addEventListener('resize', onWindowResize, false);
+
+            // Back button
+            document.getElementById('back-button').addEventListener('click', navigateBack);
 
             // Connect WebSocket
             connectWebSocket();
@@ -203,15 +246,18 @@
         }
 
         function setupControls() {
-            let isDragging = false;
-            let previousMousePosition = { x: 0, y: 0 };
-
             renderer.domElement.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                previousMousePosition = { x: e.clientX, y: e.clientY };
+                if (e.button === 0) {  // Left click
+                    isDragging = true;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                }
             });
 
             renderer.domElement.addEventListener('mousemove', (e) => {
+                // Update mouse position for raycasting
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                
                 if (isDragging) {
                     const deltaX = e.clientX - previousMousePosition.x;
                     const deltaY = e.clientY - previousMousePosition.y;
@@ -236,6 +282,9 @@
                 isDragging = false;
             });
 
+            renderer.domElement.addEventListener('click', onMouseClick);
+            renderer.domElement.addEventListener('contextmenu', onRightClick);
+
             renderer.domElement.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const zoomSpeed = 0.1;
@@ -243,47 +292,28 @@
                 const factor = 1 + direction * zoomSpeed;
                 camera.position.multiplyScalar(factor);
             });
-            // Hover detection
-
-            renderer.domElement.addEventListener('mousemove', onMouseMove, false);
-    
-            // Click to select
-            renderer.domElement.addEventListener('click', onMouseClick, false);
-    
-            // Right-click (for future drill-down)
-            renderer.domElement.addEventListener('contextmenu', onRightClick, false);
-
-        }
-
-    function onMouseMove(event) {
-            // Calculate mouse position in normalized device coordinates (-1 to +1)
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         }
 
         function onMouseClick(event) {
-            // Update raycaster
-            raycaster.setFromCamera(mouse, camera);
+            if (isDragging) return;  // Don't select if we were dragging
             
-            // Get all system spheres
-            const spheres = Object.values(systemObjects).map(obj => obj.sphere);
+            raycaster.setFromCamera(mouse, camera);
+            const spheres = Object.values(itemObjects).map(obj => obj.sphere);
             const intersects = raycaster.intersectObjects(spheres);
             
             if (intersects.length > 0) {
                 const clickedSphere = intersects[0].object;
                 
-                // Find which system this sphere belongs to
-                for (const [id, obj] of Object.entries(systemObjects)) {
+                for (const [id, obj] of Object.entries(itemObjects)) {
                     if (obj.sphere === clickedSphere) {
                         selectedObject = id;
-                        console.log('Selected system:', id);
+                        console.log('Selected:', id);
                         updateDetailsPanel(id);
-                        highlightSystem(id);
+                        highlightItem(id);
                         break;
                     }
                 }
             } else {
-                // Clicked on empty space - deselect
                 selectedObject = null;
                 clearDetailsPanel();
                 clearHighlight();
@@ -291,45 +321,116 @@
         }
 
         function onRightClick(event) {
-            event.preventDefault(); // Prevent context menu
+            event.preventDefault();
             
-            // Update raycaster
             raycaster.setFromCamera(mouse, camera);
-            
-            // Get all system spheres
-            const spheres = Object.values(systemObjects).map(obj => obj.sphere);
+            const spheres = Object.values(itemObjects).map(obj => obj.sphere);
             const intersects = raycaster.intersectObjects(spheres);
             
             if (intersects.length > 0) {
                 const clickedSphere = intersects[0].object;
                 
-                // Find which system this sphere belongs to
-                for (const [id, obj] of Object.entries(systemObjects)) {
+                for (const [id, obj] of Object.entries(itemObjects)) {
                     if (obj.sphere === clickedSphere) {
-                        console.log('Right-clicked on system:', id);
-                        console.log('TODO: Drill down into', id);
-                        // Future: trigger drill-down here
+                        console.log('Drilling down into:', id);
+                        drillDown(id);
                         break;
                     }
                 }
             }
-    }
+        }
+
+        function drillDown(itemId) {
+            // Check if we're at the deepest level (cells)
+            if (currentViewData && currentViewData.level === 'cells') {
+                console.log('Already at deepest level (cells)');
+                return;
+            }
+            
+            // Add to path and send navigation command
+            const newPath = [...currentViewPath, itemId];
+            navigateTo(newPath);
+        }
+
+        function navigateBack() {
+            if (currentViewPath.length > 0) {
+                const newPath = currentViewPath.slice(0, -1);
+                navigateTo(newPath);
+            }
+        }
+
+        function navigateTo(path) {
+            currentViewPath = path;
+            
+            // Send navigation command to server
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'navigate',
+                    path: path
+                }));
+            }
+            
+            // Update UI
+            updateBreadcrumb();
+            clearDetailsPanel();
+            clearHighlight();
+        }
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb-content');
+            const backButton = document.getElementById('back-button');
+            
+            if (currentViewPath.length === 0) {
+                breadcrumb.innerHTML = '<span class="breadcrumb-current">Systems</span>';
+                backButton.style.display = 'none';
+            } else {
+                backButton.style.display = 'block';
+                
+                let html = '<span class="breadcrumb-item" onclick="navigateTo([])">Systems</span>';
+                
+                const levelNames = ['System', 'Cluster', 'Rack', 'Module', 'Cell'];
+                
+                currentViewPath.forEach((item, index) => {
+                    html += ' <span class="breadcrumb-separator">›</span> ';
+                    
+                    const itemName = item.split('_').pop();
+                    const levelName = levelNames[index] || 'Item';
+                    
+                    if (index === currentViewPath.length - 1) {
+                        html += `<span class="breadcrumb-current">${levelName} ${itemName}</span>`;
+                    } else {
+                        const pathToHere = currentViewPath.slice(0, index + 1);
+                        html += `<span class="breadcrumb-item" onclick='navigateTo(${JSON.stringify(pathToHere)})'>${levelName} ${itemName}</span>`;
+                    }
+                });
+                
+                breadcrumb.innerHTML = html;
+            }
+        }
+
         function createTextSprite(text, x, y, z) {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = 256;
             canvas.height = 64;
             
-            context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            // Semi-transparent background instead of solid
+            context.fillStyle = 'rgba(0, 0, 0, 0.5)';  // Changed from 0.7 to 0.5
             context.fillRect(0, 0, canvas.width, canvas.height);
             
-            context.font = 'Bold 24px Arial';
-            context.fillStyle = 'white';
+            context.font = 'Bold 20px Arial';  // Slightly smaller font
+            context.fillStyle = 'rgba(255, 255, 255, 0.9)';  // Slightly transparent text
             context.textAlign = 'center';
             context.fillText(text, canvas.width / 2, canvas.height / 2 + 8);
             
             const texture = new THREE.CanvasTexture(canvas);
-            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const spriteMaterial = new THREE.SpriteMaterial({ 
+                map: texture,
+                transparent: true,  // Enable transparency
+                opacity: 0.8,  // Overall sprite opacity
+                depthTest: true,  // Respect depth so labels behind objects are dimmed
+                depthWrite: false  // Don't block other transparent objects
+            });
             const sprite = new THREE.Sprite(spriteMaterial);
             sprite.position.set(x, y, z);
             sprite.scale.set(40, 10, 1);
@@ -337,9 +438,32 @@
             
             return sprite;
         }
+                // function createTextSprite(text, x, y, z) {
+        //     const canvas = document.createElement('canvas');
+        //     const context = canvas.getContext('2d');
+        //     canvas.width = 256;
+        //     canvas.height = 64;
+            
+        //     context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        //     context.fillRect(0, 0, canvas.width, canvas.height);
+            
+        //     context.font = 'Bold 24px Arial';
+        //     context.fillStyle = 'white';
+        //     context.textAlign = 'center';
+        //     context.fillText(text, canvas.width / 2, canvas.height / 2 + 8);
+            
+        //     const texture = new THREE.CanvasTexture(canvas);
+        //     const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        //     const sprite = new THREE.Sprite(spriteMaterial);
+        //     sprite.position.set(x, y, z);
+        //     sprite.scale.set(40, 10, 1);
+        //     scene.add(sprite);
+            
+        //     return sprite;
+        // }
 
         function connectWebSocket() {
-            ws = new WebSocket('ws://192.168.86.51:9999');
+            ws = new WebSocket('ws://192.168.86.51:9999');  // UPDATE THIS IP
 
             ws.onopen = () => {
                 console.log('WebSocket connected');
@@ -366,35 +490,137 @@
             };
         }
 
+
+        function getCurrentParentLabel() {
+            if (!currentViewData) {
+                return 'Grid POC';
+            }
+
+            // Top level: all systems – parent is grid
+            if (currentViewPath.length === 0) {
+                return 'Grid POC';
+            }
+
+            // We have a path; the parent is the last item in the path
+            const parentId = currentViewPath[currentViewPath.length - 1];
+
+            // Derive a readable name from the ID
+            const suffix = parentId.split('_').pop();
+            
+            const levelNames = ['System', 'Cluster', 'Rack', 'Module', 'Cell'];
+            const depth = currentViewPath.length - 1;  // 0=system,1=cluster,2=rack,...
+
+            const levelName = levelNames[depth] || 'Item';
+            
+            // Try to find parent data from previous level's items
+            // (This is a simplification - in a real app you'd track parent data)
+            return `${levelName} ${suffix}`;
+        }
+
+        // function getCurrentParentLabel() {
+        //     if (!currentViewData) {
+        //         return 'Grid POC';
+        //     }
+
+        //     // Top level: all systems – parent is grid
+        //     if (currentViewPath.length === 0) {
+        //         return 'Grid POC';
+        //     }
+
+        //     // We have a path; the parent is the last item in the path
+        //     const parentId = currentViewPath[currentViewPath.length - 1];
+
+        //     // Try to find the matching item in currentViewData.items
+        //     // (for levels > 0, items are children of this parent)
+        //     // So we just derive a readable name from the ID.
+        //     const suffix = parentId.split('_').pop();
+            
+        //     const levelNames = ['System', 'Cluster', 'Rack', 'Module', 'Cell'];
+        //     const depth = currentViewPath.length - 1;  // 0=system,1=cluster,2=rack,...
+
+        //     const levelName = levelNames[depth] || 'Item';
+        //     return `${levelName} ${suffix}`;
+        // }
+
+        function updatePocLabel() {
+            const labelText = getCurrentParentLabel();
+
+            // Remove old label sprite if it exists
+            if (pocLabelSprite) {
+                scene.remove(pocLabelSprite);
+                if (pocLabelSprite.material) pocLabelSprite.material.map.dispose();
+                if (pocLabelSprite.material) pocLabelSprite.material.dispose();
+            }
+
+            // Re-create label at same position
+            pocLabelSprite = createTextSprite(labelText, 0, -25, 0);
+        }
+
+        function updatePocColor() {
+            const depth = currentViewPath.length;
+            
+            // Color scheme by depth
+            const colors = [
+                0xffff00,  // 0: Grid POC - yellow
+                0x00ffff,  // 1: System - cyan
+                0x0099ff,  // 2: Cluster - blue
+                0x9900ff,  // 3: Rack - purple
+                0xff00ff,  // 4: Module - magenta
+                0xff0099   // 5: Cell - pink (shouldn't reach here but just in case)
+            ];
+            
+            const color = colors[Math.min(depth, colors.length - 1)];
+            
+            pocMesh.material.color.setHex(color);
+            pocMesh.material.emissive.setHex(color);
+        }
+
         function updateVisualization(data) {
+            // Update POC info
             const pocInfo = document.getElementById('poc-info');
             pocInfo.innerHTML = `
                 <strong>${data.poc.name}</strong><br>
                 Total Power: ${data.poc.total_power.toFixed(1)} kW<br>
-                Systems: ${data.systems.length}<br>
+                Level: ${data.view.level}<br>
+                Items: ${data.view.items.length}<br>
                 <small>Last update: ${new Date(data.timestamp).toLocaleTimeString()}</small>
             `;
+            
+            // Store current view data
+            currentViewData = data.view;
+            currentViewPath = data.view_path;
+            
+            // Update breadcrumb
+            updateBreadcrumb();
 
-            const currentSystemIds = new Set();
+            // Update central POC label to reflect new parent
+            updatePocLabel();
 
-            data.systems.forEach((system, index) => {
-                currentSystemIds.add(system.id);
+            // Color-code central sphere by depth
+            updatePocColor();
 
-                if (!systemObjects[system.id]) {
-                    systemObjects[system.id] = createSystemObject(system, index);
+            // Update or create item visualizations
+            const currentItemIds = new Set();
+
+            data.view.items.forEach((item, index) => {
+                currentItemIds.add(item.id);
+
+                if (!itemObjects[item.id]) {
+                    itemObjects[item.id] = createItemObject(item, index, data.view.items.length);
                 }
 
-                updateSystemObject(systemObjects[system.id], system, index);
+                updateItemObject(itemObjects[item.id], item, index, data.view.items.length);
             });
 
-            Object.keys(systemObjects).forEach(id => {
-                if (!currentSystemIds.has(id)) {
-                    removeSystemObject(id);
+            // Remove items that no longer exist
+            Object.keys(itemObjects).forEach(id => {
+                if (!currentItemIds.has(id)) {
+                    removeItemObject(id);
                 }
             });
         }
 
-        function createSystemObject(system, index) {
+        function createItemObject(item, index, total) {
             const obj = {
                 sphere: null,
                 line: null,
@@ -420,93 +646,122 @@
             return obj;
         }
 
+        function updateItemObject(obj, item, index, total) {
+            obj.data = item;
+            
+            // Distance from POC based on capacity
+            //const distance = 60 + item.capacity * 0.25;
+            // Distance from POC based on capacity (with adjustments for deep levels)
+            let distance;
+            if (currentViewData.level === 'cells') {
+                // Cells: fixed distance in a tighter circle
+                distance = 80;
+            } else if (currentViewData.level === 'modules') {
+                // Modules: medium distance
+                distance = 100;
+            } else {
+                // Systems/clusters/racks: scale by capacity
+                distance = 60 + item.capacity * 0.25;
+            }
+            
+            // Arrange in a circle
+            const angle = (index / total) * Math.PI * 2;
+            const x = Math.cos(angle) * distance;
+            const z = Math.sin(angle) * distance;
+            const y = Math.sin(index * 0.5) * 15;
 
-    function updateSystemObject(obj, system, index) {
-        // Store current system data
-        obj.data = system;
-        
-        // Distance from POC based on capacity (larger systems further out)
-        const distance = 60 + system.capacity * 0.25;  // 60-160 units
-        
-        // Arrange in a circle
-        const angle = (index / NUM_SYSTEMS) * Math.PI * 2;
-        const x = Math.cos(angle) * distance;
-        const z = Math.sin(angle) * distance;
-        
-        // Slight vertical variation for visual interest
-        const y = Math.sin(index * 0.5) * 15;
+            obj.sphere.position.set(x, y, z);
 
-        obj.sphere.position.set(x, y, z);
+            // Sphere radius based on capacity
+            let radius;
+            if (currentViewData.level === 'cells') {
+                // Cells: fixed size for easy clicking
+                radius = Math.sqrt(item.capacity) * 8;
+            } else if (currentViewData.level === 'modules') {
+                // Modules: slightly larger fixed size
+                radius = Math.sqrt(item.capacity) * 3;
+            } else {
+                // Systems/clusters/racks: scale by capacity
+                radius = Math.sqrt(item.capacity) * 0.6;
+                radius = Math.max(radius, 6);  // Minimum radius of 6
+            }
 
-        // Sphere radius based on capacity (sqrt so large ones don't dominate)
-        const radius = Math.sqrt(system.capacity) * 0.6;  // ~6-12 units
-        obj.sphere.geometry.dispose();
-        obj.sphere.geometry = new THREE.SphereGeometry(radius, 32, 32);
+            //const radius = Math.sqrt(item.capacity) * 0.6;
+            obj.sphere.geometry.dispose();
+            obj.sphere.geometry = new THREE.SphereGeometry(radius, 32, 32);
 
-        const points = [
+            // Update connection line
+            const points = [
                 new THREE.Vector3(0, 0, 0),
                 new THREE.Vector3(x, y, z)
             ];
             obj.line.geometry.setFromPoints(points);
 
-            // let color;
-            // if (system.power_flow < 0) {
-            //     color = new THREE.Color(0, 1, 0);   // green
-            // } else {
-            //     color = new THREE.Color(1, 0, 0);   // red
-            // }
-            // obj.line.material.color = color;
-            // obj.line.material.linewidth = 3;
-            // Color based on charge/discharge with intensity based on magnitude
+            // Color based on charge/discharge
             let color;
-            const maxPower = system.capacity / 2;
-            const powerRatio = Math.min(Math.abs(system.power_flow) / maxPower, 1);
+            const maxPower = item.capacity / 2;
+            const powerRatio = Math.min(Math.abs(item.power_flow) / maxPower, 1);
             
-            if (system.power_flow < 0) {
-                // Charging - green (darker when low power, brighter when high)
+            if (item.power_flow < 0) {
                 const intensity = 0.3 + powerRatio * 0.7;
                 color = new THREE.Color(0, intensity, 0);
-            } else if (system.power_flow > 0) {
-                // Discharging - red (darker when low power, brighter when high)
+            } else if (item.power_flow > 0) {
                 const intensity = 0.3 + powerRatio * 0.7;
                 color = new THREE.Color(intensity, 0, 0);
             } else {
-                // Idle - dim gray
                 color = new THREE.Color(0.2, 0.2, 0.2);
             }
             obj.line.material.color = color;
-            
-            // Line thickness based on power flow (note: linewidth has limited support in WebGL)
-            // We'll use opacity as an additional visual cue
             obj.line.material.opacity = 0.4 + powerRatio * 0.6;
             obj.line.material.transparent = true;
 
+            // Update label
             if (!obj.label) {
-                obj.label = createTextSprite(system.name, x, y + radius + 10, z);
+                obj.label = createTextSprite(item.name, x, y + radius + 10, z);
             } else {
                 obj.label.position.set(x, y + radius + 10, z);
             }
         }
 
-        function updateDetailsPanel(systemId) {
-            const obj = systemObjects[systemId];
+        function removeItemObject(id) {
+            const obj = itemObjects[id];
+            if (obj) {
+                scene.remove(obj.sphere);
+                scene.remove(obj.line);
+                if (obj.label) scene.remove(obj.label);
+                obj.sphere.geometry.dispose();
+                obj.sphere.material.dispose();
+                obj.line.geometry.dispose();
+                obj.line.material.dispose();
+                delete itemObjects[id];
+            }
+        }
+
+        function updateDetailsPanel(itemId) {
+            const obj = itemObjects[itemId];
             if (!obj || !obj.data) return;
             
-            const system = obj.data;
+            const item = obj.data;
             const detailsDiv = document.getElementById('system-details');
             
-            const chargeState = system.power_flow < 0 ? 'Charging' : 'Discharging';
-            const powerAbs = Math.abs(system.power_flow);
+            const chargeState = item.power_flow < 0 ? 'Charging' : item.power_flow > 0 ? 'Discharging' : 'Idle';
+            const powerAbs = Math.abs(item.power_flow);
+            
+            let extraInfo = '';
+            if (item.voltage !== undefined) {
+                extraInfo = `<div><strong>Voltage:</strong> ${item.voltage} V</div>`;
+            }
             
             detailsDiv.innerHTML = `
-                <h4 style="margin: 5px 0;">${system.name}</h4>
-                <div><strong>ID:</strong> ${system.id}</div>
-                <div><strong>Capacity:</strong> ${system.capacity} kWh</div>
+                <h4 style="margin: 5px 0;">${item.name}</h4>
+                <div><strong>ID:</strong> ${item.id}</div>
+                <div><strong>Capacity:</strong> ${item.capacity} kWh</div>
                 <div><strong>State:</strong> ${chargeState}</div>
                 <div><strong>Power:</strong> ${powerAbs.toFixed(1)} kW</div>
-                <div><strong>SOC:</strong> ${system.soc}%</div>
+                <div><strong>SOC:</strong> ${item.soc}%</div>
+                ${extraInfo}
                 <div style="margin-top: 8px; font-size: 11px; color: #aaa;">
-                    Click to select • Right-click to drill down
+                    Right-click to drill down
                 </div>
             `;
             detailsDiv.style.display = 'block';
@@ -517,38 +772,21 @@
             detailsDiv.style.display = 'none';
         }
 
-        function highlightSystem(systemId) {
-            // Clear previous highlights
+        function highlightItem(itemId) {
             clearHighlight();
             
-            const obj = systemObjects[systemId];
+            const obj = itemObjects[itemId];
             if (!obj) return;
             
-            // Change sphere color to highlight
             obj.sphere.material.emissive.setHex(0xffff00);
             obj.sphere.material.emissiveIntensity = 0.6;
         }
 
         function clearHighlight() {
-            // Reset all spheres to default
-            Object.values(systemObjects).forEach(obj => {
+            Object.values(itemObjects).forEach(obj => {
                 obj.sphere.material.emissive.setHex(0x3399ff);
                 obj.sphere.material.emissiveIntensity = 0.3;
             });
-        }
-
-        function removeSystemObject(id) {
-            const obj = systemObjects[id];
-            if (obj) {
-                scene.remove(obj.sphere);
-                scene.remove(obj.line);
-                if (obj.label) scene.remove(obj.label);
-                obj.sphere.geometry.dispose();
-                obj.sphere.material.dispose();
-                obj.line.geometry.dispose();
-                obj.line.material.dispose();
-                delete systemObjects[id];
-            }
         }
 
         function onWindowResize() {
