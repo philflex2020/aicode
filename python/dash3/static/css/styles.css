@@ -9,7 +9,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,Segoe UI,
 .widget{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:50px}
 .whead{padding:8px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:relative}
 .wtitle{font-weight:600}
-.wbody{padding:8px;overflow:auto;flex:1}
+.wbody{padding:8px;overflow:hidden;flex:1}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
 canvas{width:100%;height:100%}
@@ -86,13 +86,14 @@ canvas{width:100%;height:100%}
   color: #fbbf24;
   font-weight: 700;
 }
-.indexgrid-container {
+
+/* .indexgrid-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 100%;
   height: 100%;
-  overflow-y: auto;      /* scroll if many blocks */
+  overflow-y: auto;     
   padding-right: 4px;
 }
 
@@ -139,25 +140,62 @@ canvas{width:100%;height:100%}
 .indexgrid-val-header {
   font-weight: 600;
   color: #fef9c3;
-}
+} */
+
 
 /* Root container for the whole grid */
 .ixg-root {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;      /* optional, depending on your widget layout */
+  height: 100%;
 }
 
-/* Single shared scroll container */
+/* Blocks stack vertically and scroll if too tall */
+.ixg-blocks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;        /* grow within ixg-root */
+  overflow-y: hidden;      /* vertical scroll for many blocks */
+  overflow-x: hidden;      /* vertical scroll for many blocks */
+  padding-right: 4px;
+}
+
+/* Two-column layout: left fixed, right scrollable */
+.ixg-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+}
+
+/* Left legend column (no horizontal scroll) */
+.ixg-legend {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Right values column (shared horizontal scroll) */
 .ixg-scroll {
   flex: 1 1 auto;
   overflow-x: auto;
   overflow-y: hidden;
-  white-space: nowrap;    /* so rows’ cells line up horizontally */
+  white-space: nowrap;
+  padding-bottom: 4px;
 }
 
-/* Each logical row (index or metric) */
+/* Legend rows */
+.ixg-row-left {
+  height: 22px;              /* tune to match .ixg-row height */
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* Shared row style for values side */
 .ixg-row {
   display: flex;
   flex-direction: row;
@@ -165,30 +203,37 @@ canvas{width:100%;height:100%}
   margin-bottom: 4px;
 }
 
-/* Left label column */
+/* Left legend cell */
 .ixg-row-head {
-  flex: 0 0 auto;
-  width: 120px;       /* choose a width that fits your labels */
+  flex: 0 0 140px;
+  width: 140px;
   font-weight: 600;
   padding-right: 8px;
+  color: #9ca3af;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Row cells container – stretches wide but does NOT scroll */
+/* Values container per row */
 .ixg-row-cells {
   flex: 0 0 auto;
   display: flex;
+  gap: 2px;
 }
 
-/* Individual cells */
 .ixg-cell {
-  min-width: 40px;    /* adjust for column width */
-  padding: 2px 4px;
+  min-width: 50px;
+  padding: 4px 6px;
   text-align: right;
-  border-right: 1px solid #ddd;
-  font-family: monospace;
-  font-size: 12px;
+  border-right: 1px solid #1e2a43;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #e8eef6;
+  background: #0a1628;
 }
 
 .ixg-cell-empty {
   opacity: 0.3;
+  color: #4b5563;
 }

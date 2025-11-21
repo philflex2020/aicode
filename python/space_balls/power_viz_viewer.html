@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power System 3D Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-width: 300px;
+        }
+        #status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .connected { color: #0f0; }
+        .disconnected { color: #f00; }
+        #legend {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .legend-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 30px;
+            height: 15px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">
+        <h3 style="margin-top: 0;">Power System Visualization</h3>
+        <div id="poc-info">Connecting...</div>
+    </div>
+    <!-- ADD THIS NEW DIV -->
+    <div id="system-details" style="
+        position: absolute;
+        top: 150px;
+        left: 10px;
+        color: white;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px;
+        border-radius: 5px;
+        font-size: 13px;
+        max-width: 280px;
+        display: none;
+        border: 2px solid #ffff00;
+    ">
+    <!-- Details will be populated by JS -->
+</div>
+    <div id="status">
+        <span id="connection-status" class="disconnected">● Disconnected</span>
+    </div>
+    <!-- <div id="legend">
+        <strong>Legend:</strong>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff0000;"></div>
+            <span>Discharging (to grid)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #00ff00;"></div>
+            <span>Charging (from grid)</span>
+        </div>
+        <div class="legend-item">
+            <span style="margin-left: 40px;">Sphere size = Capacity</span>
+        </div>
+        <div class="legend-item">
+            <span style="margin-left: 40px;">Line thickness = Power flow</span>
+        </div>
+        <div class="legend-item">
+            <span style="margin-left: 40px;">Distance from POC = Capacity</span>
+        </div>
+    </div> -->
+    <div id="legend">
+        <strong>Legend:</strong>
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(to right, #330000, #ff0000);"></div>
+            <span>Discharging (to grid)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(to right, #003300, #00ff00);"></div>
+            <span>Charging (from grid)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #333333;"></div>
+            <span>Idle / Low power</span>
+        </div>
+        <div class="legend-item">
+            <span style="margin-left: 40px;"><strong>Sphere size</strong> = Capacity</span>
+        </div>
+        <div class="legend-item">
+            <span style="margin-left: 40px;"><strong>Distance from POC</strong> = Capacity</span>
+        </div>
+        <div class="legend-item">
+            <span style="margin-left: 40px;"><strong>Line brightness</strong> = Power flow</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Configuration
+        const NUM_SYSTEMS = 6;  // Should match server
+
+        // Three.js setup
+        let scene, camera, renderer;
+        let pocMesh;
+        let systemObjects = {};
+        let ws;
+
+        // Raycasting for picking
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let hoveredObject = null;
+        let selectedObject = null;
+
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 150, 300);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
+            pointLight.position.set(0, 200, 200);
+            scene.add(pointLight);
+
+            // POC (central point)
+            const pocGeometry = new THREE.SphereGeometry(15, 32, 32);
+            const pocMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffff00,
+                emissive: 0xffff00,
+                emissiveIntensity: 0.5
+            });
+            pocMesh = new THREE.Mesh(pocGeometry, pocMaterial);
+            scene.add(pocMesh);
+
+            // Add POC label
+            createTextSprite('POC', 0, -25, 0);
+
+            // Grid helper
+            const gridHelper = new THREE.GridHelper(400, 20, 0x444444, 0x222222);
+            gridHelper.position.y = -50;
+            scene.add(gridHelper);
+
+            // Mouse controls (simple orbit)
+            setupControls();
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Connect WebSocket
+            connectWebSocket();
+
+            // Animation loop
+            animate();
+        }
+
+        function setupControls() {
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            renderer.domElement.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+
+                    const radius = camera.position.length();
+                    const theta = Math.atan2(camera.position.x, camera.position.z);
+                    const phi = Math.acos(camera.position.y / radius);
+
+                    const newTheta = theta - deltaX * 0.01;
+                    const newPhi = Math.max(0.1, Math.min(Math.PI - 0.1, phi - deltaY * 0.01));
+
+                    camera.position.x = radius * Math.sin(newPhi) * Math.sin(newTheta);
+                    camera.position.y = radius * Math.cos(newPhi);
+                    camera.position.z = radius * Math.sin(newPhi) * Math.cos(newTheta);
+                    camera.lookAt(0, 0, 0);
+
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            renderer.domElement.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            renderer.domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomSpeed = 0.1;
+                const direction = e.deltaY > 0 ? 1 : -1;
+                const factor = 1 + direction * zoomSpeed;
+                camera.position.multiplyScalar(factor);
+            });
+            // Hover detection
+
+            renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+    
+            // Click to select
+            renderer.domElement.addEventListener('click', onMouseClick, false);
+    
+            // Right-click (for future drill-down)
+            renderer.domElement.addEventListener('contextmenu', onRightClick, false);
+
+        }
+
+    function onMouseMove(event) {
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function onMouseClick(event) {
+            // Update raycaster
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Get all system spheres
+            const spheres = Object.values(systemObjects).map(obj => obj.sphere);
+            const intersects = raycaster.intersectObjects(spheres);
+            
+            if (intersects.length > 0) {
+                const clickedSphere = intersects[0].object;
+                
+                // Find which system this sphere belongs to
+                for (const [id, obj] of Object.entries(systemObjects)) {
+                    if (obj.sphere === clickedSphere) {
+                        selectedObject = id;
+                        console.log('Selected system:', id);
+                        updateDetailsPanel(id);
+                        highlightSystem(id);
+                        break;
+                    }
+                }
+            } else {
+                // Clicked on empty space - deselect
+                selectedObject = null;
+                clearDetailsPanel();
+                clearHighlight();
+            }
+        }
+
+        function onRightClick(event) {
+            event.preventDefault(); // Prevent context menu
+            
+            // Update raycaster
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Get all system spheres
+            const spheres = Object.values(systemObjects).map(obj => obj.sphere);
+            const intersects = raycaster.intersectObjects(spheres);
+            
+            if (intersects.length > 0) {
+                const clickedSphere = intersects[0].object;
+                
+                // Find which system this sphere belongs to
+                for (const [id, obj] of Object.entries(systemObjects)) {
+                    if (obj.sphere === clickedSphere) {
+                        console.log('Right-clicked on system:', id);
+                        console.log('TODO: Drill down into', id);
+                        // Future: trigger drill-down here
+                        break;
+                    }
+                }
+            }
+    }
+        function createTextSprite(text, x, y, z) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 64;
+            
+            context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            context.font = 'Bold 24px Arial';
+            context.fillStyle = 'white';
+            context.textAlign = 'center';
+            context.fillText(text, canvas.width / 2, canvas.height / 2 + 8);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.set(x, y, z);
+            sprite.scale.set(40, 10, 1);
+            scene.add(sprite);
+            
+            return sprite;
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://192.168.86.51:9999');
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                const s = document.getElementById('connection-status');
+                s.textContent = '● Connected';
+                s.className = 'connected';
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateVisualization(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                const s = document.getElementById('connection-status');
+                s.textContent = '● Disconnected';
+                s.className = 'disconnected';
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+
+        function updateVisualization(data) {
+            const pocInfo = document.getElementById('poc-info');
+            pocInfo.innerHTML = `
+                <strong>${data.poc.name}</strong><br>
+                Total Power: ${data.poc.total_power.toFixed(1)} kW<br>
+                Systems: ${data.systems.length}<br>
+                <small>Last update: ${new Date(data.timestamp).toLocaleTimeString()}</small>
+            `;
+
+            const currentSystemIds = new Set();
+
+            data.systems.forEach((system, index) => {
+                currentSystemIds.add(system.id);
+
+                if (!systemObjects[system.id]) {
+                    systemObjects[system.id] = createSystemObject(system, index);
+                }
+
+                updateSystemObject(systemObjects[system.id], system, index);
+            });
+
+            Object.keys(systemObjects).forEach(id => {
+                if (!currentSystemIds.has(id)) {
+                    removeSystemObject(id);
+                }
+            });
+        }
+
+        function createSystemObject(system, index) {
+            const obj = {
+                sphere: null,
+                line: null,
+                label: null,
+                data: null
+            };
+
+            const radius = 10;
+            const geometry = new THREE.SphereGeometry(radius, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x3399ff,
+                emissive: 0x3399ff,
+                emissiveIntensity: 0.3
+            });
+            obj.sphere = new THREE.Mesh(geometry, material);
+            scene.add(obj.sphere);
+
+            const lineGeometry = new THREE.BufferGeometry();
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+            obj.line = new THREE.Line(lineGeometry, lineMaterial);
+            scene.add(obj.line);
+
+            return obj;
+        }
+
+
+    function updateSystemObject(obj, system, index) {
+        // Store current system data
+        obj.data = system;
+        
+        // Distance from POC based on capacity (larger systems further out)
+        const distance = 60 + system.capacity * 0.25;  // 60-160 units
+        
+        // Arrange in a circle
+        const angle = (index / NUM_SYSTEMS) * Math.PI * 2;
+        const x = Math.cos(angle) * distance;
+        const z = Math.sin(angle) * distance;
+        
+        // Slight vertical variation for visual interest
+        const y = Math.sin(index * 0.5) * 15;
+
+        obj.sphere.position.set(x, y, z);
+
+        // Sphere radius based on capacity (sqrt so large ones don't dominate)
+        const radius = Math.sqrt(system.capacity) * 0.6;  // ~6-12 units
+        obj.sphere.geometry.dispose();
+        obj.sphere.geometry = new THREE.SphereGeometry(radius, 32, 32);
+
+        const points = [
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(x, y, z)
+            ];
+            obj.line.geometry.setFromPoints(points);
+
+            // let color;
+            // if (system.power_flow < 0) {
+            //     color = new THREE.Color(0, 1, 0);   // green
+            // } else {
+            //     color = new THREE.Color(1, 0, 0);   // red
+            // }
+            // obj.line.material.color = color;
+            // obj.line.material.linewidth = 3;
+            // Color based on charge/discharge with intensity based on magnitude
+            let color;
+            const maxPower = system.capacity / 2;
+            const powerRatio = Math.min(Math.abs(system.power_flow) / maxPower, 1);
+            
+            if (system.power_flow < 0) {
+                // Charging - green (darker when low power, brighter when high)
+                const intensity = 0.3 + powerRatio * 0.7;
+                color = new THREE.Color(0, intensity, 0);
+            } else if (system.power_flow > 0) {
+                // Discharging - red (darker when low power, brighter when high)
+                const intensity = 0.3 + powerRatio * 0.7;
+                color = new THREE.Color(intensity, 0, 0);
+            } else {
+                // Idle - dim gray
+                color = new THREE.Color(0.2, 0.2, 0.2);
+            }
+            obj.line.material.color = color;
+            
+            // Line thickness based on power flow (note: linewidth has limited support in WebGL)
+            // We'll use opacity as an additional visual cue
+            obj.line.material.opacity = 0.4 + powerRatio * 0.6;
+            obj.line.material.transparent = true;
+
+            if (!obj.label) {
+                obj.label = createTextSprite(system.name, x, y + radius + 10, z);
+            } else {
+                obj.label.position.set(x, y + radius + 10, z);
+            }
+        }
+
+        function updateDetailsPanel(systemId) {
+            const obj = systemObjects[systemId];
+            if (!obj || !obj.data) return;
+            
+            const system = obj.data;
+            const detailsDiv = document.getElementById('system-details');
+            
+            const chargeState = system.power_flow < 0 ? 'Charging' : 'Discharging';
+            const powerAbs = Math.abs(system.power_flow);
+            
+            detailsDiv.innerHTML = `
+                <h4 style="margin: 5px 0;">${system.name}</h4>
+                <div><strong>ID:</strong> ${system.id}</div>
+                <div><strong>Capacity:</strong> ${system.capacity} kWh</div>
+                <div><strong>State:</strong> ${chargeState}</div>
+                <div><strong>Power:</strong> ${powerAbs.toFixed(1)} kW</div>
+                <div><strong>SOC:</strong> ${system.soc}%</div>
+                <div style="margin-top: 8px; font-size: 11px; color: #aaa;">
+                    Click to select • Right-click to drill down
+                </div>
+            `;
+            detailsDiv.style.display = 'block';
+        }
+
+        function clearDetailsPanel() {
+            const detailsDiv = document.getElementById('system-details');
+            detailsDiv.style.display = 'none';
+        }
+
+        function highlightSystem(systemId) {
+            // Clear previous highlights
+            clearHighlight();
+            
+            const obj = systemObjects[systemId];
+            if (!obj) return;
+            
+            // Change sphere color to highlight
+            obj.sphere.material.emissive.setHex(0xffff00);
+            obj.sphere.material.emissiveIntensity = 0.6;
+        }
+
+        function clearHighlight() {
+            // Reset all spheres to default
+            Object.values(systemObjects).forEach(obj => {
+                obj.sphere.material.emissive.setHex(0x3399ff);
+                obj.sphere.material.emissiveIntensity = 0.3;
+            });
+        }
+
+        function removeSystemObject(id) {
+            const obj = systemObjects[id];
+            if (obj) {
+                scene.remove(obj.sphere);
+                scene.remove(obj.line);
+                if (obj.label) scene.remove(obj.label);
+                obj.sphere.geometry.dispose();
+                obj.sphere.material.dispose();
+                obj.line.geometry.dispose();
+                obj.line.material.dispose();
+                delete systemObjects[id];
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            pocMesh.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
