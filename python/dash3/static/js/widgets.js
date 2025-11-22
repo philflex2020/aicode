@@ -950,7 +950,8 @@ class ProtectionsWidget extends BaseWidget {
     
     this.protectionData = null;
     this.isEditMode = false;
-    
+    this.expandedVar = null;   // 👈 track which variable is expanded
+
     this.renderStructure();
   }
 
@@ -987,6 +988,206 @@ class ProtectionsWidget extends BaseWidget {
     }
   }
 
+  openEditModal(name, varData) {
+    this.editingVar = name;
+    this.editingData = JSON.parse(JSON.stringify(varData)); // deep clone
+    
+    const modal = document.createElement('div');
+    modal.className = 'prot-modal-overlay';
+    modal.innerHTML = `
+      <div class="prot-modal">
+        <div class="prot-modal-header">
+          <h3>Edit Protection: ${varData.meta.display_name}</h3>
+          <button class="prot-modal-close">&times;</button>
+        </div>
+        <div class="prot-modal-body">
+          ${this.renderEditForm(name, this.editingData)}
+        </div>
+        <div class="prot-modal-footer">
+          <button class="prot-btn prot-btn-secondary" data-action="recall-current">Recall Current</button>
+          <button class="prot-btn prot-btn-secondary" data-action="recall-default">Recall Default</button>
+          <button class="prot-btn prot-btn-secondary" data-action="reset">Reset</button>
+          <button class="prot-btn prot-btn-primary" data-action="save">Save</button>
+          <button class="prot-btn prot-btn-danger" data-action="deploy">Deploy</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event handlers
+    modal.querySelector('.prot-modal-close').onclick = () => this.closeEditModal();
+    modal.querySelector('[data-action="recall-current"]').onclick = () => this.recallValues('current');
+    modal.querySelector('[data-action="recall-default"]').onclick = () => this.recallValues('default');
+    modal.querySelector('[data-action="reset"]').onclick = () => this.resetForm();
+    modal.querySelector('[data-action="save"]').onclick = () => this.saveProtections(false);
+    modal.querySelector('[data-action="deploy"]').onclick = () => this.saveProtections(true);
+    
+    // Close on overlay click
+    modal.onclick = (e) => {
+      if (e.target === modal) this.closeEditModal();
+    };
+  }
+
+  closeEditModal() {
+    const modal = document.querySelector('.prot-modal-overlay');
+    if (modal) modal.remove();
+    this.editingVar = null;
+    this.editingData = null;
+  }
+
+  renderEditForm(name, varData) {
+    const limits = varData.limits || {};
+    const sides = ['max', 'min'];
+    const levels = ['warning', 'alert', 'fault'];
+    
+    const renderSide = (side) => {
+      const sideLimits = limits[side];
+      if (!sideLimits) return '';
+      
+      const hysteresis = sideLimits.hysteresis || 0.0;
+      
+      return `
+        <div class="prot-edit-side">
+          <h4>${side.toUpperCase()} Limits</h4>
+          
+          <div class="prot-edit-row prot-edit-hyst">
+            <label>Hysteresis</label>
+            <input type="number" step="0.01" value="${hysteresis}" 
+                  data-side="${side}" data-field="hysteresis" class="prot-input">
+          </div>
+          
+          <table class="prot-edit-table">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Threshold</th>
+                <th>On (s)</th>
+                <th>Off (s)</th>
+                <th>Enabled</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${levels.map(level => {
+                const cfg = sideLimits[level];
+                if (!cfg) return '';
+                
+                return `
+                  <tr>
+                    <td class="prot-level">${level}</td>
+                    <td>
+                      <input type="number" step="0.01" value="${cfg.threshold}" 
+                            data-side="${side}" data-level="${level}" data-field="threshold" 
+                            class="prot-input prot-input-sm">
+                    </td>
+                    <td>
+                      <input type="number" step="0.1" value="${cfg.on_duration}" 
+                            data-side="${side}" data-level="${level}" data-field="on_duration" 
+                            class="prot-input prot-input-sm">
+                    </td>
+                    <td>
+                      <input type="number" step="0.1" value="${cfg.off_duration}" 
+                            data-side="${side}" data-level="${level}" data-field="off_duration" 
+                            class="prot-input prot-input-sm">
+                    </td>
+                    <td class="prot-center">
+                      <input type="checkbox" ${cfg.enabled ? 'checked' : ''} 
+                            data-side="${side}" data-level="${level}" data-field="enabled" 
+                            class="prot-checkbox">
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    };
+    
+    return sides.map(renderSide).join('');
+  }
+
+  async recallValues(source) {
+    try {
+
+      const data = await getJSON(`/api/db/protections?source=${source}`);
+      
+      if (data.ok && data.protections[this.editingVar]) {
+        this.editingData = JSON.parse(JSON.stringify(data.protections[this.editingVar]));
+        
+        // Re-render the form
+        const modalBody = document.querySelector('.prot-modal-body');
+        if (modalBody) {
+          modalBody.innerHTML = this.renderEditForm(this.editingVar, this.editingData);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to recall values:', err);
+      alert('Failed to recall values');
+    }
+  }
+
+  resetForm() {
+    // Re-render with current editingData (undo any unsaved changes)
+    const modalBody = document.querySelector('.prot-modal-body');
+    if (modalBody) {
+      modalBody.innerHTML = this.renderEditForm(this.editingVar, this.editingData);
+    }
+  }
+
+  async saveProtections(deploy = false) {
+    // Collect values from form
+    const modal = document.querySelector('.prot-modal');
+    if (!modal) return;
+    
+    const inputs = modal.querySelectorAll('input');
+    const updatedLimits = JSON.parse(JSON.stringify(this.editingData.limits));
+    
+    inputs.forEach(input => {
+      const side = input.dataset.side;
+      const level = input.dataset.level;
+      const field = input.dataset.field;
+      
+      if (!side || !field) return;
+      
+      if (field === 'hysteresis') {
+        updatedLimits[side].hysteresis = parseFloat(input.value) || 0.0;
+      } else if (level) {
+        if (field === 'enabled') {
+          updatedLimits[side][level].enabled = input.checked;
+        } else {
+          updatedLimits[side][level][field] = parseFloat(input.value) || 0.0;
+        }
+      }
+    });
+    
+    // Build payload
+    const payload = {
+      protections: {
+        [this.editingVar]: updatedLimits
+      }
+    };
+    
+    try {
+      const endpoint = deploy ? '/api/db/protections/deploy' : '/api/db/protections';
+      const result = await getJSON(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (result.ok) {
+        alert(deploy ? 'Protections deployed!' : 'Protections saved!');
+        this.closeEditModal();
+        this.fetchProtections(); // Refresh widget
+      } else {
+        alert('Failed to save protections');
+      }
+    } catch (err) {
+      console.error('Failed to save protections:', err);
+      alert('Failed to save protections');
+    }
+  }
   showEditModal() {
     console.log('Opening edit modal... (to be implemented)');
     alert('Edit modal coming in next step!');
@@ -1022,7 +1223,8 @@ class ProtectionsWidget extends BaseWidget {
     if (!content) return;
 
     const variables = Object.keys(data.protections || {});
-    
+    console.log('Rendering protections, variables =', variables);
+
     if (variables.length === 0) {
       content.innerHTML = '<div class="protections-empty">No protections configured</div>';
       return;
@@ -1030,25 +1232,274 @@ class ProtectionsWidget extends BaseWidget {
 
     content.innerHTML = `
       <div class="protections-list">
-        ${variables.map(varName => {
-          const varData = data.protections[varName];
+        ${variables.map(name => {
+          const varData = data.protections[name];
           const state = varData.current_state || 'normal';
-          const value = varData.current_value !== null && varData.current_value !== undefined 
-            ? varData.current_value.toFixed(2) 
-            : 'N/A';
-          
+          const v = varData.current_value;
+          const value =
+            v === null || v === undefined ? 'N/A'
+            : typeof v === 'number' ? v.toFixed(2)
+            : String(v);
+          const unit = varData.meta?.unit || '';
+          const isExpanded = this.expandedVar === name;
+
           return `
-            <div class="protection-item ${this.highlightActiveAlarms && state !== 'normal' ? 'alarm-active' : ''}">
+            <div class="protection-item ${this.highlightActiveAlarms && state !== 'normal' ? 'alarm-active' : ''}" data-var="${name}">
               <div class="protection-main">
-                <span class="protection-name">${this.formatVariableName(varName)}</span>
-                <span class="protection-value">${value} ${varData.meta.unit || ''}</span>
+                <button class="protection-toggle">
+                  ${isExpanded ? '▾' : '▸'}
+                </button>
+                <span class="protection-name">${this.formatVariableName(name)}</span>
+                <span class="protection-value">${value} ${unit}</span>
                 <span class="protection-state state-${state}">${state.toUpperCase()}</span>
+                <button class="protection-edit-btn no-toggle" data-var="${name}">✎ Edit</button>
               </div>
+              ${isExpanded ? this.renderDetails(name, varData) : ''}
             </div>
           `;
         }).join('')}
       </div>
     `;
+
+    // Attach click handlers for expand/collapse
+    const items = content.querySelectorAll('.protection-item');
+    items.forEach(item => {
+      item.addEventListener('click', (ev) => {
+        // don’t trigger on inner buttons in the future (e.g., edit/save)
+        if (ev.target.closest('.no-toggle')) return;
+
+        const varName = item.getAttribute('data-var');
+        this.expandedVar = (this.expandedVar === varName) ? null : varName;
+        this.renderProtections(this.protectionData);
+      });
+    });
+
+    // Attach click handlers for edit buttons
+    const editBtns = content.querySelectorAll('.protection-edit-btn');
+    editBtns.forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const varName = btn.getAttribute('data-var');
+        const varData = data.protections[varName];
+        this.openEditModal(varName, varData);
+      });
+    });
+  }
+
+  renderDetails(name, varData) {
+    const limits = varData.limits || {};
+    const sides = ['max', 'min'];
+    const levels = ['warning', 'alert', 'fault'];
+
+    const renderSide = (side) => {
+      const sideLimits = limits[side];
+      if (!sideLimits) return '';
+
+      const hysteresis = sideLimits.hysteresis;
+
+      // Check if this side has any actual level data
+      const hasAnyLevel = levels.some(lv => sideLimits[lv]);
+      const hasHyst = hysteresis !== undefined && hysteresis !== null;
+
+      if (!hasAnyLevel && !hasHyst) return '';
+
+      return `
+        <div class="prot-side">
+          <div class="prot-side-title">${side.toUpperCase()}</div>
+          <table class="prot-table">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Threshold</th>
+                <th>On (s)</th>
+                <th>Off (s)</th>
+                <th>En</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${levels.map(level => {
+                const cfg = sideLimits[level];
+                if (!cfg) return '';
+
+                const clsDisabled = !cfg.enabled ? 'prot-row-disabled' : '';
+                return `
+                  <tr class="${clsDisabled}">
+                    <td class="prot-level">${level}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.threshold)}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.on_duration)}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.off_duration)}</td>
+                    <td class="prot-center">${cfg.enabled ? '✓' : ''}</td>
+                  </tr>
+                `;
+              }).join('')}
+              ${hasHyst ? `
+                <tr class="prot-hyst-row">
+                  <td class="prot-level">Hysteresis</td>
+                  <td class="prot-num">${this.fmtNum(hysteresis)}</td>
+                  <td class="prot-num"></td>
+                  <td class="prot-num"></td>
+                  <td class="prot-center"></td>
+                </tr>
+              ` : ''}
+            </tbody>
+          </table>
+        </div>
+      `;
+    };
+
+    const html = sides.map(renderSide).join('');
+
+    if (!html.trim()) {
+      return `
+        <div class="protection-details">
+          <div class="prot-empty">No limits configured for this variable</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="protection-details">
+        ${html}
+      </div>
+    `;
+  }
+
+  fmtNum(x) {
+    if (x === null || x === undefined) return '';
+    if (typeof x !== 'number') return String(x);
+    if (Math.abs(x) >= 10) return x.toFixed(1);
+    return x.toFixed(2);
+  }
+
+  xrenderDetails(name, varData) {
+    const limits = varData.limits || {};
+    const sides = ['max', 'min'];
+    const levels = ['warning', 'alert', 'fault'];
+
+    const renderSide = (side) => {
+      const sideLimits = limits[side];
+      if (!sideLimits) return '';  // no max or min block at all
+
+      // Check if this side has any actual level data
+      const hasAnyLevel = levels.some(lv => sideLimits[lv]);
+      if (!hasAnyLevel) return '';
+
+      return `
+        <div class="prot-side">
+          <div class="prot-side-title">${side.toUpperCase()}</div>
+          <table class="prot-table">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Threshold</th>
+                <th>On (s)</th>
+                <th>Off (s)</th>
+                <th>En</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${levels.map(level => {
+                const cfg = sideLimits[level];
+                if (!cfg) return '';
+
+                const clsDisabled = !cfg.enabled ? 'prot-row-disabled' : '';
+                return `
+                  <tr class="${clsDisabled}">
+                    <td class="prot-level">${level}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.threshold)}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.on_duration)}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.off_duration)}</td>
+                    <td class="prot-center">${cfg.enabled ? '✓' : ''}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    };
+
+    const html = sides.map(renderSide).join('');
+
+    // If no limits at all, show a message
+    if (!html.trim()) {
+      return `
+        <div class="protection-details">
+          <div class="prot-empty">No limits configured for this variable</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="protection-details">
+        ${html}
+      </div>
+    `;
+  }
+
+  fmtNum(x) {
+    if (x === null || x === undefined) return '';
+    if (typeof x !== 'number') return String(x);
+    if (Math.abs(x) >= 10) return x.toFixed(1);
+    return x.toFixed(2);
+  }
+
+xxrenderDetails(name, varData) {
+    const limits = varData.limits || {};
+    const sides = ['max', 'min'];
+    const levels = ['warning', 'alert', 'fault'];
+
+    const renderSide = (side) => {
+      const sideLimits = limits[side];
+      if (!sideLimits) return '';
+
+      return `
+        <div class="prot-side">
+          <div class="prot-side-title">${side.toUpperCase()}</div>
+          <table class="prot-table">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>Threshold</th>
+                <th>On (s)</th>
+                <th>Off (s)</th>
+                <th>En</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${levels.map(level => {
+                const cfg = sideLimits[level];
+                if (!cfg) return '';
+
+                const clsDisabled = !cfg.enabled ? 'prot-row-disabled' : '';
+                return `
+                  <tr class="${clsDisabled}">
+                    <td class="prot-level">${level}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.threshold)}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.on_duration)}</td>
+                    <td class="prot-num">${this.fmtNum(cfg.off_duration)}</td>
+                    <td class="prot-center">${cfg.enabled ? '✓' : ''}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    };
+
+    return `
+      <div class="protection-details">
+        ${sides.map(renderSide).join('')}
+      </div>
+    `;
+  }
+
+  fmtNum(x) {
+    if (x === null || x === undefined) return '';
+    if (typeof x !== 'number') return String(x);
+    if (Math.abs(x) >= 10) return x.toFixed(1);
+    return x.toFixed(2);
   }
 
   formatVariableName(name) {

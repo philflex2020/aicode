@@ -357,3 +357,304 @@ canvas{width:100%;height:100%}
   background: #F44336;
   color: white;
 }
+
+.protection-main {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.protection-toggle {
+  border: none;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+}
+
+.protection-toggle:focus {
+  outline: none;
+}
+
+.protection-details {
+  padding: 8px 10px 10px 28px; /* indent under main row */
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.prot-side {
+  min-width: 220px;
+}
+
+.prot-side-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.prot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.prot-table th,
+.prot-table td {
+  padding: 2px 4px;
+  text-align: right;
+}
+
+.prot-table th:first-child,
+.prot-table td:first-child {
+  text-align: left;
+}
+
+.prot-table thead tr {
+  border-bottom: 1px solid #444;
+}
+
+.prot-table tbody tr {
+  border-top: 1px solid #333;
+}
+
+.prot-row-disabled {
+  color: #777;
+  opacity: 0.6;
+}
+
+.prot-num {
+  font-family: monospace;
+}
+
+.prot-level {
+  text-transform: capitalize;
+}
+
+.prot-center {
+  text-align: center;
+}
+
+.prot-empty {
+  color: #888;
+  font-style: italic;
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+.prot-hyst-row {
+  border-top: 1px dashed #555;
+}
+
+.prot-hyst-row .prot-level {
+  font-style: italic;
+  color: #ccc;
+}
+/* Edit button in protection row */
+.protection-edit-btn {
+  background: #444;
+  border: none;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.protection-edit-btn:hover {
+  background: #555;
+}
+
+/* Modal styles (same as before) */
+.prot-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.prot-modal {
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.prot-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #444;
+}
+
+.prot-modal-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+}
+
+.prot-modal-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  line-height: 28px;
+}
+
+.prot-modal-close:hover {
+  color: #fff;
+}
+
+.prot-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.prot-edit-side {
+  margin-bottom: 24px;
+}
+
+.prot-edit-side h4 {
+  color: #4a9eff;
+  margin: 0 0 12px 0;
+  font-size: 16px;
+}
+
+.prot-edit-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.prot-edit-row label {
+  flex: 0 0 120px;
+  color: #ccc;
+  font-size: 13px;
+}
+
+.prot-edit-hyst {
+  background: #252525;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.prot-edit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prot-edit-table th {
+  background: #252525;
+  color: #aaa;
+  padding: 8px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.prot-edit-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #333;
+}
+
+.prot-level {
+  text-transform: capitalize;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.prot-center {
+  text-align: center;
+}
+
+.prot-input {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 100%;
+}
+
+.prot-input-sm {
+  width: 80px;
+}
+
+.prot-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.prot-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.prot-modal-footer {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid #444;
+  justify-content: flex-end;
+}
+
+.prot-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.prot-btn-primary {
+  background: #4a9eff;
+  color: #fff;
+}
+
+.prot-btn-primary:hover {
+  background: #3a8eef;
+}
+
+.prot-btn-secondary {
+  background: #444;
+  color: #fff;
+}
+
+.prot-btn-secondary:hover {
+  background: #555;
+}
+
+.prot-btn-danger {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.prot-btn-danger:hover {
+  background: #c0392b;
+}

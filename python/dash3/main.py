@@ -17,6 +17,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from typing import Optional
 import httpx
 import json
 import uvicorn
@@ -32,6 +33,7 @@ DATA_SERVER_HOST = os.environ.get("DATA_SERVER_HOST", "localhost")
 DATA_SERVER_PORT = int(os.environ.get("DATA_SERVER_PORT", "8084"))
 #DATA_SERVER_URL = f"http://{DATA_SERVER_HOST}:8084"
 DS_URL = "http://127.0.0.1:8084"
+DB_SERVER_URL = "http://127.0.0.1:8084"
 
 # -----------------------------------------------------------------
 # Static + templates
@@ -154,12 +156,113 @@ async def profiles_clone_proxy(request: Request):
     return await proxy_to_data_server("/api/profiles/clone", request)
 
 @app.get("/api/protections")
-async def profiles_clone_proxy(request: Request):
+async def protections_get_proxy(request: Request):
     return await proxy_to_data_server("/api/protections", request)
 
 @app.post("/api/protections")
 async def protections_post_proxy(request: Request):
     return await proxy_to_data_server("/api/protections", request)
+
+
+@app.post("/api/db/protections")
+async def proxy_save_protections(request: Request):
+    """Proxy POST /api/protections to db_server"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{DB_SERVER_URL}/api/protections",
+            content=body,
+            headers={"Content-Type": "application/json"}
+        )
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+
+@app.post("/api/db/protections/deploy")
+async def proxy_deploy_protections(request: Request):
+    """Proxy POST /api/protections/deploy to db_server"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{DB_SERVER_URL}/api/protections/deploy",
+            content=body,
+            headers={"Content-Type": "application/json"}
+        )
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+
+@app.get("/api/db/protections")
+async def proxy_get_protections(source: str = "current", profile: Optional[str] = None):
+    """Proxy GET /api/protections to db_server"""
+    params = {"source": source}
+    if profile:
+        params["profile"] = profile
+    
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{DB_SERVER_URL}/api/protections",
+            params=params
+        )
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+# @app.post("/api/protections")
+# def save_protections(config: ProtectionConfigIn):
+#     """Save protection configuration to profile (does not deploy)"""
+#     with SessionLocal() as db:
+#         if config.profile:
+#             prof = db.query(EnvProfile).filter_by(name=config.profile).first()
+#             if not prof:
+#                 raise HTTPException(404, f"Profile '{config.profile}' not found")
+#         else:
+#             prof = get_active_profile(db)
+        
+#         # Delete existing protections for this profile
+#         db.query(Protection).filter_by(profile_id=prof.id).delete()
+        
+#         # Insert new protections
+#         for var_name, limits in config.protections.items():
+#             for limit_type, levels in limits.items():
+#                 for level, data in levels.items():
+#                     db.add(Protection(
+#                         profile_id=prof.id,
+#                         variable_name=var_name,
+#                         limit_type=limit_type,
+#                         level=level,
+#                         threshold=data.threshold,
+#                         on_duration=data.on_duration,
+#                         off_duration=data.off_duration,
+#                         enabled=data.enabled
+#                     ))
+        
+#         db.commit()
+#         return {"ok": True, "profile": prof.name, "message": "Protections saved"}
+
+@app.post("/api/protections/deploy")
+async def protections_deploy_proxy(request: Request):
+    return {
+        "ok": True,
+        "profile": save_result["profile"],
+        "message": "Protections NOT  deployed YET",
+        "deployed": True
+    }
+    # return await proxy_to_data_server("/api/protections/deploy", request)
+
+# @app.post("/api/protections/deploy")
+# def deploy_protections(config: ProtectionConfigIn):
+#     """Save and deploy protection configuration to target system"""
+#     # First save to database
+#     save_result = save_protections(config)
+    
+#     # TODO: Add actual deployment logic here (send to BMS hardware, etc.)
+#     # For now, just return success
+    
+#     return {
+#         "ok": True,
+#         "profile": save_result["profile"],
+#         "message": "Protections saved and deployed",
+#         "deployed": True
+#     }
+
+
 # -----------------------------------------------------------------
 # Entry point with argparse for CLI options
 # -----------------------------------------------------------------
