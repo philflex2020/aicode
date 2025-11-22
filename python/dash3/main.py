@@ -153,6 +153,13 @@ async def profiles_select_proxy(request: Request):
 async def profiles_clone_proxy(request: Request):
     return await proxy_to_data_server("/api/profiles/clone", request)
 
+@app.get("/api/protections")
+async def profiles_clone_proxy(request: Request):
+    return await proxy_to_data_server("/api/protections", request)
+
+@app.post("/api/protections")
+async def protections_post_proxy(request: Request):
+    return await proxy_to_data_server("/api/protections", request)
 # -----------------------------------------------------------------
 # Entry point with argparse for CLI options
 # -----------------------------------------------------------------
