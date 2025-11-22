@@ -1,0 +1,16 @@
+ModuleNotFoundError: No module named 'uvicorn'    
+uvicorn                   0.38.0
+
+ModuleNotFoundError: No module named 'fastapi'
+fastapi                   0.121.2
+
+ModuleNotFoundError: No module named 'pydantic'  
+pydantic                  2.12.4
+pydantic_core             2.41.5
+
+ModuleNotFoundError: No module named 'sqlalchemy'
+SQLAlchemy                2.0.44
+
+ModuleNotFoundError: No module named 'httpx'
+httpx                     0.28.1
+

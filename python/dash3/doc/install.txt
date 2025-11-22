@@ -1,0 +1,14 @@
+
+  dpkg -i /tmp/python3-zoneinfo_3.12.3-r0_arm64.deb
+  pip3 install  httpx
+  pip3 install venv
+  pip3 install uvicorn
+  pip3 install fastapi
+  pip3 install msgpack
+  pip3 install fastapi
+  pip3 install pydantic
+  pip3 install SQLAlchemy
+  pip3 install jinja2
+  dpkg -i /tmp/libonig5_6.9.9-r0_arm64.deb
+  dpkg -i /tmp/jq_1.7.1-r0_arm64.deb
+  
