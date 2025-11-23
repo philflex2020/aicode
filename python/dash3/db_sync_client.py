@@ -71,26 +71,26 @@ class SyncClient:
 
 
 
-            # 4) FINAL STEP: Force secondary's global system_version to match primary's
+            # 4) FINAL STEP: Force secondary's global current_version to match primary's
             try:
                 prim_ver_resp = requests.get(f"{self.primary_url}/api/system/version")
                 prim_ver_resp.raise_for_status()
-                primary_sys_ver = prim_ver_resp.json().get("system_version")
+                primary_sys_ver = prim_ver_resp.json().get("current_version")
                 
                 if primary_sys_ver is not None:
                     # Call a small internal sync endpoint on secondary to set system version
                     resp2 = requests.post(
                         f"{self.secondary_url}/api/system/version/sync",
-                        json={"system_version": primary_sys_ver},
+                        json={"current_version": primary_sys_ver},
                     )
                     if resp2.status_code == 200:
                         self.log(
-                            f"Initial sync: forced secondary system_version -> {primary_sys_ver}",
+                            f"Initial sync: forced secondary current_version -> {primary_sys_ver}",
                             "SUCCESS",
                         )
                     else:
                         self.log(
-                            f"Initial sync: failed to set secondary system_version "
+                            f"Initial sync: failed to set secondary current_version "
                             f"({resp2.status_code}): {resp2.text}",
                             "ERROR",
                         )

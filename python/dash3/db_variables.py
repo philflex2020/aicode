@@ -70,7 +70,7 @@ class SystemVersion(Base):
     __tablename__ = "system_version"
     
     id = Column(Integer, primary_key=True, default=1)
-    current_version = Column(Integer, default=0, nullable=False)
+    system_version = Column(Integer, default=0, nullable=False)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     __table_args__ = (
@@ -151,7 +151,7 @@ def init_db():
     with SessionLocal() as db:
         sys_ver = db.query(SystemVersion).filter_by(id=1).first()
         if not sys_ver:
-            db.add(SystemVersion(id=1, current_version=0))
+            db.add(SystemVersion(id=1, system_version=0))
             db.commit()
             print(f"✓ Initialized system version to 0")
     
@@ -170,43 +170,38 @@ def get_session():
 def get_system_version(db: Session) -> int:
     sys_ver = db.query(SystemVersion).filter_by(id=1).first()
     if not sys_ver:
-        sys_ver = SystemVersion(id=1, current_version=0)
+        sys_ver = SystemVersion(id=1, system_version=0)
         db.add(sys_ver)
         db.flush()
-    return sys_ver.current_version
-
-def xxget_system_version(db: Session) -> int:
-    """Get current system version"""
-    sys_ver = db.query(SystemVersion).filter_by(id=1).first()
-    return sys_ver.current_version if sys_ver else 0
+    return sys_ver.system_version
 
 
 def increment_system_version(db: Session) -> int:
     """Increment and return new system version (thread-safe)"""
     sys_ver = db.query(SystemVersion).filter_by(id=1).with_for_update().first()
     if not sys_ver:
-        sys_ver = SystemVersion(id=1, current_version=0)
+        sys_ver = SystemVersion(id=1, system_version=0)
         db.add(sys_ver)
         db.flush()
     
-    sys_ver.current_version += 1
+    sys_ver.system_version += 1
     sys_ver.last_updated = datetime.utcnow()
     db.flush()
     
-    return sys_ver.current_version
+    return sys_ver.system_version
 
 def set_system_version(db: Session, version: int) -> int:
     """Set system version to a specific value (for sync purposes)"""
     sys_ver = db.query(SystemVersion).filter_by(id=1).with_for_update().first()
     if not sys_ver:
-        sys_ver = SystemVersion(id=1, current_version=version)
+        sys_ver = SystemVersion(id=1, system_version=version)
         db.add(sys_ver)
     else:
-        sys_ver.current_version = version
+        sys_ver.system_version = version
         sys_ver.last_updated = datetime.utcnow()
     
     db.flush()
-    return sys_ver.current_version
+    return sys_ver.system_version
 
 
 def sync_system_version(db: Session, target_version: int) -> bool:

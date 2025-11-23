@@ -106,6 +106,25 @@
             padding: 15px;
             border-radius: 5px;
             text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .stat-box.synced {
+            border: 2px solid #2ecc71;
+            animation: pulse 2s infinite;
+        }
+        
+        .stat-box.out-of-sync {
+            border: 2px solid #e74c3c;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+            }
         }
         
         .stat-value {
@@ -289,7 +308,7 @@
                     </div>
                     <div class="stat-box">
                         <div class="stat-value" id="primary-version">0</div>
-                        <div class="stat-label">Version</div>
+                        <div class="stat-label">System Version</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-value" id="primary-events">0</div>
@@ -309,9 +328,9 @@
                         <div class="stat-value" id="secondary-vars">0</div>
                         <div class="stat-label">Variables</div>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-box" id="version-sync-box">
                         <div class="stat-value" id="secondary-version">0</div>
-                        <div class="stat-label">Version</div>
+                        <div class="stat-label">System Version</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-value" id="secondary-synced">0</div>
@@ -462,16 +481,30 @@
                 // Primary stats
                 const primaryRes = await fetch(`${PRIMARY_URL}/api/health`);
                 const primaryData = await primaryRes.json();
+                const primaryVersion = primaryData.system_version;
+                
                 document.getElementById('primary-vars').textContent = primaryData.variable_count;
-                document.getElementById('primary-version').textContent = primaryData.system_version;
+                document.getElementById('primary-version').textContent = primaryVersion;
                 document.getElementById('primary-events').textContent = eventCount;
                 
                 // Secondary stats
                 const secondaryRes = await fetch(`${SECONDARY_URL}/api/health`);
                 const secondaryData = await secondaryRes.json();
+                const secondaryVersion = secondaryData.system_version;
+                
                 document.getElementById('secondary-vars').textContent = secondaryData.variable_count;
-                document.getElementById('secondary-version').textContent = secondaryData.system_version;
+                document.getElementById('secondary-version').textContent = secondaryVersion;
                 document.getElementById('secondary-synced').textContent = syncedCount;
+                
+                // Check version sync status
+                const versionBox = document.getElementById('version-sync-box');
+                if (primaryVersion === secondaryVersion) {
+                    versionBox.className = 'stat-box synced';
+                    versionBox.title = '✓ Versions in sync';
+                } else {
+                    versionBox.className = 'stat-box out-of-sync';
+                    versionBox.title = `⚠ Out of sync (primary: ${primaryVersion}, secondary: ${secondaryVersion})`;
+                }
             } catch (error) {
                 console.error('Error updating stats:', error);
             }

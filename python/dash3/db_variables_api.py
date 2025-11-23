@@ -170,7 +170,7 @@ class SystemVariableResponse(BaseModel):
 
 
 class SystemVersionResponse(BaseModel):
-    current_version: int
+    system_version: int
     last_updated: datetime
     
     class Config:
@@ -751,7 +751,7 @@ def sync_version(request: SyncVersionRequest, db: Session = Depends(get_db)):
     
     return {
         "updated": updated,
-        "current_version": current,
+        "system_version": current,
         "target_version": request.system_version
     }
 

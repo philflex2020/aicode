@@ -13,8 +13,8 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a2e;
-            color: #eee;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
         }
         
@@ -23,143 +23,212 @@
             margin: 0 auto;
         }
         
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #00d9ff;
-            font-size: 2em;
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         
-        .servers {
+        .header h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .server-config {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
-        .server-card {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid #0f3460;
-        }
-        
-        .server-card.primary {
-            border-color: #00d9ff;
-        }
-        
-        .server-card.secondary {
-            border-color: #ff6b6b;
-        }
-        
-        .server-header {
+        .config-group {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+            flex-direction: column;
         }
         
-        .server-title {
-            font-size: 1.3em;
-            font-weight: bold;
+        .config-group label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
         
-        .server-card.primary .server-title {
-            color: #00d9ff;
+        .config-group input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
         }
         
-        .server-card.secondary .server-title {
-            color: #ff6b6b;
+        .config-group input:focus {
+            outline: none;
+            border-color: #667eea;
         }
         
-        .status-badge {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-        
-        .status-badge.connected {
-            background: #2ecc71;
-            color: white;
-        }
-        
-        .status-badge.disconnected {
-            background: #e74c3c;
-            color: white;
-        }
-        
-        .server-url {
-            color: #aaa;
-            font-size: 0.9em;
-            margin-bottom: 15px;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+        .button-group {
+            display: flex;
             gap: 10px;
+            margin-top: 20px;
         }
         
-        .stat-box {
-            background: #0f3460;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s;
         }
         
-        .stat-box.synced {
-            border: 2px solid #2ecc71;
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
             animation: pulse 2s infinite;
         }
         
-        .stat-box.out-of-sync {
-            border: 2px solid #e74c3c;
+        .status-dot.connected {
+            background: #10b981;
+        }
+        
+        .status-dot.disconnected {
+            background: #ef4444;
+            animation: none;
+        }
+        
+        .status-dot.connecting {
+            background: #f59e0b;
         }
         
         @keyframes pulse {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
-            }
-            50% {
-                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
-        .stat-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #00d9ff;
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .badge-secondary {
+            background: #764ba2;
+            color: white;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
         }
         
         .stat-label {
-            font-size: 0.9em;
-            color: #aaa;
-            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
         }
         
-        .activity-feed {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 20px;
-            border: 2px solid #0f3460;
-            max-height: 500px;
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .activity-log {
+            max-height: 400px;
             overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
         }
         
-        .activity-header {
-            font-size: 1.3em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #00d9ff;
-        }
-        
-        .activity-item {
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border-left: 4px solid;
+        .log-entry {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            font-size: 13px;
             animation: slideIn 0.3s ease-out;
         }
         
@@ -174,402 +243,408 @@
             }
         }
         
-        .activity-item.created {
-            background: rgba(46, 204, 113, 0.1);
-            border-color: #2ecc71;
+        .log-entry.created {
+            border-left-color: #10b981;
         }
         
-        .activity-item.updated {
-            background: rgba(241, 196, 15, 0.1);
-            border-color: #f1c40f;
+        .log-entry.updated {
+            border-left-color: #3b82f6;
         }
         
-        .activity-item.deleted {
-            background: rgba(231, 76, 60, 0.1);
-            border-color: #e74c3c;
+        .log-entry.deleted {
+            border-left-color: #ef4444;
         }
         
-        .activity-time {
-            font-size: 0.85em;
-            color: #aaa;
+        .log-time {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 4px;
         }
         
-        .activity-type {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 0.85em;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-        
-        .activity-type.created {
-            background: #2ecc71;
-            color: white;
-        }
-        
-        .activity-type.updated {
-            background: #f1c40f;
+        .log-message {
             color: #333;
         }
         
-        .activity-type.deleted {
-            background: #e74c3c;
-            color: white;
+        .variable-name {
+            font-weight: 600;
+            color: #667eea;
         }
         
-        .activity-details {
-            margin-top: 8px;
-            font-size: 0.95em;
+        .full-width {
+            grid-column: 1 / -1;
         }
         
-        .activity-name {
-            font-weight: bold;
-            color: #00d9ff;
-        }
-        
-        .activity-meta {
-            color: #aaa;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: #00d9ff;
-            color: #1a1a2e;
-        }
-        
-        .btn-primary:hover {
-            background: #00b8d4;
-        }
-        
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-        
-        .input-group {
-            display: flex;
-            gap: 10px;
-            flex: 1;
-        }
-        
-        input {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #0f3460;
-            border-radius: 5px;
-            background: #16213e;
-            color: #eee;
-            font-size: 1em;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #00d9ff;
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔄 Variable Registry Sync Monitor</h1>
-        
-        <div class="servers">
-            <div class="server-card primary">
-                <div class="server-header">
-                    <div class="server-title">Primary Server</div>
-                    <div class="status-badge" id="primary-status">Disconnected</div>
+        <div class="header">
+            <h1>🔄 Variable Registry Sync Monitor</h1>
+            
+            <div class="server-config">
+                <div class="config-group">
+                    <label for="primaryUrl">Primary Server URL</label>
+                    <input type="text" id="primaryUrl" placeholder="http://192.168.86.51:8902" value="http://192.168.86.51:8902">
                 </div>
-                <div class="server-url" id="primary-url">Not connected</div>
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="stat-value" id="primary-vars">0</div>
-                        <div class="stat-label">Variables</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="primary-version">0</div>
+                <div class="config-group">
+                    <label for="secondaryUrl">Secondary Server URL</label>
+                    <input type="text" id="secondaryUrl" placeholder="http://192.168.86.51:8903" value="http://192.168.86.51:8903">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect</button>
+                <button class="btn btn-secondary" id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+                <button class="btn btn-secondary" onclick="clearLogs()">Clear Logs</button>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot disconnected" id="primaryStatus"></div>
+                    <span id="primaryStatusText">Primary: Disconnected</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot disconnected" id="secondaryStatus"></div>
+                    <span id="secondaryStatusText">Secondary: Disconnected</span>
+                </div>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h2>
+                    <span>Primary Server</span>
+                    <span class="badge badge-primary">Master</span>
+                </h2>
+                <div class="stat-grid">
+                    <div class="stat">
                         <div class="stat-label">System Version</div>
+                        <div class="stat-value" id="primaryVersion">-</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="primary-events">0</div>
-                        <div class="stat-label">Events</div>
+                    <div class="stat">
+                        <div class="stat-label">Variables</div>
+                        <div class="stat-value" id="primaryVarCount">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Last Updated</div>
+                        <div class="stat-value" style="font-size: 14px;" id="primaryLastUpdate">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value" style="font-size: 14px;" id="primaryHealth">-</div>
                     </div>
                 </div>
             </div>
             
-            <div class="server-card secondary">
-                <div class="server-header">
-                    <div class="server-title">Secondary Server</div>
-                    <div class="status-badge" id="secondary-status">Disconnected</div>
-                </div>
-                <div class="server-url" id="secondary-url">Not connected</div>
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="stat-value" id="secondary-vars">0</div>
-                        <div class="stat-label">Variables</div>
-                    </div>
-                    <div class="stat-box" id="version-sync-box">
-                        <div class="stat-value" id="secondary-version">0</div>
+            <div class="card">
+                <h2>
+                    <span>Secondary Server</span>
+                    <span class="badge badge-secondary">Replica</span>
+                </h2>
+                <div class="stat-grid">
+                    <div class="stat">
                         <div class="stat-label">System Version</div>
+                        <div class="stat-value" id="secondaryVersion">-</div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="secondary-synced">0</div>
-                        <div class="stat-label">Synced</div>
+                    <div class="stat">
+                        <div class="stat-label">Variables</div>
+                        <div class="stat-value" id="secondaryVarCount">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Last Updated</div>
+                        <div class="stat-value" style="font-size: 14px;" id="secondaryLastUpdate">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Sync Status</div>
+                        <div class="stat-value" style="font-size: 14px;" id="syncStatus">-</div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="controls">
-            <div class="input-group">
-                <input type="text" id="var-name" placeholder="Variable name (e.g., test_variable_1)">
-                <input type="text" id="var-category" placeholder="Category (config/prot/oper)" value="oper">
-                <input type="text" id="var-locator" placeholder="Locator (e.g., system.global)" value="system.global">
+            
+            <div class="card full-width">
+                <h2>📊 Activity Log</h2>
+                <div class="activity-log" id="activityLog">
+                    <div class="log-entry">
+                        <div class="log-time">Waiting for connection...</div>
+                        <div class="log-message">Configure servers and click Connect to start monitoring</div>
+                    </div>
+                </div>
             </div>
-            <button class="btn btn-primary" onclick="createVariable()">Create Variable</button>
-            <button class="btn btn-danger" onclick="clearActivity()">Clear Activity</button>
-        </div>
-        
-        <div class="activity-feed">
-            <div class="activity-header">Activity Feed</div>
-            <div id="activity-list"></div>
         </div>
     </div>
-    
+
     <script>
-        const PRIMARY_URL = 'http://192.168.86.51:8902';
-        const SECONDARY_URL = 'http://192.168.86.51:8903';
-        
         let primaryWs = null;
         let secondaryWs = null;
-        let eventCount = 0;
-        let syncedCount = 0;
+        let primaryUrl = 'http://192.168.86.51:8902';
+        let secondaryUrl = 'http://192.168.86.51:8903';
+        let isConnected = false;
+        let reconnectTimeout = null;
         
-        // Connect to primary server
-        function connectPrimary() {
-            const wsUrl = PRIMARY_URL.replace('http://', 'ws://') + '/ws/sync';
-            primaryWs = new WebSocket(wsUrl);
-            
-            primaryWs.onopen = () => {
-                console.log('✓ Connected to primary server');
-                document.getElementById('primary-status').textContent = 'Connected';
-                document.getElementById('primary-status').className = 'status-badge connected';
-                document.getElementById('primary-url').textContent = PRIMARY_URL;
-                updateStats();
-            };
-            
-            primaryWs.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type !== 'pong') {
-                    handleEvent(data, 'primary');
-                }
-            };
-            
-            primaryWs.onclose = () => {
-                console.log('✗ Disconnected from primary server');
-                document.getElementById('primary-status').textContent = 'Disconnected';
-                document.getElementById('primary-status').className = 'status-badge disconnected';
-                setTimeout(connectPrimary, 3000);
-            };
-            
-            primaryWs.onerror = (error) => {
-                console.error('Primary WebSocket error:', error);
-            };
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
         }
         
-        // Connect to secondary server
-        function connectSecondary() {
-            const wsUrl = SECONDARY_URL.replace('http://', 'ws://') + '/ws/sync';
-            secondaryWs = new WebSocket(wsUrl);
+        function updateStatus(server, status) {
+            const statusDot = document.getElementById(`${server}Status`);
+            const statusText = document.getElementById(`${server}StatusText`);
             
-            secondaryWs.onopen = () => {
-                console.log('✓ Connected to secondary server');
-                document.getElementById('secondary-status').textContent = 'Connected';
-                document.getElementById('secondary-status').className = 'status-badge connected';
-                document.getElementById('secondary-url').textContent = SECONDARY_URL;
-                updateStats();
+            statusDot.className = `status-dot ${status}`;
+            
+            const serverName = server === 'primary' ? 'Primary' : 'Secondary';
+            const statusMap = {
+                'connected': 'Connected',
+                'disconnected': 'Disconnected',
+                'connecting': 'Connecting...'
             };
             
-            secondaryWs.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type !== 'pong') {
-                    handleEvent(data, 'secondary');
-                }
-            };
-            
-            secondaryWs.onclose = () => {
-                console.log('✗ Disconnected from secondary server');
-                document.getElementById('secondary-status').textContent = 'Disconnected';
-                document.getElementById('secondary-status').className = 'status-badge disconnected';
-                setTimeout(connectSecondary, 3000);
-            };
-            
-            secondaryWs.onerror = (error) => {
-                console.error('Secondary WebSocket error:', error);
-            };
+            statusText.textContent = `${serverName}: ${statusMap[status]}`;
         }
         
-        // Handle events
-        function handleEvent(data, source) {
-            if (data.type === 'created' || data.type === 'updated' || data.type === 'deleted') {
-                eventCount++;
-                if (source === 'secondary') {
-                    syncedCount++;
-                }
-                addActivity(data, source);
-                updateStats();
-            }
-        }
-        
-        // Add activity to feed
-        function addActivity(data, source) {
-            const activityList = document.getElementById('activity-list');
-            const item = document.createElement('div');
-            item.className = `activity-item ${data.type}`;
+        function addLog(type, message) {
+            const log = document.getElementById('activityLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
             
-            const time = new Date(data.timestamp).toLocaleTimeString();
-            const variable = data.variable;
-            
-            item.innerHTML = `
-                <div>
-                    <span class="activity-time">${time}</span>
-                    <span class="activity-type ${data.type}">${data.type.toUpperCase()}</span>
-                    <span style="color: ${source === 'primary' ? '#00d9ff' : '#ff6b6b'}; margin-left: 10px; font-weight: bold;">
-                        [${source.toUpperCase()}]
-                    </span>
-                </div>
-                <div class="activity-details">
-                    <span class="activity-name">${variable.name}</span>
-                </div>
-                <div class="activity-meta">
-                    Category: ${variable.category} | Locator: ${variable.locator || 'none'} | 
-                    Version: v${variable.variable_version} (sys: ${variable.system_version})
-                </div>
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `
+                <div class="log-time">${time}</div>
+                <div class="log-message">${message}</div>
             `;
             
-            activityList.insertBefore(item, activityList.firstChild);
+            log.insertBefore(entry, log.firstChild);
             
-            // Keep only last 50 items
-            while (activityList.children.length > 50) {
-                activityList.removeChild(activityList.lastChild);
+            // Keep only last 100 entries
+            while (log.children.length > 100) {
+                log.removeChild(log.lastChild);
             }
         }
         
-        // Update statistics
-        async function updateStats() {
+        function clearLogs() {
+            const log = document.getElementById('activityLog');
+            log.innerHTML = '<div class="log-entry"><div class="log-message">Logs cleared</div></div>';
+        }
+        
+        async function fetchStats() {
             try {
-                // Primary stats
-                const primaryRes = await fetch(`${PRIMARY_URL}/api/health`);
-                const primaryData = await primaryRes.json();
-                const primaryVersion = primaryData.system_version;
+                // Fetch primary stats
+                const primaryVersionRes = await fetch(`${primaryUrl}/api/system/version`);
+                const primaryVersionData = await primaryVersionRes.json();
+                document.getElementById('primaryVersion').textContent = primaryVersionData.system_version;
+                console.log('Primary Version Data:', primaryVersionData);
+
+
+                document.getElementById('primaryLastUpdate').textContent = 
+                    new Date(primaryVersionData.last_updated).toLocaleTimeString();
                 
-                document.getElementById('primary-vars').textContent = primaryData.variable_count;
-                document.getElementById('primary-version').textContent = primaryVersion;
-                document.getElementById('primary-events').textContent = eventCount;
+                const primaryVarsRes = await fetch(`${primaryUrl}/api/variables`);
+                const primaryVars = await primaryVarsRes.json();
+                document.getElementById('primaryVarCount').textContent = primaryVars.length;
                 
-                // Secondary stats
-                const secondaryRes = await fetch(`${SECONDARY_URL}/api/health`);
-                const secondaryData = await secondaryRes.json();
-                const secondaryVersion = secondaryData.system_version;
+                const primaryHealthRes = await fetch(`${primaryUrl}/api/health`);
+                const primaryHealth = await primaryHealthRes.json();
+                document.getElementById('primaryHealth').textContent = primaryHealth.status;
                 
-                document.getElementById('secondary-vars').textContent = secondaryData.variable_count;
-                document.getElementById('secondary-version').textContent = secondaryVersion;
-                document.getElementById('secondary-synced').textContent = syncedCount;
+                // Fetch secondary stats
+                const secondaryVersionRes = await fetch(`${secondaryUrl}/api/system/version`);
+                const secondaryVersionData = await secondaryVersionRes.json();
+                console.log('Secondary Version Data:', secondaryVersionData);
+
+                document.getElementById('secondaryVersion').textContent = secondaryVersionData.system_version;
+                document.getElementById('secondaryLastUpdate').textContent = 
+                    new Date(secondaryVersionData.last_updated).toLocaleTimeString();
                 
-                // Check version sync status
-                const versionBox = document.getElementById('version-sync-box');
-                if (primaryVersion === secondaryVersion) {
-                    versionBox.className = 'stat-box synced';
-                    versionBox.title = '✓ Versions in sync';
-                } else {
-                    versionBox.className = 'stat-box out-of-sync';
-                    versionBox.title = `⚠ Out of sync (primary: ${primaryVersion}, secondary: ${secondaryVersion})`;
+                const secondaryVarsRes = await fetch(`${secondaryUrl}/api/variables`);
+                const secondaryVars = await secondaryVarsRes.json();
+                document.getElementById('secondaryVarCount').textContent = secondaryVars.length;
+                
+                // Check sync status - secondary should match primary
+                const primaryVersion = primaryVersionData.system_version;
+                const secondaryVersion = secondaryVersionData.system_version;
+                const primaryCount = primaryVars.length;
+                const secondaryCount = secondaryVars.length;
+                
+                const versionDiff = primaryVersion - secondaryVersion;
+                const varDiff = primaryCount - secondaryCount;
+                
+                const syncStatusEl = document.getElementById('syncStatus');
+                
+                if (versionDiff === 0 && varDiff === 0) {
+                    syncStatusEl.textContent = '✓ In Sync';
+                    syncStatusEl.style.color = '#10b981';
+                } else if (versionDiff > 0  ) {
+                    // Secondary is behind primary
+                    syncStatusEl.textContent = `⚠ version Behind (v:${versionDiff > 0 ? '-' + versionDiff : '✓'}, c:${varDiff > 0 ? '-' + varDiff : '✓'})`;
+                    syncStatusEl.style.color = '#f59e0b';
+                } else if (varDiff > 0) {
+                    // Secondary is behind primary
+                    syncStatusEl.textContent = `⚠ var Behind (v:${versionDiff > 0 ? '-' + versionDiff : '✓'}, c:${varDiff > 0 ? '-' + varDiff : '✓'})`;
+                    syncStatusEl.style.color = '#f59e0b';
+                } else if (versionDiff < 0 || varDiff < 0) {
+                    // Secondary is ahead of primary (shouldn't happen!)
+                    syncStatusEl.textContent = `⚠ Ahead (v:${versionDiff < 0 ? '+' + Math.abs(versionDiff) : '✓'}, c:${varDiff < 0 ? '+' + Math.abs(varDiff) : '✓'})`;
+                    syncStatusEl.style.color = '#ef4444';
                 }
+                
             } catch (error) {
-                console.error('Error updating stats:', error);
+                console.error('Error fetching stats:', error);
+                showError(`Failed to fetch stats: ${error.message}`);
             }
         }
         
-        // Create variable on primary server
-        async function createVariable() {
-            const name = document.getElementById('var-name').value.trim();
-            const category = document.getElementById('var-category').value.trim() || 'oper';
-            const locator = document.getElementById('var-locator').value.trim() || 'system.global';
+        function connectWebSocket(server, url) {
+            const wsUrl = url.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws/sync';
             
-            if (!name) {
-                alert('Please enter a variable name');
+            updateStatus(server, 'connecting');
+            addLog('info', `Connecting to ${server} WebSocket...`);
+            
+            const ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                updateStatus(server, 'connected');
+                addLog('info', `✓ Connected to ${server} server`);
+                
+                // Send ping every 30 seconds
+                ws.pingInterval = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'ping' }));
+                    }
+                }, 30000);
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'created') {
+                        const varName = data.variable.name;
+                        addLog('created', `<span class="variable-name">${varName}</span> created on ${server}`);
+                        fetchStats();
+                    } else if (data.type === 'updated') {
+                        const varName = data.variable.name;
+                        addLog('updated', `<span class="variable-name">${varName}</span> updated on ${server}`);
+                        fetchStats();
+                    } else if (data.type === 'deleted') {
+                        const varName = data.variable.name;
+                        addLog('deleted', `<span class="variable-name">${varName}</span> deleted on ${server}`);
+                        fetchStats();
+                    }
+                } catch (error) {
+                    console.error('Error parsing message:', error);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error(`${server} WebSocket error:`, error);
+                showError(`${server} WebSocket error`);
+            };
+            
+            ws.onclose = () => {
+                updateStatus(server, 'disconnected');
+                addLog('info', `✗ Disconnected from ${server} server`);
+                
+                if (ws.pingInterval) {
+                    clearInterval(ws.pingInterval);
+                }
+                
+                // Auto-reconnect if still connected
+                if (isConnected) {
+                    addLog('info', `Reconnecting to ${server} in 5 seconds...`);
+                    setTimeout(() => {
+                        if (isConnected) {
+                            if (server === 'primary') {
+                                primaryWs = connectWebSocket('primary', primaryUrl);
+                            } else {
+                                secondaryWs = connectWebSocket('secondary', secondaryUrl);
+                            }
+                        }
+                    }, 5000);
+                }
+            };
+            
+            return ws;
+        }
+        
+        function connect() {
+            // Get URLs from inputs
+            primaryUrl = document.getElementById('primaryUrl').value.trim();
+            secondaryUrl = document.getElementById('secondaryUrl').value.trim();
+            
+            if (!primaryUrl || !secondaryUrl) {
+                showError('Please enter both primary and secondary server URLs');
                 return;
             }
             
-            try {
-                const response = await fetch(`${PRIMARY_URL}/api/variables`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        display_name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                        units: '',
-                        description: `Test variable created at ${new Date().toLocaleTimeString()}`,
-                        category: category,
-                        locator: locator,
-                        source_system: 'web-ui'
-                    })
-                });
-                
-                if (response.ok) {
-                    document.getElementById('var-name').value = '';
-                    console.log('✓ Variable created successfully');
-                } else {
-                    const error = await response.json();
-                    alert(`Error: ${error.detail}`);
-                }
-            } catch (error) {
-                console.error('Error creating variable:', error);
-                alert('Failed to create variable');
-            }
+            isConnected = true;
+            
+            // Update button states
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            document.getElementById('primaryUrl').disabled = true;
+            document.getElementById('secondaryUrl').disabled = true;
+            
+            addLog('info', `Connecting to servers...`);
+            addLog('info', `Primary: ${primaryUrl}`);
+            addLog('info', `Secondary: ${secondaryUrl}`);
+            
+            // Connect WebSockets
+            primaryWs = connectWebSocket('primary', primaryUrl);
+            secondaryWs = connectWebSocket('secondary', secondaryUrl);
+            
+            // Fetch initial stats
+            fetchStats();
+            
+            // Poll stats every 5 seconds
+            window.statsInterval = setInterval(fetchStats, 5000);
         }
         
-        // Clear activity feed
-        function clearActivity() {
-            document.getElementById('activity-list').innerHTML = '';
-            eventCount = 0;
-            syncedCount = 0;
-            updateStats();
+        function disconnect() {
+            isConnected = false;
+            
+            // Update button states
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            document.getElementById('primaryUrl').disabled = false;
+            document.getElementById('secondaryUrl').disabled = false;
+            
+            // Close WebSockets
+            if (primaryWs) {
+                primaryWs.close();
+                primaryWs = null;
+            }
+            if (secondaryWs) {
+                secondaryWs.close();
+                secondaryWs = null;
+            }
+            
+            // Clear intervals
+            if (window.statsInterval) {
+                clearInterval(window.statsInterval);
+            }
+            
+            updateStatus('primary', 'disconnected');
+            updateStatus('secondary', 'disconnected');
+            
+            addLog('info', 'Disconnected from all servers');
         }
         
-        // Initialize
-        connectPrimary();
-        connectSecondary();
-        setInterval(updateStats, 5000);
-        
-        // Allow Enter key to create variable
-        document.getElementById('var-name').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                createVariable();
-            }
-        });
+        // Auto-connect on page load (optional - comment out if you don't want this)
+        // window.addEventListener('load', connect);
     </script>
 </body>
 </html>

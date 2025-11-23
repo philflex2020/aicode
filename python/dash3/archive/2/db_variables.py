@@ -57,7 +57,7 @@ class SystemVersion(Base):
     __tablename__ = "system_version"
     
     id = Column(Integer, primary_key=True, default=1)
-    current_version = Column(Integer, default=0, nullable=False)
+    system_version = Column(Integer, default=0, nullable=False)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     __table_args__ = (
@@ -150,13 +150,6 @@ def get_session():
 # ============================================================================
 # Version management helpers
 # ============================================================================
-def get_system_version(db: Session) -> int:
-    sys_ver = db.query(SystemVersion).filter_by(id=1).first()
-    if not sys_ver:
-        sys_ver = SystemVersion(id=1, current_version=0)
-        db.add(sys_ver)
-        db.flush()
-    return sys_ver.current_version
 
 def set_system_version(db: Session, version: int) -> int:
     """Set system version to a specific value (for sync purposes)"""
@@ -170,12 +163,15 @@ def set_system_version(db: Session, version: int) -> int:
     db.flush()
     return sys_ver.current_version
 
+def get_system_version():
+    version = db.query(SystemVersion).first()
+    if version:
+        return {
+            "system_version": version.system_version,
+            "timestamp": version.timestamp
+        }
+    return {"system_version": 0, "timestamp": None}
 
-
-def xxget_system_version(db: Session) -> int:
-    """Get current system version"""
-    sys_ver = db.query(SystemVersion).filter_by(id=1).first()
-    return sys_ver.current_version if sys_ver else 0
 
 
 def increment_system_version(db: Session) -> int:
