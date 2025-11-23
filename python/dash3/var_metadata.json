@@ -1,0 +1,70 @@
+{
+  "defaults": {
+    "category": "oper",
+    "locator": null
+  },
+  "variables": {
+    "online": {
+      "locator": "system.global"
+    },
+    "soc": {
+      "locator": "sbmu.global"
+    },
+    "cell_voltages": {
+      "locator": "rbms.cell[n]"
+    },
+    "rs_485_1": {
+      "locator": "system.rs485[0]"
+    },
+    "rs_485_2": {
+      "locator": "system.rs485[1]"
+    },
+    "config_cfg": {
+      "locator": "system.global"
+    },
+    "terminal_overvoltage": {
+      "locator": "system.terminal[n]"
+    },
+    "terminal_undervoltage": {
+      "locator": "system.terminal[n]"
+    }
+  },
+  "patterns": [
+    {
+      "name_pattern": "^cell_voltage_.*",
+      "locator": "rbms.cell[n]"
+    },
+    {
+      "name_pattern": "^temperature_.*",
+      "locator": "rbms.module[n]"
+    },
+    {
+      "name_pattern": "^current_.*",
+      "locator": "system.global"
+    },
+    {
+      "name_pattern": "^soc_.*",
+      "locator": "sbmu.global"
+    },
+    {
+      "name_pattern": "^chiller_.*",
+      "locator": "sbmu.chiller[n]"
+    },
+    {
+      "name_pattern": "^module_.*",
+      "locator": "rbms.module[n]"
+    },
+    {
+      "name_pattern": "^cell_.*",
+      "locator": "rbms.cell[n]"
+    },
+    {
+      "name_pattern": "^contactor_.*",
+      "locator": "system.contactor[n]"
+    },
+    {
+      "name_pattern": "^relay_.*",
+      "locator": "system.relay[n]"
+    }
+  ]
+}

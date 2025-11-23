@@ -1,0 +1,75 @@
+[
+  {
+    "table": "oper:rack:sm16",
+    "items": [
+      {"name": "online",            "offset": 26626, "size": 2, "num": 1},
+      {"name": "rs_485_1",          "offset": 7182,  "size": 2, "num": 16},
+      {"name": "rs_485_2",          "offset": 7198,  "size": 2, "num": 16}
+    ]
+  },
+  {
+    "table": "config:rack:sm16",
+    "items": [
+      {"name": "config_cfg",        "offset": 7218,  "size": 2, "num": 20}
+    ]
+  },
+  {
+    "table": "oper:rtos:bits",
+    "items": [
+      {"name": "_gap1",                 "offset": 0, "size": 1, "num": 1},
+      {"name": "terminal_overvoltage",  "offset": 1, "size": 1, "num": 3},
+      {"name": "terminal_undervoltage", "offset": 4, "size": 1, "num": 3}
+    ]
+  },
+  {
+    "table": "oper:sbmu:input",
+    "items": [
+      {"name": "soc",           "offset": 100, "size": 2, "num": 1},
+      {"name": "cell_voltages", "offset": 200, "size": 2, "num": 96}
+    ]
+  },
+  {
+    "table": "prot:sbmu:hold",
+    "items": [
+      {"name": "cell_voltage_max_warn",      "offset": 1000, "size": 2, "num": 1},
+      {"name": "cell_voltage_max_warn_dur",  "offset": 1002, "size": 2, "num": 1},
+      {"name": "cell_voltage_max_alert",     "offset": 1004, "size": 2, "num": 1},
+      {"name": "cell_voltage_max_alert_dur", "offset": 1006, "size": 2, "num": 1},
+      {"name": "cell_voltage_max_fault",     "offset": 1008, "size": 2, "num": 1},
+      {"name": "cell_voltage_max_fault_dur", "offset": 1010, "size": 2, "num": 1},
+      {"name": "cell_voltage_max_hyst",      "offset": 1012, "size": 2, "num": 1},
+      
+      {"name": "cell_voltage_min_warn",      "offset": 1020, "size": 2, "num": 1},
+      {"name": "cell_voltage_min_warn_dur",  "offset": 1022, "size": 2, "num": 1},
+      {"name": "cell_voltage_min_alert",     "offset": 1024, "size": 2, "num": 1},
+      {"name": "cell_voltage_min_alert_dur", "offset": 1026, "size": 2, "num": 1},
+      {"name": "cell_voltage_min_fault",     "offset": 1028, "size": 2, "num": 1},
+      {"name": "cell_voltage_min_fault_dur", "offset": 1030, "size": 2, "num": 1},
+      {"name": "cell_voltage_min_hyst",      "offset": 1032, "size": 2, "num": 1},
+      
+      {"name": "temperature_max_warn",       "offset": 1040, "size": 2, "num": 1},
+      {"name": "temperature_max_warn_dur",   "offset": 1042, "size": 2, "num": 1},
+      {"name": "temperature_max_alert",      "offset": 1044, "size": 2, "num": 1},
+      {"name": "temperature_max_alert_dur",  "offset": 1046, "size": 2, "num": 1},
+      {"name": "temperature_max_fault",      "offset": 1048, "size": 2, "num": 1},
+      {"name": "temperature_max_fault_dur",  "offset": 1050, "size": 2, "num": 1},
+      {"name": "temperature_max_hyst",       "offset": 1052, "size": 2, "num": 1},
+      
+      {"name": "current_max_warn",           "offset": 1060, "size": 2, "num": 1},
+      {"name": "current_max_warn_dur",       "offset": 1062, "size": 2, "num": 1},
+      {"name": "current_max_alert",          "offset": 1064, "size": 2, "num": 1},
+      {"name": "current_max_alert_dur",      "offset": 1066, "size": 2, "num": 1},
+      {"name": "current_max_fault",          "offset": 1068, "size": 2, "num": 1},
+      {"name": "current_max_fault_dur",      "offset": 1070, "size": 2, "num": 1},
+      {"name": "current_max_hyst",           "offset": 1072, "size": 2, "num": 1},
+      
+      {"name": "soc_min_warn",               "offset": 1080, "size": 2, "num": 1},
+      {"name": "soc_min_warn_dur",           "offset": 1082, "size": 2, "num": 1},
+      {"name": "soc_min_alert",              "offset": 1084, "size": 2, "num": 1},
+      {"name": "soc_min_alert_dur",          "offset": 1086, "size": 2, "num": 1},
+      {"name": "soc_min_fault",              "offset": 1088, "size": 2, "num": 1},
+      {"name": "soc_min_fault_dur",          "offset": 1090, "size": 2, "num": 1},
+      {"name": "soc_min_hyst",               "offset": 1092, "size": 2, "num": 1}
+    ]
+  }
+]

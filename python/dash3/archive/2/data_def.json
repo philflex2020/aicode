@@ -1,0 +1,26 @@
+[
+  {
+    "table": "rack:sm16",
+    "items": [
+      {"name": "online",            "offset": 26626, "size": 2, "num": 1},
+      {"name": "rs_485_1",          "offset": 7182,  "size": 2, "num": 16},
+      {"name": "rs_485_2",          "offset": 7198,  "size": 2, "num": 16},
+      {"name": "config_cfg",        "offset": 7218,  "size": 2, "num": 20}
+    ]
+  },
+  {
+    "table": "rtos:bits",
+    "items": [
+      {"name": "_gap1",                 "offset": 0, "size": 1, "num": 1},
+      {"name": "terminal_overvoltage",  "offset": 1, "size": 1, "num": 3},
+      {"name": "terminal_undervoltage", "offset": 4, "size": 1, "num": 3}
+    ]
+  },
+  {
+    "table": "sbmu:sm16",
+    "items": [
+      {"name": "soc",           "offset": 100, "size": 2, "num": 1},
+      {"name": "cell_voltages", "offset": 200, "size": 2, "num": 96}
+    ]
+  }
+]

@@ -1120,6 +1120,8 @@ class ProtectionsWidget extends BaseWidget {
         if (modalBody) {
           modalBody.innerHTML = this.renderEditForm(this.editingVar, this.editingData);
         }
+      } else {
+        alert('Variable not found in recalled data');
       }
     } catch (err) {
       console.error('Failed to recall values:', err);
@@ -1136,24 +1138,140 @@ class ProtectionsWidget extends BaseWidget {
   }
 
   async saveProtections(deploy = false) {
+    const modal = document.querySelector('.prot-modal');
+    if (!modal || !this.editingVar || !this.editingData) {
+      console.warn('saveProtections: missing modal/editingVar/editingData');
+      return;
+    }
+
+    const inputs = modal.querySelectorAll('input');
+    // Start from current editingData.limits
+    const updatedLimits = JSON.parse(JSON.stringify(this.editingData.limits));
+
+    console.log('saveProtections: starting with limits =', JSON.stringify(updatedLimits, null, 2));
+
+    inputs.forEach(input => {
+      const side  = input.dataset.side;    // "max" or "min"
+      const level = input.dataset.level;   // "warning" | "alert" | "fault" | undefined
+      const field = input.dataset.field;   // "threshold" | "on_duration" | "off_duration" | "enabled" | "hysteresis"
+
+      const value = (input.type === 'checkbox') ? input.checked : input.value;
+
+      console.log('Input:', {
+        value,
+        side,
+        level,
+        field
+      });
+
+      if (!side || !field) {
+        console.warn('Skipping input (missing side/field)', { side, field });
+        return;
+      }
+
+      if (!updatedLimits[side]) {
+        updatedLimits[side] = {};
+      }
+
+      if (field === 'hysteresis') {
+        updatedLimits[side].hysteresis = parseFloat(input.value) || 0.0;
+        console.log(`Set ${side}.hysteresis =`, updatedLimits[side].hysteresis);
+        return;
+      }
+
+      // For non-hysteresis fields, we must have a level
+      if (!level) {
+        console.warn('Skipping non-hysteresis input without level', { field });
+        return;
+      }
+
+      if (!updatedLimits[side][level]) {
+        // If the level didn't exist yet, create it
+        updatedLimits[side][level] = {
+          threshold: 0.0,
+          on_duration: 0.0,
+          off_duration: 0.0,
+          enabled: false,
+        };
+      }
+
+      if (field === 'enabled') {
+        updatedLimits[side][level].enabled = input.checked;
+      } else {
+        updatedLimits[side][level][field] = parseFloat(input.value) || 0.0;
+      }
+
+      console.log(`Set ${side}.${level}.${field} =`,
+        field === 'enabled'
+          ? updatedLimits[side][level].enabled
+          : updatedLimits[side][level][field]);
+    });
+
+    console.log('saveProtections: final updatedLimits =', JSON.stringify(updatedLimits, null, 2));
+
+    // Build payload
+    const payload = {
+      protections: {
+        [this.editingVar]: updatedLimits
+      }
+    };
+
+    const endpoint = deploy ? '/api/protections/deploy' : '/api/protections';
+
+    try {
+      console.log('Saving protections to', endpoint, JSON.stringify(payload, null, 2));
+      const data = await postJSON(endpoint, payload);
+      console.log('Save protections response:', data);
+
+      if (data && data.ok) {
+        alert(deploy ? 'Protections deployed!' : 'Protections saved!');
+        this.closeEditModal();
+        console.log('Protections saved, refreshing...');
+        // If you don’t have this yet, either add fetchProtections or remove this line
+        if (this.fetchProtections) {
+          await this.fetchProtections('current');
+        }
+      } else {
+        const msg = (data && data.error) ? data.error : 'Unknown error';
+        console.error('Failed to save protections:', msg);
+        alert(`Failed to save protections: ${msg}`);
+      }
+    } catch (err) {
+      console.error('Failed to save protections:', err);
+      alert(`Failed to save protections: ${err.message}`);
+    }
+  }
+
+  async xsaveProtections(deploy = false) {
     // Collect values from form
     const modal = document.querySelector('.prot-modal');
-    if (!modal) return;
-    
+    if (!modal || !this.editingVar || !this.editingData) return;
+
     const inputs = modal.querySelectorAll('input');
     const updatedLimits = JSON.parse(JSON.stringify(this.editingData.limits));
     
     inputs.forEach(input => {
-      const side = input.dataset.side;
-      const level = input.dataset.level;
-      const field = input.dataset.field;
+      const side = input.dataset.side;  // max or min
+      const level = input.dataset.level; // warning, alert, fault, or undefined
+      const field = input.dataset.field; // threshold, on_duration, off_duration, enabled, hysteresis
       
       if (!side || !field) return;
       
       if (field === 'hysteresis') {
         updatedLimits[side].hysteresis = parseFloat(input.value) || 0.0;
-      } else if (level) {
-        if (field === 'enabled') {
+        return;
+
+      if (!level) return
+      if (!updatedLimits[side][level]) {
+        updatedLimits[side][level] = {
+          threshold: 0.0,
+          on_duration: 0.0,
+          off_duration: 0.0,
+          enabled: false
+        };
+
+      }
+      if (field === 'enabled') {
           updatedLimits[side][level].enabled = input.checked;
         } else {
           updatedLimits[side][level][field] = parseFloat(input.value) || 0.0;
@@ -1167,25 +1285,45 @@ class ProtectionsWidget extends BaseWidget {
         [this.editingVar]: updatedLimits
       }
     };
-    
+    const endpoint = deploy ? '/api/protections/deploy' : '/api/protections';
     try {
-      const endpoint = deploy ? '/api/db/protections/deploy' : '/api/db/protections';
-      const result = await getJSON(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      if (result.ok) {
+      console.log('Saving protections to', endpoint, JSON.stringify(payload, null, 2));
+      const data = await postJSON(endpoint, payload);
+      console.log('Save protections response:', data);
+      console.log('Save protections response data OK:', data.ok);
+
+      if (data && data.ok) {
         alert(deploy ? 'Protections deployed!' : 'Protections saved!');
         this.closeEditModal();
-        this.fetchProtections(); // Refresh widget
+        console.log('Protections saved, refreshing...');
+        await this.fetchProtections('current'); // Refresh widget
       } else {
-        alert('Failed to save protections');
+        const msg =(data && data.error) ? data.error : 'Unknown error';
+        console.error('Failed to save protections:', msg);
+        alert(`Failed to save protections #1 ${msg}`);
       }
     } catch (err) {
       console.error('Failed to save protections:', err);
-      alert('Failed to save protections');
+      alert('Failed to save protections #2');
+    }
+  }
+
+  async fetchProtections(source = 'current') {
+    try {
+      const data = await getJSON(`/api/protections?source=${source}`);
+      
+      console.log('Fetched protections data:', data );
+
+      if (data && data.ok) {
+        this.protections = data.protections;
+        this.renderProtections(data);
+      } else {
+        console.error('Failed to fetch protections #1');
+        this.root.innerHTML = '<div class="prot-error">Failed to load protections</div>';
+      }
+    } catch (err) {
+      console.error('Failed to fetch protections #2:', err);
+      this.root.innerHTML = `<div class="prot-error">Error: ${err.message}</div>`;
     }
   }
   showEditModal() {
@@ -1219,6 +1357,7 @@ class ProtectionsWidget extends BaseWidget {
   }
 
   renderProtections(data) {
+    console.log('Rendering protections, data =', data);
     const content = this.body.querySelector('.protections-content');
     if (!content) return;
 
