@@ -1,5 +1,5 @@
 # db_server_prot.py
-# RBMS Data Server with DB persistence for profiles, variables, protections, and variable registry
+# RBMS Data Server with DB persistence for profiles, variables, and protections
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -95,70 +95,39 @@ class TelemetryMeta(Base):
     category = Column(String, nullable=True)
 
 
-# Protection metadata (variable definitions)
+# NEW: Protection metadata (variable definitions)
 class ProtectionMeta(Base):
     __tablename__ = "protection_meta"
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
     display_name = Column(String, nullable=False)
-    format = Column(String, nullable=True)
+    format = Column(String, nullable=True)  # e.g., "%.2f V"
     unit = Column(String, nullable=True)
-    text = Column(Text, nullable=True)
-    callback = Column(String, nullable=True)
+    text = Column(Text, nullable=True)  # descriptive help text
+    callback = Column(String, nullable=True)  # backend callback function name
     has_max = Column(Boolean, default=True)
     has_min = Column(Boolean, default=True)
 
 
-# Protection limits (profile-specific)
+# NEW: Protection limits (profile-specific)
 class Protection(Base):
     __tablename__ = "protections"
     id = Column(Integer, primary_key=True)
     profile_id = Column(Integer, ForeignKey("env_profiles.id"), nullable=False)
-    variable_name = Column(String, nullable=False)
-    limit_type = Column(String, nullable=False)
-    level = Column(String, nullable=False)
+    variable_name = Column(String, nullable=False)  # e.g., "cell_voltage"
+    limit_type = Column(String, nullable=False)  # "max" or "min"
+    level = Column(String, nullable=False)  # "warning", "alert", "fault"
     threshold = Column(Float, nullable=False)
-    on_duration = Column(Float, nullable=False)
-    off_duration = Column(Float, nullable=False)
+    on_duration = Column(Float, nullable=False)  # seconds
+    off_duration = Column(Float, nullable=False)  # seconds
     enabled = Column(Boolean, default=True)
-    hysteresis = Column(Float, nullable=False, default=0.0)
+    hysteresis = Column(Float, nullable=False, default=0.0)  # 👈 NEW
     updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
     __table_args__ = (
         UniqueConstraint("profile_id", "variable_name", "limit_type", "level", name="uniq_protection"),
         CheckConstraint("limit_type in ('max','min')", name="ck_limit_type"),
         CheckConstraint("level in ('warning','alert','fault')", name="ck_level"),
     )
-
-
-# NEW: Variable Registry Models
-class VarRegistry(Base):
-    """Variable registry - system-wide variable definitions"""
-    __tablename__ = "var_registry"
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False, index=True)
-    display_name = Column(String, nullable=False)
-    units = Column(String, nullable=True)
-    description = Column(Text, nullable=True)
-    category = Column(String, nullable=True, index=True)
-    locator = Column(String, nullable=True, index=True)
-    source_system = Column(String, nullable=True)
-    variable_version = Column(Integer, default=1)
-    system_version = Column(Integer, default=1)
-    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
-    updated_at = Column(TIMESTAMP, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
-
-
-class VarAccessPath(Base):
-    """Access paths for variables (how to read/write them)"""
-    __tablename__ = "var_access_paths"
-    id = Column(Integer, primary_key=True)
-    variable_id = Column(Integer, ForeignKey("var_registry.id", ondelete="CASCADE"), nullable=False)
-    access_type = Column(String, nullable=False)  # e.g., "modbus", "canbus", "memory"
-    reference = Column(JSON, nullable=False)  # e.g., {"register": 1000, "function": 3}
-    priority = Column(Integer, default=0)
-    read_only = Column(Boolean, default=False)
-    active = Column(Boolean, default=True)
-    variable = relationship("VarRegistry", backref="access_paths")
 
 
 # ------------------------------
@@ -220,8 +189,8 @@ class ProtectionLimitIn(BaseModel):
     off_duration: float
     enabled: bool = True
 
-
 class ProtectionSideIn(BaseModel):
+    # e.g. { "hysteresis": 0.5, "warning": {...}, "alert": {...}, "fault": {...} }
     hysteresis: float = 0.0
     warning: Optional[ProtectionLimitIn] = None
     alert: Optional[ProtectionLimitIn] = None
@@ -231,59 +200,7 @@ class ProtectionSideIn(BaseModel):
 class ProtectionConfigIn(BaseModel):
     profile: Optional[str] = None
     protections: Dict[str, Dict[str, ProtectionSideIn]]
-
-
-# NEW: Variable Registry Schemas
-class VarAccessPathIn(BaseModel):
-    access_type: str
-    reference: Dict[str, Any]
-    priority: int = 0
-    read_only: bool = False
-    active: bool = True
-
-
-class VarAccessPathOut(BaseModel):
-    id: int
-    access_type: str
-    reference: Dict[str, Any]
-    priority: int
-    read_only: bool
-    active: bool
-    model_config = {"from_attributes": True}
-
-
-class VarRegistryIn(BaseModel):
-    name: str
-    display_name: str
-    units: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    locator: Optional[str] = None
-    source_system: Optional[str] = None
-    access_paths: Optional[List[VarAccessPathIn]] = None
-
-
-class VarRegistryUpdate(BaseModel):
-    display_name: Optional[str] = None
-    units: Optional[str] = None
-    description: Optional[str] = None
-    category: Optional[str] = None
-    locator: Optional[str] = None
-
-
-class VarRegistryOut(BaseModel):
-    id: int
-    name: str
-    display_name: str
-    units: Optional[str]
-    description: Optional[str]
-    category: Optional[str]
-    locator: Optional[str]
-    source_system: Optional[str]
-    variable_version: int
-    system_version: int
-    access_paths: List[VarAccessPathOut] = []
-    model_config = {"from_attributes": True}
+    # e.g., {"cell_voltage": {"max": {"warning": {...}, "alert": {...}}, "min": {...}}}
 
 
 # ------------------------------
@@ -312,24 +229,6 @@ STATE: Dict[str, Any] = init_state_from_dash()
 # ------------------------------
 # DB helpers
 # ------------------------------
-def increment_system_version(db: Session):
-    """Increment the global system version counter"""
-    kv = db.query(MetaKV).filter_by(k="system_version").first()
-    if not kv:
-        kv = MetaKV(k="system_version", v="1")
-        db.add(kv)
-    else:
-        kv.v = str(int(kv.v) + 1)
-    db.commit()
-    return int(kv.v)
-
-
-def get_system_version(db: Session) -> int:
-    """Get current system version"""
-    kv = db.query(MetaKV).filter_by(k="system_version").first()
-    return int(kv.v) if kv else 0
-
-
 def init_db():
     Base.metadata.create_all(engine)
     with SessionLocal() as db:
@@ -345,11 +244,6 @@ def init_db():
         # Set active profile
         if db.query(MetaKV).filter_by(k="active_profile").first() is None:
             db.add(MetaKV(k="active_profile", v="default"))
-            db.commit()
-        
-        # Initialize system version
-        if db.query(MetaKV).filter_by(k="system_version").first() is None:
-            db.add(MetaKV(k="system_version", v="1"))
             db.commit()
         
         # Seed telemetry_meta if empty
@@ -463,49 +357,15 @@ def init_db():
                 Protection(profile_id=prof.id, variable_name="soc", limit_type="max", level="warning",
                           threshold=95.0, on_duration=30.0, off_duration=60.0, hysteresis=0.5, enabled=True),
                 Protection(profile_id=prof.id, variable_name="soc", limit_type="max", level="alert",
-                          threshold=98.0, on_duration=15.0, off_duration=90.0, hysteresis=0.5, enabled=False),
+                          threshold=98.0, on_duration=15.0, off_duration=90.0, hysteresis=0.5,enabled=False),
                 Protection(profile_id=prof.id, variable_name="soc", limit_type="min", level="warning",
-                          threshold=10.0, on_duration=30.0, off_duration=60.0, hysteresis=0.5, enabled=True),
+                          threshold=10.0, on_duration=30.0, off_duration=60.0, hysteresis=0.5,enabled=True),
                 Protection(profile_id=prof.id, variable_name="soc", limit_type="min", level="alert",
                           threshold=5.0, on_duration=15.0, off_duration=90.0, hysteresis=0.5, enabled=True),
                 Protection(profile_id=prof.id, variable_name="soc", limit_type="min", level="fault",
                           threshold=2.0, on_duration=5.0, off_duration=120.0, hysteresis=0.5, enabled=True),
             ]
             db.add_all(default_protections)
-            db.commit()
-        
-        # Seed variable registry if empty
-        if db.query(VarRegistry).count() == 0:
-            seed_vars = [
-                VarRegistry(
-                    name="battery_voltage",
-                    display_name="Battery Voltage",
-                    units="V",
-                    description="Main battery pack voltage",
-                    category="oper",
-                    locator="rbms.battery.voltage",
-                    source_system="bms"
-                ),
-                VarRegistry(
-                    name="battery_current",
-                    display_name="Battery Current",
-                    units="A",
-                    description="Battery charge/discharge current",
-                    category="oper",
-                    locator="rbms.battery.current",
-                    source_system="bms"
-                ),
-                VarRegistry(
-                    name="battery_temp",
-                    display_name="Battery Temperature",
-                    units="°C",
-                    description="Average battery temperature",
-                    category="oper",
-                    locator="rbms.battery.temp",
-                    source_system="bms"
-                ),
-            ]
-            db.add_all(seed_vars)
             db.commit()
     
     # Sync dash.json variables
@@ -733,6 +593,92 @@ def get_protection_meta():
         return [ProtectionMetaOut.model_validate(r, from_attributes=True) for r in rows]
 
 
+# @app.get("/api/protections")
+# def get_protections(source: str = "current", profile: Optional[str] = None):
+#     """
+#     Get protection configuration with current values and alarm states.
+#     source: "current" (from DB) or "default" (factory defaults)
+#     """
+#     with SessionLocal() as db:
+#         if profile:
+#             prof = db.query(EnvProfile).filter_by(name=profile).first()
+#             if not prof:
+#                 raise HTTPException(404, f"Profile '{profile}' not found")
+#         else:
+#             prof = get_active_profile(db)
+        
+#         # Get metadata
+#         meta_rows = db.query(ProtectionMeta).all()
+#         meta_dict = {m.name: m for m in meta_rows}
+        
+#         # Get protections
+#         if source == "default":
+#             # Return factory defaults (from default profile)
+#             default_prof = db.query(EnvProfile).filter_by(name="default").first()
+#             if not default_prof:
+#                 raise HTTPException(404, "Default profile not found")
+#             prot_rows = db.query(Protection).filter_by(profile_id=default_prof.id).all()
+#         else:
+#             prot_rows = db.query(Protection).filter_by(profile_id=prof.id).all()
+        
+#         # Organize by variable -> limit_type -> level
+#         result = {}
+#         for var_name, meta in meta_dict.items():
+#             result[var_name] = {
+#                 "meta": {
+#                     "display_name": meta.display_name,
+#                     "format": meta.format,
+#                     "unit": meta.unit,
+#                     "text": meta.text,
+#                     "callback": meta.callback,
+#                     "has_max": meta.has_max,
+#                     "has_min": meta.has_min,
+#                 },
+#                 "limits": {},
+#                 "current_value": None,
+#                 "current_state": "normal"
+#             }
+        
+#         for p in prot_rows:
+#             if p.variable_name not in result:
+#                 continue
+            
+#             if p.limit_type not in result[p.variable_name]["limits"]:
+#                 result[p.variable_name]["limits"][p.limit_type] = {}
+            
+#             result[p.variable_name]["limits"][p.limit_type][p.level] = {
+#                 "threshold": p.threshold,
+#                 "on_duration": p.on_duration,
+#                 "off_duration": p.off_duration,
+#                 "enabled": p.enabled
+#             }
+        
+#         # Generate mock current values and compute states
+#         for var_name in result:
+#             if var_name == "cell_voltage":
+#                 current_val = round(3.20 + 0.95 * random.random(), 2)
+#             elif var_name == "temperature":
+#                 current_val = round(25.0 + 20.0 * random.random(), 1)
+#             elif var_name == "current":
+#                 current_val = round(50.0 + 50.0 * random.random(), 1)
+#             elif var_name == "soc":
+#                 current_val = round(50.0 + 40.0 * random.random(), 1)
+#             else:
+#                 current_val = 0.0
+            
+#             result[var_name]["current_value"] = current_val
+#             result[var_name]["current_state"] = compute_alarm_state(
+#                 current_val,
+#                 result[var_name]["limits"]
+#             )
+        
+#         return {
+#             "ok": True,
+#             "profile": prof.name,
+#             "source": source,
+#             "protections": result
+#         }
+
 @app.get("/api/protections")
 def get_protections(source: str = "current", profile: Optional[str] = None):
     """
@@ -753,6 +699,7 @@ def get_protections(source: str = "current", profile: Optional[str] = None):
         
         # Get protections
         if source == "default":
+            # Return factory defaults (from default profile)
             default_prof = db.query(EnvProfile).filter_by(name="default").first()
             if not default_prof:
                 raise HTTPException(404, "Default profile not found")
@@ -784,10 +731,12 @@ def get_protections(source: str = "current", profile: Optional[str] = None):
                 continue
             
             if p.limit_type not in result[p.variable_name]["limits"]:
+                # Initialize the limit_type with hysteresis from first row
                 result[p.variable_name]["limits"][p.limit_type] = {
-                    "hysteresis": p.hysteresis
+                    "hysteresis": p.hysteresis  # 👈 Extract hysteresis
                 }
             
+            # Add the level configuration
             result[p.variable_name]["limits"][p.limit_type][p.level] = {
                 "threshold": p.threshold,
                 "on_duration": p.on_duration,
@@ -839,6 +788,7 @@ def save_protections(config: ProtectionConfigIn):
         # Insert new protections
         for var_name, limits in config.protections.items():
             for limit_type, side in limits.items():
+                # side is ProtectionSideIn
                 hysteresis = side.hysteresis if side.hysteresis is not None else 0.0
 
                 for level_name in ("warning", "alert", "fault"):
@@ -861,194 +811,232 @@ def save_protections(config: ProtectionConfigIn):
         db.commit()
         return {"ok": True, "profile": prof.name, "message": "Protections saved"}
 
+# @app.post("/api/protections")
+# def save_protections(config: ProtectionConfigIn):
+#     """Save protection configuration to profile (does not deploy)"""
+#     with SessionLocal() as db:
+#         if config.profile:
+#             prof = db.query(EnvProfile).filter_by(name=config.profile).first()
+#             if not prof:
+#                 raise HTTPException(404, f"Profile '{config.profile}' not found")
+#         else:
+#             prof = get_active_profile(db)
+        
+#         # Delete existing protections for this profile
+#         db.query(Protection).filter_by(profile_id=prof.id).delete()
+        
+#         # Insert new protections
+#         for var_name, limits in config.protections.items():
+#             for limit_type, levels in limits.items():
+#                 # Extract hysteresis (it's at the same level as warning/alert/fault)
+#                 hysteresis = levels.get("hysteresis", 0.0) if isinstance(levels, dict) else 0.0
+                
+#                 for level, data in levels.items():
+#                     # Skip hysteresis key itself
+#                     if level == "hysteresis":
+#                         continue
+                    
+#                     db.add(Protection(
+#                         profile_id=prof.id,
+#                         variable_name=var_name,
+#                         limit_type=limit_type,
+#                         level=level,
+#                         threshold=data.threshold,
+#                         on_duration=data.on_duration,
+#                         off_duration=data.off_duration,
+#                         enabled=data.enabled,
+#                         hysteresis=hysteresis  # 👈 Store hysteresis
+#                     ))
+        
+#         db.commit()
+#         return {"ok": True, "profile": prof.name, "message": "Protections saved"}
 
-@app.post("/api/protections/deploy")
-def deploy_protections(config: ProtectionConfigIn):
-    """Save and deploy protection configuration to target system"""
-    save_result = save_protections(config)
+# @app.post("/api/db/protections")
+# async def proxy_save_protections(request: Request):
+#     """Proxy POST /api/protections to db_server"""
+#     body = await request.body()
+#     async with httpx.AsyncClient() as client:
+#         resp = await client.post(
+#             f"{DB_SERVER_URL}/api/protections",
+#             content=body,
+#             headers={"Content-Type": "application/json"}
+#         )
+#         return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+
+# @app.post("/api/db/protections/deploy")
+# async def proxy_deploy_protections(request: Request):
+#     """Proxy POST /api/protections/deploy to db_server"""
+#     body = await request.body()
+#     async with httpx.AsyncClient() as client:
+#         resp = await client.post(
+#             f"{DB_SERVER_URL}/api/protections/deploy",
+#             content=body,
+#             headers={"Content-Type": "application/json"}
+#         )
+#         return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+
+# @app.get("/api/db/protections")
+# async def proxy_get_protections(source: str = "current", profile: Optional[str] = None):
+#     """Proxy GET /api/protections to db_server"""
+#     params = {"source": source}
+#     if profile:
+#         params["profile"] = profile
     
-    # TODO: Add actual deployment logic here (send to BMS hardware, etc.)
+#     async with httpx.AsyncClient() as client:
+#         resp = await client.get(
+#             f"{DB_SERVER_URL}/api/protections",
+#             params=params
+#         )
+#         return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+# # @app.post("/api/protections")
+# # def save_protections(config: ProtectionConfigIn):
+# #     """Save protection configuration to profile (does not deploy)"""
+# #     with SessionLocal() as db:
+# #         if config.profile:
+# #             prof = db.query(EnvProfile).filter_by(name=config.profile).first()
+# #             if not prof:
+# #                 raise HTTPException(404, f"Profile '{config.profile}' not found")
+# #         else:
+# #             prof = get_active_profile(db)
+        
+# #         # Delete existing protections for this profile
+# #         db.query(Protection).filter_by(profile_id=prof.id).delete()
+        
+# #         # Insert new protections
+# #         for var_name, limits in config.protections.items():
+# #             for limit_type, levels in limits.items():
+# #                 for level, data in levels.items():
+# #                     db.add(Protection(
+# #                         profile_id=prof.id,
+# #                         variable_name=var_name,
+# #                         limit_type=limit_type,
+# #                         level=level,
+# #                         threshold=data.threshold,
+# #                         on_duration=data.on_duration,
+# #                         off_duration=data.off_duration,
+# #                         enabled=data.enabled
+# #                     ))
+        
+# #         db.commit()
+# #         return {"ok": True, "profile": prof.name, "message": "Protections saved"}
+
+
+# @app.post("/api/protections/deploy")
+# def deploy_protections(config: ProtectionConfigIn):
+#     """Save and deploy protection configuration to target system"""
+#     # First save to database
+#     save_result = save_protections(config)
     
-    return {
-        "ok": True,
-        "profile": save_result["profile"],
-        "message": "Protections saved (deployment pending)",
-        "deployed": False
-    }
+#     # TODO: Add actual deployment logic here (send to BMS hardware, etc.)
+#     # For now, just return success
+    
+#     return {
+#         "ok": True,
+#         "profile": save_result["profile"],
+#         "message": "Protections saved and deployed",
+#         "deployed": True
+#     }
 
 
-# ------------------------------
-# Variable Registry endpoints
-# ------------------------------
-@app.get("/api/variables", response_model=List[VarRegistryOut])
-def list_variables(
+# Variable Registry API Proxy Routes
+@app.get("/api/db/variables")
+async def proxy_get_variables(
     category: Optional[str] = None,
     locator: Optional[str] = None,
     name_pattern: Optional[str] = None,
     include_paths: bool = True,
     since_version: Optional[int] = None
 ):
-    """List all variables in the registry with optional filtering"""
-    with SessionLocal() as db:
-        query = db.query(VarRegistry)
-        
-        if category:
-            query = query.filter(VarRegistry.category == category)
-        if locator:
-            query = query.filter(VarRegistry.locator == locator)
-        if name_pattern:
-            query = query.filter(VarRegistry.name.like(f"%{name_pattern}%"))
-        if since_version is not None:
-            query = query.filter(VarRegistry.system_version > since_version)
-        
-        vars = query.order_by(VarRegistry.name).all()
-        
-        result = []
-        for v in vars:
-            var_dict = VarRegistryOut.model_validate(v, from_attributes=True)
-            if include_paths:
-                paths = db.query(VarAccessPath).filter_by(variable_id=v.id).all()
-                var_dict.access_paths = [VarAccessPathOut.model_validate(p, from_attributes=True) for p in paths]
-            result.append(var_dict)
-        
-        return result
+    """Proxy to variable registry API - list variables"""
+    params = {}
+    if category:
+        params['category'] = category
+    if locator:
+        params['locator'] = locator
+    if name_pattern:
+        params['name_pattern'] = name_pattern
+    if not include_paths:
+        params['include_paths'] = 'false'
+    if since_version is not None:
+        params['since_version'] = since_version
+    
+    query_string = '&'.join([f"{k}={v}" for k, v in params.items()])
+    url = f"{VAR_SERVER_URL}/api/variables"
+    if query_string:
+        url += f"?{query_string}"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 
-@app.get("/api/variables/{variable_name}", response_model=VarRegistryOut)
-def get_variable(variable_name: str):
-    """Get a specific variable by name"""
-    with SessionLocal() as db:
-        var = db.query(VarRegistry).filter_by(name=variable_name).first()
-        if not var:
-            raise HTTPException(404, f"Variable '{variable_name}' not found")
-        
-        var_dict = VarRegistryOut.model_validate(var, from_attributes=True)
-        paths = db.query(VarAccessPath).filter_by(variable_id=var.id).all()
-        var_dict.access_paths = [VarAccessPathOut.model_validate(p, from_attributes=True) for p in paths]
-        
-        return var_dict
+@app.get("/api/db/variables/{variable_name}")
+async def proxy_get_variable(variable_name: str):
+    """Proxy to variable registry API - get specific variable"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{VAR_SERVER_URL}/api/variables/{variable_name}")
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 
-@app.post("/api/variables", response_model=VarRegistryOut)
-def create_variable(var_in: VarRegistryIn):
-    """Create a new variable in the registry"""
-    with SessionLocal() as db:
-        # Check if variable already exists
-        existing = db.query(VarRegistry).filter_by(name=var_in.name).first()
-        if existing:
-            raise HTTPException(409, f"Variable '{var_in.name}' already exists")
-        
-        # Get current system version and increment
-        sys_ver = increment_system_version(db)
-        
-        # Create variable
-        var = VarRegistry(
-            name=var_in.name,
-            display_name=var_in.display_name,
-            units=var_in.units,
-            description=var_in.description,
-            category=var_in.category,
-            locator=var_in.locator,
-            source_system=var_in.source_system,
-            variable_version=1,
-            system_version=sys_ver
+@app.post("/api/db/variables")
+async def proxy_create_variable(request: Request):
+    """Proxy to variable registry API - create variable"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{VAR_SERVER_URL}/api/variables",
+            content=body,
+            headers={"Content-Type": "application/json"}
         )
-        db.add(var)
-        db.flush()
-        
-        # Add access paths if provided
-        if var_in.access_paths:
-            for path_in in var_in.access_paths:
-                path = VarAccessPath(
-                    variable_id=var.id,
-                    access_type=path_in.access_type,
-                    reference=path_in.reference,
-                    priority=path_in.priority,
-                    read_only=path_in.read_only,
-                    active=path_in.active
-                )
-                db.add(path)
-        
-        db.commit()
-        db.refresh(var)
-        
-        return get_variable(var.name)
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 
-@app.put("/api/variables/{variable_name}", response_model=VarRegistryOut)
-def update_variable(variable_name: str, var_update: VarRegistryUpdate):
-    """Update an existing variable"""
-    with SessionLocal() as db:
-        var = db.query(VarRegistry).filter_by(name=variable_name).first()
-        if not var:
-            raise HTTPException(404, f"Variable '{variable_name}' not found")
-        
-        # Update fields
-        if var_update.display_name is not None:
-            var.display_name = var_update.display_name
-        if var_update.units is not None:
-            var.units = var_update.units
-        if var_update.description is not None:
-            var.description = var_update.description
-        if var_update.category is not None:
-            var.category = var_update.category
-        if var_update.locator is not None:
-            var.locator = var_update.locator
-        
-        # Increment versions
-        var.variable_version += 1
-        var.system_version = increment_system_version(db)
-        
-        db.commit()
-        db.refresh(var)
-        
-        return get_variable(var.name)
+@app.put("/api/db/variables/{variable_name}")
+async def proxy_update_variable(variable_name: str, request: Request):
+    """Proxy to variable registry API - update variable"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.put(
+            f"{VAR_SERVER_URL}/api/variables/{variable_name}",
+            content=body,
+            headers={"Content-Type": "application/json"}
+        )
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 
-@app.delete("/api/variables/{variable_name}")
-def delete_variable(variable_name: str):
-    """Delete a variable from the registry"""
-    with SessionLocal() as db:
-        var = db.query(VarRegistry).filter_by(name=variable_name).first()
-        if not var:
-            raise HTTPException(404, f"Variable '{variable_name}' not found")
-        
-        # Delete access paths (cascade should handle this, but being explicit)
-        db.query(VarAccessPath).filter_by(variable_id=var.id).delete()
-        
-        # Delete variable
-        db.delete(var)
-        
-        # Increment system version
-        increment_system_version(db)
-        
-        db.commit()
-        
-        return {"ok": True, "message": f"Variable '{variable_name}' deleted"}
+@app.delete("/api/db/variables/{variable_name}")
+async def proxy_delete_variable(variable_name: str):
+    """Proxy to variable registry API - delete variable"""
+    async with httpx.AsyncClient() as client:
+        response = await client.delete(f"{VAR_SERVER_URL}/api/variables/{variable_name}")
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 
-@app.get("/api/system/version")
-def get_system_version_endpoint():
-    """Get current system version"""
-    with SessionLocal() as db:
-        return {"system_version": get_system_version(db)}
+@app.get("/api/db/system/version")
+async def proxy_system_version():
+    """Proxy to variable registry API - get system version"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{VAR_SERVER_URL}/api/system/version")
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 
-@app.get("/api/categories")
-def list_categories():
-    """List all unique categories"""
-    with SessionLocal() as db:
-        categories = db.query(VarRegistry.category).distinct().filter(VarRegistry.category.isnot(None)).all()
-        return {"categories": [c[0] for c in categories]}
+@app.get("/api/db/categories")
+async def proxy_categories():
+    """Proxy to variable registry API - list categories"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{VAR_SERVER_URL}/api/categories")
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 
-@app.get("/api/locators")
-def list_locators():
-    """List all unique locators"""
-    with SessionLocal() as db:
-        locators = db.query(VarRegistry.locator).distinct().filter(VarRegistry.locator.isnot(None)).all()
-        return {"locators": [l[0] for l in locators]}
-
+@app.get("/api/db/locators")
+async def proxy_locators():
+    """Proxy to variable registry API - list locators"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{VAR_SERVER_URL}/api/locators")
+        return Response(content=response.content, status_code=response.status_code, media_type="application/json")
 
 # ------------------------------
 # State and button (compatibility)
@@ -1074,7 +1062,7 @@ def button_action(name: str):
 
 
 # ------------------------------
-# Variable endpoints (legacy)
+# Variable endpoints
 # ------------------------------
 @app.post("/vars")
 async def update_vars(request: Request, profile: Optional[str] = None):

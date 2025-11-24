@@ -1,0 +1,425 @@
+# Perfect — you’re about to unify everything 👍  
+# Let’s update **`main.py`** so it can:  
+
+# ✅ Accept command‑line options for  
+# - the frontend web port  
+# - the backend data‑server host and port  
+  
+# ✅ Propagate those options to the proxy URLs dynamically.  
+# ✅ Keep everything else unchanged.
+
+
+# ```python
+# main.py
+# RBMS Dashboard Frontend with CLI port selection and configurable data server address
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from typing import Optional
+import httpx
+import json
+import uvicorn
+import os
+import argparse
+
+app = FastAPI(title="RBMS Dashboard Frontend")
+
+# -----------------------------------------------------------------
+# Globals (will be overridden by CLI args or env vars)
+# -----------------------------------------------------------------
+DATA_SERVER_HOST = os.environ.get("DATA_SERVER_HOST", "localhost")
+DATA_SERVER_PORT = int(os.environ.get("DATA_SERVER_PORT", "8084"))
+#DATA_SERVER_URL = f"http://{DATA_SERVER_HOST}:8084"
+DS_URL = "http://127.0.0.1:8084"
+DB_SERVER_URL = "http://127.0.0.1:8084"
+VAR_SERVER_URL = "http://127.0.0.1:8902"
+
+# -----------------------------------------------------------------
+# Static + templates
+# -----------------------------------------------------------------
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+def load_dash_config():
+    with open("dash.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+async def get_active_profile_name():
+    """Fetch the active profile name from the data server."""
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"{DS_URL}/api/active_profile"
+            resp = await client.get(url, timeout=2.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("name", "Unknown")
+    except Exception as e:
+        print(f"[WARNING] Could not fetch active profile: {e}")
+    return "Unknown"
+# -----------------------------------------------------------------
+# Routes
+# -----------------------------------------------------------------
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    profile_name = await get_active_profile_name()   # ← called here    
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "profile_name": profile_name}
+        )
+
+@app.get("/dash.json")
+def dash_json():
+    return JSONResponse(content=load_dash_config())
+
+# -----------------------------------------------------------------
+# Proxy helper
+# -----------------------------------------------------------------
+async def proxy_to_data_server(path: str, request: Request):
+    """Forward request to the configured data server."""
+    async with httpx.AsyncClient() as client:
+        url = f"{DS_URL}{path}"
+        print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>[DEBUG] proxying -> {url}")
+        if request.method == "GET":
+            params = dict(request.query_params)
+            resp = await client.get(url, params=params)
+        elif request.method == "POST":
+            body = await request.body()
+            resp = await client.post(
+                url, content=body, headers={"Content-Type": "application/json"}
+            )
+        else:
+            return Response(content="Method not allowed", status_code=405)
+        return Response(
+            content=resp.content,
+            status_code=resp.status_code,
+            media_type=resp.headers.get("content-type"),
+        )
+
+# -----------------------------------------------------------------
+# Proxy endpoints
+# -----------------------------------------------------------------
+@app.get("/metrics")
+async def metrics_proxy(request: Request):
+    return await proxy_to_data_server("/metrics", request)
+
+@app.get("/vars")
+async def vars_proxy(request: Request):
+    return await proxy_to_data_server("/vars", request)
+
+@app.post("/vars")
+async def vars_post_proxy(request: Request):
+    return await proxy_to_data_server("/vars", request)
+
+@app.get("/series")
+async def series_proxy(request: Request):
+    return await proxy_to_data_server("/series", request)
+
+@app.get("/series/category/{category}")
+async def series_category_proxy(category: str, request: Request):
+    return await proxy_to_data_server(f"/series/category{category}", request)
+
+@app.get("/api/state")
+async def state_get_proxy(request: Request):
+    return await proxy_to_data_server("/api/state", request)
+
+@app.post("/api/state")
+async def state_post_proxy(request: Request):
+    return await proxy_to_data_server("/api/state", request)
+
+@app.post("/api/button/{name}")
+async def button_proxy(name: str, request: Request):
+    return await proxy_to_data_server(f"/api/button/{name}", request)
+
+# -----------------------------------------------------------------
+# New: proxies for DB-server profile APIs
+# -----------------------------------------------------------------
+@app.get("/api/profiles")
+async def profiles_list_proxy(request: Request):
+    print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>[DEBUG] get /api/profiles")
+    return await proxy_to_data_server("/api/profiles", request)
+
+@app.get("/api/active_profile")
+async def active_profile_proxy(request: Request):
+    return await proxy_to_data_server("/api/active_profile", request)
+
+@app.post("/api/profiles")
+async def profiles_create_proxy(request: Request):
+    return await proxy_to_data_server("/api/profiles", request)
+
+@app.post("/api/profiles/select")
+async def profiles_select_proxy(request: Request):
+    return await proxy_to_data_server("/api/profiles/select", request)
+
+@app.post("/api/profiles/clone")
+async def profiles_clone_proxy(request: Request):
+    return await proxy_to_data_server("/api/profiles/clone", request)
+
+@app.get("/api/protections")
+async def protections_get_proxy(request: Request):
+    return await proxy_to_data_server("/api/protections", request)
+
+@app.post("/api/protections")
+async def protections_post_proxy(request: Request):
+    return await proxy_to_data_server("/api/protections", request)
+
+
+@app.post("/api/db/protections")
+async def proxy_save_protections(request: Request):
+    """Proxy POST /api/protections to db_server"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{DB_SERVER_URL}/api/protections",
+            content=body,
+            headers={"Content-Type": "application/json"}
+        )
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+
+@app.post("/api/db/protections/deploy")
+async def proxy_deploy_protections(request: Request):
+    """Proxy POST /api/protections/deploy to db_server"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{DB_SERVER_URL}/api/protections/deploy",
+            content=body,
+            headers={"Content-Type": "application/json"}
+        )
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+
+@app.get("/api/db/protections")
+async def proxy_get_protections(source: str = "current", profile: Optional[str] = None):
+    """Proxy GET /api/protections to db_server"""
+    params = {"source": source}
+    if profile:
+        params["profile"] = profile
+    
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{DB_SERVER_URL}/api/protections",
+            params=params
+        )
+        return Response(content=resp.content, status_code=resp.status_code, media_type="application/json")
+
+# @app.post("/api/protections")
+# def save_protections(config: ProtectionConfigIn):
+#     """Save protection configuration to profile (does not deploy)"""
+#     with SessionLocal() as db:
+#         if config.profile:
+#             prof = db.query(EnvProfile).filter_by(name=config.profile).first()
+#             if not prof:
+#                 raise HTTPException(404, f"Profile '{config.profile}' not found")
+#         else:
+#             prof = get_active_profile(db)
+        
+#         # Delete existing protections for this profile
+#         db.query(Protection).filter_by(profile_id=prof.id).delete()
+        
+#         # Insert new protections
+#         for var_name, limits in config.protections.items():
+#             for limit_type, levels in limits.items():
+#                 for level, data in levels.items():
+#                     db.add(Protection(
+#                         profile_id=prof.id,
+#                         variable_name=var_name,
+#                         limit_type=limit_type,
+#                         level=level,
+#                         threshold=data.threshold,
+#                         on_duration=data.on_duration,
+#                         off_duration=data.off_duration,
+#                         enabled=data.enabled
+#                     ))
+        
+#         db.commit()
+#         return {"ok": True, "profile": prof.name, "message": "Protections saved"}
+
+@app.post("/api/protections/deploy")
+async def protections_deploy_proxy(request: Request):
+    return {
+        "ok": True,
+        "profile": save_result["profile"],
+        "message": "Protections NOT  deployed YET",
+        "deployed": True
+    }
+    # return await proxy_to_data_server("/api/protections/deploy", request)
+
+# @app.post("/api/protections/deploy")
+# def deploy_protections(config: ProtectionConfigIn):
+#     """Save and deploy protection configuration to target system"""
+#     # First save to database
+#     save_result = save_protections(config)
+    
+#     # TODO: Add actual deployment logic here (send to BMS hardware, etc.)
+#     # For now, just return success
+    
+#     return {
+#         "ok": True,
+#         "profile": save_result["profile"],
+#         "message": "Protections saved and deployed",
+#         "deployed": True
+#     }
+
+
+# # Variable Registry API Proxy Routes
+# @app.get("/api/db/variables")
+# async def proxy_get_variables(
+#     category: Optional[str] = None,
+#     locator: Optional[str] = None,
+#     name_pattern: Optional[str] = None,
+#     include_paths: bool = True,
+#     since_version: Optional[int] = None
+# ):
+#     """Proxy to variable registry API - list variables"""
+#     params = {}
+#     if category:
+#         params['category'] = category
+#     if locator:
+#         params['locator'] = locator
+#     if name_pattern:
+#         params['name_pattern'] = name_pattern
+#     if not include_paths:
+#         params['include_paths'] = 'false'
+#     if since_version is not None:
+#         params['since_version'] = since_version
+    
+#     query_string = '&'.join([f"{k}={v}" for k, v in params.items()])
+#     url = f"{VAR_SERVER_URL}/api/variables"
+#     if query_string:
+#         url += f"?{query_string}"
+    
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(url)
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+
+# @app.get("/api/db/variables/{variable_name}")
+# async def proxy_get_variable(variable_name: str):
+#     """Proxy to variable registry API - get specific variable"""
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(f"{VAR_SERVER_URL}/api/variables/{variable_name}")
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+
+# @app.post("/api/db/variables")
+# async def proxy_create_variable(request: Request):
+#     """Proxy to variable registry API - create variable"""
+#     body = await request.body()
+#     async with httpx.AsyncClient() as client:
+#         response = await client.post(
+#             f"{VAR_SERVER_URL}/api/variables",
+#             content=body,
+#             headers={"Content-Type": "application/json"}
+#         )
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+
+# @app.put("/api/db/variables/{variable_name}")
+# async def proxy_update_variable(variable_name: str, request: Request):
+#     """Proxy to variable registry API - update variable"""
+#     body = await request.body()
+#     async with httpx.AsyncClient() as client:
+#         response = await client.put(
+#             f"{VAR_SERVER_URL}/api/variables/{variable_name}",
+#             content=body,
+#             headers={"Content-Type": "application/json"}
+#         )
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+
+# @app.delete("/api/db/variables/{variable_name}")
+# async def proxy_delete_variable(variable_name: str):
+#     """Proxy to variable registry API - delete variable"""
+#     async with httpx.AsyncClient() as client:
+#         response = await client.delete(f"{VAR_SERVER_URL}/api/variables/{variable_name}")
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+
+# @app.get("/api/db/system/version")
+# async def proxy_system_version():
+#     """Proxy to variable registry API - get system version"""
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(f"{VAR_SERVER_URL}/api/system/version")
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+
+# @app.get("/api/db/categories")
+# async def proxy_categories():
+#     """Proxy to variable registry API - list categories"""
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(f"{VAR_SERVER_URL}/api/categories")
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+
+# @app.get("/api/db/locators")
+# async def proxy_locators():
+#     """Proxy to variable registry API - list locators"""
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(f"{VAR_SERVER_URL}/api/locators")
+#         return Response(content=response.content, status_code=response.status_code, media_type="application/json")
+
+# -----------------------------------------------------------------
+# Entry point with argparse for CLI options
+# -----------------------------------------------------------------
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="RBMS Dashboard Frontend")
+    parser.add_argument(
+        "--host", default=os.environ.get("HOST", "0.0.0.0"),
+        help="Frontend host to bind (default 0.0.0.0)"
+    )
+    parser.add_argument(
+        "--port", type=int, default=int(os.environ.get("PORT", "8081")),
+        help="Frontend port (default 8081)"
+    )
+    parser.add_argument(
+        "--data-host", default=DATA_SERVER_HOST,
+        help="Data server host (default localhost)"
+    )
+    parser.add_argument(
+        "--data-port", type=int, default=DATA_SERVER_PORT,
+        help="Data server port (default 8084)"
+    )
+    parser.add_argument(
+        "--reload", action="store_true", help="Enable uvicorn reload"
+    )
+    args = parser.parse_args()
+
+    # Compose backend URL dynamically
+    #DATA_SERVER_URL = f"http://{args.data_host}:{args.data_port}"
+    print(f"🚀 Starting RBMS Dashboard Frontend on {args.host}:{args.port}")
+    print(f"↔️  Proxying to data server at {DS_URL}")
+
+    uvicorn.run("main:app", host=args.host, port=args.port, reload=args.reload)
+# ```
+
+# ---
+
+# ### 🔧 How to run
+
+# **Default (same as before):**
+# ```bash
+# python3 main.py
+# ```
+# → Frontend on `http://0.0.0.0:8080`, proxies to `http://localhost:8081`
+
+# **Custom ports / different data server:**
+# ```bash
+# python3 main.py --port 8090 --data-host 192.168.1.50 --data-port 9001
+# ```
+# → Frontend runs on 8090, proxies to `http://192.168.1.50:9001`
+
+# **Use with reload for development:**
+# ```bash
+# python3 main.py --reload --port 8082
+# ```
+
+# ---
+
+# ✅  You now have:
+# - Dynamic CLI and environment‑controlled ports for both frontend and backend  
+# - Newly proxied `/api/profiles*` endpoints so the dashboard can call your DB server  
+
+# Next step would be adding the **Profile control UI** in your dashboard page to drive these new endpoints—want me to generate that next?

@@ -1650,6 +1650,535 @@ xxrenderDetails(name, varData) {
   }
 }
 
+
+
+// ------------------------------------------------------------------
+// VariablesWidget  // Widget for displaying and managing system variables
+// ------------------------------------------------------------------
+
+class VariablesWidget extends BaseWidget {
+    constructor(config) {
+        super(config);
+        this.variables = [];
+        this.filteredVariables = [];
+        this.systemVersion = 0;
+        this.selectedCategory = 'all';
+        this.searchQuery = '';
+        this.showPaths = false;
+        this.sortBy = 'name';
+        this.sortAsc = true;
+    }
+
+    init() {
+        this.fetchVariables();
+        // Refresh every 5 seconds
+        setInterval(() => this.fetchVariables(), 5000);
+    }
+
+    tick(seriesCache) {
+        // Not using seriesCache for this widget
+        // Data comes from variable registry API
+    }
+
+    async fetchVariables() {
+        try {
+            const url = this.selectedCategory === 'all' 
+                ? '/api/db/variables'
+                : `/api/db/variables?category=${this.selectedCategory}`;
+
+            const data = await $.getJSON(url);
+
+            if (Array.isArray(data)) {
+                this.variables = data;
+                this.applyFilters();
+                this.render();
+            }
+        } catch (error) {
+            console.error('Error fetching variables:', error);
+            this.renderError('Failed to load variables');
+        }
+    }
+
+    async fetchSystemVersion() {
+        try {
+            const data = await $.getJSON('/api/db/system/version');
+            this.systemVersion = data.system_version;
+        } catch (error) {
+            console.error('Error fetching system version:', error);
+        }
+    }
+
+    applyFilters() {
+        this.filteredVariables = this.variables.filter(v => {
+            // Search filter
+            if (this.searchQuery) {
+                const query = this.searchQuery.toLowerCase();
+                const matchName = v.name.toLowerCase().includes(query);
+                const matchDisplay = v.display_name.toLowerCase().includes(query);
+                const matchDesc = v.description.toLowerCase().includes(query);
+                if (!matchName && !matchDisplay && !matchDesc) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        // Sort
+        this.filteredVariables.sort((a, b) => {
+            let aVal, bVal;
+
+            switch (this.sortBy) {
+                case 'name':
+                    aVal = a.name;
+                    bVal = b.name;
+                    break;
+                case 'category':
+                    aVal = a.category;
+                    bVal = b.category;
+                    break;
+                case 'version':
+                    aVal = a.variable_version;
+                    bVal = b.variable_version;
+                    break;
+                default:
+                    aVal = a.name;
+                    bVal = b.name;
+            }
+
+            if (typeof aVal === 'string') {
+                return this.sortAsc 
+                    ? aVal.localeCompare(bVal)
+                    : bVal.localeCompare(aVal);
+            } else {
+                return this.sortAsc ? aVal - bVal : bVal - aVal;
+            }
+        });
+    }
+
+    render() {
+        const container = $(`#${this.config.id}`);
+        if (!container.length) return;
+
+        const html = `
+            <div class="variables-widget">
+                <div class="variables-header">
+                    <div class="variables-controls">
+                        <div class="control-group">
+                            <label>Category:</label>
+                            <select class="category-filter">
+                                <option value="all">All</option>
+                                <option value="config">Config</option>
+                                <option value="prot">Protection</option>
+                                <option value="oper">Operational</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Search:</label>
+                            <input type="text" class="search-input" placeholder="Search variables..." value="${this.searchQuery}">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Sort:</label>
+                            <select class="sort-select">
+                                <option value="name">Name</option>
+                                <option value="category">Category</option>
+                                <option value="version">Version</option>
+                            </select>
+                            <button class="sort-direction-btn" title="Toggle sort direction">
+                                ${this.sortAsc ? '↑' : '↓'}
+                            </button>
+                        </div>
+
+                        <div class="control-group">
+                            <label>
+                                <input type="checkbox" class="show-paths-checkbox" ${this.showPaths ? 'checked' : ''}>
+                                Show Access Paths
+                            </label>
+                        </div>
+
+                        <button class="refresh-btn">↻ Refresh</button>
+                        <button class="add-variable-btn">+ Add Variable</button>
+                    </div>
+                </div>
+
+                <div class="variables-stats">
+                    <span>Total: ${this.variables.length}</span>
+                    <span>Filtered: ${this.filteredVariables.length}</span>
+                    <span>System Version: ${this.systemVersion}</span>
+                </div>
+
+                <div class="variables-list">
+                    ${this.renderVariablesList()}
+                </div>
+            </div>
+        `;
+
+        container.html(html);
+        this.attachEventHandlers();
+    }
+
+    renderVariablesList() {
+        if (this.filteredVariables.length === 0) {
+            return '<div class="no-variables">No variables found</div>';
+        }
+
+        return this.filteredVariables.map(v => this.renderVariableCard(v)).join('');
+    }
+
+    renderVariableCard(variable) {
+        const categoryClass = `category-${variable.category}`;
+        const pathsHtml = this.showPaths ? this.renderAccessPaths(variable.access_paths) : '';
+
+        return `
+            <div class="variable-card ${categoryClass}" data-variable-id="${variable.id}">
+                <div class="variable-header">
+                    <div class="variable-title">
+                        <span class="variable-name">${variable.name}</span>
+                        <span class="variable-category badge-${variable.category}">${variable.category}</span>
+                    </div>
+                    <div class="variable-actions">
+                        <button class="edit-variable-btn" data-variable-name="${variable.name}">✎ Edit</button>
+                        <button class="delete-variable-btn" data-variable-name="${variable.name}">🗑</button>
+                    </div>
+                </div>
+
+                <div class="variable-body">
+                    <div class="variable-info">
+                        <div class="info-row">
+                            <span class="label">Display Name:</span>
+                            <span class="value">${variable.display_name}</span>
+                        </div>
+                        ${variable.units ? `
+                        <div class="info-row">
+                            <span class="label">Units:</span>
+                            <span class="value">${variable.units}</span>
+                        </div>
+                        ` : ''}
+                        ${variable.description ? `
+                        <div class="info-row">
+                            <span class="label">Description:</span>
+                            <span class="value">${variable.description}</span>
+                        </div>
+                        ` : ''}
+                        ${variable.locator ? `
+                        <div class="info-row">
+                            <span class="label">Locator:</span>
+                            <span class="value">${variable.locator}</span>
+                        </div>
+                        ` : ''}
+                        <div class="info-row">
+                            <span class="label">Version:</span>
+                            <span class="value">v${variable.variable_version} (sys: ${variable.system_version})</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Source:</span>
+                            <span class="value">${variable.source_system}</span>
+                        </div>
+                    </div>
+                    ${pathsHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    renderAccessPaths(paths) {
+        if (!paths || paths.length === 0) {
+            return '<div class="access-paths"><em>No access paths</em></div>';
+        }
+
+        const pathsHtml = paths.map(path => {
+            const ref = typeof path.reference === 'string' 
+                ? JSON.parse(path.reference) 
+                : path.reference;
+
+            return `
+                <div class="access-path ${path.active ? '' : 'inactive'}">
+                    <span class="path-type">${path.access_type}</span>
+                    <span class="path-ref">${JSON.stringify(ref)}</span>
+                    <span class="path-priority">Priority: ${path.priority}</span>
+                    ${path.read_only ? '<span class="read-only-badge">RO</span>' : ''}
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="access-paths">
+                <div class="access-paths-header">Access Paths:</div>
+                ${pathsHtml}
+            </div>
+        `;
+    }
+
+    renderError(message) {
+        const container = $(`#${this.config.id}`);
+        container.html(`
+            <div class="variables-widget">
+                <div class="error-message">${message}</div>
+            </div>
+        `);
+    }
+
+    attachEventHandlers() {
+        const container = $(`#${this.config.id}`);
+
+        // Category filter
+        container.find('.category-filter').val(this.selectedCategory).on('change', (e) => {
+            this.selectedCategory = e.target.value;
+            this.fetchVariables();
+        });
+
+        // Search input
+        container.find('.search-input').on('input', (e) => {
+            this.searchQuery = e.target.value;
+            this.applyFilters();
+            this.render();
+        });
+
+        // Sort controls
+        container.find('.sort-select').val(this.sortBy).on('change', (e) => {
+            this.sortBy = e.target.value;
+            this.applyFilters();
+            this.render();
+        });
+
+        container.find('.sort-direction-btn').on('click', () => {
+            this.sortAsc = !this.sortAsc;
+            this.applyFilters();
+            this.render();
+        });
+
+        // Show paths checkbox
+        container.find('.show-paths-checkbox').on('change', (e) => {
+            this.showPaths = e.target.checked;
+            this.render();
+        });
+
+        // Refresh button
+        container.find('.refresh-btn').on('click', () => {
+            this.fetchVariables();
+            this.fetchSystemVersion();
+        });
+
+        // Add variable button
+        container.find('.add-variable-btn').on('click', () => {
+            this.showAddVariableModal();
+        });
+
+        // Edit variable buttons
+        container.find('.edit-variable-btn').on('click', (e) => {
+            const variableName = $(e.target).data('variable-name');
+            this.showEditVariableModal(variableName);
+        });
+
+        // Delete variable buttons
+        container.find('.delete-variable-btn').on('click', (e) => {
+            const variableName = $(e.target).data('variable-name');
+            this.deleteVariable(variableName);
+        });
+    }
+
+    showAddVariableModal() {
+        const modalHtml = `
+            <div class="modal-overlay" id="add-variable-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Add New Variable</h3>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input type="text" id="var-name" placeholder="e.g., battery_voltage">
+                        </div>
+                        <div class="form-group">
+                            <label>Display Name:</label>
+                            <input type="text" id="var-display-name" placeholder="e.g., Battery Voltage">
+                        </div>
+                        <div class="form-group">
+                            <label>Units:</label>
+                            <input type="text" id="var-units" placeholder="e.g., V">
+                        </div>
+                        <div class="form-group">
+                            <label>Description:</label>
+                            <textarea id="var-description" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Category:</label>
+                            <select id="var-category">
+                                <option value="oper">Operational</option>
+                                <option value="config">Config</option>
+                                <option value="prot">Protection</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Locator (optional):</label>
+                            <input type="text" id="var-locator" placeholder="e.g., rbms.battery.voltage">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-cancel">Cancel</button>
+                        <button class="btn-save">Create Variable</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('body').append(modalHtml);
+
+        $('#add-variable-modal .modal-close, #add-variable-modal .btn-cancel').on('click', () => {
+            $('#add-variable-modal').remove();
+        });
+
+        $('#add-variable-modal .btn-save').on('click', () => {
+            this.createVariable();
+        });
+    }
+
+    async createVariable() {
+        const data = {
+            name: $('#var-name').val().trim(),
+            display_name: $('#var-display-name').val().trim(),
+            units: $('#var-units').val().trim(),
+            description: $('#var-description').val().trim(),
+            category: $('#var-category').val(),
+            locator: $('#var-locator').val().trim() || null,
+            source_system: 'ui'
+        };
+
+        if (!data.name || !data.display_name) {
+            alert('Name and Display Name are required');
+            return;
+        }
+
+        try {
+            await $.ajax({
+                url: '/api/db/variables',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data)
+            });
+
+            $('#add-variable-modal').remove();
+            this.fetchVariables();
+            alert('Variable created successfully');
+        } catch (error) {
+            console.error('Error creating variable:', error);
+            alert('Failed to create variable: ' + (error.responseJSON?.detail || error.message));
+        }
+    }
+
+    async showEditVariableModal(variableName) {
+        // Fetch full variable details
+        try {
+            const variable = await $.getJSON(`/api/db/variables/${variableName}`);
+
+            const modalHtml = `
+                <div class="modal-overlay" id="edit-variable-modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Edit Variable: ${variable.name}</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Name:</label>
+                                <input type="text" id="edit-var-name" value="${variable.name}" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Display Name:</label>
+                                <input type="text" id="edit-var-display-name" value="${variable.display_name}">
+                            </div>
+                            <div class="form-group">
+                                <label>Units:</label>
+                                <input type="text" id="edit-var-units" value="${variable.units}">
+                            </div>
+                            <div class="form-group">
+                                <label>Description:</label>
+                                <textarea id="edit-var-description" rows="3">${variable.description}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Category:</label>
+                                <select id="edit-var-category">
+                                    <option value="oper" ${variable.category === 'oper' ? 'selected' : ''}>Operational</option>
+                                    <option value="config" ${variable.category === 'config' ? 'selected' : ''}>Config</option>
+                                    <option value="prot" ${variable.category === 'prot' ? 'selected' : ''}>Protection</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Locator:</label>
+                                <input type="text" id="edit-var-locator" value="${variable.locator || ''}">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel">Cancel</button>
+                            <button class="btn-save">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(modalHtml);
+
+            $('#edit-variable-modal .modal-close, #edit-variable-modal .btn-cancel').on('click', () => {
+                $('#edit-variable-modal').remove();
+            });
+
+            $('#edit-variable-modal .btn-save').on('click', () => {
+                this.updateVariable(variableName);
+            });
+        } catch (error) {
+            console.error('Error fetching variable:', error);
+            alert('Failed to load variable details');
+        }
+    }
+
+    async updateVariable(variableName) {
+        const data = {
+            display_name: $('#edit-var-display-name').val().trim(),
+            units: $('#edit-var-units').val().trim(),
+            description: $('#edit-var-description').val().trim(),
+            category: $('#edit-var-category').val(),
+            locator: $('#edit-var-locator').val().trim() || null
+        };
+
+        try {
+            await $.ajax({
+                url: `/api/db/variables/${variableName}`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data)
+            });
+
+            $('#edit-variable-modal').remove();
+            this.fetchVariables();
+            alert('Variable updated successfully');
+        } catch (error) {
+            console.error('Error updating variable:', error);
+            alert('Failed to update variable: ' + (error.responseJSON?.detail || error.message));
+        }
+    }
+
+    async deleteVariable(variableName) {
+        if (!confirm(`Are you sure you want to delete variable "${variableName}"?`)) {
+            return;
+        }
+
+        try {
+            await $.ajax({
+                url: `/api/db/variables/${variableName}`,
+                method: 'DELETE'
+            });
+
+            this.fetchVariables();
+            alert('Variable deleted successfully');
+        } catch (error) {
+            console.error('Error deleting variable:', error);
+            alert('Failed to delete variable: ' + (error.responseJSON?.detail || error.message));
+        }
+    }
+}
+
 // class ProtectionsWidget {
 //   constructor(container, config) {
 //     this.container = container;
@@ -1786,8 +2315,10 @@ const WidgetTypes = {
   line:  (node,cfg)=>new LineWidget(node,cfg),
   dial:  (node,cfg)=>new DialWidget(node,cfg),
   vartable: (node,cfg)=>new VarTableWidget(node,cfg),
-  indexgrid:(node,cfg)=>new IndexGridWidget(node,cfg),   // 👈 new
-  protections:(node,cfg)=>new ProtectionsWidget(node,cfg)   // 👈 new
+  indexgrid: (node,cfg)=>new IndexGridWidget(node,cfg),   // 👈 new
+  protections: (node,cfg)=>new ProtectionsWidget(node,cfg),   // 👈 new
+  VariablesWidget: (node,cfg)=>new VariablesWidget(node,cfg)  // Add this
+
 };
 
 
