@@ -2256,7 +2256,7 @@ attachEventHandlers() {
 
         try {
             await $.ajax({
-                url: '/api/db/variables',
+                url: '/api/variables',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(data)
@@ -2347,7 +2347,7 @@ attachEventHandlers() {
 
         try {
             await $.ajax({
-                url: `/api/db/variables/${variableName}`,
+                url: `/api/variables/${variableName}`,
                 method: 'PUT',
                 contentType: 'application/json',
                 data: JSON.stringify(data)
@@ -2369,7 +2369,7 @@ attachEventHandlers() {
 
         try {
             await $.ajax({
-                url: `/api/db/variables/${variableName}`,
+                url: `/api/variables/${variableName}`,
                 method: 'DELETE'
             });
 
