@@ -1657,40 +1657,55 @@ xxrenderDetails(name, varData) {
 // ------------------------------------------------------------------
 
 class VariablesWidget extends BaseWidget {
-    constructor(config) {
-        super(config);
+    constructor(node,cfg) {
+        super(node,cfg);
         this.variables = [];
         this.filteredVariables = [];
         this.systemVersion = 0;
-        this.selectedCategory = 'all';
+        this.selectedCategory = 'oper';
         this.searchQuery = '';
         this.showPaths = false;
         this.sortBy = 'name';
         this.sortAsc = true;
+        this.systemVersion = 'Unknown';
+        
+        // Load data once on initialization
+        this.fetchVariables();
+        this.fetchSystemVersion();
+
     }
 
     init() {
+        console.log(">>>>>>>>>>init; category:", this.selectedCategory);
         this.fetchVariables();
         // Refresh every 5 seconds
-        setInterval(() => this.fetchVariables(), 5000);
+        //setInterval(() => this.fetchVariables(), 5000);
     }
 
     tick(seriesCache) {
+        //console.log("tick ; category:", this.selectedCategory);
+        //this.fetchVariables();
         // Not using seriesCache for this widget
         // Data comes from variable registry API
     }
 
     async fetchVariables() {
+        console.log("Fetching variables for category:", this.selectedCategory);
         try {
             const url = this.selectedCategory === 'all' 
-                ? '/api/db/variables'
-                : `/api/db/variables?category=${this.selectedCategory}`;
+                ? '/api/variables'
+                : `/api/variables?category=${this.selectedCategory}`;
 
-            const data = await $.getJSON(url);
+
+            console.log("Fetching variables for url:", url);
+            const data = await getJSON(url);
+            console.log("Fetching variables data:", data);
 
             if (Array.isArray(data)) {
                 this.variables = data;
+                console.log("before apply filters:");
                 this.applyFilters();
+                console.log("before apply render:");
                 this.render();
             }
         } catch (error) {
@@ -1701,7 +1716,7 @@ class VariablesWidget extends BaseWidget {
 
     async fetchSystemVersion() {
         try {
-            const data = await $.getJSON('/api/db/system/version');
+            const data = await $.getJSON('/api/system/version');
             this.systemVersion = data.system_version;
         } catch (error) {
             console.error('Error fetching system version:', error);
@@ -1756,9 +1771,101 @@ class VariablesWidget extends BaseWidget {
     }
 
     render() {
-        const container = $(`#${this.config.id}`);
-        if (!container.length) return;
+    console.log("running render #1");
 
+    if (!this.body) {
+        console.error("render: this.body is not set");
+        return;
+    }
+
+    const html = `
+        <div class="variables-widget">
+            <div class="variables-header">
+                <div class="variables-controls">
+                    <div class="control-group">
+                        <label>Category:</label>
+                        <select class="category-filter">
+                            <option value="all">All</option>
+                            <option value="config">Config</option>
+                            <option value="prot">Protection</option>
+                            <option value="oper">Operational</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Search:</label>
+                        <input type="text" class="search-input" placeholder="Search variables..." value="${this.searchQuery}">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Sort:</label>
+                        <select class="sort-select">
+                            <option value="name">Name</option>
+                            <option value="category">Category</option>
+                            <option value="version">Version</option>
+                        </select>
+                        <button class="sort-direction-btn" title="Toggle sort direction">
+                            ${this.sortAsc ? '↑' : '↓'}
+                        </button>
+                    </div>
+
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" class="show-paths-checkbox" ${this.showPaths ? 'checked' : ''}>
+                            Show Access Paths
+                        </label>
+                    </div>
+
+                    <button class="refresh-btn">↻ Refresh</button>
+                    <button class="add-variable-btn">+ Add Variable</button>
+                </div>
+            </div>
+
+            <div class="variables-stats">
+                <span>Total: ${this.variables.length}</span>
+                <span>Filtered: ${this.filteredVariables.length}</span>
+                <span>System Version: ${this.systemVersion}</span>
+            </div>
+
+            <div class="variables-list">
+                ${this.renderVariablesList()}
+            </div>
+        </div>
+    `;
+    
+    console.log("running render #2");
+
+    this.body.innerHTML = html;
+    this.attachEventHandlers();
+}
+    xrender() {
+        console.log("running render #1");
+
+    if (!this.cfg) {
+        console.error("render: this.cfg is not set", this.cfg);
+        return;
+    }
+    console.log("render: this.cfg is ", this.cfg);
+    console.log("render: this.cfg.id is ", this.cfg.id);
+    if (!this.cfg.id) {
+        console.error("render: this.cfg.id is not set", this.cfg);
+        return;
+    }
+    try {
+        const container = $(`#${this.cfg.id}`);
+        console.log("render container:", container);
+    } catch (e) {
+        console.error("ERROR creating container:", e);
+        console.error("Stack:", e.stack);
+        return;
+    }
+        const container = $(`#${this.cfg.id}`);
+        console.log("render container :", container);  
+        if (!container.length) {
+          //we return here
+           console.error("render container length :", container.length);
+          return;
+        }
         const html = `
             <div class="variables-widget">
                 <div class="variables-header">
@@ -1813,6 +1920,7 @@ class VariablesWidget extends BaseWidget {
                 </div>
             </div>
         `;
+        console.log("running render #2");
 
         container.html(html);
         this.attachEventHandlers();
@@ -1909,74 +2017,169 @@ class VariablesWidget extends BaseWidget {
             </div>
         `;
     }
+renderError(message) {
+    this.body.innerHTML = `
+        <div class="variables-widget">
+            <div class="error-message">${message}</div>
+        </div>
+    `;
+}
 
-    renderError(message) {
-        const container = $(`#${this.config.id}`);
-        container.html(`
-            <div class="variables-widget">
-                <div class="error-message">${message}</div>
-            </div>
-        `);
-    }
+attachEventHandlers() {
+    // Use this.body instead of looking up by ID
+    const container = this.body;
 
-    attachEventHandlers() {
-        const container = $(`#${this.config.id}`);
-
-        // Category filter
-        container.find('.category-filter').val(this.selectedCategory).on('change', (e) => {
+    // Category filter
+    const categoryFilter = container.querySelector('.category-filter');
+    if (categoryFilter) {
+        categoryFilter.value = this.selectedCategory;
+        categoryFilter.addEventListener('change', (e) => {
             this.selectedCategory = e.target.value;
             this.fetchVariables();
         });
+    }
 
-        // Search input
-        container.find('.search-input').on('input', (e) => {
+    // Search input
+    const searchInput = container.querySelector('.search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
             this.searchQuery = e.target.value;
             this.applyFilters();
             this.render();
         });
+    }
 
-        // Sort controls
-        container.find('.sort-select').val(this.sortBy).on('change', (e) => {
+    // Sort controls
+    const sortSelect = container.querySelector('.sort-select');
+    if (sortSelect) {
+        sortSelect.value = this.sortBy;
+        sortSelect.addEventListener('change', (e) => {
             this.sortBy = e.target.value;
             this.applyFilters();
             this.render();
         });
+    }
 
-        container.find('.sort-direction-btn').on('click', () => {
+    const sortDirBtn = container.querySelector('.sort-direction-btn');
+    if (sortDirBtn) {
+        sortDirBtn.addEventListener('click', () => {
             this.sortAsc = !this.sortAsc;
             this.applyFilters();
             this.render();
         });
+    }
 
-        // Show paths checkbox
-        container.find('.show-paths-checkbox').on('change', (e) => {
+    // Show paths checkbox
+    const showPathsCheckbox = container.querySelector('.show-paths-checkbox');
+    if (showPathsCheckbox) {
+        showPathsCheckbox.addEventListener('change', (e) => {
             this.showPaths = e.target.checked;
             this.render();
         });
+    }
 
-        // Refresh button
-        container.find('.refresh-btn').on('click', () => {
+    // Refresh button
+    const refreshBtn = container.querySelector('.refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
             this.fetchVariables();
             this.fetchSystemVersion();
         });
+    }
 
-        // Add variable button
-        container.find('.add-variable-btn').on('click', () => {
+    // Add variable button
+    const addBtn = container.querySelector('.add-variable-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
             this.showAddVariableModal();
         });
+    }
 
-        // Edit variable buttons
-        container.find('.edit-variable-btn').on('click', (e) => {
-            const variableName = $(e.target).data('variable-name');
+    // Edit variable buttons
+    const editBtns = container.querySelectorAll('.edit-variable-btn');
+    editBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const variableName = btn.getAttribute('data-variable-name');
             this.showEditVariableModal(variableName);
         });
+    });
 
-        // Delete variable buttons
-        container.find('.delete-variable-btn').on('click', (e) => {
-            const variableName = $(e.target).data('variable-name');
+    // Delete variable buttons
+    const deleteBtns = container.querySelectorAll('.delete-variable-btn');
+    deleteBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const variableName = btn.getAttribute('data-variable-name');
             this.deleteVariable(variableName);
         });
-    }
+    });
+}
+    // renderError(message) {
+    //     const container = $(`#${this.cfg.id}`);
+    //     container.html(`
+    //         <div class="variables-widget">
+    //             <div class="error-message">${message}</div>
+    //         </div>
+    //     `);
+    // }
+
+    // attachEventHandlers() {
+    //     const container = $(`#${this.cfg.id}`);
+
+    //     // Category filter
+    //     container.find('.category-filter').val(this.selectedCategory).on('change', (e) => {
+    //         this.selectedCategory = e.target.value;
+    //         this.fetchVariables();
+    //     });
+
+    //     // Search input
+    //     container.find('.search-input').on('input', (e) => {
+    //         this.searchQuery = e.target.value;
+    //         this.applyFilters();
+    //         this.render();
+    //     });
+
+    //     // Sort controls
+    //     container.find('.sort-select').val(this.sortBy).on('change', (e) => {
+    //         this.sortBy = e.target.value;
+    //         this.applyFilters();
+    //         this.render();
+    //     });
+
+    //     container.find('.sort-direction-btn').on('click', () => {
+    //         this.sortAsc = !this.sortAsc;
+    //         this.applyFilters();
+    //         this.render();
+    //     });
+
+    //     // Show paths checkbox
+    //     container.find('.show-paths-checkbox').on('change', (e) => {
+    //         this.showPaths = e.target.checked;
+    //         this.render();
+    //     });
+
+    //     // Refresh button
+    //     container.find('.refresh-btn').on('click', () => {
+    //         this.fetchVariables();
+    //         this.fetchSystemVersion();
+    //     });
+
+    //     // Add variable button
+    //     container.find('.add-variable-btn').on('click', () => {
+    //         this.showAddVariableModal();
+    //     });
+
+    //     // Edit variable buttons
+    //     container.find('.edit-variable-btn').on('click', (e) => {
+    //         const variableName = $(e.target).data('variable-name');
+    //         this.showEditVariableModal(variableName);
+    //     });
+
+    //     // Delete variable buttons
+    //     container.find('.delete-variable-btn').on('click', (e) => {
+    //         const variableName = $(e.target).data('variable-name');
+    //         this.deleteVariable(variableName);
+    //     });
+    // }
 
     showAddVariableModal() {
         const modalHtml = `
@@ -2071,7 +2274,7 @@ class VariablesWidget extends BaseWidget {
     async showEditVariableModal(variableName) {
         // Fetch full variable details
         try {
-            const variable = await $.getJSON(`/api/db/variables/${variableName}`);
+            const variable = await $.getJSON(`/api/variables/${variableName}`);
 
             const modalHtml = `
                 <div class="modal-overlay" id="edit-variable-modal">
