@@ -38,8 +38,8 @@ config = Config()
 def parse_args():
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description='Variable Database Server')
-    parser.add_argument('--db', type=str, default='variables.db',
-                        help='Database file path (default: variables.db)')
+    parser.add_argument('--db', type=str, default='primary.db',
+                        help='Database file path (default: primary.db)')
     parser.add_argument('--config', type=str, default=None,
                         help='JSON config file to import on startup')
     parser.add_argument('--metadata', type=str, default=None,

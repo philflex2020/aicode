@@ -1558,12 +1558,12 @@ render() {
                             <select class="path-protocol" required>
                                 <option value="">Select Protocol</option>
                                 <option value="modbus">Modbus TCP</option>
+                                <option value="rs485">Modbus RTU</option>
                                 <option value="dnp3">DNP3</option>
                                 <option value="iec61850">IEC 61850</option>
                                 <option value="opcua">OPC UA</option>
                                 <option value="mqtt">MQTT</option>
                                 <option value="http">HTTP/REST</option>
-                                <option value="snmp">SNMP</option>
                             </select>
                         </div>
 

@@ -312,6 +312,16 @@ async def proxy_delete_variable(variable_name: str):
     response = await var_client.delete(f"{VAR_SERVER_URL}/api/variables/{variable_name}")
     return response.json()
 
+@app.post("/api/access-paths")
+async def proxy_create_access_path(request: Request):
+    body = await request.body()
+    response = await var_client.post(
+        f"{VAR_SERVER_URL}/api/access-paths",
+        content=body,
+        headers={"Content-Type": "application/json"}
+    )
+    return response.json()
+
 
 @app.get("/api/system/version")
 async def proxy_get_system_version():

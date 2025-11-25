@@ -690,227 +690,7 @@ class IndexGridWidget extends BaseWidget {
     root.appendChild(blocksContainer);
     this.body.appendChild(root);
   }
-  yrenderBlocks(data) {
-    this.body.innerHTML = "";
-  
-    const root = document.createElement("div");
-    root.className = "ixg-root";
-  
-    const blocksContainer = document.createElement("div");
-    blocksContainer.className = "ixg-blocks-container";
-  
-    const totalBlocks = Math.ceil(this.totalItems / this.itemsPerBlock);
-  
-    // We keep scroll positions per block by index
-    if (!this.blockScroll) this.blockScroll = {};
-  
-    for (let b = 0; b < totalBlocks; b++) {
-      const start = b * this.itemsPerBlock;
-      const end   = Math.min((b + 1) * this.itemsPerBlock, this.totalItems);
-      const count = end - start;
-  
-      // Outer block card
-      const block = document.createElement("div");
-      block.className = "ixg-block";
-  
-      const blockTitle = document.createElement("div");
-      blockTitle.className = "ixg-block-title";
-      blockTitle.textContent = `Cells ${start + 1}–${end}`;
-      block.appendChild(blockTitle);
-  
-      // Two-column layout inside block
-      const layout = document.createElement("div");
-      layout.className = "ixg-layout";
-  
-      const leftCol = document.createElement("div");
-      leftCol.className = "ixg-legend";
-  
-      const rightCol = document.createElement("div");
-      rightCol.className = "ixg-scroll";
-  
-      // Restore previous scroll position for this block
-      if (this.blockScroll[b] != null) {
-        rightCol.scrollLeft = this.blockScroll[b];
-      }
-  
-      const rows = [];
-  
-      // Index row
-      const indexVals = [];
-      for (let i = 0; i < count; i++) indexVals.push(start + i + 1);
-      rows.push({
-        label: this.indexLabel,
-        unit: "",
-        values: indexVals,
-        isIndex: true,
-      });
-  
-      // Metric rows
-      for (const m of this.metrics) {
-        if (!this.visible.includes(m.name)) continue;
-        const fullVals = data[m.name] || [];
-        const slice = [];
-        for (let i = start; i < end; i++) {
-          slice.push(i < fullVals.length ? fullVals[i] : null);
-        }
-        rows.push({
-          label: m.label,
-          unit: m.unit || "",
-          values: slice,
-          isIndex: false,
-        });
-      }
-  
-      for (const rowData of rows) {
-        // Left legend row
-        const lrow = document.createElement("div");
-        lrow.className = "ixg-row-left";
-        const lhead = document.createElement("div");
-        lhead.className = "ixg-row-head";
-        lhead.textContent = rowData.unit
-          ? `${rowData.label} (${rowData.unit})`
-          : rowData.label;
-        lrow.appendChild(lhead);
-        leftCol.appendChild(lrow);
-  
-        // Right values row
-        const rrow = document.createElement("div");
-        rrow.className = "ixg-row";
-        const cellsWrap = document.createElement("div");
-        cellsWrap.className = "ixg-row-cells";
-  
-        for (let i = 0; i < rowData.values.length; i++) {
-          const v = rowData.values[i];
-          const cell = document.createElement("div");
-          cell.className = "ixg-cell";
-  
-          if (v == null || Number.isNaN(v)) {
-            cell.classList.add("ixg-cell-empty");
-            cell.textContent = "—";
-          } else if (rowData.isIndex) {
-            cell.textContent = parseInt(v, 10);
-          } else {
-            cell.textContent =
-              typeof v === "number" ? v.toFixed(2) : v;
-          }
-  
-          cellsWrap.appendChild(cell);
-        }
-  
-        rrow.appendChild(cellsWrap);
-        rightCol.appendChild(rrow);
-      }
-  
-      // Track scroll changes for this block
-      rightCol.addEventListener("scroll", () => {
-        this.blockScroll[b] = rightCol.scrollLeft;
-      });
-  
-      layout.appendChild(leftCol);
-      layout.appendChild(rightCol);
-      block.appendChild(layout);
-      blocksContainer.appendChild(block);
-    }
-  
-    root.appendChild(blocksContainer);
-    this.body.appendChild(root);
-  }
-  xrenderBlocks(data) {
-    // Preserve scroll position
-    let prevScrollLeft = 0;
-    const existingRoot = this.body.querySelector(".ixg-root");
-    if (existingRoot) {
-      const existingScroll = existingRoot.querySelector(".ixg-scroll");
-      if (existingScroll) prevScrollLeft = existingScroll.scrollLeft;
-    }
-  
-    this.body.innerHTML = "";
-  
-    const root = document.createElement("div");
-    root.className = "ixg-root";
-  
-    // Two-column layout: left fixed legend, right scrolling values
-    const layout = document.createElement("div");
-    layout.className = "ixg-layout";
-  
-    const leftCol = document.createElement("div");
-    leftCol.className = "ixg-legend";
-  
-    const rightCol = document.createElement("div");
-    rightCol.className = "ixg-scroll";
-  
-    // Build rows in parallel for alignment
-    const rows = [];
-  
-    const indexVals = [];
-    for (let i = 0; i < this.totalItems; i++) indexVals.push(i + 1);
-    rows.push({
-      label: this.indexLabel,
-      unit: "",
-      values: indexVals,
-      isIndex: true,
-    });
-  
-    for (const m of this.metrics) {
-      if (!this.visible.includes(m.name)) continue;
-      const vals = data[m.name] || [];
-      rows.push({
-        label: m.label,
-        unit: m.unit || "",
-        values: vals,
-        isIndex: false,
-      });
-    }
-  
-    for (const rowData of rows) {
-      // Left legend cell (fixed)
-      const lrow = document.createElement("div");
-      lrow.className = "ixg-row-left";
-      const lhead = document.createElement("div");
-      lhead.className = "ixg-row-head";
-      lhead.textContent = rowData.unit
-        ? `${rowData.label} (${rowData.unit})`
-        : rowData.label;
-      lrow.appendChild(lhead);
-      leftCol.appendChild(lrow);
-  
-      // Right values cells (scrollable)
-      const rrow = document.createElement("div");
-      rrow.className = "ixg-row";
-      const cellsWrap = document.createElement("div");
-      cellsWrap.className = "ixg-row-cells";
-  
-      for (let i = 0; i < this.totalItems; i++) {
-        const v = rowData.values[i];
-        const cell = document.createElement("div");
-        cell.className = "ixg-cell";
-  
-        if (v == null || Number.isNaN(v)) {
-          cell.classList.add("ixg-cell-empty");
-          cell.textContent = "—";
-        } else if (rowData.isIndex) {
-          // Index row: integer cell number
-          cell.textContent = parseInt(v, 10);
-        } else {
-          cell.textContent =
-            typeof v === "number" ? v.toFixed(2) : v;
-        }
-  
-        cellsWrap.appendChild(cell);
-      }
-  
-      rrow.appendChild(cellsWrap);
-      rightCol.appendChild(rrow);
-    }
-  
-    layout.appendChild(leftCol);
-    layout.appendChild(rightCol);
-    root.appendChild(layout);
-    this.body.appendChild(root);
-  
-    // Restore scroll position
-    rightCol.scrollLeft = prevScrollLeft;
-  }
+
 }
 //
 //
@@ -1242,71 +1022,6 @@ class ProtectionsWidget extends BaseWidget {
     }
   }
 
-  async xsaveProtections(deploy = false) {
-    // Collect values from form
-    const modal = document.querySelector('.prot-modal');
-    if (!modal || !this.editingVar || !this.editingData) return;
-
-    const inputs = modal.querySelectorAll('input');
-    const updatedLimits = JSON.parse(JSON.stringify(this.editingData.limits));
-    
-    inputs.forEach(input => {
-      const side = input.dataset.side;  // max or min
-      const level = input.dataset.level; // warning, alert, fault, or undefined
-      const field = input.dataset.field; // threshold, on_duration, off_duration, enabled, hysteresis
-      
-      if (!side || !field) return;
-      
-      if (field === 'hysteresis') {
-        updatedLimits[side].hysteresis = parseFloat(input.value) || 0.0;
-        return;
-
-      if (!level) return
-      if (!updatedLimits[side][level]) {
-        updatedLimits[side][level] = {
-          threshold: 0.0,
-          on_duration: 0.0,
-          off_duration: 0.0,
-          enabled: false
-        };
-
-      }
-      if (field === 'enabled') {
-          updatedLimits[side][level].enabled = input.checked;
-        } else {
-          updatedLimits[side][level][field] = parseFloat(input.value) || 0.0;
-        }
-      }
-    });
-    
-    // Build payload
-    const payload = {
-      protections: {
-        [this.editingVar]: updatedLimits
-      }
-    };
-    const endpoint = deploy ? '/api/protections/deploy' : '/api/protections';
-    try {
-      console.log('Saving protections to', endpoint, JSON.stringify(payload, null, 2));
-      const data = await postJSON(endpoint, payload);
-      console.log('Save protections response:', data);
-      console.log('Save protections response data OK:', data.ok);
-
-      if (data && data.ok) {
-        alert(deploy ? 'Protections deployed!' : 'Protections saved!');
-        this.closeEditModal();
-        console.log('Protections saved, refreshing...');
-        await this.fetchProtections('current'); // Refresh widget
-      } else {
-        const msg =(data && data.error) ? data.error : 'Unknown error';
-        console.error('Failed to save protections:', msg);
-        alert(`Failed to save protections #1 ${msg}`);
-      }
-    } catch (err) {
-      console.error('Failed to save protections:', err);
-      alert('Failed to save protections #2');
-    }
-  }
 
   async fetchProtections(source = 'current') {
     try {
@@ -1510,71 +1225,6 @@ class ProtectionsWidget extends BaseWidget {
     return x.toFixed(2);
   }
 
-  xrenderDetails(name, varData) {
-    const limits = varData.limits || {};
-    const sides = ['max', 'min'];
-    const levels = ['warning', 'alert', 'fault'];
-
-    const renderSide = (side) => {
-      const sideLimits = limits[side];
-      if (!sideLimits) return '';  // no max or min block at all
-
-      // Check if this side has any actual level data
-      const hasAnyLevel = levels.some(lv => sideLimits[lv]);
-      if (!hasAnyLevel) return '';
-
-      return `
-        <div class="prot-side">
-          <div class="prot-side-title">${side.toUpperCase()}</div>
-          <table class="prot-table">
-            <thead>
-              <tr>
-                <th>Level</th>
-                <th>Threshold</th>
-                <th>On (s)</th>
-                <th>Off (s)</th>
-                <th>En</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${levels.map(level => {
-                const cfg = sideLimits[level];
-                if (!cfg) return '';
-
-                const clsDisabled = !cfg.enabled ? 'prot-row-disabled' : '';
-                return `
-                  <tr class="${clsDisabled}">
-                    <td class="prot-level">${level}</td>
-                    <td class="prot-num">${this.fmtNum(cfg.threshold)}</td>
-                    <td class="prot-num">${this.fmtNum(cfg.on_duration)}</td>
-                    <td class="prot-num">${this.fmtNum(cfg.off_duration)}</td>
-                    <td class="prot-center">${cfg.enabled ? '✓' : ''}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    };
-
-    const html = sides.map(renderSide).join('');
-
-    // If no limits at all, show a message
-    if (!html.trim()) {
-      return `
-        <div class="protection-details">
-          <div class="prot-empty">No limits configured for this variable</div>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="protection-details">
-        ${html}
-      </div>
-    `;
-  }
 
   fmtNum(x) {
     if (x === null || x === undefined) return '';
@@ -1583,56 +1233,6 @@ class ProtectionsWidget extends BaseWidget {
     return x.toFixed(2);
   }
 
-xxrenderDetails(name, varData) {
-    const limits = varData.limits || {};
-    const sides = ['max', 'min'];
-    const levels = ['warning', 'alert', 'fault'];
-
-    const renderSide = (side) => {
-      const sideLimits = limits[side];
-      if (!sideLimits) return '';
-
-      return `
-        <div class="prot-side">
-          <div class="prot-side-title">${side.toUpperCase()}</div>
-          <table class="prot-table">
-            <thead>
-              <tr>
-                <th>Level</th>
-                <th>Threshold</th>
-                <th>On (s)</th>
-                <th>Off (s)</th>
-                <th>En</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${levels.map(level => {
-                const cfg = sideLimits[level];
-                if (!cfg) return '';
-
-                const clsDisabled = !cfg.enabled ? 'prot-row-disabled' : '';
-                return `
-                  <tr class="${clsDisabled}">
-                    <td class="prot-level">${level}</td>
-                    <td class="prot-num">${this.fmtNum(cfg.threshold)}</td>
-                    <td class="prot-num">${this.fmtNum(cfg.on_duration)}</td>
-                    <td class="prot-num">${this.fmtNum(cfg.off_duration)}</td>
-                    <td class="prot-center">${cfg.enabled ? '✓' : ''}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    };
-
-    return `
-      <div class="protection-details">
-        ${sides.map(renderSide).join('')}
-      </div>
-    `;
-  }
 
   fmtNum(x) {
     if (x === null || x === undefined) return '';
@@ -1651,42 +1251,25 @@ xxrenderDetails(name, varData) {
 }
 
 
-
 // ------------------------------------------------------------------
 // VariablesWidget  // Widget for displaying and managing system variables
 // ------------------------------------------------------------------
-
 class VariablesWidget extends BaseWidget {
-    constructor(node,cfg) {
-        super(node,cfg);
+    constructor(node, cfg) {
+        super(node, cfg);
         this.variables = [];
         this.filteredVariables = [];
-        this.systemVersion = 0;
         this.selectedCategory = 'oper';
         this.searchQuery = '';
         this.showPaths = false;
         this.sortBy = 'name';
         this.sortAsc = true;
+        this.expandedVariable = null;
         this.systemVersion = 'Unknown';
         
         // Load data once on initialization
         this.fetchVariables();
         this.fetchSystemVersion();
-
-    }
-
-    init() {
-        console.log(">>>>>>>>>>init; category:", this.selectedCategory);
-        this.fetchVariables();
-        // Refresh every 5 seconds
-        //setInterval(() => this.fetchVariables(), 5000);
-    }
-
-    tick(seriesCache) {
-        //console.log("tick ; category:", this.selectedCategory);
-        //this.fetchVariables();
-        // Not using seriesCache for this widget
-        // Data comes from variable registry API
     }
 
     async fetchVariables() {
@@ -1695,7 +1278,6 @@ class VariablesWidget extends BaseWidget {
             const url = this.selectedCategory === 'all' 
                 ? '/api/variables'
                 : `/api/variables?category=${this.selectedCategory}`;
-
 
             console.log("Fetching variables for url:", url);
             const data = await getJSON(url);
@@ -1716,7 +1298,7 @@ class VariablesWidget extends BaseWidget {
 
     async fetchSystemVersion() {
         try {
-            const data = await $.getJSON('/api/system/version');
+            const data = await getJSON('/api/system/version');
             this.systemVersion = data.system_version;
         } catch (error) {
             console.error('Error fetching system version:', error);
@@ -1728,9 +1310,9 @@ class VariablesWidget extends BaseWidget {
             // Search filter
             if (this.searchQuery) {
                 const query = this.searchQuery.toLowerCase();
-                const matchName = v.name.toLowerCase().includes(query);
-                const matchDisplay = v.display_name.toLowerCase().includes(query);
-                const matchDesc = v.description.toLowerCase().includes(query);
+                const matchName = (v.name || '').toLowerCase().includes(query);
+                const matchDisplay = (v.display_name || '').toLowerCase().includes(query);
+                const matchDesc = (v.description || '').toLowerCase().includes(query);
                 if (!matchName && !matchDisplay && !matchDesc) {
                     return false;
                 }
@@ -1771,101 +1353,11 @@ class VariablesWidget extends BaseWidget {
     }
 
     render() {
-    console.log("running render #1");
-
-    if (!this.body) {
-        console.error("render: this.body is not set");
-        return;
-    }
-
-    const html = `
-        <div class="variables-widget">
-            <div class="variables-header">
-                <div class="variables-controls">
-                    <div class="control-group">
-                        <label>Category:</label>
-                        <select class="category-filter">
-                            <option value="all">All</option>
-                            <option value="config">Config</option>
-                            <option value="prot">Protection</option>
-                            <option value="oper">Operational</option>
-                        </select>
-                    </div>
-
-                    <div class="control-group">
-                        <label>Search:</label>
-                        <input type="text" class="search-input" placeholder="Search variables..." value="${this.searchQuery}">
-                    </div>
-
-                    <div class="control-group">
-                        <label>Sort:</label>
-                        <select class="sort-select">
-                            <option value="name">Name</option>
-                            <option value="category">Category</option>
-                            <option value="version">Version</option>
-                        </select>
-                        <button class="sort-direction-btn" title="Toggle sort direction">
-                            ${this.sortAsc ? '↑' : '↓'}
-                        </button>
-                    </div>
-
-                    <div class="control-group">
-                        <label>
-                            <input type="checkbox" class="show-paths-checkbox" ${this.showPaths ? 'checked' : ''}>
-                            Show Access Paths
-                        </label>
-                    </div>
-
-                    <button class="refresh-btn">↻ Refresh</button>
-                    <button class="add-variable-btn">+ Add Variable</button>
-                </div>
-            </div>
-
-            <div class="variables-stats">
-                <span>Total: ${this.variables.length}</span>
-                <span>Filtered: ${this.filteredVariables.length}</span>
-                <span>System Version: ${this.systemVersion}</span>
-            </div>
-
-            <div class="variables-list">
-                ${this.renderVariablesList()}
-            </div>
-        </div>
-    `;
-    
-    console.log("running render #2");
-
-    this.body.innerHTML = html;
-    this.attachEventHandlers();
-}
-    xrender() {
-        console.log("running render #1");
-
-    if (!this.cfg) {
-        console.error("render: this.cfg is not set", this.cfg);
-        return;
-    }
-    console.log("render: this.cfg is ", this.cfg);
-    console.log("render: this.cfg.id is ", this.cfg.id);
-    if (!this.cfg.id) {
-        console.error("render: this.cfg.id is not set", this.cfg);
-        return;
-    }
-    try {
-        const container = $(`#${this.cfg.id}`);
-        console.log("render container:", container);
-    } catch (e) {
-        console.error("ERROR creating container:", e);
-        console.error("Stack:", e.stack);
-        return;
-    }
-        const container = $(`#${this.cfg.id}`);
-        console.log("render container :", container);  
-        if (!container.length) {
-          //we return here
-           console.error("render container length :", container.length);
-          return;
+        if (!this.body) {
+            console.error("render: this.body is not set");
+            return;
         }
+
         const html = `
             <div class="variables-widget">
                 <div class="variables-header">
@@ -1920,10 +1412,163 @@ class VariablesWidget extends BaseWidget {
                 </div>
             </div>
         `;
-        console.log("running render #2");
-
-        container.html(html);
+        
+        this.body.innerHTML = html;
+        
+        // Create or update the path modal (outside widget container)
+        this.ensurePathModal();
+        
         this.attachEventHandlers();
+    }
+
+    ensurePathModal() {
+        // Check if modal already exists
+        let modal = document.getElementById('path-modal');
+        
+        if (!modal) {
+            const modalHtml = `
+                <div class="modal path-modal" id="path-modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Add Access Path</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form class="path-form">
+                                <input type="hidden" class="path-variable-name">
+                                <input type="hidden" class="path-index" value="-1">
+                                
+                                <div class="form-group">
+                                    <label>Protocol:</label>
+                                    <select class="path-protocol" required>
+                                        <option value="">Select Protocol</option>
+                                        <option value="modbus">Modbus TCP</option>
+                                        <option value="dnp3">DNP3</option>
+                                        <option value="iec61850">IEC 61850</option>
+                                        <option value="opcua">OPC UA</option>
+                                        <option value="mqtt">MQTT</option>
+                                        <option value="http">HTTP/REST</option>
+                                        <option value="snmp">SNMP</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Address/Register:</label>
+                                    <input type="text" class="path-address" placeholder="e.g., 40001, /device/sensor1" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Unit ID / Slave ID:</label>
+                                    <input type="number" class="path-unit-id" placeholder="Optional" min="0" max="255">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Data Type:</label>
+                                    <select class="path-data-type">
+                                        <option value="int16">INT16</option>
+                                        <option value="uint16">UINT16</option>
+                                        <option value="int32">INT32</option>
+                                        <option value="uint32">UINT32</option>
+                                        <option value="float32">FLOAT32</option>
+                                        <option value="float64">FLOAT64</option>
+                                        <option value="bool">BOOLEAN</option>
+                                        <option value="string">STRING</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Byte Order:</label>
+                                    <select class="path-byte-order">
+                                        <option value="big">Big Endian</option>
+                                        <option value="little">Little Endian</option>
+                                        <option value="big-swap">Big Endian (Word Swap)</option>
+                                        <option value="little-swap">Little Endian (Word Swap)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Scale Factor:</label>
+                                    <input type="number" class="path-scale" placeholder="1.0" step="any" value="1.0">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Offset:</label>
+                                    <input type="number" class="path-offset" placeholder="0.0" step="any" value="0.0">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Poll Rate (ms):</label>
+                                    <input type="number" class="path-poll-rate" placeholder="1000" min="100" step="100" value="1000">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" class="path-read-only">
+                                        Read Only
+                                    </label>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" class="path-enabled" checked>
+                                        Enabled
+                                    </label>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Description:</label>
+                                    <textarea class="path-description" rows="3" placeholder="Optional description"></textarea>
+                                </div>
+
+                                <div class="modal-actions">
+                                    <button type="submit" class="btn-primary">Save Path</button>
+                                    <button type="button" class="btn-secondary modal-cancel">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            modal = document.getElementById('path-modal');
+            
+            // Attach modal event handlers once
+            this.attachModalHandlers(modal);
+        }
+    }
+
+    attachModalHandlers(modal) {
+        // Modal close buttons
+        const modalClose = modal.querySelector('.modal-close');
+        if (modalClose) {
+            modalClose.addEventListener('click', () => {
+                this.closePathModal();
+            });
+        }
+
+        const modalCancel = modal.querySelector('.modal-cancel');
+        if (modalCancel) {
+            modalCancel.addEventListener('click', () => {
+                this.closePathModal();
+            });
+        }
+
+        // Close modal on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closePathModal();
+            }
+        });
+
+        // Path form submission
+        const pathForm = modal.querySelector('.path-form');
+        if (pathForm) {
+            pathForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.savePathFromForm();
+            });
+        }
     }
 
     renderVariablesList() {
@@ -1931,255 +1576,904 @@ class VariablesWidget extends BaseWidget {
             return '<div class="no-variables">No variables found</div>';
         }
 
-        return this.filteredVariables.map(v => this.renderVariableCard(v)).join('');
-    }
-
-    renderVariableCard(variable) {
-        const categoryClass = `category-${variable.category}`;
-        const pathsHtml = this.showPaths ? this.renderAccessPaths(variable.access_paths) : '';
-
         return `
-            <div class="variable-card ${categoryClass}" data-variable-id="${variable.id}">
-                <div class="variable-header">
-                    <div class="variable-title">
-                        <span class="variable-name">${variable.name}</span>
-                        <span class="variable-category badge-${variable.category}">${variable.category}</span>
-                    </div>
-                    <div class="variable-actions">
-                        <button class="edit-variable-btn" data-variable-name="${variable.name}">✎ Edit</button>
-                        <button class="delete-variable-btn" data-variable-name="${variable.name}">🗑</button>
-                    </div>
-                </div>
-
-                <div class="variable-body">
-                    <div class="variable-info">
-                        <div class="info-row">
-                            <span class="label">Display Name:</span>
-                            <span class="value">${variable.display_name}</span>
-                        </div>
-                        ${variable.units ? `
-                        <div class="info-row">
-                            <span class="label">Units:</span>
-                            <span class="value">${variable.units}</span>
-                        </div>
-                        ` : ''}
-                        ${variable.description ? `
-                        <div class="info-row">
-                            <span class="label">Description:</span>
-                            <span class="value">${variable.description}</span>
-                        </div>
-                        ` : ''}
-                        ${variable.locator ? `
-                        <div class="info-row">
-                            <span class="label">Locator:</span>
-                            <span class="value">${variable.locator}</span>
-                        </div>
-                        ` : ''}
-                        <div class="info-row">
-                            <span class="label">Version:</span>
-                            <span class="value">v${variable.variable_version} (sys: ${variable.system_version})</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Source:</span>
-                            <span class="value">${variable.source_system}</span>
-                        </div>
-                    </div>
-                    ${pathsHtml}
-                </div>
-            </div>
+            <table class="variables-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Current Value</th>
+                        <th>Version</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${this.filteredVariables.map(v => this.renderVariableRow(v)).join('')}
+                </tbody>
+            </table>
         `;
     }
 
-    renderAccessPaths(paths) {
-        if (!paths || paths.length === 0) {
-            return '<div class="access-paths"><em>No access paths</em></div>';
+    renderVariableRow(variable) {
+        const isExpanded = this.expandedVariable === variable.name;
+        const isConfig = variable.category === 'config';
+        const hasChanges = variable.pendingValue !== undefined && variable.pendingValue !== variable.value;
+        
+        return `
+            <tr class="variable-row ${isExpanded ? 'expanded' : ''} ${hasChanges ? 'has-changes' : ''}" data-variable-name="${variable.name}">
+                <td>
+                    <button class="expand-btn" data-variable-name="${variable.name}">
+                        ${isExpanded ? '▼' : '▶'}
+                    </button>
+                    <span class="variable-name">${variable.name}</span>
+                    ${hasChanges ? '<span class="pending-indicator" title="Has pending changes">●</span>' : ''}
+                </td>
+                <td><span class="category-badge category-${variable.category}">${variable.category}</span></td>
+                <td>
+                    <span class="current-value">${this.formatValue(variable.value)}</span>
+                    ${hasChanges ? `<span class="pending-value" title="Pending: ${variable.pendingValue}">→ ${this.formatValue(variable.pendingValue)}</span>` : ''}
+                </td>
+                <td>${variable.version || 'N/A'}</td>
+                <td>
+                    <button class="icon-btn edit-variable-btn" data-variable-name="${variable.name}" title="Edit Value">
+                        ✏️
+                    </button>
+                    ${isConfig ? `
+                        <button class="icon-btn deploy-variable-btn ${!hasChanges ? 'disabled' : ''}" 
+                                data-variable-name="${variable.name}" 
+                                title="${hasChanges ? 'Deploy pending changes' : 'No changes to deploy'}"
+                                ${!hasChanges ? 'disabled' : ''}>
+                            🚀
+                        </button>
+                    ` : ''}
+                    <button class="icon-btn delete-variable-btn" data-variable-name="${variable.name}" title="Delete">
+                        🗑️
+                    </button>
+                </td>
+            </tr>
+            ${isExpanded ? this.renderVariableDetails(variable) : ''}
+        `;
+    }
+
+    renderVariableDetails(variable) {
+        const isConfig = variable.category === 'config';
+        const hasChanges = variable.pendingValue !== undefined && variable.pendingValue !== variable.value;
+        
+        return `
+            <tr class="variable-details-row">
+                <td colspan="5">
+                    <div class="variable-details">
+                        ${isConfig ? `
+                        <!-- Configuration & Deployment Section -->
+                        <div class="details-section config-section">
+                            <h4>Configuration & Deployment</h4>
+                            <div class="config-deploy">
+                                <div class="value-comparison">
+                                    <div class="value-item">
+                                        <label>Current (Deployed) Value:</label>
+                                        <span class="deployed-value">${this.formatValue(variable.value)}</span>
+                                    </div>
+                                    <div class="value-item">
+                                        <label>Pending Value:</label>
+                                        <input type="text" 
+                                               class="pending-value-input" 
+                                               data-variable-name="${variable.name}"
+                                               value="${variable.pendingValue !== undefined ? variable.pendingValue : variable.value}"
+                                               placeholder="Enter new value">
+                                    </div>
+                                </div>
+                                <div class="deploy-actions">
+                                    <button class="update-pending-btn" data-variable-name="${variable.name}">
+                                        Update Pending Value
+                                    </button>
+                                    <button class="deploy-btn ${!hasChanges ? 'disabled' : ''}" 
+                                            data-variable-name="${variable.name}"
+                                            ${!hasChanges ? 'disabled' : ''}>
+                                        🚀 Deploy Changes
+                                    </button>
+                                    ${hasChanges ? `
+                                        <button class="revert-btn" data-variable-name="${variable.name}">
+                                            ↶ Revert to Current
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                ${variable.lastDeployed ? `
+                                    <div class="deploy-info">
+                                        <small>Last deployed: ${variable.lastDeployed} by ${variable.deployedBy || 'Unknown'}</small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Access Paths Section -->
+                        <div class="details-section">
+                            <h4>Access Paths</h4>
+                            <div class="paths-list">
+                                ${this.renderPathsList(variable)}
+                            </div>
+                            <button class="add-path-btn" data-variable-name="${variable.name}">
+                                + Add Path
+                            </button>
+                        </div>
+
+                        <!-- Protection Limits Section -->
+                        <div class="details-section">
+                            <h4>Protection Limits</h4>
+                            <div class="limits-config">
+                                ${this.renderLimitsConfig(variable)}
+                            </div>
+                        </div>
+
+                        <!-- Monitoring Section -->
+                        <div class="details-section">
+                            <h4>Monitoring</h4>
+                            <div class="monitoring-config">
+                                <div class="monitor-option">
+                                    <label>
+                                        <input type="checkbox" 
+                                               class="add-to-metrics-checkbox" 
+                                               data-variable-name="${variable.name}"
+                                               ${variable.inMetrics ? 'checked' : ''}>
+                                        Add to Metrics Group
+                                    </label>
+                                    ${variable.inMetrics ? `
+                                        <select class="metrics-group-select" data-variable-name="${variable.name}">
+                                            ${this.renderMetricsGroupOptions(variable.metricsGroup)}
+                                        </select>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="monitor-option">
+                                    <label>
+                                        <input type="checkbox" 
+                                               class="add-to-chart-checkbox" 
+                                               data-variable-name="${variable.name}"
+                                               ${variable.inChart ? 'checked' : ''}>
+                                        Add to Chart
+                                    </label>
+                                    ${variable.inChart ? `
+                                        <select class="chart-select" data-variable-name="${variable.name}">
+                                            ${this.renderChartOptions(variable.chartId)}
+                                        </select>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metadata Section -->
+                        <div class="details-section">
+                            <h4>Metadata</h4>
+                            <div class="metadata">
+                                <div><strong>Type:</strong> ${variable.type || 'Unknown'}</div>
+                                <div><strong>Units:</strong> ${variable.units || 'N/A'}</div>
+                                <div><strong>Description:</strong> ${variable.description || 'No description'}</div>
+                                <div><strong>Last Modified:</strong> ${variable.lastModified || 'Unknown'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    renderPathsList(variable) {
+        if (!variable.access_paths || variable.access_paths.length === 0) {
+            return '<div class="no-paths">No access paths defined</div>';
         }
 
-        const pathsHtml = paths.map(path => {
-            const ref = typeof path.reference === 'string' 
-                ? JSON.parse(path.reference) 
-                : path.reference;
-
-            return `
-                <div class="access-path ${path.active ? '' : 'inactive'}">
-                    <span class="path-type">${path.access_type}</span>
-                    <span class="path-ref">${JSON.stringify(ref)}</span>
-                    <span class="path-priority">Priority: ${path.priority}</span>
-                    ${path.read_only ? '<span class="read-only-badge">RO</span>' : ''}
+        return variable.access_paths.map((path, index) => `
+            <div class="path-item ${!path.enabled ? 'path-disabled' : ''}">
+                <div class="path-main">
+                    <span class="path-protocol-badge">${path.protocol}</span>
+                    <span class="path-address">${path.address}</span>
+                    ${path.unitId !== undefined ? `<span class="path-unit">Unit: ${path.unitId}</span>` : ''}
+                    ${!path.enabled ? '<span class="path-status-badge disabled">Disabled</span>' : ''}
+                    ${path.readOnly ? '<span class="path-status-badge readonly">Read Only</span>' : ''}
                 </div>
-            `;
-        }).join('');
+                <div class="path-details">
+                    <span class="path-detail">Type: ${path.dataType || 'N/A'}</span>
+                    <span class="path-detail">Byte Order: ${path.byteOrder || 'N/A'}</span>
+                    ${path.scale !== 1.0 ? `<span class="path-detail">Scale: ${path.scale}</span>` : ''}
+                    ${path.offset !== 0.0 ? `<span class="path-detail">Offset: ${path.offset}</span>` : ''}
+                    <span class="path-detail">Poll: ${path.pollRate}ms</span>
+                </div>
+                ${path.description ? `<div class="path-description-text">${path.description}</div>` : ''}
+                <div class="path-actions">
+                    <button class="icon-btn edit-path-btn" 
+                            data-variable-name="${variable.name}" 
+                            data-path-index="${index}"
+                            title="Edit Path">
+                        ✏️
+                    </button>
+                    <button class="icon-btn delete-path-btn" 
+                            data-variable-name="${variable.name}" 
+                            data-path-index="${index}"
+                            title="Remove Path">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
 
+    renderLimitsConfig(variable) {
+        const limits = variable.limits || {};
+        
         return `
-            <div class="access-paths">
-                <div class="access-paths-header">Access Paths:</div>
-                ${pathsHtml}
+            <div class="limits-grid">
+                <div class="limit-field">
+                    <label>Min Value:</label>
+                    <input type="number" 
+                           class="limit-input" 
+                           data-variable-name="${variable.name}" 
+                           data-limit-type="min"
+                           value="${limits.min !== undefined ? limits.min : ''}"
+                           placeholder="No limit">
+                </div>
+                <div class="limit-field">
+                    <label>Max Value:</label>
+                    <input type="number" 
+                           class="limit-input" 
+                           data-variable-name="${variable.name}" 
+                           data-limit-type="max"
+                           value="${limits.max !== undefined ? limits.max : ''}"
+                           placeholder="No limit">
+                </div>
+                <div class="limit-field">
+                    <label>Warning Low:</label>
+                    <input type="number" 
+                           class="limit-input" 
+                           data-variable-name="${variable.name}" 
+                           data-limit-type="warnLow"
+                           value="${limits.warnLow !== undefined ? limits.warnLow : ''}"
+                           placeholder="No warning">
+                </div>
+                <div class="limit-field">
+                    <label>Warning High:</label>
+                    <input type="number" 
+                           class="limit-input" 
+                           data-variable-name="${variable.name}" 
+                           data-limit-type="warnHigh"
+                           value="${limits.warnHigh !== undefined ? limits.warnHigh : ''}"
+                           placeholder="No warning">
+                </div>
+                <div class="limit-actions">
+                    <button class="save-limits-btn" data-variable-name="${variable.name}">
+                        Save Limits
+                    </button>
+                </div>
             </div>
         `;
     }
-renderError(message) {
-    this.body.innerHTML = `
-        <div class="variables-widget">
-            <div class="error-message">${message}</div>
-        </div>
-    `;
-}
 
-attachEventHandlers() {
-    // Use this.body instead of looking up by ID
-    const container = this.body;
+    renderMetricsGroupOptions(selectedGroup) {
+        // Placeholder - you'll populate this from your metrics groups later
+        const groups = ['Group 1', 'Group 2', 'Group 3'];
+        return groups.map(g => 
+            `<option value="${g}" ${g === selectedGroup ? 'selected' : ''}>${g}</option>`
+        ).join('');
+    }
 
-    // Category filter
-    const categoryFilter = container.querySelector('.category-filter');
-    if (categoryFilter) {
-        categoryFilter.value = this.selectedCategory;
-        categoryFilter.addEventListener('change', (e) => {
-            this.selectedCategory = e.target.value;
-            this.fetchVariables();
+    renderChartOptions(selectedChart) {
+        // Placeholder - you'll populate this from available charts later
+        const charts = ['Chart A', 'Chart B', 'Chart C'];
+        return charts.map(c => 
+            `<option value="${c}" ${c === selectedChart ? 'selected' : ''}>${c}</option>`
+        ).join('');
+    }
+
+    formatValue(value) {
+        if (value === null || value === undefined) return 'N/A';
+        if (typeof value === 'number') return value.toFixed(2);
+        return String(value);
+    }
+
+    renderError(message) {
+        this.body.innerHTML = `
+            <div class="variables-widget">
+                <div class="error-message">${message}</div>
+            </div>
+        `;
+    }
+
+    attachEventHandlers() {
+        const container = this.body;
+
+        // Category filter
+        const categoryFilter = container.querySelector('.category-filter');
+        if (categoryFilter) {
+            categoryFilter.value = this.selectedCategory;
+            categoryFilter.addEventListener('change', (e) => {
+                this.selectedCategory = e.target.value;
+                this.fetchVariables();
+            });
+        }
+
+        // Search input
+        const searchInput = container.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchQuery = e.target.value;
+                this.applyFilters();
+                this.render();
+            });
+        }
+
+        // Sort controls
+        const sortSelect = container.querySelector('.sort-select');
+        if (sortSelect) {
+            sortSelect.value = this.sortBy;
+            sortSelect.addEventListener('change', (e) => {
+                this.sortBy = e.target.value;
+                this.applyFilters();
+                this.render();
+            });
+        }
+
+        const sortDirBtn = container.querySelector('.sort-direction-btn');
+        if (sortDirBtn) {
+            sortDirBtn.addEventListener('click', () => {
+                this.sortAsc = !this.sortAsc;
+                this.applyFilters();
+                this.render();
+            });
+        }
+
+        // Show paths checkbox
+        const showPathsCheckbox = container.querySelector('.show-paths-checkbox');
+        if (showPathsCheckbox) {
+            showPathsCheckbox.addEventListener('change', (e) => {
+                this.showPaths = e.target.checked;
+                this.render();
+            });
+        }
+
+        // Refresh button
+        const refreshBtn = container.querySelector('.refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.fetchVariables();
+                this.fetchSystemVersion();
+            });
+        }
+
+        // Add variable button
+        const addBtn = container.querySelector('.add-variable-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                this.showAddVariableModal();
+            });
+        }
+
+        // Edit variable buttons
+        const editBtns = container.querySelectorAll('.edit-variable-btn');
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const variableName = btn.getAttribute('data-variable-name');
+                this.showEditVariableModal(variableName);
+            });
+        });
+
+        // Delete variable buttons
+        const deleteBtns = container.querySelectorAll('.delete-variable-btn');
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const variableName = btn.getAttribute('data-variable-name');
+                this.deleteVariable(variableName);
+            });
+        });
+
+        // Expand/collapse variable details
+        const expandBtns = container.querySelectorAll('.expand-btn');
+        expandBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const variableName = btn.getAttribute('data-variable-name');
+                this.toggleVariableDetails(variableName);
+            });
+        });
+
+        // Add path
+        const addPathBtns = container.querySelectorAll('.add-path-btn');
+        console.log("Attaching add path handlers:", addPathBtns);
+
+        addPathBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                console.log("Add path for variable:", variableName);
+                this.showAddPathModal(variableName);
+            });
+        });
+
+        // Edit path
+        const editPathBtns = container.querySelectorAll('.edit-path-btn');
+        editPathBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                const pathIndex = parseInt(btn.getAttribute('data-path-index'));
+                this.showEditPathModal(variableName, pathIndex);
+            });
+        });
+
+        // Delete path
+        const deletePathBtns = container.querySelectorAll('.delete-path-btn');
+        deletePathBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                const pathIndex = parseInt(btn.getAttribute('data-path-index'));
+                this.deletePath(variableName, pathIndex);
+            });
+        });
+
+        // Save limits
+        const saveLimitsBtns = container.querySelectorAll('.save-limits-btn');
+        saveLimitsBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                this.saveLimits(variableName);
+            });
+        });
+
+        // Add to metrics group
+        const metricsCheckboxes = container.querySelectorAll('.add-to-metrics-checkbox');
+        metricsCheckboxes.forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const variableName = cb.getAttribute('data-variable-name');
+                this.toggleMetricsGroup(variableName, e.target.checked);
+            });
+        });
+
+        // Metrics group selection
+        const metricsSelects = container.querySelectorAll('.metrics-group-select');
+        metricsSelects.forEach(sel => {
+            sel.addEventListener('change', (e) => {
+                const variableName = sel.getAttribute('data-variable-name');
+                this.updateMetricsGroup(variableName, e.target.value);
+            });
+        });
+
+        // Add to chart
+        const chartCheckboxes = container.querySelectorAll('.add-to-chart-checkbox');
+        chartCheckboxes.forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const variableName = cb.getAttribute('data-variable-name');
+                this.toggleChart(variableName, e.target.checked);
+            });
+        });
+
+        // Chart selection
+        const chartSelects = container.querySelectorAll('.chart-select');
+        chartSelects.forEach(sel => {
+            sel.addEventListener('change', (e) => {
+                const variableName = sel.getAttribute('data-variable-name');
+                this.updateChart(variableName, e.target.value);
+            });
+        });
+
+        // Update pending value
+        const updatePendingBtns = container.querySelectorAll('.update-pending-btn');
+        updatePendingBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                this.updatePendingValue(variableName);
+            });
+        });
+
+        // Deploy button (in actions column)
+        const deployBtns = container.querySelectorAll('.deploy-variable-btn');
+        deployBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                this.deployVariable(variableName);
+            });
+        });
+
+        // Deploy button (in details panel)
+        const deployDetailBtns = container.querySelectorAll('.deploy-btn');
+        deployDetailBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                this.deployVariable(variableName);
+            });
+        });
+
+        // Revert button
+        const revertBtns = container.querySelectorAll('.revert-btn');
+        revertBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const variableName = btn.getAttribute('data-variable-name');
+                this.revertPendingValue(variableName);
+            });
         });
     }
 
-    // Search input
-    const searchInput = container.querySelector('.search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            this.searchQuery = e.target.value;
-            this.applyFilters();
-            this.render();
-        });
+    toggleVariableDetails(variableName) {
+        if (this.expandedVariable === variableName) {
+            this.expandedVariable = null;
+        } else {
+            this.expandedVariable = variableName;
+        }
+        this.render();
     }
 
-    // Sort controls
-    const sortSelect = container.querySelector('.sort-select');
-    if (sortSelect) {
-        sortSelect.value = this.sortBy;
-        sortSelect.addEventListener('change', (e) => {
-            this.sortBy = e.target.value;
-            this.applyFilters();
-            this.render();
-        });
+    showAddPathModal(variableName) {
+        console.log('showAddPathModal called for:', variableName);
+        this.ensurePathModal();
+        
+        const modal = document.getElementById('path-modal');
+        if (!modal) {
+            console.error('Path modal not found');
+            return;
+        }
+        
+        const form = modal.querySelector('.path-form');
+        const title = modal.querySelector('.modal-title');
+        
+        // Reset form
+        form.reset();
+        title.textContent = 'Add Access Path';
+        
+        // Set variable name
+        form.querySelector('.path-variable-name').value = variableName;
+        form.querySelector('.path-index').value = '-1';
+        
+        // Set defaults
+        form.querySelector('.path-scale').value = '1.0';
+        form.querySelector('.path-offset').value = '0.0';
+        form.querySelector('.path-poll-rate').value = '1000';
+        form.querySelector('.path-enabled').checked = true;
+        form.querySelector('.path-read-only').checked = false;
+        
+        // Show modal
+        modal.style.display = 'flex';
     }
 
-    const sortDirBtn = container.querySelector('.sort-direction-btn');
-    if (sortDirBtn) {
-        sortDirBtn.addEventListener('click', () => {
-            this.sortAsc = !this.sortAsc;
-            this.applyFilters();
-            this.render();
-        });
+    showEditPathModal(variableName, pathIndex) {
+        const variable = this.variables.find(v => v.name === variableName);
+        if (!variable || !variable.access_paths || !variable.access_paths[pathIndex]) {
+            console.error('Path not found');
+            return;
+        }
+        
+        const path = variable.access_paths[pathIndex];
+        const modal = document.getElementById('path-modal');
+        if (!modal) {
+            console.error('Path modal not found');
+            return;
+        }
+        
+        const form = modal.querySelector('.path-form');
+        const title = modal.querySelector('.modal-title');
+        
+        // Set title
+        title.textContent = 'Edit Access Path';
+        
+        // Set variable name and index
+        form.querySelector('.path-variable-name').value = variableName;
+        form.querySelector('.path-index').value = pathIndex;
+        
+        // Populate form with existing data
+        form.querySelector('.path-protocol').value = path.protocol || '';
+        form.querySelector('.path-address').value = path.address || '';
+        form.querySelector('.path-unit-id').value = path.unitId !== undefined ? path.unitId : '';
+        form.querySelector('.path-data-type').value = path.dataType || 'int16';
+        form.querySelector('.path-byte-order').value = path.byteOrder || 'big';
+        form.querySelector('.path-scale').value = path.scale !== undefined ? path.scale : 1.0;
+        form.querySelector('.path-offset').value = path.offset !== undefined ? path.offset : 0.0;
+        form.querySelector('.path-poll-rate').value = path.pollRate || 1000;
+        form.querySelector('.path-read-only').checked = path.readOnly || false;
+        form.querySelector('.path-enabled').checked = path.enabled !== false;
+        form.querySelector('.path-description').value = path.description || '';
+        
+        // Show modal
+        modal.style.display = 'flex';
     }
 
-    // Show paths checkbox
-    const showPathsCheckbox = container.querySelector('.show-paths-checkbox');
-    if (showPathsCheckbox) {
-        showPathsCheckbox.addEventListener('change', (e) => {
-            this.showPaths = e.target.checked;
-            this.render();
-        });
+    closePathModal() {
+        const modal = document.getElementById('path-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
 
-    // Refresh button
-    const refreshBtn = container.querySelector('.refresh-btn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            this.fetchVariables();
-            this.fetchSystemVersion();
-        });
+    async savePathFromForm() {
+        const modal = document.getElementById('path-modal');
+        if (!modal) {
+            console.error('Path modal not found');
+            return;
+        }
+        
+        const form = modal.querySelector('.path-form');
+        
+        const variableName = form.querySelector('.path-variable-name').value;
+        const pathIndex = parseInt(form.querySelector('.path-index').value);
+        
+        // Collect form data
+        const pathData = {
+            protocol: form.querySelector('.path-protocol').value,
+            address: form.querySelector('.path-address').value,
+            unitId: form.querySelector('.path-unit-id').value ? parseInt(form.querySelector('.path-unit-id').value) : undefined,
+            dataType: form.querySelector('.path-data-type').value,
+            byteOrder: form.querySelector('.path-byte-order').value,
+            scale: parseFloat(form.querySelector('.path-scale').value) || 1.0,
+            offset: parseFloat(form.querySelector('.path-offset').value) || 0.0,
+            pollRate: parseInt(form.querySelector('.path-poll-rate').value) || 1000,
+            readOnly: form.querySelector('.path-read-only').checked,
+            enabled: form.querySelector('.path-enabled').checked,
+            description: form.querySelector('.path-description').value.trim()
+        };
+        
+        // Validate required fields
+        if (!pathData.protocol || !pathData.address) {
+            alert('Protocol and Address are required');
+            return;
+        }
+        
+        try {
+            let response;
+            
+            if (pathIndex === -1) {
+                // Add new path
+                response = await fetch(`/api/access-paths`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      variable_name: variableName,
+                      access_type: pathData.accessType,
+                      reference: pathData.reference,
+                      priority: pathData.priority,
+                      read_only: pathData.readOnly,
+                      rack_number: pathData.rackNumber,
+                      device_id: pathData.deviceId
+                  })
+                });
+            } else {
+                // Update existing path
+                const oldPathId = pathData.id; // assuming you store the path ID in pathData
+
+                // Step 1: Deactivate the old path
+                await fetch(`/api/access-paths/${oldPathId}`, {
+                    method: 'DELETE'
+                });
+
+                // Step 2: Create a new path with updated data
+                response = await fetch(`/api/access-paths`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        variable_name: variableName,
+                        access_type: pathData.accessType,
+                        reference: pathData.reference,
+                        priority: pathData.priority,
+                        read_only: pathData.readOnly,
+                        rack_number: pathData.rackNumber,
+                        device_id: pathData.deviceId
+                    })
+                });
+                
+            }
+            
+            if (response.ok) {
+                // Update local data
+                const variable = this.variables.find(v => v.name === variableName);
+                
+                if (!variable.access_paths) {
+                    variable.access_paths = [];
+                }
+                
+                if (pathIndex === -1) {
+                    // Add new path
+                    variable.access_paths.push(pathData);
+                } else {
+                    // Update existing path
+                    variable.access_paths[pathIndex] = pathData;
+                }
+                
+                this.applyFilters();
+                this.render();
+                this.closePathModal();
+                
+                alert(pathIndex === -1 ? 'Path added successfully' : 'Path updated successfully');
+            } else {
+                const error = await response.json();
+                alert(`Failed to save path: ${error.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error saving path:', error);
+            alert('Error saving path');
+        }
     }
 
-    // Add variable button
-    const addBtn = container.querySelector('.add-variable-btn');
-    if (addBtn) {
-        addBtn.addEventListener('click', () => {
-            this.showAddVariableModal();
-        });
+    async deletePath(variableName, pathIndex) {
+        if (!confirm('Remove this access path?')) return;
+        
+        try {
+            const response = await fetch(`/api/variables/${variableName}/paths/${pathIndex}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                // Update local data
+                const variable = this.variables.find(v => v.name === variableName);
+                variable.access_paths.splice(pathIndex, 1);
+                this.applyFilters();
+                this.render();
+            } else {
+                alert('Failed to delete path');
+            }
+        } catch (error) {
+            console.error('Error deleting path:', error);
+            alert('Error deleting path');
+        }
     }
 
-    // Edit variable buttons
-    const editBtns = container.querySelectorAll('.edit-variable-btn');
-    editBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const variableName = btn.getAttribute('data-variable-name');
-            this.showEditVariableModal(variableName);
+    async saveLimits(variableName) {
+        const container = this.body;
+        const inputs = container.querySelectorAll(`.limit-input[data-variable-name="${variableName}"]`);
+        
+        const limits = {};
+        inputs.forEach(input => {
+            const limitType = input.getAttribute('data-limit-type');
+            const value = input.value.trim();
+            if (value !== '') {
+                limits[limitType] = parseFloat(value);
+            }
         });
-    });
+        
+        try {
+            const response = await fetch(`/api/variables/${variableName}/limits`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(limits)
+            });
+            
+            if (response.ok) {
+                // Update local data
+                const variable = this.variables.find(v => v.name === variableName);
+                variable.limits = limits;
+                alert('Limits saved successfully');
+            } else {
+                alert('Failed to save limits');
+            }
+        } catch (error) {
+            console.error('Error saving limits:', error);
+            alert('Error saving limits');
+        }
+    }
 
-    // Delete variable buttons
-    const deleteBtns = container.querySelectorAll('.delete-variable-btn');
-    deleteBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const variableName = btn.getAttribute('data-variable-name');
-            this.deleteVariable(variableName);
-        });
-    });
-}
-    // renderError(message) {
-    //     const container = $(`#${this.cfg.id}`);
-    //     container.html(`
-    //         <div class="variables-widget">
-    //             <div class="error-message">${message}</div>
-    //         </div>
-    //     `);
-    // }
+    async toggleMetricsGroup(variableName, enabled) {
+        const variable = this.variables.find(v => v.name === variableName);
+        variable.inMetrics = enabled;
+        
+        if (enabled && !variable.metricsGroup) {
+            variable.metricsGroup = 'Group 1'; // Default
+        }
+        
+        // TODO: Send to backend
+        this.render();
+    }
 
-    // attachEventHandlers() {
-    //     const container = $(`#${this.cfg.id}`);
+    async updateMetricsGroup(variableName, groupName) {
+        const variable = this.variables.find(v => v.name === variableName);
+        variable.metricsGroup = groupName;
+        
+        // TODO: Send to backend
+        console.log(`Updated ${variableName} to metrics group ${groupName}`);
+    }
 
-    //     // Category filter
-    //     container.find('.category-filter').val(this.selectedCategory).on('change', (e) => {
-    //         this.selectedCategory = e.target.value;
-    //         this.fetchVariables();
-    //     });
+    async toggleChart(variableName, enabled) {
+        const variable = this.variables.find(v => v.name === variableName);
+        variable.inChart = enabled;
+        
+        if (enabled && !variable.chartId) {
+            variable.chartId = 'Chart A'; // Default
+        }
+        
+        // TODO: Send to backend
+        this.render();
+    }
 
-    //     // Search input
-    //     container.find('.search-input').on('input', (e) => {
-    //         this.searchQuery = e.target.value;
-    //         this.applyFilters();
-    //         this.render();
-    //     });
+    async updateChart(variableName, chartId) {
+        const variable = this.variables.find(v => v.name === variableName);
+        variable.chartId = chartId;
+        
+        // TODO: Send to backend
+        console.log(`Updated ${variableName} to chart ${chartId}`);
+    }
 
-    //     // Sort controls
-    //     container.find('.sort-select').val(this.sortBy).on('change', (e) => {
-    //         this.sortBy = e.target.value;
-    //         this.applyFilters();
-    //         this.render();
-    //     });
+    updatePendingValue(variableName) {
+        const container = this.body;
+        const input = container.querySelector(`.pending-value-input[data-variable-name="${variableName}"]`);
+        
+        if (!input) return;
+        
+        const newValue = input.value.trim();
+        const variable = this.variables.find(v => v.name === variableName);
+        
+        if (!variable) return;
+        
+        // Parse value based on type
+        let parsedValue = newValue;
+        if (variable.type === 'number' || variable.type === 'float') {
+            parsedValue = parseFloat(newValue);
+            if (isNaN(parsedValue)) {
+                alert('Invalid number format');
+                return;
+            }
+        } else if (variable.type === 'integer') {
+            parsedValue = parseInt(newValue);
+            if (isNaN(parsedValue)) {
+                alert('Invalid integer format');
+                return;
+            }
+        } else if (variable.type === 'boolean') {
+            parsedValue = newValue.toLowerCase() === 'true' || newValue === '1';
+        }
+        
+        // Update pending value locally
+        variable.pendingValue = parsedValue;
+        this.applyFilters();
+        this.render();
+    }
 
-    //     container.find('.sort-direction-btn').on('click', () => {
-    //         this.sortAsc = !this.sortAsc;
-    //         this.applyFilters();
-    //         this.render();
-    //     });
+    async deployVariable(variableName) {
+        const variable = this.variables.find(v => v.name === variableName);
+        
+        if (!variable || variable.pendingValue === undefined) {
+            alert('No pending changes to deploy');
+            return;
+        }
+        
+        if (!confirm(`Deploy ${variableName}?\n\nCurrent: ${variable.value}\nNew: ${variable.pendingValue}\n\nThis will update the running system.`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/variables/${variableName}/deploy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    value: variable.pendingValue 
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                
+                // Update local data
+                variable.value = variable.pendingValue;
+                variable.pendingValue = undefined;
+                variable.lastDeployed = new Date().toISOString();
+                variable.deployedBy = result.deployedBy || 'Current User';
+                
+                this.applyFilters();
+                this.render();
+                
+                alert(`Successfully deployed ${variableName}`);
+            } else {
+                const error = await response.json();
+                alert(`Failed to deploy: ${error.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error deploying variable:', error);
+            alert('Error deploying variable');
+        }
+    }
 
-    //     // Show paths checkbox
-    //     container.find('.show-paths-checkbox').on('change', (e) => {
-    //         this.showPaths = e.target.checked;
-    //         this.render();
-    //     });
-
-    //     // Refresh button
-    //     container.find('.refresh-btn').on('click', () => {
-    //         this.fetchVariables();
-    //         this.fetchSystemVersion();
-    //     });
-
-    //     // Add variable button
-    //     container.find('.add-variable-btn').on('click', () => {
-    //         this.showAddVariableModal();
-    //     });
-
-    //     // Edit variable buttons
-    //     container.find('.edit-variable-btn').on('click', (e) => {
-    //         const variableName = $(e.target).data('variable-name');
-    //         this.showEditVariableModal(variableName);
-    //     });
-
-    //     // Delete variable buttons
-    //     container.find('.delete-variable-btn').on('click', (e) => {
-    //         const variableName = $(e.target).data('variable-name');
-    //         this.deleteVariable(variableName);
-    //     });
-    // }
+    revertPendingValue(variableName) {
+        const variable = this.variables.find(v => v.name === variableName);
+        
+        if (!variable) return;
+        
+        if (!confirm(`Revert pending changes for ${variableName}?`)) {
+            return;
+        }
+        
+        variable.pendingValue = undefined;
+        this.applyFilters();
+        this.render();
+    }
 
     showAddVariableModal() {
         const modalHtml = `
@@ -2227,25 +2521,22 @@ attachEventHandlers() {
             </div>
         `;
 
-        $('body').append(modalHtml);
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        $('#add-variable-modal .modal-close, #add-variable-modal .btn-cancel').on('click', () => {
-            $('#add-variable-modal').remove();
-        });
-
-        $('#add-variable-modal .btn-save').on('click', () => {
-            this.createVariable();
-        });
+        const modal = document.getElementById('add-variable-modal');
+        modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+        modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+        modal.querySelector('.btn-save').addEventListener('click', () => this.createVariable());
     }
 
     async createVariable() {
         const data = {
-            name: $('#var-name').val().trim(),
-            display_name: $('#var-display-name').val().trim(),
-            units: $('#var-units').val().trim(),
-            description: $('#var-description').val().trim(),
-            category: $('#var-category').val(),
-            locator: $('#var-locator').val().trim() || null,
+            name: document.getElementById('var-name').value.trim(),
+            display_name: document.getElementById('var-display-name').value.trim(),
+            units: document.getElementById('var-units').value.trim(),
+            description: document.getElementById('var-description').value.trim(),
+            category: document.getElementById('var-category').value,
+            locator: document.getElementById('var-locator').value.trim() || null,
             source_system: 'ui'
         };
 
@@ -2255,26 +2546,29 @@ attachEventHandlers() {
         }
 
         try {
-            await $.ajax({
-                url: '/api/variables',
+            const response = await fetch('/api/variables', {
                 method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(data)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
 
-            $('#add-variable-modal').remove();
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to create variable');
+            }
+
+            document.getElementById('add-variable-modal').remove();
             this.fetchVariables();
             alert('Variable created successfully');
         } catch (error) {
             console.error('Error creating variable:', error);
-            alert('Failed to create variable: ' + (error.responseJSON?.detail || error.message));
+            alert('Failed to create variable: ' + error.message);
         }
     }
 
     async showEditVariableModal(variableName) {
-        // Fetch full variable details
         try {
-            const variable = await $.getJSON(`/api/variables/${variableName}`);
+            const variable = await getJSON(`/api/variables/${variableName}`);
 
             const modalHtml = `
                 <div class="modal-overlay" id="edit-variable-modal">
@@ -2321,15 +2615,12 @@ attachEventHandlers() {
                 </div>
             `;
 
-            $('body').append(modalHtml);
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-            $('#edit-variable-modal .modal-close, #edit-variable-modal .btn-cancel').on('click', () => {
-                $('#edit-variable-modal').remove();
-            });
-
-            $('#edit-variable-modal .btn-save').on('click', () => {
-                this.updateVariable(variableName);
-            });
+            const modal = document.getElementById('edit-variable-modal');
+            modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+            modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+            modal.querySelector('.btn-save').addEventListener('click', () => this.updateVariable(variableName));
         } catch (error) {
             console.error('Error fetching variable:', error);
             alert('Failed to load variable details');
@@ -2338,27 +2629,31 @@ attachEventHandlers() {
 
     async updateVariable(variableName) {
         const data = {
-            display_name: $('#edit-var-display-name').val().trim(),
-            units: $('#edit-var-units').val().trim(),
-            description: $('#edit-var-description').val().trim(),
-            category: $('#edit-var-category').val(),
-            locator: $('#edit-var-locator').val().trim() || null
+            display_name: document.getElementById('edit-var-display-name').value.trim(),
+            units: document.getElementById('edit-var-units').value.trim(),
+            description: document.getElementById('edit-var-description').value.trim(),
+            category: document.getElementById('edit-var-category').value,
+            locator: document.getElementById('edit-var-locator').value.trim() || null
         };
 
         try {
-            await $.ajax({
-                url: `/api/variables/${variableName}`,
+            const response = await fetch(`/api/variables/${variableName}`, {
                 method: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify(data)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
             });
 
-            $('#edit-variable-modal').remove();
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to update variable');
+            }
+
+            document.getElementById('edit-variable-modal').remove();
             this.fetchVariables();
             alert('Variable updated successfully');
         } catch (error) {
             console.error('Error updating variable:', error);
-            alert('Failed to update variable: ' + (error.responseJSON?.detail || error.message));
+            alert('Failed to update variable: ' + error.message);
         }
     }
 
@@ -2368,148 +2663,24 @@ attachEventHandlers() {
         }
 
         try {
-            await $.ajax({
-                url: `/api/variables/${variableName}`,
+            const response = await fetch(`/api/variables/${variableName}`, {
                 method: 'DELETE'
             });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to delete variable');
+            }
 
             this.fetchVariables();
             alert('Variable deleted successfully');
         } catch (error) {
             console.error('Error deleting variable:', error);
-            alert('Failed to delete variable: ' + (error.responseJSON?.detail || error.message));
+            alert('Failed to delete variable: ' + error.message);
         }
     }
 }
-
-// class ProtectionsWidget {
-//   constructor(container, config) {
-//     this.container = container;
-//     this.config = config || {};
-//     this.protectionData = null;
-//     this.isEditMode = false;
-    
-//     // Configuration options with defaults
-//     this.showDisabled = this.config.show_disabled !== false;
-//     this.highlightActiveAlarms = this.config.highlight_active_alarms !== false;
-//     this.allowEdit = this.config.allow_edit !== false;
-    
-//     this.render();
-//   }
-
-//   render() {
-//     // Create the main widget structure
-//     this.container.innerHTML = `
-//       <div class="protections-widget">
-//         <div class="protections-header">
-//           ${this.allowEdit ? '<button class="btn-edit" id="btn-edit-protections">Edit</button>' : ''}
-//         </div>
-//         <div class="protections-content">
-//           <div class="protections-loading">Loading protections...</div>
-//         </div>
-//       </div>
-//     `;
-
-//     // Attach event listeners
-//     if (this.allowEdit) {
-//       const editBtn = this.container.querySelector('#btn-edit-protections');
-//       if (editBtn) {
-//         editBtn.addEventListener('click', () => this.toggleEditMode());
-//       }
-//     }
-
-//     console.log('ProtectionsWidget initialized');
-//   }
-
-//   toggleEditMode() {
-//     this.isEditMode = !this.isEditMode;
-//     console.log('Edit mode:', this.isEditMode);
-    
-//     if (this.isEditMode) {
-//       this.showEditModal();
-//     }
-//   }
-
-//   showEditModal() {
-//     console.log('Opening edit modal... (to be implemented)');
-//     alert('Edit modal coming in next step!');
-//   }
-
-//   async fetchProtections() {
-//     try {
-//       const response = await fetch(`${API_BASE}/api/protections?source=current`);
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! status: ${response.status}`);
-//       }
-//       const data = await response.json();
-//       this.protectionData = data;
-//       console.log('Fetched protection data:', data);
-//       return data;
-//     } catch (error) {
-//       console.error('Error fetching protections:', error);
-//       return null;
-//     }
-//   }
-
-//   async update() {
-//     const data = await this.fetchProtections();
-//     if (data && data.protections) {
-//       this.renderProtections(data);
-//     }
-//   }
-
-//   renderProtections(data) {
-//     const content = this.container.querySelector('.protections-content');
-//     if (!content) return;
-
-//     const variables = Object.keys(data.protections || {});
-    
-//     if (variables.length === 0) {
-//       content.innerHTML = '<div class="protections-empty">No protections configured</div>';
-//       return;
-//     }
-
-//     content.innerHTML = `
-//       <div class="protections-list">
-//         ${variables.map(varName => {
-//           const varData = data.protections[varName];
-//           const state = varData.current_state || 'normal';
-//           const value = varData.current_value !== null && varData.current_value !== undefined 
-//             ? varData.current_value.toFixed(2) 
-//             : 'N/A';
-          
-//           return `
-//             <div class="protection-item ${this.highlightActiveAlarms && state !== 'normal' ? 'alarm-active' : ''}">
-//               <div class="protection-main">
-//                 <span class="protection-name">${this.formatVariableName(varName)}</span>
-//                 <span class="protection-value">${value} ${varData.meta.unit || ''}</span>
-//                 <span class="protection-state state-${state}">${state.toUpperCase()}</span>
-//               </div>
-//             </div>
-//           `;
-//         }).join('')}
-//       </div>
-//     `;
-//   }
-
-//   formatVariableName(name) {
-//     // Convert snake_case to Title Case
-//     return name
-//       .split('_')
-//       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-//       .join(' ');
-//   }
-
-//   destroy() {
-//     console.log('ProtectionsWidget destroyed');
-//   }
-// }
-
-// // Register the widget
-// if (typeof window.WidgetRegistry !== 'undefined') {
-//   window.WidgetRegistry.register('protections', ProtectionsWidget);
-// }
-// ------------------------------------------------------------------
+//--------------------------
 // ------------------------------------------------------------------
 // Widget registry
 // ------------------------------------------------------------------
