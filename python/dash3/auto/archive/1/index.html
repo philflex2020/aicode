@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Variable Feature Manager</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: #eee;
+      padding: 20px;
+    }
+    select, button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #252525;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+    }
+    input, select {
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    button[type="submit"] {
+      margin-top: 10px;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Select Variable</h2>
+<select id="variableSelect">
+  <option value="bv2">bv2</option>
+  <option value="soc">soc</option>
+  <option value="cell_voltage_max_warn">cell_voltage_max_warn</option>
+  <!-- Add more variables dynamically if needed -->
+</select>
+
+<h2>Add Features</h2>
+<div>
+  <button type="button" data-modal="accessPath" class="openModalBtn">Add Access Path</button>
+  <button type="button" data-modal="protection" class="openModalBtn">Add Protection</button>
+  <button type="button" data-modal="chart" class="openModalBtn">Add to Chart</button>
+  <button type="button" data-modal="metrics" class="openModalBtn">Add to Metrics</button>
+  <button type="button" data-modal="pub" class="openModalBtn">Add to Pub</button>
+</div>
+
+<!-- Modal -->
+<div id="pathModal" class="modal" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">Modal Title</h3>
+    <form id="pathForm" novalidate></form>
+    <div style="margin-top:12px;">
+      <button id="closeModalBtn" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="form-generator.js"></script>
+</body>
+</html>

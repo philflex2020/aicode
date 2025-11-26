@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Variable Feature Manager</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: #eee;
+      padding: 20px;
+    }
+    select, button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #252525;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+      color: #111;
+    }
+    button[type="submit"] { margin-top: 10px; }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .script-panel {
+      margin-top: 12px;
+      display: none;
+      background: #0b0b0b;
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .script-actions { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+    .script-pre { background:#111; color:#0f0; padding:10px; overflow:auto; max-height:240px; border-radius:4px; }
+    #featuresContainer { margin-bottom: 18px; }
+  </style>
+</head>
+<body>
+
+<!-- Hard Reset Reload Button -->
+<div style="position: absolute; top: 10px; right: 10px;">
+  <button id="reloadButton" type="button" title="Force reload without cache">🔄 Reload</button>
+</div>
+
+<h1>Variable Feature Management</h1>
+<!-- Variable filter form (will be populated by variables.js) -->
+<div id="variableFilterForm"></div>
+
+<h2>Select Variable</h2>
+<select id="variableSelect">
+  <option value="bv2">bv2</option>
+  <option value="soc">soc</option>
+  <option value="cell_voltage_max_warn">cell_voltage_max_warn</option>
+  <!-- Add more variables dynamically if needed -->
+</select>
+
+<h2>Add Features</h2>
+<div id="featuresContainer">
+  <!-- Buttons will be generated here from FEATURES in schemas.js -->
+</div>
+
+<!-- Modal -->
+<div id="pathModal" class="modal" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">Modal Title</h3>
+
+    <!-- form -->
+    <form id="pathForm" novalidate></form>
+
+    <!-- action buttons -->
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button id="showCurlBtn" type="button">Show curl</button>
+      <button id="closeModalBtn" type="button">Close</button>
+    </div>
+
+    <!-- script display panel -->
+    <div id="scriptPanel" class="script-panel" aria-hidden="true">
+      <div class="script-actions">
+        <strong>Generated curl</strong>
+        <div>
+          <button id="copyCurlBtn" type="button">Copy</button>
+          <button id="hideCurlBtn" type="button">Hide</button>
+        </div>
+      </div>
+      <pre id="curlScript" class="script-pre"></pre>
+    </div>
+
+  </div>
+</div>
+
+<!-- Load schemas first, then the main generator -->
+<script src="schemas.js?v=3.0"></script>
+<script src="form-generator.js?v=3.0"></script>
+<script src="variables.js?v=4.0"></script>
+</body>
+</html>
