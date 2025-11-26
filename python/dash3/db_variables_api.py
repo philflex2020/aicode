@@ -77,7 +77,7 @@ import uvicorn
 
 from db_variables import (
     init_db, get_session, config, apply_config, parse_args,
-    SystemVariable, VariableAccessPath, SystemVersion,
+    SystemVariable, VariableAccessPath, SystemVersion, VariablePub,
     get_system_version, increment_system_version, sync_system_version, set_system_version
 )
 
@@ -150,6 +150,21 @@ class VariableAccessPathResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# Pub
+class VariablePubResponse(BaseModel):
+    pub_name: str
+    format: Optional[str]
+    scale: Optional[float]
+    offset: Optional[float]
+    extra: Optional[dict]
+
+class PubCreateRequest(BaseModel):
+    variable_name: str
+    pub_name: str
+    format: Optional[str]
+    scale: Optional[float]
+    offset: Optional[float]
+    extra: Optional[dict]
 
 class SystemVariableResponse(BaseModel):
     id: int
@@ -682,7 +697,7 @@ def list_access_paths(
         for path in paths
     ]
 
-    
+
 @app.post("/api/access-paths", response_model=VariableAccessPathResponse, status_code=201)
 def create_access_path(request: AccessPathCreateRequest, db: Session = Depends(get_db)):
     """Create a new access path for a variable"""
@@ -745,6 +760,18 @@ def delete_access_path(path_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": f"Access path {path_id} deactivated successfully"}
+
+@app.get("/api/pubs", response_model=List[VariablePubResponse])
+def list_pubs(variable_name: Optional[str] = Query(None), active_only: bool = Query(True), db: Session = Depends(get_db)):
+    return list_generic_feature(db, VariablePub, variable_name, active_only)
+
+@app.post("/api/pubs", response_model=VariablePubResponse, status_code=201)
+def create_pub(request: PubCreateRequest, db: Session = Depends(get_db)):
+    return create_generic_feature(db, VariablePub, request, "pub_name")
+
+@app.delete("/api/pubs/{pub_id}")
+def delete_pub(pub_id: int, db: Session = Depends(get_db)):
+    return deactivate_generic_feature(db, VariablePub, pub_id)
 
 
 @app.get("/api/categories")
@@ -903,7 +930,50 @@ async def sync_delete_variable(
     
     return {"action": "deleted", "variable_name": variable_name}
 
+# ============================================================================
+# generic features
+# ============================================================================
 
+def list_generic_feature(db, model, variable_name=None, active_only=True):
+    query = db.query(model)
+    if variable_name:
+        var = db.query(SystemVariable).filter_by(name=variable_name).first()
+        if not var:
+            raise HTTPException(404, f"Variable '{variable_name}' not found")
+        query = query.filter(model.variable_id == var.id)
+    if active_only:
+        query = query.filter(model.is_active == True)
+    return query.order_by(model.id).all()
+
+def create_generic_feature(db, model, request, name_field):
+    var = db.query(SystemVariable).filter_by(name=request.variable_name).first()
+    if not var:
+        raise HTTPException(404, f"Variable '{request.variable_name}' not found")
+
+    data = request.dict()
+    data["variable_id"] = var.id
+    data["is_active"] = True
+    if "extra" in data and data["extra"]:
+        data["extra"] = json.dumps(data["extra"])
+
+    obj = model(**data)
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+
+    # Reload and parse extra
+    if obj.extra:
+        obj.extra = json.loads(obj.extra)
+    return obj
+
+def deactivate_generic_feature(db, model, feature_id):
+    obj = db.query(model).filter_by(id=feature_id).first()
+    if not obj:
+        raise HTTPException(404, f"Feature {feature_id} not found")
+    obj.is_active = False
+    obj.updated_at = datetime.utcnow()
+    db.commit()
+    return {"message": f"Feature {feature_id} deactivated successfully"}
 
 # ============================================================================
 # Main entry point

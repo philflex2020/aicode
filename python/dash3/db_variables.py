@@ -10,7 +10,7 @@
 # ✅ Full dual versioning system
 # ✅ Command-line args for both config files
 # python3 db_variables.py --config data_def.json --metadata var_metadata.json
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, ForeignKey, CheckConstraint
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship, sessionmaker, Session, declarative_base
 from datetime import datetime
 import json
@@ -129,6 +129,20 @@ class VariableAccessPath(Base):
     active = Column(Boolean, default=True)
     
     variable = relationship("SystemVariable", back_populates="access_paths")
+
+class VariablePub(Base):
+    __tablename__ = 'variable_pubs'
+    id = Column(Integer, primary_key=True)
+    variable_id = Column(Integer, ForeignKey('variables.id'), nullable=False)
+    variable_name = Column(String, nullable=False)
+    pub_name = Column(String, nullable=False)
+    format = Column(String)
+    scale = Column(Float)
+    offset = Column(Float)
+    extra = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 # ============================================================================
