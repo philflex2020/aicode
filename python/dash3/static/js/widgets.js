@@ -1276,8 +1276,8 @@ class VariablesWidget extends BaseWidget {
         console.log("Fetching variables for category:", this.selectedCategory);
         try {
             const url = this.selectedCategory === 'all' 
-                ? '/api/variables'
-                : `/api/variables?category=${this.selectedCategory}`;
+                ? '/api/variables?include_paths=' + (this.showPaths ? '1' : '0')
+                : `/api/variables?category=${this.selectedCategory}&include_paths=${this.showPaths ? '1' : '0'}`;
 
             console.log("Fetching variables for url:", url);
             const data = await getJSON(url);
@@ -1767,11 +1767,13 @@ class VariablesWidget extends BaseWidget {
                 <div class="path-main">
                     <span class="path-protocol-badge">${path.protocol}</span>
                     <span class="path-address">${path.address}</span>
+                    ${path.id !== undefined ? `<span class="path-id">ID: ${path.id}</span>` : ''}
                     ${path.unitId !== undefined ? `<span class="path-unit">Unit: ${path.unitId}</span>` : ''}
                     ${!path.enabled ? '<span class="path-status-badge disabled">Disabled</span>' : ''}
                     ${path.readOnly ? '<span class="path-status-badge readonly">Read Only</span>' : ''}
                 </div>
                 <div class="path-details">
+                    <span class="path-detail">ID: ${path.id}</span>
                     <span class="path-detail">Type: ${path.dataType || 'N/A'}</span>
                     <span class="path-detail">Byte Order: ${path.byteOrder || 'N/A'}</span>
                     ${path.scale !== 1.0 ? `<span class="path-detail">Scale: ${path.scale}</span>` : ''}

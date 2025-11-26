@@ -645,7 +645,44 @@ def delete_variable(variable_name: str, db: Session = Depends(get_db)):
     
     return {"message": f"Variable '{variable_name}' deleted successfully"}
 
+@app.get("/api/access-paths", response_model=List[VariableAccessPathResponse])
+def list_access_paths(
+    variable_name: Optional[str] = Query(None, description="Filter by variable name"),
+    active_only: bool = Query(True, description="Only return active paths"),
+    db: Session = Depends(get_db)
+):
+    """List access paths with optional filtering by variable name"""
+    query = db.query(VariableAccessPath)
 
+    if variable_name:
+        var = db.query(SystemVariable).filter_by(name=variable_name).first()
+        if not var:
+            raise HTTPException(status_code=404, detail=f"Variable '{variable_name}' not found")
+        query = query.filter(VariableAccessPath.variable_id == var.id)
+
+    if active_only:
+        query = query.filter(VariableAccessPath.active == True)
+
+    paths = query.order_by(VariableAccessPath.id).all()
+
+    return [
+        VariableAccessPathResponse(
+            id=path.id,
+            access_type=path.access_type,
+            reference=json.loads(path.reference),
+            priority=path.priority,
+            read_only=path.read_only,
+            rack_number=path.rack_number,
+            device_id=path.device_id,
+            path_version=path.path_version,
+            system_version=path.system_version,
+            active=path.active,
+            last_updated=path.last_updated
+        )
+        for path in paths
+    ]
+
+    
 @app.post("/api/access-paths", response_model=VariableAccessPathResponse, status_code=201)
 def create_access_path(request: AccessPathCreateRequest, db: Session = Depends(get_db)):
     """Create a new access path for a variable"""
