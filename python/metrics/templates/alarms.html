@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dynamic Alarm Chart with Limits API Integration</title>
+<link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<!-- templates/alarms.html` -->
+
+<body>
+
+<h1>Dynamic Alarm Chart with Limits API Integration</h1>
+
+<input type="text" id="api-url-input" value="http://192.168.86.51:8011/api/alarms" placeholder="Enter API URL" />
+<button id="fetch-api-btn">Fetch Data from API</button>
+<button id="load-sim-btn">Load Simulated Data</button>
+<button id="color-switch-btn">Switch Color Theme</button>
+<button id="sort-toggle-btn">Enable Sorting</button>
+
+<div id="error-message"></div>
+<div id="alarm-container"></div>
+<div id="tooltip"></div>
+
+<div id="overlay"></div>
+<div id="history-popup">
+  <button id="close-history">Close</button>
+  <h3 id="popup-title">Alarm Details</h3>
+  <div id="popup-tabs">
+    <div class="tab active" data-tab="history">History</div>
+    <div class="tab" data-tab="limits">Limits</div>
+  </div>
+  <div id="history" class="tab-content active">
+    <ul id="history-list"></ul>
+  </div>
+  <div id="limits" class="tab-content">
+    <!-- Level 1 -->
+    <div class="limit-row">
+      <div class="limit-label">Level 1 Time</div>
+      <input type="number" id="level1-time" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 1 Offtime</div>
+      <input type="number" id="level1-offtime" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 1 Action</div>
+      <input type="text" id="level1-action" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 1 Value</div>
+      <input type="number" id="level1-value" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 1 Hysteresis</div>
+      <input type="number" id="level1-hysteresis" class="limit-input" readonly />
+    </div>
+
+    <!-- Level 2 -->
+    <div class="limit-row">
+      <div class="limit-label">Level 2 Time</div>
+      <input type="number" id="level2-time" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 2 Offtime</div>
+      <input type="number" id="level2-offtime" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 2 Action</div>
+      <input type="text" id="level2-action" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 2 Value</div>
+      <input type="number" id="level2-value" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 2 Hysteresis</div>
+      <input type="number" id="level2-hysteresis" class="limit-input" readonly />
+    </div>
+
+    <!-- Level 3 -->
+    <div class="limit-row">
+      <div class="limit-label">Level 3 Time</div>
+      <input type="number" id="level3-time" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 3 Offtime</div>
+      <input type="number" id="level3-offtime" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 3 Action</div>
+      <input type="text" id="level3-action" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 3 Value</div>
+      <input type="number" id="level3-value" class="limit-input" readonly />
+    </div>
+    <div class="limit-row">
+      <div class="limit-label">Level 3 Hysteresis</div>
+      <input type="number" id="level3-hysteresis" class="limit-input" readonly />
+    </div>
+
+    <div style="margin-top: 12px;">
+      <button id="edit-limits">Edit</button>
+      <button id="save-limits" style="display:none;">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/alarms.js"></script>
+</body>
+</html>

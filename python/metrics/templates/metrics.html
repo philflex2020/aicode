@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Metrics Dashboard</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+<h1>Metrics Dashboard</h1>
+
+<input type="text" id="api-url-input" value="http://192.168.86.51:8011/api/metrics" placeholder="Enter API URL" />
+<button id="fetch-api-btn">Fetch Data from API</button>
+<button id="load-sim-btn">Load Simulated Data</button>
+<button id="color-switch-btn">Switch Color Theme</button>
+<button id="sort-toggle-btn">Enable Sorting</button>
+
+<div id="error-message"></div>
+<div id="alarm-container"></div>
+<div id="tooltip"></div>
+
+<!-- Overlay and popup can be added here if needed -->
+
+<script>
+  // Placeholder for dynamic behavior loading
+  function loadBehavior(type, version) {
+    const script = document.createElement('script');
+    script.src = `/static/${type}_v${version}.js`;
+    script.onload = () => {
+      console.log(`Loaded behavior script for type=${type}, version=${version}`);
+      if (typeof onBehaviorLoaded === 'function') {
+        onBehaviorLoaded();
+      }
+    };
+    script.onerror = () => {
+      console.error(`Failed to load behavior script: /static/${type}_v${version}.js`);
+    };
+    document.body.appendChild(script);
+  }
+
+  document.getElementById('fetch-api-btn').addEventListener('click', async () => {
+    const url = document.getElementById('api-url-input').value.trim();
+    if (!url) {
+      document.getElementById('error-message').textContent = 'Please enter a valid API URL.';
+      return;
+    }
+    document.getElementById('error-message').textContent = '';
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      if (!data.type || !data.version) {
+        throw new Error('Data missing required type or version fields');
+      }
+      loadBehavior(data.type, data.version);
+      // You can also pass data to the loaded script if needed
+    } catch (err) {
+      document.getElementById('error-message').textContent = `Error fetching data: ${err.message}`;
+    }
+  });
+
+  document.getElementById('load-sim-btn').addEventListener('click', () => {
+    alert('Simulated data loading not implemented yet.');
+  });
+
+  document.getElementById('color-switch-btn').addEventListener('click', () => {
+    alert('Color switch not implemented yet.');
+  });
+
+  document.getElementById('sort-toggle-btn').addEventListener('click', () => {
+    alert('Sorting toggle not implemented yet.');
+  });
+</script>
+
+</body>
+</html>
