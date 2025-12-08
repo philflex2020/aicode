@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Tracker - {{ current_db }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="report-container">
+    <div class="header-controls">
+        <h1>Phil's Projects ({{ current_db.replace('.db', '').capitalize() }})</h1>
+        <div class="nav-buttons">
+            {% if current_db == 'active.db' %}
+                <!-- Button to open the Add Modal -->
+                <button class="btn" onclick="openAddModal()">Add New Task</button>
+                <a href="/?view_db=archive.db" class="btn">View Archive Tasks</a>
+            {% else %}
+                <a href="/?view_db=active.db" class="btn">View Active Tasks</a>
+            {% endif %}
+            <form action="/hard_reset" method="post" style="display: inline;" onsubmit="return confirm('WARNING: Are you sure you want to hard reset all data? This cannot be undone!');">
+                <button type="submit" class="btn delete-btn">Hard Reset Data</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- ... Status indicators ... -->
+    <p><strong>Report Date:</strong> <span>{{ report_date }}</span></p>
+    <p>
+        <strong>Project Status:</strong> 
+        {{ completed_count }} completed, {{ total_count - completed_count }} in progress. Total tasks shown: {{ total_count }}
+    </p>
+    <progress value="{{ progress_percentage }}" max="100" style="width: 100%; height: 25px;">{{ progress_percentage }}%</progress>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Work Item (Click to Edit)</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Est. Hours</th>
+                <th>Actual Hours</th>
+                <th>Quick Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <!-- Changed to a button to open modal, passing current_db -->
+                <td>
+                    <button class="edit-btn" onclick="openEditModal({{ task.id }}, '{{ current_db }}')">{{ task.work_item }}</button>
+                </td>
+                <td>{{ task.description }}</td>
+                <td>
+                    <span class="status-badge {{ 'completed' if task.status == 'Completed' else 'in-progress' }}">
+                        {{ task.status }}
+                    </span>
+                </td>
+                <td>{{ task.task_date }}</td>
+                <td>{{ task.est_hours | default('N/A', True) }}</td>
+                <td>{{ task.actual_hours | default('0.0', True) }}</td>
+                <td>
+                    <!-- Quick action to move/reactivate -->
+                    <form action="/move_task/{{ task.id }}" method="post" style="display: inline;">
+                        <input type="hidden" name="source_db" value="{{ current_db }}">
+                        {% if current_db == 'active.db' %}
+                            <button type="submit" title="Move to Archive" class="btn-archive">Archive</button>
+                        {% else %}
+                            <button type="submit" title="Move to Active" class="btn-reactivate">Reactivate</button>
+                        {% endif %}
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- The "Add New Task" form is no longer here, it is in the new "addModal" below -->
+
+</div>
+
+<!-- The Edit Modal (pop-up) Structure -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>Edit Task <span id="modal-task-id"></span></h2>
+        <form id="editForm" action="/update_task/0" method="post">
+            <input type="hidden" id="edit_current_db" name="current_db" value="{{ current_db }}">
+
+            <label for="edit_work_item">Work Item Title:</label><br>
+            <input type="text" id="edit_work_item" name="work_item" required><br><br>
+            
+            <label for="edit_description">Description:</label><br>
+            <textarea id="edit_description" name="description" rows="4" required></textarea><br><br>
+
+            <label for="edit_status">Status:</label><br>
+            <select id="edit_status" name="status">
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+            </select><br><br>
+
+            <label for="edit_actual_hours">Actual Hours Spent:</label><br>
+            <input type="number" step="0.1" id="edit_actual_hours" name="actual_hours" required><br><br>
+
+            <button type="submit">Save Changes</button>
+            <button type="button" onclick="deleteTaskFromModal()" class="delete-btn">Delete Task</button>
+        </form>
+    </div>
+</div>
+
+<!-- The Add New Task Modal Structure (NEW) -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddModal()">&times;</span>
+        <h2>Add New Task</h2>
+        <form action="/add_task" method="post" id="add-task-form">
+            <label for="add_work_item">Work Item Title:</label><br>
+            <input type="text" id="add_work_item" name="work_item" required><br><br>
+            
+            <label for="add_description">Description:</label><br>
+            <textarea id="add_description" name="description" rows="4" required></textarea><br><br>
+
+            <label for="add_task_date">Date:</label><br>
+            <input type="date" id="add_task_date" name="task_date" value="{{ today_date }}" required><br><br>
+
+            <label for="add_est_hours">Estimated Hours:</label><br>
+            <input type="number" step="0.1" id="add_est_hours" name="est_hours" value="0.0" required><br><br>
+
+            <button type="submit">Add Task</button>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    // Get the modal elements
+    var editModal = document.getElementById("editModal");
+    var addModal = document.getElementById("addModal");
+    var editForm = document.getElementById("editForm");
+    var currentDbElement = document.getElementById("edit_current_db");
+
+    // --- Edit Modal Functions ---
+    async function openEditModal(taskId, currentDb) {
+        const response = await fetch(`/task_details/${taskId}?view_db=${currentDb}`);
+        if (!response.ok) {
+            alert("Could not fetch task details.");
+            return;
+        }
+        const task = await response.json();
+
+        document.getElementById('modal-task-id').textContent = '(ID: ' + taskId + ')';
+        document.getElementById('edit_work_item').value = task.work_item;
+        document.getElementById('edit_description').value = task.description;
+        document.getElementById('edit_status').value = task.status;
+        document.getElementById('edit_actual_hours').value = task.actual_hours || 0.0;
+        
+        editForm.action = `/update_task/${taskId}`;
+        currentDbElement.value = currentDb; 
+
+        editModal.style.display = "block";
+    }
+
+    function closeEditModal() {
+        editModal.style.display = "none";
+    }
+
+    function deleteTaskFromModal() {
+        if (confirm('Are you sure you want to permanently delete this task? This cannot be undone!')) {
+            const taskId = document.getElementById('modal-task-id').textContent.replace('(ID: ', '').replace(')', '');
+            const currentDb = document.getElementById("edit_current_db").value;
+            
+            const tempForm = document.createElement('form');
+            tempForm.action = `/delete_task/${taskId}`;
+            tempForm.method = 'POST';
+            const dbInput = document.createElement('input');
+            dbInput.type = 'hidden';
+            dbInput.name = 'current_db';
+            dbInput.value = currentDb;
+            tempForm.appendChild(dbInput);
+
+            document.body.appendChild(tempForm);
+            tempForm.submit();
+        }
+    }
+
+    // --- Add Modal Functions (NEW) ---
+    function openAddModal() {
+        // Optional: Reset the form fields if needed every time it opens
+        document.getElementById('add-task-form').reset();
+        // Set the default date to today again, as reset() clears it
+        document.getElementById('add_task_date').value = "{{ today_date }}"; 
+        addModal.style.display = "block";
+    }
+
+    function closeAddModal() {
+        addModal.style.display = "none";
+    }
+
+
+    // Close modals if the user clicks anywhere outside of the modal content
+    window.onclick = function(event) {
+        if (event.target == editModal) {
+            closeEditModal();
+        } else if (event.target == addModal) {
+            closeAddModal();
+        }
+    }
+</script>
+
+</body>
+</html>

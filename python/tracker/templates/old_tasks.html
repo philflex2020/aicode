@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phil Wilshire - Tasks</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="report-container">
+    <h1>Phil's Current Projects</h1>
+    <p><strong>Report Date:</strong> <span>{{ report_date }}</span></p>
+    <p>
+        <strong>Project Status:</strong> 
+        {{ completed_count }} items completed ({{ progress_percentage }}%), 
+        {{ total_count - completed_count }} items in progress
+    </p>
+    <progress value="{{ progress_percentage }}" max="100" style="width: 100%; height: 25px;">{{ progress_percentage }}%</progress>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Work Item</th>
+                <th>Description</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.work_item }}</td>
+                <td>{{ task.description }}</td>
+                <td>
+                    <span class="status-badge {{ 'completed' if task.status == 'Completed' else 'in-progress' }}">
+                        {{ task.status }}
+                    </span>
+                    {% if task.status == 'In Progress' %}
+                        <form action="/update_status/{{ task.id }}" method="post" style="display: inline;">
+                            <input type="hidden" name="status" value="Completed">
+                            <button type="submit">Mark as Complete</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Add New Task</h2>
+    <form action="/add_task" method="post">
+        <label for="work_item">Work Item Title:</label><br>
+        <input type="text" id="work_item" name="work_item" required><br><br>
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description" rows="4" required></textarea><br><br>
+        <button type="submit">Add Task</button>
+    </form>
+</div>
+
+</body>
+</html>
