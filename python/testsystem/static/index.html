@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Test System Interface</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1 { color: #333; }
+  ul { list-style: none; padding: 0; }
+  li { padding: 8px; border: 1px solid #ccc; margin-bottom: 5px; cursor: pointer; }
+  li:hover { background: #f0f0f0; }
+  #modal { display: none; position: fixed; top: 10%; left: 50%; transform: translateX(-50%); background: white; border: 1px solid #ccc; padding: 20px; max-width: 500px; z-index: 1000; }
+  #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+  label { display: block; margin-top: 10px; }
+  input, textarea { width: 100%; padding: 6px; box-sizing: border-box; }
+  button { margin-top: 15px; padding: 8px 12px; }
+  .actions button { margin-right: 10px; }
+</style>
+</head>
+<body>
+<h1>Test Definitions</h1>
+<ul id="testDefList"></ul>
+
+<div id="modal-overlay"></div>
+<div id="modal">
+  <h2>Edit Test Definition</h2>
+  <form id="modalForm">
+    <input type="hidden" id="modalId" />
+    <label>Name:<input type="text" id="modalName" required /></label>
+    <label>Description:<textarea id="modalDescription"></textarea></label>
+    <label>Config JSON:<textarea id="modalConfigJson" rows="6" required></textarea></label>
+    <div class="actions">
+      <button type="submit">Save</button>
+      <button type="button" id="deleteBtn">Delete</button>
+      <button type="button" id="copyBtn">Copy</button>
+      <button type="button" id="runBtn">Run</button>
+      <button type="button" id="closeBtn">Close</button>
+    </div>
+  </form>
+  <div id="modalMessage" style="margin-top:10px;color:green;"></div>
+</div>
+
+<script>
+const apiBase = '';
+
+const modal = document.getElementById('modal');
+const overlay = document.getElementById('modal-overlay');
+const testDefList = document.getElementById('testDefList');
+const modalForm = document.getElementById('modalForm');
+const modalId = document.getElementById('modalId');
+const modalName = document.getElementById('modalName');
+const modalDescription = document.getElementById('modalDescription');
+const modalConfigJson = document.getElementById('modalConfigJson');
+const modalMessage = document.getElementById('modalMessage');
+
+function showModal() {
+  modal.style.display = 'block';
+  overlay.style.display = 'block';
+  modalMessage.textContent = '';
+}
+
+function closeModal() {
+  modal.style.display = 'none';
+  overlay.style.display = 'none';
+}
+
+overlay.addEventListener('click', closeModal);
+document.getElementById('closeBtn').addEventListener('click', closeModal);
+
+async function fetchTestDefinitions() {
+  const res = await fetch(apiBase + '/test-definitions/');
+  const defs = await res.json();
+  testDefList.innerHTML = '';
+  defs.forEach(def => {
+    const li = document.createElement('li');
+    li.textContent = def.name;
+    li.dataset.id = def.id;
+    li.addEventListener('click', () => openModal(def));
+    testDefList.appendChild(li);
+  });
+}
+
+function openModal(def) {
+  modalId.value = def.id;
+  modalName.value = def.name;
+  modalDescription.value = def.description || '';
+  modalConfigJson.value = typeof def.config_json === 'string' ? def.config_json : JSON.stringify(def.config_json, null, 2);
+  showModal();
+}
+
+modalForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = modalId.value;
+  const data = {
+    name: modalName.value,
+    description: modalDescription.value,
+    config_json: modalConfigJson.value
+  };
+  const res = await fetch(apiBase + `/test-definitions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (res.ok) {
+    modalMessage.style.color = 'green';
+    modalMessage.textContent = 'Saved successfully.';
+    fetchTestDefinitions();
+  } else {
+    modalMessage.style.color = 'red';
+    modalMessage.textContent = 'Error saving.';
+  }
+});
+
+document.getElementById('deleteBtn').addEventListener('click', async () => {
+  if (!confirm('Delete this test definition?')) return;
+  const id = modalId.value;
+  const res = await fetch(apiBase + `/test-definitions/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    closeModal();
+    fetchTestDefinitions();
+  } else {
+    modalMessage.style.color = 'red';
+    modalMessage.textContent = 'Error deleting.';
+  }
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const id = modalId.value;
+  const res = await fetch(apiBase + `/test-definitions/${id}/copy`, { method: 'POST' });
+  if (res.ok) {
+    modalMessage.style.color = 'green';
+    modalMessage.textContent = 'Copied successfully.';
+    fetchTestDefinitions();
+  } else {
+    modalMessage.style.color = 'red';
+    modalMessage.textContent = 'Error copying.';
+  }
+});
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const id = modalId.value;
+  const res = await fetch(apiBase + `/test-definitions/${id}/run`, { method: 'POST' });
+  if (res.ok) {
+    modalMessage.style.color = 'green';
+    modalMessage.textContent = 'Test started.';
+  } else {
+    modalMessage.style.color = 'red';
+    modalMessage.textContent = 'Error starting test.';
+  }
+});
+
+fetchTestDefinitions();
+</script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test System Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        label { display: block; margin-top: 10px; }
+        input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+        button { margin-top: 15px; padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .container { max-width: 600px; margin: auto; }
+        .result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test System Interface</h1>
+
+        <h2>Create Test Definition</h2>
+        <form id="testDefForm">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required />
+
+            <label for="description">Description:</label>
+            <textarea id="description" name="description"></textarea>
+
+            <label for="config_json">Config JSON:</label>
+            <textarea id="config_json" name="config_json" rows="6" required></textarea>
+
+            <button type="submit">Create Test Definition</button>
+        </form>
+
+        <div id="testDefResult" class="result"></div>
+
+        <h2>Get Test Definition</h2>
+        <form id="getTestDefForm">
+            <label for="testDefId">Test Definition ID:</label>
+            <input type="number" id="testDefId" name="testDefId" required />
+            <button type="submit">Get Test Definition</button>
+        </form>
+
+        <div id="getTestDefResult" class="result"></div>
+
+        <h2>Create Test Result</h2>
+        <form id="testResultForm">
+            <label for="test_definition_id">Test Definition ID:</label>
+            <input type="number" id="test_definition_id" name="test_definition_id" required />
+
+            <label for="target_system">Target System:</label>
+            <input type="text" id="target_system" name="target_system" required />
+
+            <label for="result_status">Result Status:</label>
+            <input type="text" id="result_status" name="result_status" required />
+
+            <label for="result_data">Result Data (JSON):</label>
+            <textarea id="result_data" name="result_data" rows="4" required></textarea>
+
+            <label for="comparison_data">Comparison Data (JSON):</label>
+            <textarea id="comparison_data" name="comparison_data" rows="4" required></textarea>
+
+            <label for="notes">Notes:</label>
+            <textarea id="notes" name="notes"></textarea>
+
+            <button type="submit">Create Test Result</button>
+        </form>
+
+        <div id="testResultResult" class="result"></div>
+
+        <h2>Get Test Results by Test Definition</h2>
+        <form id="getTestResultsForm">
+            <label for="testDefIdResults">Test Definition ID:</label>
+            <input type="number" id="testDefIdResults" name="testDefIdResults" required />
+            <button type="submit">Get Test Results</button>
+        </form>
+
+        <div id="getTestResultsResult" class="result"></div>
+    </div>
+
+    <script>
+        const apiBase = '';
+
+        document.getElementById('testDefForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: e.target.name.value,
+                description: e.target.description.value,
+                config_json: e.target.config_json.value
+            };
+            const res = await fetch(apiBase + '/test-definitions/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            document.getElementById('testDefResult').textContent = JSON.stringify(json, null, 2);
+        });
+
+        document.getElementById('getTestDefForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = e.target.testDefId.value;
+            const res = await fetch(apiBase + `/test-definitions/${id}`);
+            const json = await res.json();
+            document.getElementById('getTestDefResult').textContent = JSON.stringify(json, null, 2);
+        });
+
+        document.getElementById('testResultForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                test_definition_id: parseInt(e.target.test_definition_id.value),
+                target_system: e.target.target_system.value,
+                result_status: e.target.result_status.value,
+                result_data: e.target.result_data.value,
+                comparison_data: e.target.comparison_data.value,
+                notes: e.target.notes.value
+            };
+            const res = await fetch(apiBase + '/test-results/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            document.getElementById('testResultResult').textContent = JSON.stringify(json, null, 2);
+        });
+
+        document.getElementById('getTestResultsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = e.target.testDefIdResults.value;
+            const res = await fetch(apiBase + `/test-definitions/${id}/results`);
+            const json = await res.json();
+            document.getElementById('getTestResultsResult').textContent = JSON.stringify(json, null, 2);
+        });
+    </script>
+</body>
+</html>
+

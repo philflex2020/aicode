@@ -1,0 +1,2 @@
+When you’re back tonight, just say you’re continuing the “dash3 / indexgrid / FractlBMS” work 
+and paste whatever has changed (CSS, widgets.js, dash.json, or db_server.py), and we’ll pick up from there

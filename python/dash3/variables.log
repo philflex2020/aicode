@@ -1,0 +1,28 @@
+/home/phil/work/aicode/python/dash3/db_variables_api.py:137: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  class VariableAccessPathResponse(BaseModel):
+/home/phil/work/aicode/python/dash3/db_variables_api.py:169: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  class SystemVariableResponse(BaseModel):
+/home/phil/work/aicode/python/dash3/db_variables_api.py:187: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  class SystemVersionResponse(BaseModel):
+INFO:     Started server process [414338]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8902 (Press CTRL+C to quit)
+============================================================
+Variable Registry API Server
+============================================================
+Database:        sqlite:///./primary.db
+Server port:     8902
+============================================================
+✓ Database initialized: sqlite:///./primary.db
+Loading config file: data_def.json
+Loading metadata config: var_metadata.json
+✓ Imported: 0 variables
+✓ Updated: 0 access paths
+✓ Skipped: 1 gaps
+✓ System version: 94
+
+✓ Starting API server on port 8902...
+✓ API docs: http://localhost:8902/docs
+✓ Health check: http://localhost:8902/api/health
+INFO:     127.0.0.1:52278 - "GET /api/health HTTP/1.1" 200 OK

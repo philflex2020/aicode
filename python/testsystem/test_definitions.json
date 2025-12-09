@@ -1,0 +1,1315 @@
+[
+    {
+        "test": "f1", 
+        "name": "f1", 
+        "desc": "basic test",
+        "items":[
+                {"action":"setmb sbmu:hold:535 0 ",          "desc": " reset rack overrides",    "data":[0]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",           "desc": " read num_racks_online",    "data":[7]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]},
+
+                {"action":"set rtos:sm16:0:0xc800 3234 3244 3210",         "desc": "set some sm16 cell volts rack 0",    "data":[3234, 3244, 3210]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"get rtos:sm16:0:0xc800 3",         "desc": "get some sm16 cell volts rack 0",    "data":[3234, 3244, 3210]},
+                {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",    "data":[0]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]},
+                {"action":"get rtos:sm16:0:0xc800 3",         "desc": "get some sm16 cell volts rack 0",    "data":[65535, 65535, 65535]}
+                
+            ]
+    },
+    {
+        "test": "f2", 
+        "name": "f2", 
+        "desc": "rack total_charge_cap 0x5418   Done ",
+        "cat": "sbmu_inputs.charge_cap",
+        "items":[ 
+                {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",      "desc": " force rack 1 online noupdates",    "data":[65197, 1, 1, 1]},
+                {"action":"set rtos:sm16:1:0x402 16",             "desc": " set number of batteries",          "data":[16]},
+                {"action":"set rtos:sm16:1:0x5418 2300 3300 4400 5500",     "desc": "set sm16 state ",         "data":[2300,3300, 4400, 5500 ]},
+                {"action":"get rtos:sm16:1:0x5418 4",              "desc": "get total_charge ",                "data":[2300,3300, 4400, 5500 ]},
+                {"action":"get rtos:input:1:total_charge_cap 2",          "desc": "get cap from sbmu ",        "data":[3300, 2300]},
+                {"action":"get rtos:input:1:total_discharge_cap 2",          "desc": "get cap from sbmu ",     "data":[5500, 4400]},
+                {"action":"get sbmu:input:1:system_charge_capacity 2",   "desc": "get power from sbmu ",     "data":[3300, 2300]},
+                {"action":"get sbmu:input:1:system_discharge_capacity 2",   "desc": "get power from sbmu ",  "data":[5500, 4400]},
+                {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                {"action":"setmb sbmu:hold:531 65197 0 0 1",  "desc": " force rack 0 offline noupdates",    "data":[65197, 0, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 1 0 1",  "desc": " force rack 1 offline noupdates",    "data":[65197, 1, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 2 0 1",  "desc": " force rack 2 offline noupdates",    "data":[65197, 2, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 3 0 1",  "desc": " force rack 3 offline noupdates",    "data":[65197, 3, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 4 0 1",  "desc": " force rack 4 offline noupdates",    "data":[65197, 4, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 5 0 1",  "desc": " force rack 5 offline noupdates",    "data":[65197, 5, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 6 0 1",  "desc": " force rack 6 offline noupdates",    "data":[65197, 6, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[1]}
+                ]
+    },
+    {
+        "test": "first", 
+        "name": "first", 
+        "desc": "turn all racks offline",
+        "items":[
+                {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197, 1, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197, 2, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197, 3, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197, 4, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197, 5, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197, 6, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+                {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",    "data":[0]},
+                {"action":"setmb sbmu:hold:531 65197 7 0 0",  "desc": " force rack 7 offline",    "data":[65197, 7, 0, 0]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]}
+                
+            ]
+        },
+        {
+            "test": "r0", 
+            "name": "r0", 
+            "desc": "test rack one volts",
+            "items":[
+                    {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                    {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                    {
+                        "test": "first", 
+                        "name": "first", 
+                        "desc": "turn all racks offline",
+                        "items":[
+                                {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]},
+                                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197, 1, 1, 1]},
+                                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197, 2, 1, 1]},
+                                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197, 3, 1, 1]},
+                                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197, 4, 1, 1]},
+                                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197, 5, 1, 1]},
+                                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197, 6, 1, 1]},
+                                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+                                {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",    "data":[0]},
+                                {"action":"setmb sbmu:hold:531 65197 7 0 0",  "desc": " force rack 7 offline",    "data":[65197, 7, 0, 0]},
+                                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]}
+                                
+                            ]
+                        },
+                        {
+                            "test": "first", 
+                            "name": "first", 
+                            "desc": "turn all racks offline",
+                            "items":[
+                                    {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                                    {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                                    {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]},
+                                    {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                                    {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                                    {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197, 1, 1, 1]},
+                                    {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197, 2, 1, 1]},
+                                    {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197, 3, 1, 1]},
+                                    {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197, 4, 1, 1]},
+                                    {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197, 5, 1, 1]},
+                                    {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197, 6, 1, 1]},
+                                    {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                                    {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                                    {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+                                    {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",    "data":[0]},
+                                    {"action":"setmb sbmu:hold:531 65197 7 0 0",  "desc": " force rack 7 offline",    "data":[65197, 7, 0, 0]},
+                                    {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                                    {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]}
+                                    
+                                ]
+                            },
+    {
+        "test": "first", 
+        "name": "first", 
+        "desc": "turn all racks offline",
+        "items":[
+                {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]},
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197, 1, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197, 2, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197, 3, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197, 4, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197, 5, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197, 6, 1, 1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+                {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",    "data":[0]},
+                {"action":"setmb sbmu:hold:531 65197 7 0 0",  "desc": " force rack 7 offline",    "data":[65197, 7, 0, 0]},
+                {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[7]}
+                
+            ]
+        },
+             {"action":"get rtos:sm16:0:0xc800 3",  "desc": "get some sm16 cell volts",    "data":[2033, 2034, 2035]}
+                    ]
+            },
+            {
+                "test": "r7v", 
+                "name": "r7v", 
+                "desc": "test rack eight volts",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",    "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 0 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0xc800 2733 2734 2735",   "desc": "set some sm16 cell volts",    "data":[2733, 2734, 2735]},
+                        {"action":"get rtos:sm16:7:0xc800 3",                "desc": "get some sm16 cell volts",    "data":[2733, 2734, 2735]},
+                        {"action":"get sbmu:input:7:191 3",                  "desc": "get some smbu input cell volts",    "data":[2733, 2734, 2735]}
+                        ]
+            },
+            {
+                "test": "r7all", 
+                "name": "r7all", 
+                "desc": "All rack tests so far   Passed ",
+                "items":[
+                        {"action":"run r7a",    "desc": " r7a ",                    "cat":"rack.test1",           "data":[]},
+                        {"action":"run r7b",    "desc": " r7b ",                    "cat":"rack.test2",           "data":[]},
+                        {"action":"run r7c",    "desc": " r7c SOC ",                "cat":"rack.SOC",             "data":[]},
+                        {"action":"run r7d",    "desc": " r7d SOH ",                "cat":"rack.SOH",             "data":[]},
+                        {"action":"run r7e",    "desc": " r7e State ",              "cat":"rack.state",           "data":[]},
+                        {"action":"run r7f",    "desc": " r7f Charge/Discharge  ",  "cat":"rack.charge_dis",      "data":[]},
+                        {"action":"run r7g",    "desc": " r7g DI DO  ",             "cat":"rack.di do",           "data":[]},
+                        {"action":"run r7h",    "desc": " r7g DI DO  ",              "cat":"rack.r7h",            "data":[]},
+                        {"action":"run r7i",    "desc": " r7g DI DO  ",              "cat":"rack.r7i",            "data":[]},
+                        {"action":"run r7j",    "desc": " r7j soc soh etc  ",        "cat":"rack.soc_soh",        "data":[]},
+                        {"action":"run r7k",    "desc": " r7k acc capacity  ",       "cat":"rack.capacity",       "data":[]},
+                        {"action":"run r7l",    "desc": " r7l Module_temp  ",         "cat":"rack.module_temp",   "data":[]},
+                        {"action":"run r7v",    "desc": " r7v rack Volts",            "cat":"rack.volts",         "data":[]},
+                        {"action":"run r7vc",   "desc": " r7v rack_voltage/current",  "cat":"rack.volts_current", "data":[]}
+                        ]
+            },
+            {
+                "test": "r7a", 
+                "name": "r7a", 
+                "desc": "Passed sbmu mapping rack volt inputs to sbmu at offset 191; set rack eight volts @0xc800  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.force_online",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0xc800 2733 2734 2735",   "desc": "set some sm16 cell volts",        "data":[2733, 2734, 2735]},
+                        {"action":"get rtos:sm16:7:0xc800 3",                "desc": "get some sm16 cell volts",        "data":[2733, 2734, 2735]},
+                        {"action":"get sbmu:input:7:21191 3",                "desc": "get values from sbmu ",           "data":[2733, 2734, 2735]}
+                        ]
+            },
+            {
+                "test": "r7b", 
+                "name": "r7b", 
+                "desc": "Passed sbmu mapping battery temp inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.battery_temp",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",          "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates", "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0xc9e0 1733  1734 1735",  "desc": "set some sm16 battery temps",    "data":[1733, 1734, 1735]},
+                        {"action":"get rtos:sm16:7:0xc9e0 3",                "desc": "get some sm16 cell temps",       "data":[1733, 1734, 1735]},
+                        {"action":"getmb sbmu:input:21891 3",              "desc": "get values from sbmu ",          "data":[1733, 1734, 1735]}
+                        ]
+            },
+            {
+                "test": "r7c", 
+                "name": "r7c", 
+                "desc": "TODO  sbmu set cell_soc values /BSW/BasicSoft/src/SOC_Calc.c  0x42d8 inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.soc_soh_init",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": "set number of batteries",           "data":[64]},
+                        {"action":"set rtos:sm16:7:0x42d8 733  734 735",  "desc": "set some sm16 battery soc values",  "data":[733, 734, 735]},
+                        {"action":"get rtos:sm16:7:0x42d8 3",             "desc": "get some sm16 cell soc",            "data":[733, 734, 735]},
+                        {"action":"pause:500",                         "desc": " pause",    "data":[]},
+                        {"action":"get sbmu:input:7:22591 3",             "desc": "get values from sbmu ",             "data":[733, 734, 735]},
+                        {"action":"get sbmu:input:7:1591 3",              "desc": "get values from sbmu ",             "data":[733, 734, 735]},
+                        {"action":"get sbmu:input:7:22591 3",             "desc": "get values from sbmu ",             "data":[733, 734, 735]},
+                        {"action":"get rtos:input:7:3000 3",              "desc": "get values from rtos ",             "data":[730, 730, 730]},
+                        {"action":"set rtos:sm16:7:0x42d8 634  614 604",  "desc": "set some sm16 battery soc values",  "data":[634, 614, 604]},
+                        {"action":"get rtos:input:7:3000 3",              "desc": "get values from rtos ",             "data":[630, 610, 600]}
+                        ]
+            },
+            {
+                "test": "r7d", 
+                "name": "r7d", 
+                "desc": "sbmu set cell_soh values /BSW/BasicSoft/src/SOC_Calc.c  0x42d8 inputs to sbmu at offset 191; set rack eight volts @0xc800+480  check sbmu inputs  191 + 21000   Passed ",
+                "cat":"sbmu_inputs.cel_soc_soh",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",           "data":[64]},
+                        {"action":"set rtos:sm8:7:0x4002 83 84 85",       "desc": "set some sm16 battery soh values",  "data":[83, 84, 85]},
+                        {"action":"get rtos:sm8:7:0x4002 3",             "desc": "get some sm16 soh ",                "data":[83, 84, 85]},
+                        {"action":"get sbmu:input:7:23291 3",             "desc": "get values from sbmu ",             "data":[83, 84, 85]},
+                        {"action":"get sbmu:input:7:2291 3",              "desc": "get soh values from sbmu ",         "data":[83, 84, 85]},
+                        {"action":"get rtos:input:7:4000 3",              "desc": "get values from rtos ",             "data":[83, 84, 85]},
+                        {"action":"set rtos:sm16:7:0x42d8 634  614 604",  "desc": "set some sm16 battery soc values",  "data":[634, 614, 604]},
+                        {"action":"get rtos:input:7:4000 3",              "desc": "get values from rtos ",             "data":[83, 84, 85]}
+                        ]
+            },
+            {
+                "test": "r7e", 
+                "name": "r7e", 
+                "desc": "rack system state 0x6800   Passed ",
+                "cat":"sbmu_inputs.State",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",          "data":[64]},
+                        {"action":"set rtos:sm8:7:0x6800 23",             "desc": "set sm16 state ",                   "data":[23]},
+                        {"action":"get rtos:sm8:7:0x6800 1",              "desc": "get some sm16 soh ",                "data":[23]},
+                        {"action":"get sbmu:input:7:21100 1",             "desc": "get state from sbmu ",              "data":[24]},
+                        {"action":"get sbmu:input:7:100 1",               "desc": "get statefrom sbmu ",               "data":[24]},
+                        {"action":"get rtos:input:7:8 1",                 "desc": "get values from rtos ",             "data":[24]}
+                        ]
+            },
+            {
+                "test": "r7f", 
+                "name": "r7f", 
+                "desc": "rack total_charge_cap 0x5418   Done ",
+                "cat": "sbmu_inputs.charge_cap",
+                "items":[ 
+                        {"action":"setmb sbmu:hold:535 0 ",               "desc": " reset rack overrides",             "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",      "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",             "desc": " set number of batteries",          "data":[64]},
+                        {"action":"set rtos:sm16:7:0x5418 2300 3300 4400 5500",     "desc": "set sm16 state ",         "data":[2300,3300, 4400, 5500 ]},
+                        {"action":"get rtos:sm16:7:0x5418 4",              "desc": "get total_charge ",                "data":[2300,3300, 4400, 5500 ]},
+                        {"action":"get rtos:input:7:total_charge_cap 2",          "desc": "get cap from sbmu ",        "data":[3300, 2300]},
+                        {"action":"get rtos:input:7:total_discharge_cap 2",          "desc": "get cap from sbmu ",     "data":[5500, 4400]},
+                        {"action":"get sbmu:input:7:system_charge_capacity 2",   "desc": "get power from sbmu ",     "data":[3300, 2300]},
+                        {"action":"get sbmu:input:7:system_discharge_capacity 2",   "desc": "get power from sbmu ",  "data":[5500, 4400]}
+                        ]
+            },
+            {
+                "test": "r7g", 
+                "name": "r7g", 
+                "desc": "rack ASW/src/RelayControl.c DO 0x6825 DI 0x681c   note In progress ",
+                "cat":"sbmu_inputs.relay_control",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+                        {"action":"set rtos:sm8:7:0x6825 1 0 1 0 1 0 1 0",   "desc": "set DO (10) ",                    "data":[1, 0, 1, 0, 1, 0, 1, 0 ]},
+                        {"action":"set rtos:sm8:7:0x681c 1 1 1 1 0 0 0 0",   "desc": "set DI (9) ",                     "data":[1, 1, 1, 1, 0, 0, 0, 0 ]},
+                        {"action":"get rtos:sm16:7:0x6825 1",                "desc": "get gpio ",                       "data":[256 ]},
+                        {"action":"get rtos:input:7:group_di 1",             "desc": "get rtos ",                       "data":[15]},
+                        {"action":"get rtos:input:7:group_do 1",             "desc": "get cap from sbmu ",              "data":[149]},
+                        {"action":"get sbmu:input:7:DI1 1",                  "desc": "get sbmu DI 1",                   "data":[1]},
+                        {"action":"get sbmu:input:7:DI8 1",                  "desc": "get sbmu DI 8",                   "data":[0]}
+                        ]
+            },
+            {
+                "test": "r7h", 
+                "name": "r7h", 
+                "desc": "rack ASW/src/RelayControl.c DO 0x6825 DI 0x681c   note In progress ",
+                "cat":"sbmu_inputs.check_di",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+                        {"action":"set rtos:sm8:7:0x6825 1 0 1 0 1 0 1 0",   "desc": "set DO (10) ",                    "data":[1, 0, 1, 0, 1, 0, 1, 0 ]},
+                        {"action":"set rtos:sm8:7:0x681c 1 1 1 1 0 0 0 0",   "desc": "set DI (9) ",                     "data":[1, 1, 1, 1, 0, 0, 0, 0 ]},
+                        {"action":"get rtos:sm16:7:0x6825 1",                "desc": "get gpio ",                       "data":[256 ]},
+                        {"action":"get rtos:input:7:group_di 1",             "desc": "get rtos ",                       "data":[15]},
+                        {"action":"get rtos:input:7:group_do 1",             "desc": "get cap from sbmu ",              "data":[149]},
+                        {"action":"get sbmu:input:7:DI1 1",                  "desc": "get sbmu DI 1",                   "data":[1]},
+                        {"action":"get sbmu:input:7:DI8 1",                  "desc": "get sbmu DI 8",                   "data":[0]}
+                        ]
+            },
+            {
+                "test": "r7i", 
+                "name": "r7i", 
+                "desc": " read soc , soh",
+                "cat":"sbmu_inputs.module_soc",
+                "note1": " CAP_Read_ModSOC sm8 0x5428 data 120",
+                "note2": " BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 82 ptr 0xdda0 val 0",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+                        {"action":"set rtos:sm8:7:0x5428 44",                "desc": "set module soc ",                 "data":[44]},
+                        {"action":"get rtos:sm8:7:0x5428 1",                 "desc": "get module soc ",                 "data":[44]},
+                        {"action":"get rtos:input:7:soc 1",                  "desc": "get soc from modbus  ",           "data":[440]},
+                        {"action":"get sbmu:input:7:118 1",                  "desc": "get sbmu SOC 1 (118)",            "data":[440]},
+                        {"action":"set rtos:sm8:7:0xdda0 55",                "desc": "set soh ",                        "data":[55]},
+                        {"action":"get rtos:sm8:7:0xdda0 1",                 "desc": "get soh ",                        "data":[55]},
+                        {"action":"get rtos:input:7:soh 1",                  "desc": "get soh from modbus  ",           "data":[55]},
+                        {"action":"set rtos:sm8:7:0xdda0 60",                "desc": "set soh ",                        "data":[60]},
+                        {"action":"get rtos:sm8:7:0xdda0 1",                 "desc": "get soh ",                        "data":[60]},
+                        {"action":"get rtos:input:7:soh 1",                  "desc": "get soh from modbus  ",           "data":[60]},
+                        {"action":"pause:1000",  "desc": " pause",    "data":[]},
+                        {"action":"get sbmu:input:7:119 1",                  "desc": "get sbmu SOH 1 (119)",            "data":[60]}
+                        ]
+            },
+            {
+                "test": "r7j", 
+                "name": "r7j", 
+                "cat": "sbmu.input.mapping", 
+
+                "desc": " read avg_voltage (18) , avg_temp (20) min_voltage ",
+                "note1": " CAP_Read_ModSOC sm8 0x5428 data 120",
+                "note2": "temp (18)  BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 142 ptr 0xdd40 val 700",
+                "note3": "min_volt BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 4 VOLT_MIN1 ptr 0xdcec val 0",
+                "note4": "voltage (20) BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 8 ptr 0xdd04 val 0",
+                "note5": "max_volt BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 0 VOLT_MAX1 ptr 0xdcd4 val 0",
+                "note6": "max_volt_num (154) BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 0 VOLT_MAX_NUM ptr 0xdce4 val 0",
+                "note7": "max_volt_num (155) BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 21 VOLT_MIN_NUM ptr 0xdcfc val 0",
+                "note8": "max_temp_num (11) BSW/dataCenter/configPara/EvbmmConfigPara.c:Get_BmmBase_TotalBatteryTempNum  ptr 0x0406 val 0",
+                "note9": "max_temp (12) BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 0 VOLT_MAX1 ptr 0xdd10 val 0",
+                "note10": "min_temp (15)  157BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 138 ptr 0xdd28 val 700",
+                "note11": "temp_min_num  (15)BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 47 TEMP_MIN_NUM_1 ptr 0xdd38 val 0",
+            
+                "note12": ">> max_soc>> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 52 SOC_MAX ptr 0xdd4c val 0",
+                "note13": ">> soc_max_num (158) >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 52 SOC_MAX_NUM ptr 0xdd5c val 0",
+
+                "note21": ">> min_soc BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 56 SOC_MIN ptr 0xdd64 val 0",
+                "note14": ">> soc_min_num (159) >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 52 SOC_MIN_NUM ptr 0xdd74 val 0",
+ 
+                "note15": ">> max_soh (35) >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 64 SOH_MAX ptr 0xdd88 val 0",
+                "note16": ">> min_soh (40) >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 52 SOH_MIN ptr 0xdda0 val 0",
+                "note17": ">> soh_max_num (160) >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 52 SOH_MAX_NUM ptr 0xdd98 val 0",
+                "note18": ">> soh_min_num (161) >> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 52 SOC_MIN_NUM ptr 0xddb0 val 0",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+                        {"action":"set rtos:sm16:7:0xdd40 567",   "desc": "set avg_temp to 567  ",                       "data":[567]},
+                        {"action":"set rtos:sm16:7:0xdd04 3567",   "desc": "set avg_volt to 3567  ",                       "data":[3567]},
+                        {"action":"set rtos:sm16:7:0xdcd4 3667",   "desc": "set max_volt to 3667  ",                       "data":[3667]},
+                        {"action":"set rtos:sm16:7:0xdcec 3467",   "desc": "set min_volt to 3467  ",                       "data":[3467]},
+                        {"action":"set rtos:sm16:7:0xdce4 66",      "desc": "set max_volt_num to 66  ",                    "data":[66]},
+                        {"action":"set rtos:sm16:7:0xdcfc 33",      "desc": "set min_volt_num to 33  ",                    "data":[33]},
+                        {"action":"set rtos:sm16:7:0x0406 21",      "desc": "set max_temp_num to 21  ",                    "data":[21]},
+                        {"action":"set rtos:sm16:7:0xdd10 457",      "desc": "set max_temp to 457  ",                       "data":[457]},
+                        {"action":"set rtos:sm16:7:0xdd28 257",      "desc": "set min_temp to 257  ",                       "data":[257]},
+                        {"action":"set rtos:sm16:7:0xdd38 5",      "desc": "set temp_min_num to 5  ",                       "data":[5]},
+
+                        {"action":"set rtos:sm16:7:0xdd4c 80",      "desc": "set max_soc to 80  ",                          "data":[80]},
+                        {"action":"set rtos:sm16:7:0xdd5c 8",       "desc": "set max_soc_num to 8  ",                       "data":[8]},
+                        {"action":"set rtos:sm16:7:0xdd64 60",      "desc": "set min_soc to 60  ",                          "data":[60]},
+                        {"action":"set rtos:sm16:7:0xdd74 45",      "desc": "set max_soc_num to 45  ",                      "data":[45]},
+ 
+                        {"action":"set rtos:sm16:7:0xdd88 70",      "desc": "set max_soh to 70  ",                          "data":[70]},
+                        {"action":"set rtos:sm16:7:0xdda0 60",      "desc": "set min_soh to 60  ",                          "data":[60]},
+                        {"action":"set rtos:sm16:7:0xdd98 160",     "desc": "set soh_max_num to 160  ",                     "data":[160]},
+                        {"action":"set rtos:sm16:7:0xddb0 39",      "desc": "set soh_min_num to 39  ",                      "data":[39]},
+
+                        {"action":"get rtos:sm16:7:0xdd04 1",      "desc": "get avg_volt ",                               "data":[3567]},
+                        {"action":"get rtos:sm16:7:0xdd40 1",      "desc": "get avg_temp ",                               "data":[567]},
+                        {"action":"get rtos:sm16:7:0xdcec 1",             "desc": "get min_volt to 3467  ",               "data":[3467]},
+                        {"action":"get rtos:sm16:7:0xdcfc 1",             "desc": "get min_volt_num as 33  ",             "data":[33]},
+                        {"action":"get rtos:sm16:7:0xdd10 1",       "desc": "get max_temp as 457  ",                       "data":[457]},
+                        {"action":"get rtos:sm16:7:0x0406 1",       "desc": "get max_temp_num as 21  ",                    "data":[21]},
+                        {"action":"get rtos:sm16:7:0xdd28 1",      "desc": "get min_temp to 257  ",                       "data":[257]},
+                        {"action":"get rtos:sm16:7:0xdd38 1",      "desc": "get temp_min_num to 5  ",                       "data":[5]},
+                        {"action":"get rtos:sm16:7:0xdd4c 1",      "desc": "get max_soc to 80  ",                          "data":[80]},
+
+                        {"action":"get rtos:sm16:7:0xdd4c 1",      "desc": "get max_soc to 80  ",                          "data":[80]},
+                        {"action":"get rtos:sm16:7:0xdd5c 1",      "desc": "get max_soc_num to 8  ",                       "data":[8]},
+                        {"action":"get rtos:sm16:7:0xdd64 1",      "desc": "get min_soc to 60  ",                          "data":[60]},
+                        {"action":"get rtos:sm16:7:0xdd74 1",      "desc": "get max_soc_num to 45  ",                      "data":[45]},
+
+                        {"action":"get rtos:sm16:7:0xdd88 1",      "desc": "set max_soh to 70  ",                          "data":[70]},
+                        {"action":"get rtos:sm16:7:0xdda0 1",      "desc": "set min_soh to 60  ",                          "data":[60]},
+                        {"action":"get rtos:sm16:7:0xdd98 1",      "desc": "set soh_max_num to 160  ",                     "data":[160]},
+                        {"action":"get rtos:sm16:7:0xddb0 1",      "desc": "set soh_min_num to 39  ",                      "data":[39]},
+
+                        {"action":"get rtos:input:7:avg_temp 1",         "desc": "get avg_temp modbus  ",            "data":[967]},
+                        {"action":"get rtos:input:7:max_temp 1",         "desc": "get max_temp modbus  ",            "data":[857]},
+                        {"action":"get rtos:input:7:max_temp_num 1",     "desc": "get max_temp_num modbus  ",         "data":[21]},
+                        {"action":"get rtos:input:7:avg_voltage 1",     "desc": "get avg_voltage modbus  ",            "data":[3567]},
+                        {"action":"get rtos:input:7:min_volt 1",        "desc": "get min_volt modbus  ",               "data":[3467]},
+                        {"action":"get rtos:input:7:max_voltage 1",        "desc": "get min_voltage modbus  ",               "data":[3667]},
+                        {"action":"get rtos:input:7:volt_max_num 1",                     "desc": "get volt_max_num modbus  ",               "data":[66]},
+                        {"action":"get rtos:input:7:volt_min_num 1",                     "desc": "get volt_min_num modbus  ",               "data":[33]},
+                        {"action":"get rtos:input:7:max_temp_num 1",                     "desc": "get max_temp_num modbus  ",               "data":[21]},
+                        {"action":"get rtos:input:7:min_temp 1",                         "desc": "get min_temp modbus  ",               "data":[657]},
+                        {"action":"get rtos:input:7:temp_min_num 1",                     "desc": "get temp_min_num modbus  ",           "data":[5]},
+
+                        {"action":"get rtos:input:7:max_soc 1",                          "desc": "get max_soc modbus  ",           "data":[80]},
+                        {"action":"get rtos:input:7:soc_max_num 1",                      "desc": "get soc_max_num modbus  ",       "data":[8]},
+                        {"action":"get rtos:input:7:min_soc 1",                          "desc": "get min_soc modbus  ",           "data":[60]},
+                        {"action":"get rtos:input:7:soc_min_num 1",                       "desc": "get soc_min_num modbus  ",      "data":[45]},
+
+                        {"action":"get rtos:input:7:max_soh 1",                          "desc": "get max_soc modbus  ",           "data":[70]},
+                        {"action":"get rtos:input:7:min_soh 1",                          "desc": "get min_soc modbus  ",           "data":[60]},
+                        {"action":"get rtos:input:7:soh_max_num 1",                      "desc": "get soc_max_num modbus  ",       "data":[160]},
+                        {"action":"get rtos:input:7:soh_min_num 1",                       "desc": "get soc_min_num modbus  ",      "data":[39]},
+
+                        {"action":"get sbmu:input:7:Average_cell_voltage 1",             "desc": "get " ,  "data":[3567]},
+                        {"action":"get sbmu:input:7:Average_cell_temp 1",                "desc": "get ",  "data":[967]},
+                        {"action":"get sbmu:input:7:Min_cell_voltage 1",                 "desc": "get " ,  "data":[3467]},
+                        {"action":"get sbmu:input:7:123 1",                 "desc": "get " ,  "data":[3667]},
+                        {"action":"get sbmu:input:7:Max_cell_voltage_number 1",          "desc": "get " ,  "data":[66]},
+                        {"action":"get sbmu:input:7:Min_cell_voltage_number 1",          "desc": "get " ,  "data":[33]},
+                        {"action":"get sbmu:input:7:Max_cell_temp 1",                    "desc": "get " ,  "data":[857]},
+                        {"action":"get sbmu:input:7:Max_cell_temp_number 1",          "desc": "get " ,  "data":[21]},
+                        {"action":"get sbmu:input:7:Min_cell_temp 1",                 "desc": "get " ,  "data":[657]},
+                        {"action":"get sbmu:input:7:Min_cell_temp_number 1",          "desc": "get " ,  "data":[5]},
+
+                        {"action":"get sbmu:input:7:Max_cell_SOC 1",                    "desc": "get " ,  "data":[80]},
+                        {"action":"get sbmu:input:7:Max_cell_SOC_number 1",             "desc": "get " ,  "data":[8]},
+                        {"action":"get sbmu:input:7:Min_cell_SOC 1",                    "desc": "get " ,  "data":[60]},
+                        {"action":"get sbmu:input:7:Min_cell_SOC_number 1",             "desc": "get " ,  "data":[45]},
+
+                        {"action":"get sbmu:input:7:Max_cell_SOH 1",                    "desc": "get " ,  "data":[70]},
+                        {"action":"get sbmu:input:7:Min_cell_SOH 1",                    "desc": "get " ,  "data":[60]},
+                        {"action":"get sbmu:input:7:Max_cell_SOH_number 1",             "desc": "get " ,  "data":[160]},
+                        {"action":"get sbmu:input:7:Min_cell_SOH_number 1",             "desc": "get " ,  "data":[39]}
+
+                    ]
+            },
+            {
+                "test": "r7k", 
+                "name": "r7k", 
+                "cat": "sbmu.input.mapping_2", 
+                "desc": " read avg_voltage (18) , avg_temp (20) min_voltage ",
+                "note1": " single_charge_cap 63  >> Get_Battery_Accumulate_Data Type 6 addr 0x5408 data 0",
+                "note2": " single_discharge_cap 64 Get_Battery_Accumulate_Data Type 7 addr 0x540c data 0",
+                "note3": " accumulated single_charge_cap 134     >> Get_Battery_Accumulate_Data Type 6 addr 0x5404 data 0",
+                "note4": " accumulated single_discharge_cap 136  >> Get_Battery_Accumulate_Data Type 6 addr 0x5400 data 0",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+
+                        {"action":"set rtos:sm16:7:0x5408 5670",                "desc": "set single_charge_cap to 5670  ",           "data":[5670]},
+                        {"action":"set rtos:sm16:7:0x540c 5770",                "desc": "set single_discharge_cap to 5770  ",        "data":[5770]},
+                        {"action":"set rtos:sm16:7:0x5404 1670 23",             "desc": "set acc single_charge_cap to 1670 23  ",    "data":[1670, 23]},
+                        {"action":"set rtos:sm16:7:0x5400 670 24",              "desc": "set acc single_dis charge_cap to 670 23  ", "data":[670, 24]},
+
+                        {"action":"get rtos:sm16:7:0x5408 1",                   "desc": "get single_charge_cap as 5670  ",           "data":[5670]},
+                        {"action":"get rtos:sm16:7:0x540c 1",                   "desc": "get single_discharge_cap as 5770  ",        "data":[5770]},
+                        {"action":"get rtos:sm16:7:0x5404 2",                   "desc": "get single_charge_cap as 1670 23  ",        "data":[1670, 23]},
+                        {"action":"get rtos:sm16:7:0x5400 2",                   "desc": "get single_discharge_cap as 670 24  ",      "data":[670, 24]},
+
+                        {"action":"get rtos:input:7:single_charge_cap 1",      "desc": "get single_charge_cap mb  5670  ",           "data":[5670]},
+                        {"action":"get rtos:input:7:single_discharge_cap 1",   "desc": "get single_charge_cap mb  5770  ",           "data":[5770]},
+
+                        {"action":"get rtos:input:7:acc_single_charge_cap 2",      "desc": "get acc_single_charge_cap mb  5670  ",   "data":[2,26281]},
+                        {"action":"get rtos:input:7:acc_single_discharge_cap 2",   "desc": "get acc_single_charge_cap mb  5770  ",   "data":[2,19827]},
+
+                        {"action":"get sbmu:input:7:Accumulated_single_charge_capacity 2",   "desc": "get single_charge_cap mb   ",  "data":[2,26281]},
+                        {"action":"get sbmu:input:7:Accumulated_single_discharge_capacity 2", "desc": "get single_discharge_cap mb ", "data":[2, 19827]},
+                        {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                        {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]}
+
+                    ]
+            },
+            {
+                "test": "r7l", 
+                "name": "r7l", 
+                "desc": "Module_temp  ",
+                "cat": "sbmu_input.Module_temp",
+                "note7": "uint8_t GENERAL_Read_Module_Temp_Data(uint8_t module_Num, uint8_t type)",
+                "note8": " max_temp_mod  (13)BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 143 TEMP_MAX_MODL_1 ptr 0xdd18 val 0",
+                "note9": " max_temp_mod>> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 143 TEMP_MAX_NUM_1 ptr 0xdd20 val 0",
+                "note10": " max_temp_mod>> BSW/dataCenter/operatingData/Battery_Data.c:GENERAL_Read_Data type 143 TEMP_MIN_NUM_1 ptr 0xdd38 val 5",
+                "note11":"GENERAL_Read_Data type 35 GROUP_INSU_JUST (pos) addr 0x5014 GROUP_INSU_BEAR (neg) addr 0x5016 ",  
+                "note12": "Mod num 24 addr 0xd83c  value 0",
+                "note13": "terminal temp 100 at 2991 Battery_Data.c  Get_U16Bias40_01_PoleTemp(regAddr - 500);",
+                "note14": "Pole_temp  Evbcm_Config_Para->bcm_pole_temp_num addr 0x001a",
+                "note15": "Pole_temp Evbmm_Base_Config->total_poleTemp_num  addr 0x0408",
+                "note16": "Pole_temp   addr 0xd340",
+
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+
+                        {"action":"set rtos:sm16:7:0xdd18 24",               "desc": " set temp max_mod 1",             "data":[24]},
+                        {"action":"set rtos:sm16:7:0xd83c 12",               "desc": " set temp max_mod_num",           "data":[12]},
+                        {"action":"set rtos:sm16:7:0xdd20 4",               "desc": " set temp max_mod_num",            "data":[4]},
+                        {"action":"set rtos:sm16:7:0xdd38 8",               "desc": " set temp min_mod_num 1",          "data":[8]},
+                        {"action":"set rtos:sm16:7:0x5014 245",               "desc": " set insul pos",                 "data":[245]},
+                        {"action":"set rtos:sm16:7:0x5016 345",               "desc": " set insul neg",                 "data":[345]},
+
+                        {"action":"set rtos:sm16:7:0x001a 8",               "desc": " set pole temp num",              "data":[8]},
+                        {"action":"set rtos:sm16:7:0x0408 0",               "desc": " set total pole temp num",        "data":[0]},
+                        {"action":"set rtos:sm16:7:0xd340 431",             "desc": " set total pole temp",            "data":[431]},
+
+
+                        {"action":"get rtos:sm16:7:0x5014 1",                "desc": " get sm16 insul_pos",           "data":[245]},
+                        {"action":"get rtos:sm16:7:0x5016 1",                "desc": " get sm16 insul_neg",           "data":[345]},
+                        {"action":"get rtos:sm16:7:0xdd18 1",                "desc": " get sm16 module temp",         "data":[24]},
+                        {"action":"get rtos:sm16:7:0xdd20 1",               "desc": " get temp max_mod_num",          "data":[4]},
+                        {"action":"get rtos:sm16:7:0xdd38 1",               "desc": " get temp min_mod_num 1",        "data":[8]},
+
+                        {"action":"get rtos:input:7:max_temp_mod 1",         "desc": " get max_temp_mod ",            "data":[24]},
+                        {"action":"get rtos:input:7:max_temp_mod_num 1",     "desc": " get max_temp_mod ",            "data":[12]},
+                        {"action":"get sbmu:input:7:Module_temp 1",          "desc": " get Module_temp",              "data":[24]},
+                        {"action":"get rtos:input:7:insulation_res_pos 1",   "desc": " get insul_pos ",               "data":[345]},
+                        {"action":"get rtos:input:7:insulation_res_neg 1",   "desc": " get insul_neg ",               "data":[245]},
+                        {"action":"get sbmu:input:7:Insulation_Resistance",  "desc": " get sbmu:insul_res ",          "data":[345]},
+                        {"action":"get rtos:input:7:500 1",                  "desc": " get rtos terminal_temp ",      "data":[831]},
+                        {"action":"get sbmu:input:7:terminal_temp 1",        "desc": " get sbmu terminal_temp ",      "data":[831]}
+
+
+                    ]
+            },
+            {
+                "test": "r7m", 
+                "name": "r7m", 
+                "desc": "close rack 7  ",
+                "cat": "close rack",
+                "note1": "set rack state to 0x25",
+                "note2": "Get_InputRegData >>>> System State   addr 0x6800  data 24",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                  "desc": " reset rack overrides",           "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",         "desc": " force rack 7 online noupdates",  "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm16:7:0x402 64",                "desc": " set number of batteries",        "data":[64]},
+
+                        {"action":"set rtos:sm16:7:0x6800 36",               "desc": " set state closed",        "data":[36]},
+                        {"action":"get rtos:input:7:state 1",                "desc": " check state closed",      "data":[37]}
+                ]
+            },
+
+            {
+            "test": "r1v", 
+            "name": "r1v", 
+            "desc": "tst rack one volts",
+            "cat": "sbmu_input.volts",
+            "items":[
+                    {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                    {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                    {"action":"set rtos:sm16:0:0xc800 2033 2034 2035",  "desc": "set some sm16 cell volts",    "data":[2033, 2034, 2035]},
+                    {"action":"get rtos:sm16:0:0xc800 3",  "desc": "get some sm16 cell volts",    "data":[2033, 2034, 2035]}
+                    ]
+            },
+            {
+                "test": "r7vc", 
+                "name": "r7vc", 
+                "cat": "sbmu_input.current",
+                "desc": "test rack eight volts current",
+                "notes": "esbcm Get_InputRegData -> GROUP_Read_Data ./BSW/dataCenter/operatingData/EvbcmData.c test rack eight volts current",
+                "notes1":"GROUP_Read_Data type 1 GROUP_VOLT addr 0x5000  value 0 >>>> Esbcm_ModbusSlave_ReadCallback getting   reg 2 batnum 64",
+                "notes2": "GROUP_Read_Data type 2 GROUP_CURR FLAG addr 0x502d INVALID = 0 GROUP_CURR addr 0x5008",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 7, 1, 1]},
+                        {"action":"set rtos:sm8:7:0x502d 1",  "desc": "clear invalid",    "data":[1]},
+                        {"action":"set rtos:sm16:7:0x5008 321",  "desc": "set current value",    "data":[321]},
+                        {"action":"set rtos:sm16:7:0x5000 4321",  "desc": "set volts value",    "data":[4321]},
+                        {"action":"get rtos:input:7:rack_voltage",  "desc": "get  rack voltage",    "data":[4321]},
+                        {"action":"get rtos:input:7:rack_current",  "desc": "get  rack current",    "data":[16321]},
+                        {"action":"get sbmu:input:7:Total_Voltage",  "desc": "get  total voltage",    "data":[4321]},
+                        {"action":"get sbmu:input:7:Total_Current",  "desc": "get  total current",    "data":[16321]}
+                        ]
+            },
+            {
+                "test": "r7runpr2", 
+                "name": "r7runpr2", 
+                "desc": "test rs protocol 2  rack 7  ",
+                "cat": "config_3",
+                "note1": "select rack 7 and then trigger 706, 707",
+                "items":[
+                        {"action":"setmb sbmu:hold:500 6 ",                  "desc": " reset rack overrides",           "data":[6]},
+
+                        {"action":"setmb sbmu:hold:1706 2",                  "desc": " set rack 7 protocol 2 ",   "data":[2]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"setmb sbmu:hold:1707 5",                  "desc": " set rack 7 run and ch 1 0",    "data":[5]}
+                ]
+            },
+            {
+                "test": "r7runpr4", 
+                "name": "r7runpr4", 
+                "desc": "test rs protocol 4  rack 7  ",
+                "cat": "config_2",
+                "note1": "select rack 7 and then trigger 706, 707",
+                "items":[
+                        {"action":"setmb sbmu:hold:500 6 ",                  "desc": " reset rack overrides",           "data":[6]},
+
+                        {"action":"setmb sbmu:hold:1706 4",                  "desc": " set rack 7 protocol 4 ",   "data":[4]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"setmb sbmu:hold:1707 5",                  "desc": " set rack 7 run and ch 1 0",    "data":[5]}
+                ]
+            },
+            {
+                "test": "r7rs", 
+                "name": "r7rs", 
+                "desc": "config options for rack 7  ",
+                "cat": "config_1",
+                "note1": "select rack 7 and then trigger 703,704,705,706, 707",
+                "items":[
+                        {"action":"setmb sbmu:hold:500 6 ",                  "desc": " reset rack overrides",           "data":[6]},
+
+                        {"action":"setmb sbmu:hold:1703 1",                  "desc": " set rack 7 excommu_enable 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:excommu_enable ",         "desc": " check that its enabled ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1703 0",                  "desc": " set rack 7 excommu_enable 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:excommu_enable ",         "desc": " check that its not enabled ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1704 1",                  "desc": " set rack 7 ex_can_prot_code 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:ex_can_prot_code ",      "desc": " check that its enabled ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1704 0",                  "desc": " set rack 7 ex_can_prot_code 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:ex_can_prot_code ",         "desc": " check that its not enabled ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1705 1",                  "desc": " set rack 7 can_chan_number 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:can_chan_num ",      "desc": " check that its set ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1705 0",                  "desc": " set rack 7 ex_can_chan_num 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:can_chan_num ",         "desc": " check that its set ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1706 1",                  "desc": " set rack 7 rs485_prot_code 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_prot_code ",      "desc": " check that its set ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1706 0",                  "desc": " set rack 7 rs485_prot_code 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_prot_code ",         "desc": " check that its correct ",    "data":[0]},
+
+                        {"action":"setmb sbmu:hold:1707 1",                  "desc": " set rack 7 rs485_chan_num 1 ",   "data":[1]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_chan_num ",      "desc": " check that its set ",        "data":[1]},
+                        {"action":"setmb sbmu:hold:1707 0",                  "desc": " set rack 7 rs485_chan_num 0",    "data":[0]},
+                        {"action":"pause:250",  "desc": " pause",    "data":[]},
+                        {"action":"get rack:sm16:6:rs485_chan_num ",         "desc": " check that its correct ",    "data":[0]}
+
+                    ]
+            },
+            {
+                "test": "r20maxv-xx", 
+                "name": "r20maxv-xx", 
+                "cat": "sbmu_bits.t1",
+                "desc": "test all rack max/min_voltage",
+                "notes": "esbcm Get_InputRegData -> GROUP_Read_Data ./BSW/dataCenter/operatingData/EvbcmData.c test rack eight volts current",
+                "notes1":"GROUP_Read_Data type 1 GROUP_VOLT addr 0x5000  value 0 >>>> Esbcm_ModbusSlave_ReadCallback getting   reg 2 batnum 64",
+                "notes2": "GROUP_Read_Data type 2 GROUP_CURR FLAG addr 0x502d INVALID = 0 GROUP_CURR addr 0x5008",
+                "items":[
+                        {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",    "data":[0]},
+                        {"action":"setmb sbmu:hold:531 65197 20 1 1",              "desc": "force all racks online noupdates",    "data":[65197, 20, 1, 1]},
+                        {"action":"set rtos:sm8:7:0x502d 1",                       "desc": "clear invalid",           "data":[1]},
+                        {"action":"set rtos:sm16:7:0x5008 321",                    "desc": "set current value",       "data":[321]},
+                        {"action":"set rtos:sm16:7:0x5000 4321",                   "desc": "set volts value",         "data":[4321]},
+                        {"action":"set rtos:input:20:max_voltage  3456",           "desc": "set all rack voltage",    "data":[3456]},
+                        {"action":"set rtos:input:2:volt_max_num  220",            "desc": "set rack 2 volt_max_num", "data":[220]},
+                        {"action":"set rtos:input:2:max_voltage  4567",            "desc": "set rack 2 voltage",      "data":[4567]},
+                        {"action":"set rtos:input:20:min_volt  3300",              "desc": "set all rack voltage",    "data":[3300]},
+                        {"action":"set rtos:input:3:min_volt  3200",               "desc": "set rack 3 voltage",      "data":[3200]},
+                        {"action":"set rtos:input:3:volt_min_num  120",            "desc": "set rack 2 volt_min_num", "data":[120]},
+                        {"action":"get sbmu:input:123",               "desc": "get max cell voltage",    "data":[4567]},
+                        {"action":"get sbmu:input:Max_cell_voltage_number",        "desc": "get max voltage num",     "data":[2]},
+                        {"action":"get sbmu:input:max_battery_voltage",             "desc": "get max battery voltage",    "data":[4567]},
+                        {"action":"get sbmu:input:max_battery_voltage_rack",        "desc": "get max battery voltage rack",    "data":[2]},
+                        {"action":"get sbmu:input:max_battery_voltage_number",      "desc": "get max battery voltage number",    "data":[220]},
+                        {"action":"get sbmu:input:min_battery_voltage",             "desc": "get min battery voltage",    "data":[4567]},
+                        {"action":"get sbmu:input:min_battery_voltage_number",      "desc": "get max battery voltage number",    "data":[120]},
+                        {"action":"get sbmu:input:min_battery_voltage_rack",        "desc": "get max battery voltage rack",    "data":[3]},
+                        {"action":"get sbmu:input:Max_cell_voltage_number",        "desc": "get max voltage num",     "data":[2]},
+                        {"action":"get sbmu:input:Min_cell_voltage",               "desc": "get min cell voltage",    "data":[3300]},
+                        {"action":"get sbmu:input:Min_cell_voltage_number",        "desc": "get min voltage number",  "data":[3]}
+                    ]
+                },
+                {
+                    "test": "r20maxv", 
+                    "name": "r20maxv", 
+                    "cat": "sbmu_bits.t1",
+                    "desc": "test all rack max/min_voltage",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",                "data":[0]},
+                            {"action":"setmb sbmu:hold:531 65197 20 1 1",              "desc": "force all racks online noupdates",    "data":[65197, 20, 1, 1]},
+                            {"action":"set rtos:input:20:max_voltage  3456",           "desc": "set all rack voltage",                "data":[3456]},
+                            {"action":"set rtos:input:20:min_volt  3300",              "desc": "set all rack voltage",                "data":[3300]},
+                            {"action":"set rtos:input:2:volt_max_num  220",            "desc": "set rack 2 volt_max_num",             "data":[220]},
+                            {"action":"set rtos:input:2:max_voltage  4567",            "desc": "set rack 2 voltage",                  "data":[4567]},
+                            {"action":"get rtos:input:2:volt_max_num ",                "desc": "get rack 2 volt_max_num",             "data":[220]},
+                            {"action":"get rtos:input:2:max_voltage ",                  "desc": "get rack 2 max_voltage",             "data":[4567]},
+                            {"action":"set rtos:input:3:min_volt  3200",               "desc": "set rack 3 voltage",                  "data":[3200]},
+                            {"action":"set rtos:input:3:volt_min_num  120",            "desc": "set rack 2 volt_min_num",             "data":[120]},
+                            {"action":"pause:500", "desc": "wait a bit for the system to scan",                                       "data":[]},
+                            {"action":"get sbmu:input:max_battery_voltage",             "desc": "get max battery voltage",            "data":[4567]},
+                            {"action":"get sbmu:input:max_battery_voltage_rack",        "desc": "get max battery voltage rack",       "data":[2]},
+                            {"action":"get sbmu:input:max_battery_voltage_number",      "desc": "get max battery voltage number",     "data":[220]},
+                            {"action":"get sbmu:input:min_battery_voltage",             "desc": "get min battery voltage",            "data":[3200]},
+                            {"action":"get sbmu:input:min_battery_voltage_number",      "desc": "get min battery voltage number",     "data":[120]},
+                            {"action":"get sbmu:input:min_battery_voltage_rack",        "desc": "get min battery voltage rack",       "data":[3]}
+                        ]
+                },
+                {
+                    "test": "r20maxt", 
+                    "name": "r20maxt", 
+                    "cat": "sbmu_bits.t1",
+                    "desc": "test all rack max/min_voltage",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",                 "data":[0]},
+                            {"action":"setmb sbmu:hold:531 65197 20 1 1",              "desc": "force all racks online noupdates",     "data":[65197, 20, 1, 1]},
+                            {"action":"set rtos:input:20:max_temp  4455",              "desc": "set all rack max temp",                "data":[3456]},
+                            {"action":"set rtos:input:20:min_temp  2233",              "desc": "set all rack min temp",                "data":[3300]},
+                            {"action":"set rtos:input:2:temp_max_num  219",            "desc": "set rack 2 volt_max_num",              "data":[219]},
+                            {"action":"set rtos:input:2:max_temp  4567",               "desc": "set rack 2 voltage",                   "data":[4567]},
+                            {"action":"get rtos:input:2:temp_max_num ",                "desc": "get rack 2 max_temp_num",              "data":[219]},
+                            {"action":"get rtos:input:2:max_temp ",                    "desc": "get rack 2 max_temp",                  "data":[4567]},
+                            {"action":"set rtos:input:3:min_temp  2200",               "desc": "set rack 3 min temp",                  "data":[2200]},
+                            {"action":"set rtos:input:3:temp_min_num  119",            "desc": "set rack 3 min_temp_num",              "data":[119]},
+                            {"action":"pause:500",                                     "desc": "wait a bit for the system to scan",    "data":[]},
+                            {"action":"get sbmu:input:max_battery_temp",               "desc": "get max battery temp",                 "data":[4567]},
+                            {"action":"get sbmu:input:max_battery_temp_rack",          "desc": "get max battery temp rack",            "data":[2]},
+                            {"action":"get sbmu:input:max_battery_temp_number",        "desc": "get max battery temp number",          "data":[219]},
+                            {"action":"get sbmu:input:min_battery_temp",               "desc": "get min battery temp",                 "data":[2200]},
+                            {"action":"get sbmu:input:min_battery_temp_number",        "desc": "get min battery temp number",          "data":[119]},
+                            {"action":"get sbmu:input:min_battery_temp_rack",          "desc": "get min battery temp rack",            "data":[3]}
+                        ]
+                },
+                {
+                    "test": "r20ccap", 
+                    "name": "r20ccap", 
+                    "cat": "sbmu_bits.t1",
+                    "desc": "test cumulative charge/discharge capacity",
+                    "notes":" we dont know if we use single_charge_cap or total_charge_cap so we do both",
+                    "notes1":"./BSW/BasicSoft/src/SOC_Calc.c:uint32_t S/Get_Battery_Accumulate_Data(uint8_t Type)",
+                    "notes2":"./ASW/src/Peripheral_Protocol.c:uint32_t Get_Daily_Energy(uint8_t Type)",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",                 "data":[0]},
+                            {"action":"setmb sbmu:hold:531 65197 20 1 1",              "desc": "force all racks online noupdates",     "data":[65197, 20, 1, 1]},
+                            {"action":"set rtos:input:20:single_charge_cap  2345",     "desc": "set single charge cap (63) ",          "data":[2345]},
+                            {"action":"set rtos:input:20:single_discharge_cap  1234",  "desc": "set single discharge cap (64) ",       "data":[]},
+                            {"action":"set rtos:input:20:soc  950",                      "desc": "set all soc 95 ",                     "data":[]},
+                            {"action":"set rtos:input:20:soh  93",                      "desc": "set all soh 93 ",                     "data":[]},
+                            {"action":"get sbmu:input:0:chargeable_energy 4",          "desc": "get ch disch energy ",                 "data":[12,0,117,0]},
+
+                            {"action":"set rtos:input:20:total_charge_cap  1 2340",    "desc": "set total charge cap (59) ",          "data":[2345]},
+                            {"action":"set rtos:input:20:total_discharge_cap 2 1230",  "desc": "set total discharge cap (60) ",       "data":[1234]},
+                            {"action":"get sbmu:input:0:total_chargeable_energy 4",    "desc": "get total ch energy ",             "data":[339,0,12569,0]},
+
+                            {"action":"set rtos:input:20:min_temp  2233",              "desc": "set all rack min temp",                "data":[3300]},
+                            {"action":"set rtos:input:2:temp_max_num  219",            "desc": "set rack 2 volt_max_num",              "data":[219]},
+                            {"action":"set rtos:input:2:max_temp  4567",               "desc": "set rack 2 voltage",                   "data":[4567]},
+                            {"action":"get rtos:input:2:temp_max_num ",                "desc": "get rack 2 max_temp_num",              "data":[219]},
+                            {"action":"get rtos:input:2:max_temp ",                    "desc": "get rack 2 max_temp",                  "data":[4567]},
+                            {"action":"set rtos:input:3:min_temp  2200",               "desc": "set rack 3 min temp",                  "data":[2200]},
+                            {"action":"set rtos:input:3:temp_min_num  119",            "desc": "set rack 3 min_temp_num",              "data":[119]},
+                            {"action":"pause:500",                                     "desc": "wait a bit for the system to scan",    "data":[]},
+                            {"action":"get sbmu:input:max_battery_temp",               "desc": "get max battery temp",                 "data":[4567]},
+                            {"action":"get sbmu:input:max_battery_temp_rack",          "desc": "get max battery temp rack",            "data":[2]},
+                            {"action":"get sbmu:input:max_battery_temp_number",        "desc": "get max battery temp number",          "data":[219]},
+                            {"action":"get sbmu:input:min_battery_temp",               "desc": "get min battery temp",                 "data":[2200]},
+                            {"action":"get sbmu:input:min_battery_temp_number",        "desc": "get min battery temp number",          "data":[119]},
+                            {"action":"get sbmu:input:min_battery_temp_rack",          "desc": "get min battery temp rack",            "data":[3]}
+                        ]
+                },
+                {
+                    "test": "r20vtdiff", 
+                    "name": "r20vtdiff", 
+                    "cat": "sbmu_bits.t1",
+                    "desc": "test voltage temp diff but these are system wide at 58 and 59 ",
+                    "notes":" we dont know if we use single_charge_cap or total_charge_cap so we do both",
+                    "notes1":"./BSW/BasicSoft/src/SOC_Calc.c:uint32_t S/Get_Battery_Accumulate_Data(uint8_t Type)",
+                    "notes2":"./ASW/src/Peripheral_Protocol.c:uint32_t Get_Daily_Energy(uint8_t Type)",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",                 "data":[0]},
+                            {"action":"setmb sbmu:hold:531 65197 20 1 1",              "desc": "force all racks online noupdates",     "data":[65197, 20, 1, 1]},
+                            {"action":"set rtos:input:20:max_voltage  3345",              "desc": "max_volt ",          "data":[2345]},
+                            {"action":"set rtos:input:20:min_volt  2345",              "desc": "min_volt ",          "data":[2345]},
+                            {"action":"set rtos:input:20:max_temp  3322",              "desc": "max_temp ",          "data":[2345]},
+                            {"action":"set rtos:input:20:min_temp  2322",              "desc": "max_temp ",          "data":[2345]},
+                            {"action":"get sbmu:hold:0:voltage_diff 1",          "desc": "get ch disch energy ",                 "data":[12,0,117,0]},
+
+                            {"action":"set rtos:input:20:total_charge_cap  1 2340",    "desc": "set total charge cap (59) ",          "data":[2345]},
+                            {"action":"set rtos:input:20:total_discharge_cap 2 1230",  "desc": "set total discharge cap (60) ",       "data":[1234]},
+                            {"action":"get sbmu:input:0:total_chargeable_energy 4",    "desc": "get total ch energy ",             "data":[339,0,12569,0]},
+
+                            {"action":"set rtos:input:20:min_temp  2233",              "desc": "set all rack min temp",                "data":[3300]},
+                            {"action":"set rtos:input:2:temp_max_num  219",            "desc": "set rack 2 volt_max_num",              "data":[219]},
+                            {"action":"set rtos:input:2:max_temp  4567",               "desc": "set rack 2 voltage",                   "data":[4567]},
+                            {"action":"get rtos:input:2:temp_max_num ",                "desc": "get rack 2 max_temp_num",              "data":[219]},
+                            {"action":"get rtos:input:2:max_temp ",                    "desc": "get rack 2 max_temp",                  "data":[4567]},
+                            {"action":"set rtos:input:3:min_temp  2200",               "desc": "set rack 3 min temp",                  "data":[2200]},
+                            {"action":"set rtos:input:3:temp_min_num  119",            "desc": "set rack 3 min_temp_num",              "data":[119]},
+                            {"action":"pause:500",                                     "desc": "wait a bit for the system to scan",    "data":[]},
+                            {"action":"get sbmu:input:max_battery_temp",               "desc": "get max battery temp",                 "data":[4567]},
+                            {"action":"get sbmu:input:max_battery_temp_rack",          "desc": "get max battery temp rack",            "data":[2]},
+                            {"action":"get sbmu:input:max_battery_temp_number",        "desc": "get max battery temp number",          "data":[219]},
+                            {"action":"get sbmu:input:min_battery_temp",               "desc": "get min battery temp",                 "data":[2200]},
+                            {"action":"get sbmu:input:min_battery_temp_number",        "desc": "get min battery temp number",          "data":[119]},
+                            {"action":"get sbmu:input:min_battery_temp_rack",          "desc": "get min battery temp rack",            "data":[3]}
+                        ]
+                },
+                {
+                    "test": "sbmu_clear_single", 
+                    "name": "sbmu_clear_single", 
+                    "cat": "sbmu_acc",
+                    "desc": " clears Accumulated single charge capacity    ",
+                    "notes":"  TOD needs \"using xyz [set/get]\"",
+                    "notes1":"setmb sbmu:hold:545 1 causes the Accumulated value to reset needs to put the system in test mode and inject a value",
+                    "notes2":"TODO  needs to put the system in test mode and inject a value",
+                    "items":[
+                        {"action":"get sbmu:input:Accumulated_single_charge_capacity 8",  "desc": "show data so far",        "data":[]},
+                        {"action":"setmb sbmu:hold:545 1 ",                               "desc": "clear acc data",          "data":[1]},
+                        {"action":"get sbmu:input:Accumulated_single_charge_capacity 8",  "desc": "show cleared",            "data":[]}
+                    ]
+                },
+                {
+                    "test": "sbmu_bits", 
+                    "name": "sbmu_bits", 
+                    "cat": "sbmu_bits",
+                    "desc": " test bits and summary data   ",
+                    "notes":"  test single and multiple register writes",
+                    "notes1":"getmb sbmu:hold:1001 4 TODO this fails  after the first pause but the data is in the target",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",                  "data":[0]},
+                            {"action":"setmb sbmu:hold:540 1 ",                        "desc": "switch bits to test mode",              "data":[1]},
+                            {"action":"get  sbmu:bits:summary_total_undervoltage 3",   "desc": "summary total undervoltage",            "data":[1,0,0]},
+                            {"action":"get  sbmu:bits:summary_total_overvoltage 3",    "desc": "summary total overvoltage",             "data":[1,1,1]},
+                            {"action":"get  sbmu:bits:summary_cell_over_voltage 3",    "desc": "summary cell overv voltage",             "data":[0,1,0]},
+                            {"action":"get  sbmu:bits:summary_cell_under_voltage 3",   "desc": "summary cell under voltage",            "data":[1,0,0]},
+                            {"action":"get  sbmu:bits:summary_overcurrent 3",          "desc": "summary overcurrent",                   "data":[1,1,1]},
+                            {"action":"get  sbmu:bits:summary_module_over_temp 3",     "desc": "summary module over temp",              "data":[0,0,0]},
+                            {"action":"get  sbmu:bits:summary_module_low_temp 3",      "desc": "summary module low temp",                "data":[0,0,0]},
+                            {"action":"get  sbmu:bits:summary_cell_low_temp 3",        "desc": "summary cell low temp",                 "data":[1,0,1]},
+                            {"action":"get  sbmu:bits:summary_cell_over_temp 3",       "desc": "summary cell over temp",                "data":[1,1,0]},
+                            {"action":"get  sbmu:bits:summary_cell_diff_temp 3",       "desc": "summary cell diff temp",                "data":[0,1,0]},
+                            {"action":"get  sbmu:bits:summary_cell_low_SOC 3",         "desc": "summary cell low SOC",                   "data":[1,1,1]},
+                            {"action":"get  sbmu:bits:summary_cell_high_SOC 3",        "desc": "summary cell high SOC",                  "data":[1,1,0]},
+                            {"action":"get  sbmu:bits:summary_terminal_over_temp 3",   "desc": "summary terminal over temp",            "data":[1,1,1]},
+                            {"action":"get  sbmu:bits:summary_pack_over_voltage 3",    "desc": "summary packover volt",                 "data":[0,1,0]},
+                            {"action":"get  sbmu:bits:summary_pack_under_voltage 3",   "desc": "summary pack under volt",               "data":[0,0,1]},
+                            {"action":"get  sbmu:bits:total_overvoltage 3",            "desc": "total over volt",                       "data":[0,1,0]},
+                            {"action":"get  sbmu:bits:total_undervoltage 3",           "desc": "total  under volt",                     "data":[1,0,0]},
+                            {"action":"get  sbmu:bits:cell_under_voltage 3",           "desc": "total  under volt",                     "data":[1,0,0]},
+                            {"action":"get  sbmu:bits:cell_over_voltage 3",            "desc": "total over volt",                       "data":[0,1,0]},
+                            {"action":"get  sbmu:bits:cell_over_temp 3",               "desc": "cell over temp",                        "data":[1,1,0]},
+                            {"action":"get  sbmu:bits:cell_low_temp 3",                "desc": "cell low temp",                         "data":[1,0,1]},
+                            {"action":"get  sbmu:bits:cell_low_SOC 3",                 "desc": "cell low SOC",                          "data":[1,1,1]},
+                            {"action":"get  sbmu:bits:cell_high_SOC 3",                "desc": "cell high SOC",                         "data":[1,1,0]},
+                            {"action":"get  sbmu:bits:cell_voltage_diff 3",            "desc": "cell voltage diff",                     "data":[1,0,0]},
+                            {"action":"get  sbmu:bits:cell_temp_diff 3",               "desc": "cell temp diff",                        "data":[0,1,0]},
+                            {"action":"get  sbmu:bits:terminal_high_temp 3",           "desc": "terminal high temp",                    "data":[1,1,1]},
+                            {"action":"get  sbmu:bits:pack_over_voltage 3",            "desc": "pack over voltage",                     "data":[0,1,0]},
+                            {"action":"get  sbmu:bits:pack_under_voltage 3",           "desc": "pack under voltage",                    "data":[1,0,0]},
+                            {"action":"get  sbmu:bits:summary_low_resistance 3",       "desc": "summary low_resistance",                "data":[0,0,1]},
+                            {"action":"get  sbmu:bits:summary_total_undervoltage 3",   "desc": "summary total undervoltage ",           "data":[1,0,0]},
+                            {"action":"get  sbmu:input:3091",                           "desc": "rack 0 num alarms ",                   "data":[0]},
+                            {"action":"get  sbmu:input:18091",                          "desc": "rack 5 num alarms ",                   "data":[18]},
+                            {"action":"get  sbmu:input:rack_active_alarms 6",            "desc": "rack 0 active alarms ",         "data":[0,0,0,0,0,0]},
+                            {"action":"get  sbmu:input:18092 6",       "desc": "rack 5 active alarms ",             "data":[20610,657,22666,47104,0,0]},
+                            {"action":"setmb sbmu:hold:540 0 ",                        "desc": "switch off bits to test mode",          "data":[0]}
+
+                        ]
+                },
+                {
+                    "test": "sbmu_hold", 
+                    "name": "sbmu_hold", 
+                    "cat": "sbmu_bits",
+                    "desc": " test closed calcs   ",
+                    "notes":"  test calcs done when closed",
+                    "notes1":"getmb sbmu:hold:1001 4 TODO this fails  after the first pause but the data is in the target",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",            "data":[0]},
+                            {"action":"setmb sbmu:hold:540 1 ",                        "desc": "switch bits to test mode",        "data":[1]},
+                            {"action":"get  sbmu:hold:total_racks_voltage",            "desc": "total racks voltage",             "data":[3180]},
+                            {"action":"get  sbmu:hold:total_racks_current",            "desc": "total racks current",             "data":[9134]},
+                            {"action":"get  sbmu:hold:total_racks_soc",                "desc": "total racks soc",                 "data":[1700]},
+                            {"action":"get  sbmu:hold:total_racks_soh",                "desc": "total racks soh",                 "data":[150]},
+
+                            {"action":"get  sbmu:hold:min_charge_energy",              "desc": "min charge energy",              "data":[30928]},
+                            {"action":"get  sbmu:hold:min_discharge_energy",           "desc": "min discharge energy",           "data":[42464]},
+                            {"action":"get  sbmu:hold:min_charge_power",               "desc": "min charge power",               "data":[63392]},
+                            {"action":"get  sbmu:hold:min_discharge_power",            "desc": "min discharge power",            "data":[63928]},
+                            {"action":"get  sbmu:hold:min_charge_current",             "desc": "min charge current",             "data":[3500]},
+                            {"action":"get  sbmu:hold:min_discharge_current",          "desc": "min discharge current",          "data":[2500]},
+
+                            {"action":"get  sbmu:hold:max_charge_energy",            "desc": "max charge energy",                "data":[60928]},
+                            {"action":"get  sbmu:hold:max_discharge_energy",           "desc": "max discharge energy",           "data":[62464]},
+                            {"action":"get  sbmu:input:max_charge_power",              "desc": "max charge power",               "data":[63392]},
+                            {"action":"get  sbmu:input:max_discharge_power",           "desc": "max discharge power",            "data":[63928]},
+                            {"action":"get  sbmu:input:max_charge_current",             "desc": "max charge current",            "data":[3500]},
+                            {"action":"get  sbmu:input:max_discharge_current",          "desc": "max discharge current",         "data":[2500]},
+                            {"action":"setmb sbmu:hold:540 0 ",                        "desc": "switch off test mode",           "data":[0]}
+                    ]
+                },
+                {
+                    "test": "sbmu_1", 
+                    "name": "sbmu_1", 
+                    "cat": "sbmu_hold",
+                    "desc": " test the rack select (500) for sbmu  use events when online  ",
+                    "notes":"  test single and multiple register writes",
+                    "notes1":"getmb sbmu:hold:1001 4 TODO this fails  after the first pause but the data is in the target",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",                 "data":[0]},
+                            {"action":"setmb sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"set sbmu:hold:1001 1122 2222 3333 44 ",       "desc": "set data for rack 0",                 "data":[1122,2222,3333,44]},
+                            {"action":"set sbmu:hold:500 1 ",                        "desc": "select rack 1",                       "data":[1]},
+                            {"action":"set sbmu:hold:1001 122 222 333 55 ",          "desc": "set data for rack 1",                 "data":[122,222,333,55]},
+                            {"action":"set sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"pause:300",                                     "desc": "wait a bit getmb sbmu:hold:1001 4 fails",    "data":[]},
+                            {"action":"get rtos:sm16:0:0x2000 4",                      "desc": "sm16 test data for rack 0",           "data":[1122,2222,3333,44]},
+                            {"action":"get rtos:sm16:1:0x2000 4",                      "desc": "sm16 test data for rack 1",                "data":[122,222,333,55]},
+                            {"action":"set sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"set sbmu:hold:1001 1144 2244 3344 66 ",       "desc": "set data for rack 0",                 "data":[1144,2244,3344,66]},
+                            {"action":"set sbmu:hold:500 1 ",                        "desc": "select rack 1",                       "data":[1]},
+                            {"action":"set sbmu:hold:1001 144 244 344 77 ",          "desc": "set data for rack 1",                 "data":[144,244,344,77]},
+                            {"action":"set sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"pause:300",                                      "desc": "wait a bit for the system to scan",    "data":[]},
+                            {"action":"get rtos:sm16:0:0x2000 4",                      "desc": "sm16 test data for rack 0",           "data":[1144,2244,3344,66]},
+                            {"action":"get rtos:sm16:1:0x2000 4",                      "desc": "test data for rack 1",                "data":[144,244,344,77]},
+
+                            {"action":"set sbmu:hold:500 1 ",                        "desc": "select rack 0",                       "data":[1]},
+                            {"action":"get sbmu:hold:1001 4",                        "desc": "set data for rack 0",                 "data":[122,222,333,55]},
+                            {"action":"set sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"get sbmu:hold:1001 4 ",                       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]}
+                    ]
+                },
+                {
+                    "test": "sbmuhold_1", 
+                    "name": "sbmuhold_1", 
+                    "cat": "sbmu_hold",
+                    "desc": " test the rack select (500) for sbmu  use events when online  ",
+                    "notes":"  test single and multiple register writes",
+                    "notes1":"getmb sbmu:hold:1001 4 TODO this fails  after the first pause but the data is in the target",
+                    "items":[
+                            {"action":"setmb sbmu:hold:535 0 ",                        "desc": "reset rack overrides",                 "data":[0]},
+                            {"action":"setmb sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"setmb sbmu:hold:1001 1122 2222 3333 44 ",       "desc": "set data for rack 0",                 "data":[1122,2222,3333,44]},
+                            {"action":"setmb sbmu:hold:500 1 ",                        "desc": "select rack 1",                       "data":[1]},
+                            {"action":"setmb sbmu:hold:1001 122 222 333 55 ",          "desc": "set data for rack 1",                 "data":[122,222,333,55]},
+                            {"action":"setmb sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"pause:300",                                     "desc": "wait a bit getmb sbmu:hold:1001 4 fails",    "data":[]},
+                            {"action":"get rtos:sm16:0:0x2000 4",                      "desc": "sm16 test data for rack 0",           "data":[1122,2222,3333,44]},
+                            {"action":"get rtos:sm16:1:0x2000 4",                      "desc": "sm16 test data for rack 1",                "data":[122,222,333,55]},
+                            {"action":"setmb sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"setmb sbmu:hold:1001 1144 2244 3344 66 ",       "desc": "set data for rack 0",                 "data":[1144,2244,3344,66]},
+                            {"action":"setmb sbmu:hold:500 1 ",                        "desc": "select rack 1",                       "data":[1]},
+                            {"action":"setmb sbmu:hold:1001 144 244 344 77 ",          "desc": "set data for rack 1",                 "data":[144,244,344,77]},
+                            {"action":"setmb sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"pause:300",                                      "desc": "wait a bit for the system to scan",    "data":[]},
+                            {"action":"get rtos:sm16:0:0x2000 4",                      "desc": "sm16 test data for rack 0",           "data":[1144,2244,3344,66]},
+                            {"action":"get rtos:sm16:1:0x2000 4",                      "desc": "test data for rack 1",                "data":[144,244,344,77]},
+
+                            {"action":"setmb sbmu:hold:500 1 ",                        "desc": "select rack 0",                       "data":[1]},
+                            {"action":"getmb sbmu:hold:1001 4",                        "desc": "set data for rack 0",                 "data":[122,222,333,55]},
+                            {"action":"setmb sbmu:hold:500 0 ",                        "desc": "select rack 0",                       "data":[0]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"pause:500",                                     "desc": "wait a bit for the system to scan",    "data":[]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"setmb sbmu:hold:1001 2122 3222 4333 11 ",       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]},
+                            {"action":"getmb sbmu:hold:1001 4 ",                       "desc": "set data for rack 0",                 "data":[2122,3222,4333,11]}
+                    ]
+                },
+                {
+                "test": "mbgets", 
+                "name": "mbgets", 
+                "desc": "multiple modbus gets ",
+                "items":[
+         
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]},
+                    {"action":"run mbget",    "desc": " mbget ",                    "cat":"rack.test1",           "data":[]}
+
+                ]
+            } ,
+            {
+                "test": "closeracks", 
+                "name": "closeracks", 
+                "desc": "close all racks and monitor state ",
+                "items":[
+                {"action":"setmb sbmu:hold:536 2", "desc": "close all racks with debug",            "data":[2]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:0:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:0:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:0:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:0:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:0:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:0:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:0:state",  "desc": "get rack state",            "data":[160]}
+                ]
+            },
+            {
+                "test": "openracks", 
+                "name": "openracks", 
+                "desc": "open all racks and monitor state ",
+                "items":[
+                {"action":"get rtos:hold:6:gpio_do_read",  "desc": "get rack dio",            "data":[160]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]},
+                {"action":"setmb sbmu:hold:537 2", "desc": "open all racks with debug",            "data":[2]},
+                {"action":"pause:1000", "desc": "wait a bit",                                       "data":[]},
+                {"action":"get rtos:input:5:state",  "desc": "get rack state",            "data":[160]}
+                ]
+
+            },
+            {
+                "test": "r0open", 
+                "name": "r0open", 
+                "desc": "open rack 0 ",
+                "note0": "get rtos:hold:0:gpio_do_read gets the state of rack 0 relays",
+                "note1": "setmb  sbmu:hold:538 0  tries to close rack 0",
+                "note2": "setmb  sbmu:hold:539 0  tries to open rack 0 gets already open ",
+                "note3": "set rtos:hold:0:101 45 does create an event  ",
+                "note4": "set rtos:hold:0:99 4 does create an event  ",
+                "note5": "setmb sbmu:hold:539 0 sends open rack to sbmu modbus no events detected",
+                "items":[
+                {"action":"get rtos:hold:0:gpio_do_read",      "desc": "get rack 0  dio",               "data":[133]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"setmb sbmu:hold:539 0",             "desc": "rack 0 ",                       "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[133]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[133]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[133]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[133]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[133]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:500",                         "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:1000",                        "desc": "wait a bit",                    "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                   "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]}
+                ]
+
+            },
+            {
+                "test": "r0close", 
+                "name": "r0close", 
+                "desc": "close rack 0 ",
+                "note0": "get rtos:hold:0:gpio_do_read gets the state of rack 0 relays",
+                "note1": "setmb  sbmu:hold:538 0  tries to close rack 0",
+                "note2": "setmb  sbmu:hold:539 0  tries to open rack 0 gets already open ",
+                "note3": "set rtos:hold:0:101 45 does create an event  ",
+                "note4": "set rtos:hold:0:99 4 does create an event  ",
+                "note5": "setmb sbmu:hold:539 0 sends open rack to sbmu modbus no events detected",
+                "items":[
+                {"action":"get rtos:hold:0:gpio_do_read",      "desc": "get rack 0  dio",               "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"setmb sbmu:hold:538 0",             "desc": "rack 0 ",                       "data":[0]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:2500",                         "desc": "wait a bit",                   "data":[1]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[0]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:2500",                        "desc": "wait a bit",                    "data":[1]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[4]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:2500",                        "desc": "wait a bit",                    "data":[1]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[6]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:1500",                        "desc": "wait a bit more",                "data":[1]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[7]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]},
+                {"action":"pause:2500",                        "desc": "wait a bit more",                "data":[1]},
+                {"action":"get rtos:hold:0:gpio_do_read",     "desc": "get rack do",                    "data":[133]},
+                {"action":"get rtos:input:0:state",            "desc": "get rack state",                "data":[10]}
+                ]
+
+            },
+
+            {
+                "test": "mbget", 
+                "name": "mbget", 
+                "desc": "multiple modbus gets ",
+                "items":[
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]},
+                {"action":"getmb sbmu:input:21143 2", "desc": "get acc_charge_cap mb ",                                       "data":[2, 26281]},
+                {"action":"getmb sbmu:input:21145 2", "desc": "get acc_discharge_cap mb ",                                    "data":[2, 19827]}
+            ]
+
+        },
+        {
+            "test": "offline", 
+            "name": "offline", 
+            "desc": "turn all racks offline",
+            "items":[
+                    {"action":"setmb sbmu:hold:535 0 ",        "desc": " reset rack overrides",    "data":[0]},
+                    {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197, 0, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197, 1, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197, 2, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197, 3, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197, 4, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197, 5, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197, 6, 1, 1]},
+                    {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197, 7, 1, 1]}
+                    
+                ]
+            },
+            {
+            "test": "online", 
+            "name": "online", 
+            "desc": "turn all racks offline",
+            "items":[
+                    {"action":"setmb sbmu:hold:531 65197 0 0 0",  "desc": " force rack 0 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 1 0 0",  "desc": " force rack 1 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 2 0 o",  "desc": " force rack 2 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 3 0 0",  "desc": " force rack 3 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 4 0 0",  "desc": " force rack 4 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 5 0 0",  "desc": " force rack 5 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 6 0 0",  "desc": " force rack 6 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:531 65197 7 0 0",  "desc": " force rack 7 online noupdates",    "data":[]},
+                    {"action":"setmb sbmu:hold:535 0 ",           "desc": " reset rack overrides",              "data":[0]}                    
+                ]
+            },
+            {
+        "test": "test1", 
+        "name": "test1", 
+        "desc": "tests that the rack select on hold:500 allows writes to the other racks", 
+        "items":[
+                {"action":"setmb sbmu:hold:500 7",             "desc": " select rack 7               ",    "data":[7]},
+                {"action":"getmb sbmu:hold:500 1",            "desc": " check that we got rack 7     ",       "data":[7]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[65197,0,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[65197,1,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[65197,2,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[65197,3,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[65197,4,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[65197,5,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[65197,6,1,1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[65197,7,1,1]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": "read num_racks_online        ",    "data":[]},
+ 
+                {"action":"pause:500",                               "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",                   "desc": "read num_racks_online",    "data":[8]},
+ 
+                {"action":"setmb sbmu:hold:1001 1701 1702 1703",    "desc": " write  data to rack 7         ",    "data":[1701, 1702, 1703]},
+                {"action":"setmb sbmu:hold:500 6",                  "desc": " select rack 6 via 500         ",    "data":[6]},
+                {"action":"setmb sbmu:hold:1001 1601 1602 1603",    "desc": " write data to rack 6 via 1000 ",    "data":[1601,1602,1603]},
+                {"action":"getmb sbmu:hold:1001 3",                 "desc": " read read rack 6 from 1000    ",    "data":[1601, 1602,1603]},
+                {"action":"setmb sbmu:hold:500 7",                  "desc": " select rack 7                 ",    "data":[7]},
+                {"action":"getmb sbmu:hold:1001 3",                 "desc": " read rack 7                   ",    "data":[1701, 1702,1703]},
+                {"action":"getmb sbmu:hold:8001 3",                 "desc": " read rack 6 via 8000          ",    "data":[1601, 1602, 1603]},
+                {"action":"getmb sbmu:hold:9001 3",                 "desc": " read rack 7 via 9000          ",    "data":[1701, 1702, 1703]},
+                {"action":"setmb sbmu:hold:531 65197 7 0 0",         "desc": "force rack 7 offline          ",    "data":[65197,7,0,0]},
+                {"action":"setmb sbmu:hold:535 0",                   "desc": "clear force                    ",    "data":[0]}
+
+            ]
+    },
+    {
+        "test": "second", 
+        "name": "second", 
+        "items":[
+                {"action":"setmb sbmu:hold:500 7",           "desc": " setmb sbmu:hold:501 to 7",    "data":[7]},
+                {"action":"getmb sbmu:hold:500 1",                         "desc": " getmb sbmu:hold:501 4",       "data":[7]},
+                {"action":"setmb sbmu:hold:531 65197 0 1 1",  "desc": " force rack 0 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 1 1 1",  "desc": " force rack 1 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 2 1 1",  "desc": " force rack 2 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 3 1 1",  "desc": " force rack 3 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 4 1 1",  "desc": " force rack 4 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 5 1 1",  "desc": " force rack 5 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 6 1 1",  "desc": " force rack 6 online noupdates",    "data":[1]},
+                {"action":"setmb sbmu:hold:531 65197 7 1 1",  "desc": " force rack 7 online noupdates",    "data":[1]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+                {"action":"setmb sbmu:hold:531 65197 7 0 1",  "desc": " force rack 7 offline noupdates",    "data":[1]},
+ 
+                {"action":"pause:500",                       "desc": " pause",    "data":[]},
+                {"action":"getmb sbmu:hold:608 1",             "desc": " read num_racks_online",    "data":[8]},
+ 
+                {"action":"getmb sbmu:hold:1001 3",          "desc": " read total overvoltage rack 7",    "data":[]},
+                {"action":"setmb sbmu:hold:1001 1345 1355 1365",    "desc": " set total overvoltage rack 7",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:hold:1001 3",          "desc": " read total overvoltage rack 7",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:hold:8001 3",          "desc": " read r6 direct total overvoltage rack 6",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:hold:9001 3",          "desc": " read r7 direct total overvoltage rack 7",    "data":[1345, 1355, 1365]},
+                {"action":"getmb sbmu:input:23191 10",       "desc": " read r7 direct cell  voltage rack 7",    "data":[]},
+                {"action":"get rtos:input:7:21 10",           "desc": " read r7 direct inputs",    "data":[]},
+                {"action":"set rtos:input:7:21 10",           "desc": " let rack 0 take over",    "data":[]},
+                {"action":"pause:500",                       "desc": " let rack 0 take over",    "data":[]},
+                {"action":"set rtos:input:7:21 4456",         "desc": " let rack 7 take over",    "data":[]},
+                {"action":"setmb sbmu:hold:535 0",           "desc": " clear force",    "data":[1]}
+
+            ]
+    },
+    {
+        "test": "Initial Test", 
+        "name": "Initial Test", 
+        "items":[
+                {"action":"setmb sbmu:hold:501 251 252 253 254",           "desc": " setmb sbmu:hold:501 to 2",    "data":[251,252,253,254]},
+                {"action":"getmb sbmu:hold:501 4",                         "desc": " getmb sbmu:hold:501 4",       "data":[251,252,253,254]},
+                {"action":"setmb sbmu:hold:2052 1251 1252 1253 1254",      "desc":" setmb sbmu:hold:2052",         "data":[1251,1252,1253,1254]},
+                {"action":"getmb sbmu:hold:2052 4",                        "desc":" getmb sbmu:hold:2052",         "data":[1251,1252,1253,1254]},
+                {"note":"set get rack 1 direct"},
+                {"action":"setmb sbmu:hold:3052 2251 2252 2253 2254",      "desc":" setmb sbmu:hold:3052",         "data":[2251,2252,2253,2254]},
+                {"action":"getmb sbmu:hold:3052 4",                        "desc":" getmb sbmu:hold:3052",         "data":[2251,2252,2253,2254]},
+                {"note":" set get rack 12 direct"},
+                {"action":"setmb sbmu:hold:13052 12251 12252 12253 12254", "desc":" setmb sbmu:hold:13052",        "data":[12251,12252,12253,12254]},
+                {"action":"getmb sbmu:hold:13052 4",                       "desc":" getmb sbmu:hold:13052",        "data":[12251,12252,12253,12254]},
+                {"note":"check rack 0 access "},
+                {"action":"setmb sbmu:hold:500 0 ",                        "desc":" setmb sbmu:hold:500 to 0",     "data":[0]},
+                {"action":"getmb sbmu:hold:500 1 ",                        "desc":" getmb sbmu:hold:500 1",        "data":[0]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",         "data":[1251,1252,1253,1254]},
+
+                {"note":"check rack 1 access gets "},
+                {"action":"setmb sbmu:hold:500 1 ",                        "desc":" setmb sbmu:hold:500 to 0",     "data":[1]},
+                {"action":"getmb sbmu:hold:500 1 ",                        "desc":" getmb sbmu:hold:500 1",        "data":[1]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",         "data":[2251,2252,2253,2254]},
+
+                {"action":"setmb sbmu:hold:1052 2251 2252 2253 2254",      "desc":" setmb sbmu:hold:1052",          "data":[2251,2252,2253,2254]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",          "data":[2251,2252,2253,2254]},
+
+                {"note":"set rack 2 but read 1052"},
+                {"action":"setmb sbmu:hold:3052 3251 3252 3253 3254",      "desc":" setmb sbmu:hold:1052",          "data":[3251,3252,3253,3254]},
+                {"action":"getmb sbmu:hold:1052 4",                        "desc":" getmb sbmu:hold:1052",          "data":[3251,3252,3253,3254]},
+
+                {"action":"setmb sbmu:hold:510 48233",                     "desc":" setmb sbmu:hold:510 to 48223",  "data":[48233]},
+                {"action":"getmb sbmu:hold:510 1",                         "desc":" getmb sbmu:hold:510 ",          "data":[48233]},
+                {"note":"push an event set rack to 5"},
+                {"action":"setmb sbmu:hold:500 5 ",                        "desc":" setmb sbmu:hold:500 to 5",      "data":[5]},
+                {"action":"setmb sbmu:hold:1002 34233",                    "desc":" setmb sbmu:hold:1002 to 34233", "data":[34233]}
+            ]
+    }
+]

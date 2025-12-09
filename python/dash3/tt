@@ -1,0 +1,15 @@
+curl -X POST 'http://192.168.86.51:8902/api/access-paths'   -H "Content-Type: application/json"   -d '{
+    "reference": {
+      "table": "oper:sbmu:input",
+      "offset": 100,
+      "size": 2,
+      "num": 1
+    },
+    
+
+  "access_type": "modbus",
+  "read_only": false,
+  "priority": 10,
+  "type": "sbmu",
+  "variable_name": "soc"
+}'

@@ -1,0 +1,23 @@
+/home/phil/work/aicode/python/dash3/main_fixed.py:33: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/home/phil/work/aicode/python/dash3/main_fixed.py:42: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+INFO:     Started server process [414349]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+🚀 Frontend server starting on http://0.0.0.0:8081
+📊 DB server at http://localhost:8084
+📋 Variable registry at http://localhost:8902
+✅ HTTP clients initialized
+INFO:     127.0.0.1:41202 - "GET / HTTP/1.1" 200 OK

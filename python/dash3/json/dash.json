@@ -1,0 +1,103 @@
+{
+    "tabs": [
+      {"id": "profile", "title": "Profile"},
+      {"id": "overview", "title": "Overview"},
+      {"id": "controls", "title": "Controls"},
+      {"id": "values",   "title": "Values"},
+      {"id": "vals",     "title": "System"},
+      {"id": "cells",    "title": "Cells"}
+    ],
+    "grid": {"cols": 12, "gap": 10, "rowHeight": 90},
+    "widgets": [
+      { "type": "profile_control", "title": "Select Profiles", "tab": "profile"},
+      {"id": "metrics1", "type": "table", "title": "Rack Communications", "tab": "overview", "pos": {"row":1,"col":1,"w":12,"h":4}},
+      {"id": "protections", "type": "protections", "title": "Alarm Protections", "tab": "overview", 
+        "pos": {"row":5,"col":1,"w":12,"h":4},
+        "config": {
+          "show_disabled": true,
+          "highlight_active_alarms": true,
+          "allow_edit": true
+        }
+      },
+      {"id": "line1",    "type": "line",  "title": "Rack Volts", "tab": "overview", "pos": {"row":9,"col":1,"w":4,"h":2},
+        "series": [{"name":"mbps","windowSec":600}]},
+      {"id": "line2",    "type": "line",  "title": "Rack Temp", "tab": "overview", "pos": {"row":9,"col":5,"w":4,"h":2},
+        "series": [{"name":"mbps","windowSec":600}]},
+      {"id": "dial1",    "type": "dial",  "title": "CPU %", "tab": "overview", "pos": {"row":9,"col":9,"w":2,"h":2},
+        "series": [{"name":"cpu","windowSec":60}], "opts": {"min":0, "max":100}},
+      {"id": "config_edit", "type": "vartable", "title": "System Config", "tab": "overview",
+        "pos": {"row":11,"col":1,"w":12,"h":4},
+        "names": ["username","mode","gain","threshold","phase","enabled","status", "test1", "test2"],
+        "rack": 0},
+      {"id": "config_limits", "type": "vartable", "title": "System Limits", "tab": "overview",
+        "pos": {"row":15,"col":1,"w":12,"h":4},
+        "names": ["MaxVolts","MinVolts","MaxTemp","MinTemp","MaxChargePower","MaxDischargePower","Capacity"],
+        "rack": 0},
+      {"id": "cells1", "type": "indexgrid", "title": "Cell Data", "tab": "cells",
+        "pos": {"row":1,"col":1,"w":12,"h":6},
+        "opts": {
+          "totalItems": 480,
+          "itemsPerBlock": 100,
+          "indexLabel": "Cell #"
+        },
+        "series": [
+          {"name": "cell_volts", "label": "Volts", "unit": "V"},
+          {"name": "cell_temp",  "label": "Temp",  "unit": "°C"},
+          {"name": "cell_soc",   "label": "SOC",   "unit": "%"},
+          {"name": "cell_soh",   "label": "SOH",   "unit": "%"}
+        ]
+      },
+      {"id": "variables-widget", "type": "VariablesWidget", "title": "System Variables", "tab": "vals",
+        "pos": {"row":1,"col":1,"w":12,"h":8},
+        "xseries": [
+          {"name": "terminal_volts", "label": "Volts", "unit": "V"},
+          {"name": "terminal_temp",  "label": "Temp",  "unit": "°C"},
+          {"name": "system_soc",   "label": "SOC",   "unit": "%"},
+          {"name": "system_soh",   "label": "SOH",   "unit": "%"}
+        ]
+      }
+    ],
+    "controls": {
+      "layout": {"cols": 12, "gap": 10, "rowHeight": 90},
+      "cards": [
+        {"title": "Text & Select", "pos": {"row":1,"col":1,"w":6,"h":3},
+         "elements": [
+           {"type":"text",   "id":"username", "label":"User Name", "placeholder":"admin"},
+           {"type":"select", "id":"mode", "label":"Mode", "options":[{"label":"Online","value":"online"},{"label":"Offline","value":"offline"}]}
+         ],
+         "readbacks": [
+           {"id":"status", "label":"Status"},
+           {"id":"Alarms", "label":"Alarms"}
+         ]
+        },
+        {"title": "Sliders & Knob", "pos": {"row":1,"col":7,"w":6,"h":3},
+         "elements": [
+           {"type":"slider", "id":"gain", "label":"Gain", "min":0, "max":100, "step":1, "default":50},
+           {"type":"slider", "id":"threshold", "label":"Threshold", "min":-50, "max":50, "step":1, "default":0},
+           {"type":"knob",   "id":"current_limit", "label":"Current_Limit", "min":0, "max":360, "step":5, "default":240}
+         ]
+        },
+        {"title": "System Controls", "pos": {"row":4,"col":1,"w":5,"h":2},
+         "elements": [
+           {"type":"checkbox", "id":"enabled", "label":"Enabled", "default": true},
+           {"type":"checkbox", "id":"positive_contactor", "label":"Positive_Contactor", "action":"close_positive","default": false},
+           {"type":"checkbox", "id":"negative_contactor", "label":"Negative_Contactor", "action":"close_negative","default": false},
+           {"type":"button",   "id":"apply", "label":"Apply", "action":"set_state", "fields":["username","mode","gain","threshold","phase","enabled"]},
+           {"type":"action",   "id":"ping",  "label":"Ping", "action":"button", "name":"ping"}
+         ]
+        },
+        {"title": "Rack Controls", "pos": {"row":4,"col":6,"w":5,"h":2},
+         "elements": [
+           {"type":"checkbox", "id":"enabled", "label":"Enabled", "default": true},
+           {"type":"checkbox", "id":"positive_contactor", "label":"Positive_Contactor", "action":"close_positive","default": false},
+           {"type":"checkbox", "id":"negative_contactor", "label":"Negative_Contactor", "action":"close_negative","default": false},
+           {"type":"button",   "id":"apply", "label":"Apply", "action":"set_state", "fields":["username","mode","gain","threshold","phase","enabled"]}
+         ]
+        }
+      ]
+    },
+    "values": {
+      "columns": ["name","value","readback"],
+      "fields": ["username","mode","gain","threshold","phase","enabled","status"]
+    }
+  }
