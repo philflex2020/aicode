@@ -1,0 +1,2 @@
+alarm_num,alarm_name,num_levels,measured_variable,limits_structure,comparison_type,alarm_variable,latched_variable,notes
+1,Cell Voltage Too High,3,sbmu:input:Max_cell_temp,rtos:hold:at_cell_voltage_high,greater_than,rtos:bits:cell_voltage_high,rtos:bits:cell_voltage_high_latch,some notes

@@ -1,0 +1,7 @@
+limits_structure,alarm_name,level1_limit,level2_limit,level3_limit,hysteresis,last_updated,notes
+rtos:hold:at_cell_soc_low,Cell SOC Too Low,0,0,0,0,2025-12-14T20:38:10.599264,
+rtos:hold:at_cell_temp_high,Cell Temp Too High,0,0,0,0,2025-12-14T20:38:10.599165,
+rtos:hold:at_cell_temp_low,Cell Temp Too Low,0,0,0,0,2025-12-14T20:38:10.599198,
+rtos:hold:at_cell_temp_under,N/A,0,0,0,0,2025-12-14T20:38:10.599241,
+rtos:hold:at_cell_voltage_high,Cell Voltage Too High,0,0,0,0,2025-12-14T20:38:10.599054,
+rtos:hold:at_cell_voltage_low,Cell Voltage Too Low,0,0,0,0,2025-12-14T20:38:10.599126,

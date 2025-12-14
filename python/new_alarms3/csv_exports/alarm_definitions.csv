@@ -1,0 +1,6 @@
+alarm_num,alarm_name,num_levels,measured_variable,limits_structure,comparison_type,alarm_variable,latched_variable,notes
+0,Cell Voltage Too Low,3,sbmu:input:Min_cell_temp,rtos:hold:at_cell_voltage_low,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+1,Cell Voltage Too High,1,sbmu:input:Max_cell_temp,rtos:hold:at_cell_voltage_high,greater_than,rtos:bits:cell_voltage_high,,
+2,Cell Temp Too High,3,,rtos:hold:at_cell_temp_high,greater_than,rtos:bits:cell_temp_high,,
+3,Cell Temp Too Low,3,,rtos:hold:at_cell_temp_low,greater_than,rtos:bits:cell_temp_low,,
+4,Cell SOC Too Low,3,,rtos:hold:at_cell_soc_low,greater_than,rtos:bits:cell_soc_low,,
