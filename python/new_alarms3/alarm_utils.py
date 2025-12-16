@@ -218,6 +218,51 @@ def load_data_defs_from_json(json_path, verbose=True):
         print(f"   Tables processed: {total_tables}")
         print(f"   Items created: {total_items}")
 
+
+VALID_COMPARISON_TYPES = {
+    'greater_than',
+    'less_than',
+    'equal',
+    'not_equal',
+    'greater_or_equal',
+    'less_or_equal',
+}
+
+def normalize_comparison_type(value, default='greater_than'):
+    """
+    Normalize comparison_type to one of the allowed values.
+    Accepts some common variants and falls back to default if invalid/empty.
+    """
+    if not value:
+        return default
+
+    v = str(value).strip().lower()
+
+    # direct matches
+    if v in VALID_COMPARISON_TYPES:
+        return v
+
+    # aliases / shorthand
+    aliases = {
+        'gt': 'greater_than',
+        '>': 'greater_than',
+        'lt': 'less_than',
+        '<': 'less_than',
+        'eq': 'equal',
+        '==': 'equal',
+        '!=': 'not_equal',
+        '<>': 'not_equal',
+        'ge': 'greater_or_equal',
+        '>=': 'greater_or_equal',
+        'le': 'less_or_equal',
+        '<=': 'less_or_equal',
+    }
+    if v in aliases:
+        return aliases[v]
+
+    # last resort: default
+    return default
+
 # def load_data_defs_from_json(json_path, verbose=True):
 #     """
 #     Load DataDefinition rows from a JSON file structured as:

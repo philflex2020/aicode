@@ -11,6 +11,7 @@ from alarm_utils import (
     export_alarm_level_actions_to_csv,
     export_limits_values_to_csv,
     ensure_all_alarms_have_records,
+    normalize_comparison_type,
     CSV_ALARM_DEF_FILE
 )
 
@@ -23,7 +24,11 @@ alarm_def_model = ns.model('AlarmDefinition', {
     'num_levels': fields.Integer(required=True, description='Number of alarm levels (1-3)'),
     'measured_variable': fields.String(description='Measured variable reference'),
     'limits_structure': fields.String(description='Limits structure reference'),
-    'comparison_type': fields.String(description='Comparison type (greater_than, less_than, etc.)'),
+    'comparison_type': fields.String(
+        description='Comparison type',
+        enum=['greater_than', 'less_than', 'equal', 'not_equal', 'greater_or_equal', 'less_or_equal'],
+        default='greater_than'
+    ),
     'alarm_variable': fields.String(description='Alarm variable reference'),
     'latched_variable': fields.String(description='Latched variable reference'),
     'notes': fields.String(description='Notes'),

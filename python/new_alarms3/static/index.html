@@ -100,6 +100,56 @@
         td[contenteditable="true"] {
             background: #fffef0;
         }
+        td[contentselect="true"] {
+            background: #fffef0;
+        }
+        td select {
+            width: 100%; /* Make select fill the cell */
+            padding: 0; /* Remove default padding */
+            margin: 0; /* Remove default margin */
+            border: none; /* Remove default border */
+            background-color: transparent; /*fffef0; /* Match cell background */
+            font-family: inherit; /* Inherit font from table */
+            font-size: inherit; /* Inherit font size from table */
+            color: inherit;
+            line-height: inherit;
+            -webkit-appearance: none; /* Remove default browser styling for Webkit */
+            -moz-appearance: none;    /* Remove default browser styling for Mozilla */
+            appearance: none;         /* Remove default browser styling */
+            cursor: pointer;
+            box-sizing: border-box;
+            /* Add a custom arrow if you want, otherwise it might look like a plain text field */
+            /* background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2C197.9L146.2%2C57.1L5.4%2C197.9h281.6z%22%2F%3E%3C%2Fsvg%3E'); */
+            /* background-repeat: no-repeat; */
+            /* background-position: right 8px center; */
+            /* background-size: 12px; */
+        }
+        td select:focus {
+            outline: none; /* Remove default focus outline */
+            box-shadow: none; /*0 0 0 2px rgba(1, 8, 2, 0.25); /* Custom focus style */
+        }
+        * Visual cue for selectable/dropdown cells */
+        td.selectable-cell {
+            position: relative;
+            padding-right: 16px; /* room for arrow */
+            cursor: pointer;     /* indicate clickable */
+        }
+
+        /* Small arrow in the corner */
+        td.selectable-cell::after {
+            content: "▼";
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 9px;
+            color: #888;
+            pointer-events: none; /* click passes through to cell */
+        }
+        /* On hover, make cue slightly darker */
+        td.selectable-cell:hover::after {
+            color: #333;
+        }
         td.action-cell {
             text-align: center;
         }
@@ -222,6 +272,47 @@
 <script>
 const apiBase = location.origin + '/api/alarms';
 
+const COMPARISON_OPTIONS = [
+    'greater_than',
+    'less_than',
+    'equal',
+    'not_equal',
+    'greater_or_equal',
+    'less_or_equal',
+    'aggregate'
+];
+
+function makeComparisonTypeEditable(td) {
+    // If already editing, don’t re-enter
+    if (td.querySelector('select')) return;
+
+    const current = (td.textContent || '').trim() || 'greater_than';
+
+    const select = document.createElement('select');
+    COMPARISON_OPTIONS.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        if (opt === current) {
+            o.selected = true;
+        }
+        select.appendChild(o);
+    });
+
+    td.textContent = '';
+    td.appendChild(select);
+    select.focus();
+
+    const finalize = () => {
+        const value = select.value;
+        td.removeChild(select);
+        td.textContent = value;
+    };
+
+    select.addEventListener('blur', finalize);
+    select.addEventListener('change', finalize);
+}
+
 function setStatus(msg, isError = false) {
     const el = document.getElementById('statusText');
     el.textContent = msg;
@@ -250,7 +341,16 @@ function renderDefs(data) {
             td.textContent = row[col] ?? '';
             td.setAttribute('data-col', col);
             if (col !== 'alarm_num') {
-                td.setAttribute('contenteditable', 'true');
+                if (col === 'comparison_type') {
+                    // use dropdown editor
+                    td.classList.add('selectable-cell');   // <--- add this
+                    td.addEventListener('click', () => {
+                        makeComparisonTypeEditable(td);
+                    });
+                    td.setAttribute('contentselect', 'true');
+                } else {
+                    td.setAttribute('contenteditable', 'true');
+                }
             }
             tr.appendChild(td);
         });
