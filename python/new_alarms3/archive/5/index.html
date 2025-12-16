@@ -323,8 +323,6 @@
             <button onclick="reloadVarListOptions()">🔄 Refresh Lists</button>
             <button onclick="loadSelectedVarList()">📂 Load List</button>
             <button onclick="saveCurrentVarList()">💾 Save List</button>
-            <button onclick="getAllTargetVars()">📥 Get All</button>
-            <button onclick="setAllTargetVars()">📤 Set All</button>
         </div>
         <div class="tab-controls">
             <button onclick="addTargetVar()">➕ Add Variable</button>
@@ -865,92 +863,6 @@ async function setTargetData(tr) {
     }
 }
 
-// Get data from target for all rows in the table
-async function getAllTargetVars() {
-    const tbody = document.querySelector('#targetVarsTable tbody');
-    if (!tbody) return;
-    
-    const rows = tbody.querySelectorAll('tr');
-    if (rows.length === 0) {
-        setStatus('No variables to get.', true);
-        return;
-    }
-    
-    setStatus('Getting all variables (' + rows.length + ')...');
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const tr of rows) {
-        try {
-            await getTargetData(tr);
-            successCount++;
-        } catch (err) {
-            console.error('Error getting data for row:', err);
-            errorCount++;
-        }
-        // Small delay to avoid overwhelming the target
-        await new Promise(resolve => setTimeout(resolve, 50));
-    }
-    
-    setStatus(`Get All complete: ${successCount} success, ${errorCount} errors.`, errorCount > 0);
-}
-
-// Set data on target for all rows in the table (skip empty write_data)
-async function setAllTargetVars() {
-    const tbody = document.querySelector('#targetVarsTable tbody');
-    if (!tbody) return;
-    
-    const rows = tbody.querySelectorAll('tr');
-    if (rows.length === 0) {
-        setStatus('No variables to set.', true);
-        return;
-    }
-    
-    setStatus('Setting all variables with write_data...');
-    
-    let successCount = 0;
-    let errorCount = 0;
-    let skippedCount = 0;
-    
-    for (const tr of rows) {
-        const cells = tr.querySelectorAll('td[data-col]');
-        if (cells.length < 6) {
-            skippedCount++;
-            continue;
-        }
-        
-        const writeDataStr = cells[5].textContent.trim();
-        let writeDataArray;
-        
-        try {
-            writeDataArray = JSON.parse(writeDataStr);
-        } catch (e) {
-            console.warn('Invalid write_data JSON, skipping row');
-            skippedCount++;
-            continue;
-        }
-        
-        // Skip if write_data is empty array or not an array
-        if (!Array.isArray(writeDataArray) || writeDataArray.length === 0) {
-            skippedCount++;
-            continue;
-        }
-        
-        try {
-            await setTargetData(tr);
-            successCount++;
-        } catch (err) {
-            console.error('Error setting data for row:', err);
-            errorCount++;
-        }
-        
-        // Small delay to avoid overwhelming the target
-        await new Promise(resolve => setTimeout(resolve, 50));
-    }
-    
-    setStatus(`Set All complete: ${successCount} success, ${errorCount} errors, ${skippedCount} skipped (empty write_data).`, errorCount > 0);
-}
 // --- Variable list handling ---
 
 

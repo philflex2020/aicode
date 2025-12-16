@@ -18,9 +18,9 @@ from alarm_utils import (
 
 from target_client import TargetClient
 
-# ====
+# ==============================
 # Existing alarms namespace
-# ====
+# ==============================
 
 ns = Namespace('alarms', description='Alarm management operations')
 
@@ -90,19 +90,13 @@ target_set_model = ns.model('TargetSet', {
     'sm_name': fields.String(required=True),
     'reg_type': fields.String(required=True),
     'offset': fields.String(required=True),
-    'write_data': fields.List(fields.Integer, required=True, description='Data to write')
+    'data': fields.List(fields.Integer, required=True, description='Data to write')
 })
 
-target_get_response_model = ns.model('TargetGetResponse', {
+target_response_model = ns.model('TargetResponse', {
     'seq': fields.Integer,
     'offset': fields.Integer,
-    'read_data': fields.List(fields.Integer, description='Data read from target')
-})
-
-target_set_response_model = ns.model('TargetSetResponse', {
-    'seq': fields.Integer,
-    'offset': fields.Integer,
-    'written_data': fields.List(fields.Integer, description='Data written to target (echo)')
+    'data': fields.List(fields.Integer)
 })
 
 
@@ -182,12 +176,12 @@ class AlarmConfig(Resource):
                 num_levels = ad_data.get('num_levels', 1)
                 for level in range(1, num_levels + 1):
                     ala = AlarmLevelAction(
-                    alarm_num=ad.alarm_num,
-                    level=level,
-                    enabled=True,
-                    duration=0,
-                    actions='',
-                    notes=''
+                        alarm_num=ad.alarm_num,
+                        level=level,
+                        enabled=True,
+                        duration=0,
+                        actions='',
+                        notes=''
                     )
                     db.session.add(ala)
 
@@ -195,13 +189,13 @@ class AlarmConfig(Resource):
                 limits_structure = ad_data.get('limits_structure')
                 if limits_structure and limits_structure.strip() and limits_structure not in created_limits:
                     lv = LimitsValues(
-                    limits_structure=limits_structure,
-                    level1_limit=0,
-                    level2_limit=0,
-                    level3_limit=0,
-                    hysteresis=0,
-                    last_updated=datetime.utcnow().isoformat(),
-                    notes=''
+                        limits_structure=limits_structure,
+                        level1_limit=0,
+                        level2_limit=0,
+                        level3_limit=0,
+                        hysteresis=0,
+                        last_updated=datetime.utcnow().isoformat(),
+                        notes=''
                     )
                     db.session.add(lv)
                     created_limits.add(limits_structure)
@@ -267,7 +261,6 @@ class TargetConfig(Resource):
 class TargetGet(Resource):
     @ns.doc('get_target_data')
     @ns.expect(target_get_model)
-    @ns.marshal_with(target_get_response_model)
     def post(self):
         """Get data from target"""
         payload = ns.payload
@@ -283,7 +276,7 @@ class TargetGet(Resource):
             client = get_target_client()
             resp = client.get_data(sm_name, reg_type, offset, num)
             
-            return {'seq': resp.get('seq'), 'offset': resp.get('offset'), 'read_data': resp.get('data')}, 200
+            return resp, 200
 
         except Exception as e:
             return {'error': str(e)}, 500
@@ -293,22 +286,21 @@ class TargetGet(Resource):
 class TargetSet(Resource):
     @ns.doc('set_target_data')
     @ns.expect(target_set_model)
-    @ns.marshal_with(target_set_response_model)
     def post(self):
         """Set data on target"""
         payload = ns.payload
         sm_name = payload['sm_name']
         reg_type = payload['reg_type']
         offset_str = payload['offset']
-        write_data = payload['write_data']
+        data = payload['data']
 
         try:
             offset = resolve_offset(offset_str)
 
             client = get_target_client()
-            resp = client.set_data(sm_name, reg_type, offset, write_data)
+            resp = client.set_data(sm_name, reg_type, offset, data)
             
-            return {'seq': resp.get('seq'), 'offset': resp.get('offset'), 'written_data': resp.get('data')}, 200
+            return resp, 200
 
         except Exception as e:
             return {'error': str(e)}, 500
@@ -395,41 +387,6 @@ def resolve_offset(offset_str):
     Resolve offset from string:
     - If hex (0x...), return int
     - If decimal, return int
-    - Otherwise, look up in data_definitions table by name
-    """
-    offset_str = str(offset_str).strip()
-    
-    # Try hex
-    if offset_str.startswith("0x") or offset_str.startswith("0X"):
-        try:
-            return int(offset_str, 16)
-        except ValueError:
-            raise ValueError(f"Invalid hex offset: {offset_str}")
-    
-    # Try decimal
-    try:
-        return int(offset_str)
-    except ValueError:
-        pass
-    
-    # Look up in data_definitions by name
-    try:
-        dd = DataDefinition.query.filter_by(item_name=offset_str).first()
-        if dd and dd.offset is not None:
-            print(f"[resolve_offset] Resolved '{offset_str}' -> {dd.offset} from DataDefinition")
-            return dd.offset
-    except Exception as e:
-        print(f"[resolve_offset] Error querying DataDefinition: {e}")
-    
-    # If all else fails, raise error
-    raise ValueError(f"Cannot resolve offset '{offset_str}': not a number, not hex, and not found in data_definitions table")
-
-
-def xresolve_offset(offset_str):
-    """
-    Resolve offset from string:
-    - If hex (0x...), return int
-    - If decimal, return int
     - Otherwise, look up in data_definitions table
     """
     # Try hex
@@ -441,17 +398,17 @@ def xresolve_offset(offset_str):
     except ValueError:
         pass
     # Look up in data_definitions
-    dd = DataDefinition.query.filter_by(name=offset_str).first()
+    dd = DataDefinition.query.filter_by(item_name=offset_str).first()
     if dd and dd.offset is not None:
         return dd.offset
     raise ValueError(f"Cannot resolve offset: {offset_str}")
 
 
 
-# ====
+# ==============================
 # NEW: pub_defs namespace
 # Simple file-based pub_definition.json handling
-# ====
+# ==============================
 
 pub_ns = Namespace('pub_defs', description='Publication definition operations')
 
@@ -508,67 +465,6 @@ class SavePubDefinition(Resource):
         except Exception as e:
             return {'message': f'Error saving publication definition: {str(e)}'}, 500
 
-# NEW: simple listing of available variable list files from var_lists/
-@pub_ns.route('/list')
-class ListPubDefinitions(Resource):
-    @pub_ns.doc('list_pub_definitions')
-    def get(self):
-        """
-        List available publication/variable list JSON files in the var_lists directory.
-        """
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        var_list_dir = os.path.join(base_dir, 'var_lists')
-
-        try:
-            if not os.path.isdir(var_list_dir):
-                return {'files': [], 'directory': var_list_dir, 'message': 'Directory does not exist'}, 200
-
-            files = [
-                f for f in os.listdir(var_list_dir)
-                if f.lower().endswith('.json') and os.path.isfile(os.path.join(var_list_dir, f))
-            ]
-            return {'files': files, 'directory': var_list_dir}, 200
-
-        except Exception as e:
-            return {'message': f'Error listing var_lists: {str(e)}'}, 500
-
-
-# OPTIONAL: dedicated endpoint for loading a var list from var_lists/ (so you don't have to specify dir every time)
-load_var_list_model = pub_ns.model('LoadVarList', {
-    'file_name': fields.String(required=True, description='JSON variable list file (e.g., hithium_vars.json)')
-})
-
-@pub_ns.route('/load_var_list')
-class LoadVarList(Resource):
-    @pub_ns.doc('load_var_list')
-    @pub_ns.expect(load_var_list_model)
-    def post(self):
-        """
-        Load a variable list JSON from var_lists directory.
-        This is a convenience wrapper around /load with fixed directory = var_lists.
-        """
-        payload = request.get_json()
-        file_name = payload.get('file_name')
-        if not file_name:
-            return {'message': 'file_name is required'}, 400
-
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        directory = os.path.join(base_dir, 'var_lists')
-        file_path = os.path.join(directory, file_name)
-
-        try:
-            if not os.path.exists(file_path):
-                return {'message': f'File not found: {file_path}'}, 404
-
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-
-            return data, 200
-
-        except json.JSONDecodeError:
-            return {'message': f'Invalid JSON in file: {file_path}'}, 400
-        except Exception as e:
-            return {'message': f'Error loading var list: {str(e)}'}, 500
 
 @pub_ns.route('/load')
 class LoadPubDefinition(Resource):

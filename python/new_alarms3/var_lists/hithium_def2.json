@@ -1,0 +1,87 @@
+[
+    {
+        "table": "target_vars",
+        "items": [
+            {
+                "name": "online",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "online",
+                "num": 4,
+                "write_data": [
+                    2,
+                    3,
+                    4,
+                    5
+                ],
+                "read_data": []
+            },
+            {
+                "name": "comms",
+                "sm_name": "rtos",
+                "reg_type": "mb_input",
+                "offset": "rack_voltage",
+                "num": 4,
+                "write_data": [
+                    3,
+                    4,
+                    5
+                ],
+                "read_data": []
+            },
+            {
+                "name": "online",
+                "sm_name": "sbmu",
+                "reg_type": "sm16",
+                "offset": "0x4567",
+                "num": 4,
+                "write_data": [
+                    2,
+                    3,
+                    4,
+                    5
+                ],
+                "read_data": []
+            },
+            {
+                "name": "rtos:hold:alarm_limits",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "9",
+                "num": 4,
+                "write_data": [
+                    1,
+                    2,
+                    3
+                ],
+                "read_data": []
+            },
+            {
+                "name": "rtos:hold:alarm_limits",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "9",
+                "num": 4,
+                "write_data": [
+                    7,
+                    8,
+                    9
+                ],
+                "read_data": []
+            },
+            {
+                "name": "rtos:hold:alarm_limits",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "9",
+                "num": 4,
+                "write_data": [
+                    10,
+                    11,
+                    12
+                ],
+                "read_data": []
+            }
+        ]
+    }
+]

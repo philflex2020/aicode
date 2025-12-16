@@ -51,10 +51,8 @@ def create_app():
         bootstrap_databases(app)
 
     # Register API namespace
-    from api_endpoints import ns as alarm_namespace, pub_ns
-
+    from api_endpoints import ns as alarm_namespace
     api.add_namespace(alarm_namespace, path='/api/alarms')
-    api.add_namespace(pub_ns, path='/api/pub_defs')
 
     # Register web UI route(s)
     register_routes(app)

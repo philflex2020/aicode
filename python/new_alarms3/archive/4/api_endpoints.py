@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import request
 from flask_restx import Namespace, Resource, fields
 from extensions import db
-from alarm_models import AlarmDefinition, AlarmLevelAction, LimitsValues, DataDefinition
+from alarm_models import AlarmDefinition, AlarmLevelAction, LimitsValues
 from alarm_utils import (
     load_alarm_defs_from_csv,
     export_alarm_definitions_to_csv,
@@ -395,41 +395,6 @@ def resolve_offset(offset_str):
     Resolve offset from string:
     - If hex (0x...), return int
     - If decimal, return int
-    - Otherwise, look up in data_definitions table by name
-    """
-    offset_str = str(offset_str).strip()
-    
-    # Try hex
-    if offset_str.startswith("0x") or offset_str.startswith("0X"):
-        try:
-            return int(offset_str, 16)
-        except ValueError:
-            raise ValueError(f"Invalid hex offset: {offset_str}")
-    
-    # Try decimal
-    try:
-        return int(offset_str)
-    except ValueError:
-        pass
-    
-    # Look up in data_definitions by name
-    try:
-        dd = DataDefinition.query.filter_by(item_name=offset_str).first()
-        if dd and dd.offset is not None:
-            print(f"[resolve_offset] Resolved '{offset_str}' -> {dd.offset} from DataDefinition")
-            return dd.offset
-    except Exception as e:
-        print(f"[resolve_offset] Error querying DataDefinition: {e}")
-    
-    # If all else fails, raise error
-    raise ValueError(f"Cannot resolve offset '{offset_str}': not a number, not hex, and not found in data_definitions table")
-
-
-def xresolve_offset(offset_str):
-    """
-    Resolve offset from string:
-    - If hex (0x...), return int
-    - If decimal, return int
     - Otherwise, look up in data_definitions table
     """
     # Try hex
@@ -508,67 +473,6 @@ class SavePubDefinition(Resource):
         except Exception as e:
             return {'message': f'Error saving publication definition: {str(e)}'}, 500
 
-# NEW: simple listing of available variable list files from var_lists/
-@pub_ns.route('/list')
-class ListPubDefinitions(Resource):
-    @pub_ns.doc('list_pub_definitions')
-    def get(self):
-        """
-        List available publication/variable list JSON files in the var_lists directory.
-        """
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        var_list_dir = os.path.join(base_dir, 'var_lists')
-
-        try:
-            if not os.path.isdir(var_list_dir):
-                return {'files': [], 'directory': var_list_dir, 'message': 'Directory does not exist'}, 200
-
-            files = [
-                f for f in os.listdir(var_list_dir)
-                if f.lower().endswith('.json') and os.path.isfile(os.path.join(var_list_dir, f))
-            ]
-            return {'files': files, 'directory': var_list_dir}, 200
-
-        except Exception as e:
-            return {'message': f'Error listing var_lists: {str(e)}'}, 500
-
-
-# OPTIONAL: dedicated endpoint for loading a var list from var_lists/ (so you don't have to specify dir every time)
-load_var_list_model = pub_ns.model('LoadVarList', {
-    'file_name': fields.String(required=True, description='JSON variable list file (e.g., hithium_vars.json)')
-})
-
-@pub_ns.route('/load_var_list')
-class LoadVarList(Resource):
-    @pub_ns.doc('load_var_list')
-    @pub_ns.expect(load_var_list_model)
-    def post(self):
-        """
-        Load a variable list JSON from var_lists directory.
-        This is a convenience wrapper around /load with fixed directory = var_lists.
-        """
-        payload = request.get_json()
-        file_name = payload.get('file_name')
-        if not file_name:
-            return {'message': 'file_name is required'}, 400
-
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        directory = os.path.join(base_dir, 'var_lists')
-        file_path = os.path.join(directory, file_name)
-
-        try:
-            if not os.path.exists(file_path):
-                return {'message': f'File not found: {file_path}'}, 404
-
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-
-            return data, 200
-
-        except json.JSONDecodeError:
-            return {'message': f'Invalid JSON in file: {file_path}'}, 400
-        except Exception as e:
-            return {'message': f'Error loading var list: {str(e)}'}, 500
 
 @pub_ns.route('/load')
 class LoadPubDefinition(Resource):
