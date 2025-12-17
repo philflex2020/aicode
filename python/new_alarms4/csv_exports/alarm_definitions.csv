@@ -1,0 +1,148 @@
+alarm_num,alarm_name,num_levels,measured_variable,limits_structure,comparison_type,alarm_variable,latched_variable,notes
+0,Terminal Over Voltage,3,,rtos:hold:at_total_v_over,aggregate,sbmu:bits:summary_total_overvoltage,,voffset 32000
+1,Terminal Under Voltage,3,,rtos:hold:at_total_v_under,aggregate,sbmu:bits:summary_total_undervoltage,,"note swap , check this voffset 32000"
+2,Discharge Over Current,3,,rtos:hold:at_discharge_curr_over,aggregate,sbmu:bits:summary_overcurrent,,
+3,FastCharge Over Current,3,,rtos:hold:at_fast_charge_curr_over,aggregate,rtos:bits:cell_temp_low,,
+4,Insulation Low,3,,rtos:hold:at_insulation_resistance_under,greater_than,rtos:bits:cell_soc_low,,
+10,Single Charge Over Temp,3,,rtos:hold:at_single_charge_temp_over,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+11,Single Charge Under Temp,3,,rtos:hold:at_single_charge_temp_under,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+12,Single Over Voltage,3,,rtos:hold:at_single_voltage_over,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+13,Single Under Voltage,3,,rtos:hold:at_single_voltage_under,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+14,Single Voltage Diff,3,,rtos:hold:at_single_voltage_diff,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+15,Single Temp Diff,3,,rtos:hold:at_single_temp_diff,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+16,SOC Low,3,,rtos:hold:at_single_soc_under,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+17,Terminal Over Temp,3,,rtos:hold:at_pole_temp_over,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+18,Module Over Voltage,3,,rtos:hold:at_mod_volt_over,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+19,Module Under Voltage,3,,rtos:hold:at_mod_volt_under,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+20,DI1 mcerror,1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+21,DI2 mcerror,1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+22,DI3 mcerror,1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+23,Di4 mcerror,1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+24,Di5 mcerror,1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+25,Di6 mcerror,1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+26,Di7 mcerror,1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+27,"Di8 ,mcerror",1,,di_error,greater_or_equal,const:1,rtos:bits:cell_voltage_high_latch,some notes
+28,Can0 Error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+29,Voltage Lost,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+30,Temp Lost,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+31,bg system alarm error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+32,Group Volt Diff,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+33,Jump Instruction,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+34,Battery Extreme Error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+35,Project Version Diff,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+37,PCS comms Lost,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+40,PCS debug Mode,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+41,Can Hall Sensor Comm Lost,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+42,PCB Check error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+43,SVOL Harness Error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+44,EQ Error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+45,Ems Comms Error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+46,Bms Comms Error,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+47,Single Discharge Over Temp,3,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+48,Single Discharge Low Temp,3,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+49,SOC Over,3,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+50,Bmm Charge Vo D Valuel,3,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+51,Cell discharge temp D Value,3,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+52,Cell charge temp D Value,3,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+53,Bmm Discharge Vol D Value,3,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+54,Cluster Circulation Warning,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+55,HV Sample Volt Diff,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+56,Cell Charge Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+57,Cell Discharge Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+58,Module Charge Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+59,Module Discharge Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+60,Module Vol D Charge,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+61,Module Vol D Discharge,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+62,Cluster Charge Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+63,Cluster Discharge Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+64,Cluster Charge Cell Range Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,offset 308
+65,Cluster Discharge Cell Range Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+66,Cluster Charge Module Range Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+67,Cluster Disharge Module Range Vol,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,offset 311
+68,Cluster Charge Current,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+69,Cluster Discharge Current,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+70,Cutoff Cell High Temp,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+71,Cutoff Cell Low Temp,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+72,Cutoff Cluster Charge Cell Temp D,1,rtos:bits:316,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,offset 316
+73,Cutoff Cluster Discharge Cell Temp D,1,rtos:bits:317,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+74,Bmm Lost Status,60,rtos:bits:bmm_lost_status,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+75,End of rtos:bits,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+76,Module over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+77,Module under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+78,DI1 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+79,DI2 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+80,DI3 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+81,DI4 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+82,DI5 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+83,DI6 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+84,DI7 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+85,DI8 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+86,DI9 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+87,DI10 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+88,DI11 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+89,DI12 fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+90,Internal CAN communication disconnection,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+91,Cell voltage DAQ abnormal,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+92,Cell temperature DAQ abnormal,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+93,SBMS detection fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+94,Rack voltage-difference high,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+95,Rack trip fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+96,Battery limit fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+97,Project software version inconsistent,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+98,PCS communication fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+99,PC forced control mode,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+100,CAN Hall sensor fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+101,CAN Hall sensor communication fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+102,Hardware self-inspect abnormal,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+103,Power supply under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+104,Power supply over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+105,Module over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+106,Pack terminal under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+107,Pack terminal over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+108,Fast charge over-current,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+109,Pole over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+110,Feed over-current,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+111,Discharge over-current,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+112,Isolation low,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+113,LOW SOC,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+114,HIGH SOC,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+115,Cell over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+116,Cell under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+117,Cell voltage-difference high,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+118,Charge over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+119,Charge under-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+120,Discharge over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+121,Discharge under-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+122,Cell temperature-difference high,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+123,SOC DIFFERENCE HIGH,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+124,Temperature rise fast,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+125,Module over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+126,Module under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+127,EVBCM communication disconnection,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+128,PCS communication disconnection,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+129,Power supply under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+130,Power supply over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+131,Module over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+132,Pack terminal under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+133,Pack terminal over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+134,Fast charge over-current,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+135,Pole over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+136,"Feed over-current""",1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+137,Discharge over-current,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+138,Isolation low,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+139,LOW SOC,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+140,HIGH SOC,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+141,Cell over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+142,Cell under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+143,Cell voltage-difference high,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+144,Charge over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+145,Charge under-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+146,Discharge over-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+147,Discharge under-temperature,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+148,Cell temperature-difference high,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+149,SOC DIFFERENCE HIGH,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+150,Temperature rise fast,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+151,Module over-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+152,Module under-voltage,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+153,BMM external device fault (DI inspect),1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes
+154,Balance board fault,1,sbmu:input:Min_cell_temp,,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_high_latch,some notes

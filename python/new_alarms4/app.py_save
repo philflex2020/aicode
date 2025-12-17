@@ -1,0 +1,50 @@
+# app.py
+import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_restx import Api
+from datetime import datetime # Needed for LimitsValues default
+
+# Initialize SQLAlchemy outside of app creation for models
+db = SQLAlchemy()
+
+def create_app():
+    app = Flask(__name__)
+
+    # --- Configuration ---
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/alarms.db'  # Default DB for alarms
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_BINDS'] = {
+        'data': 'sqlite:///instance/data.db',  # Separate DB for data definitions
+    }
+    app.config['RESTX_VALIDATE'] = True # Enable validation for Flask-RESTX
+    app.config['RESTX_SWAGGER_UI_DOC_EXPANSION'] = 'list' # For Swagger UI
+
+    # Ensure instance folder exists
+    instance_path = os.path.join(app.root_path, 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+
+    # Initialize extensions
+    db.init_app(app)
+    api = Api(app, version='1.0', title='Alarm Management API',
+              description='A RESTful API for managing alarm definitions, levels, and limits.')
+
+    # Import models (must be done after db is initialized with app)
+    from alarm_models import DataDefinition, AlarmDefinition, AlarmLevelAction, LimitsValues, AlarmHistory
+
+    # --- Database Creation ---
+    with app.app_context():
+        # Create tables for the default bind (alarms.db)
+        db.create_all()
+        # Create tables for the 'data' bind (data.db)
+        db.create_all(bind='data')
+
+    # Import and register API namespaces
+    from api_endpoints import ns as alarm_namespace
+    api.add_namespace(alarm_namespace, path='/api/alarms')
+
+    return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run('0.0.0.0', debug=True, port=5002) # Run on port 5002
