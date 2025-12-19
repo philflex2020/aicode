@@ -28,6 +28,7 @@ def load_alarm_defs_from_json(json_path: str, verbose: bool = False):
           "alarm_var": "...",
           "latch_var": "...",
           "notes": "...",
+          "limits_def":"",
           "actions": [
             {
               "level": 1,
@@ -69,6 +70,7 @@ def load_alarm_defs_from_json(json_path: str, verbose: bool = False):
         measured_variable = alarm.get("measured", "")
         limits_array = alarm.get("limits", [0, 0, 0, 0])
         limits_var = alarm.get("limits_var", "")
+        limits_def = alarm.get("limits_def", "")
         comparison_type = alarm.get("compare", "greater_than")
         alarm_variable = alarm.get("alarm_var", "")
         latched_variable = alarm.get("latch_var", "")
@@ -91,6 +93,7 @@ def load_alarm_defs_from_json(json_path: str, verbose: bool = False):
             num_levels=num_levels,
             measured_variable=measured_variable if measured_variable != "none" else "",
             limits_structure=limits_structure,
+            limits_def=limits_def,
             comparison_type=comparison_type,
             alarm_variable=alarm_variable,
             latched_variable=latched_variable,
@@ -114,8 +117,8 @@ def load_alarm_defs_from_json(json_path: str, verbose: bool = False):
 
         # Create AlarmLevelAction entries
         actions_list = alarm.get("actions", [])
-        act = actions_list[0]
-        print(" action list 0 ", act)
+        # act = actions_list[0]
+        # print(" action list 0 ", act)
         for action_def in actions_list:
             level = action_def.get("level", 1)
             level_enabled = action_def.get("level_enabled", True)
@@ -147,6 +150,54 @@ def load_alarm_defs_from_json(json_path: str, verbose: bool = False):
 
     if verbose:
         print(f"[load_alarm_defs_from_json] Loaded {len(alarms)} alarm definitions with levels and limits.")
+
+        
+def load_limits_def_from_json(json_path: str, verbose: bool = False):
+    """
+    Load limits_def entries from JSON file in the format:
+    {
+      "limits_def": [
+        {
+          "name": "...",
+          "sm_name": "...",
+          "reg_type": "...",
+          "offset": ...,
+          "num": ...,
+          "write_data": ...,
+          "read_data": ...
+        },
+        ...
+      ]
+    }
+    """
+    import json
+    from alarm_models import LimitsDef
+    from app import db
+
+    if verbose:
+        print(f"[load_limits_def_from_json] Loading from {json_path}")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    limits_defs = data.get("limits_def", [])
+
+    for ld in limits_defs:
+        limits_def = LimitsDef(
+            name=ld.get("name", ""),
+            sm_name=ld.get("sm_name"),
+            reg_type=ld.get("reg_type"),
+            offset=ld.get("offset"),
+            num=ld.get("num"),
+            write_data=ld.get("write_data"),
+            read_data=ld.get("read_data")
+        )
+        db.session.add(limits_def)
+
+    db.session.commit()
+
+    if verbose:
+        print(f"[load_limits_def_from_json] Loaded {len(limits_defs)} limits_def entries.")
 
 
 def load_alarm_defs_from_csv(csv_file, verbose=False):

@@ -34,6 +34,30 @@ class DataDefinition(db.Model):
             'notes': self.notes
         }
 
+class LimitsDef(db.Model):
+    __tablename__ = 'limits_def'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # limits_structure = db.Column(db.String, nullable=False, index=True)
+    name = db.Column(db.String, nullable=False)
+    sm_name = db.Column(db.String)
+    reg_type = db.Column(db.String)
+    offset = db.Column(db.String)  # or Integer if appropriate
+    num = db.Column(db.Integer)
+    write_data = db.Column(db.JSON)  # or Text storing JSON string
+    read_data = db.Column(db.JSON)   # or Text storing JSON string
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'sm_name': self.sm_name,
+            'reg_type': self.reg_type,
+            'offset': self.offset,
+            'num': self.num,
+            'write_data': self.write_data,
+            'read_data': self.read_data,
+        }
+
 
 class AlarmDefinition(db.Model):
     """
@@ -53,6 +77,7 @@ class AlarmDefinition(db.Model):
 
     alarm_variable = db.Column(db.String(200))
     latched_variable = db.Column(db.String(200))
+    limits_def = db.Column(db.String(200))            # e.g., 'Terminal Over Temp'
 
     notes = db.Column(db.Text)
     
@@ -71,7 +96,10 @@ class AlarmDefinition(db.Model):
             'comparison_type'   : self.comparison_type,
             'alarm_variable'    : self.alarm_variable,
             'latched_variable'  : self.latched_variable,
-            'notes'             : self.notes
+            'notes'             : self.notes,
+            # Include the nested limit_def dict here
+            'limits_def'        : self.limits_def,# if self.limit_defs else {}
+            # Include other nested fields like actions, levels if needed
         }
 
     def sync_levels(self):

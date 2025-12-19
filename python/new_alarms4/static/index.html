@@ -262,11 +262,24 @@
         #saveJsonBtn:hover, #cancelJsonBtn:hover {
         background-color: #d4ac0d;
         }
+
+        .limits-structure-cell {
+        background-color: #4ada45; /* light yellow */
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 4px 8px;
+        }
+        .limits-def-cell {
+        background-color: #4ada45; /* light yellow */
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 4px 8px;
+        }
     </style>
 </head>
 <body>
 <header>
-    <h1>Alarm Config Editor ver 8</h1>
+    <h1>Alarm Config Editor ver 11</h1>
     <div class="controls">
         <label>JSON Dir:
             <input type="text" id="jsonDirInput" value="json_exports">
@@ -299,7 +312,7 @@
                 <th>alarm_name</th>
                 <th>num_levels</th>
                 <th>measured_variable</th>
-                <th>limits_structure</th>
+                <th>limits_def</th>
                 <th>comparison_type</th>
                 <th>alarm_variable</th>
                 <th>latched_variable</th>
@@ -345,6 +358,7 @@
         <tbody></tbody>
     </table>
 </div>
+
 <div id="jsonModal" class="modal" 
          style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; 
           background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000;">
@@ -354,6 +368,35 @@
   <button id="saveJsonBtn">Save</button>
   <button id="cancelJsonBtn">Cancel</button>
 </div>
+<!-- <div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000;">
+  <h3>Edit Limits Structure</h3>
+  <div id="limitsModalContent">
+   
+    <textarea id="limitsEditor" style="width:100%; height:70%; font-family: monospace;"></textarea>
+  </div>
+  <br/>
+  <button id="saveLimitsBtn">Save</button>
+  <button id="cancelLimitsBtn">Cancel</button>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop"></div> -->
+
+<div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000; border-radius: 12px;">
+  <h3>Edit Limit Definitions</h3>
+  <pre id="limitsModalContent" style="background:#f9f9f9; padding:10px; border-radius:8px; height:60%; overflow:auto; font-family: monospace;"></pre>
+  <div style="margin-top: 10px;">
+    <button id="getTargetBtn">Get Target</button>
+    <button id="setTargetBtn">Set Target</button>
+    <button id="getLimitsBtn">Get Def</button>
+    <button id="saveLimitsBtn">Save</button>
+    <button id="saveLimitsAsBtn">Save as</button>
+    <button id="cancelLimitsBtn">Cancel</button>
+  </div>
+</div>
+<div id="modalBackdrop" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999;">
+</div>
+
+
 <div id="tab-target" class="tab-content">
     <div class="target-section">
         <h3>Target Connection</h3>
@@ -413,6 +456,8 @@
 </div>
 
 <script>
+let alarmDefsData = []; // This will be populated when you load the data
+let limitsDefsData = []; // This will be populated when you load the data
 const apiBase = location.origin + '/api/alarms';
 const pubApiBase = location.origin + '/api/pub_defs';
 
@@ -476,10 +521,16 @@ function renderDefs(data) {
     tbody.innerHTML = '';
     data.forEach(row => {
         const tr = document.createElement('tr');
-        const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_structure','comparison_type','alarm_variable','latched_variable','notes'];
+        const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_def','comparison_type','alarm_variable','latched_variable','notes'];
         cols.forEach(col => {
             const td = document.createElement('td');
-            td.textContent = row[col] ?? '';
+            if (col === 'limits_def') {
+                // Show limit_defs.name if available, else fallback to limits_structure string
+                td.textContent = row.limits_def; // && row.limit_defs.name) || row.limits_structure || '';
+            } else {
+                td.textContent = row[col] ?? '';
+            }
+            //td.textContent = row[col] ?? '';
             td.setAttribute('data-col', col);
             if (col !== 'alarm_num') {
                 if (col === 'comparison_type') {
@@ -503,6 +554,13 @@ function renderDefs(data) {
 
         tbody.appendChild(tr);
     });
+    function attachLimitsStructureClickHandlers() {
+        document.querySelectorAll('#defsTable tbody tr td[data-col="limits_def"]').forEach(cell => {
+            cell.classList.add('limits-def-cell');
+            cell.addEventListener('click', () => openLimitsModal(cell));
+        });
+    }
+    attachLimitsStructureClickHandlers()
 }
 
 function renderLevels(data) {
@@ -571,13 +629,13 @@ function addNewAlarm() {
     const tr = document.createElement('tr');
     tr.className = 'new-row';
     
-    const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_structure','comparison_type','alarm_variable','latched_variable','notes'];
+    const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_def','comparison_type','alarm_variable','latched_variable','notes'];
     const defaults = {
         alarm_num: newAlarmNum,
         alarm_name: 'New Alarm',
         num_levels: 1,
         measured_variable: '',
-        limits_structure: '',
+        limits_def: 'New Alarm',
         comparison_type: 'greater_than',
         alarm_variable: '',
         latched_variable: '',
@@ -701,6 +759,8 @@ async function loadFromDB() {
         const res = await fetch(apiBase + '/config');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
+        alarmDefsData = data.alarm_definitions || [];
+        limitsDefsData = data.limits_def || [];
         renderDefs(data.alarm_definitions || []);
         renderLevels(data.alarm_level_actions || []);
         renderLimits(data.limits_values || []);
@@ -771,6 +831,545 @@ async function importJSON() {
         setStatus('Error importing JSON: ' + err.message, true);
     }
 }
+// limits modal
+
+let currentLimitsCell = null;
+let currentLimitDefs = null;
+
+function clearLimitsModal() {
+  // Clear any input fields (e.g., limit labels)
+  const inputs = document.querySelectorAll('#limitsModal input');
+  inputs.forEach(input => {
+    input.value = '';
+  });
+
+  // Clear the table content
+  const modalContent = document.getElementById('limitsModalContent');
+  if (modalContent) {
+    modalContent.innerHTML = '';
+  }
+}
+
+function openLimitsModal(cell) {
+  currentLimitsCell = cell;
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+  const alarmName = tr.querySelector('td[data-col="alarm_name"]').textContent.trim();
+
+  // Find alarm data
+  let alarmData = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      alarmData = alarm;
+      break;
+    }
+  }
+  if (!alarmData) {
+    alert('Alarm data not found.');
+    return;
+  }
+
+  // Find the alarm data in your global data model
+  currentLimitDefs = null;
+  currentLimitDefs = alarmData.limits_def || [];
+  console.log('alarmNum :', alarmNum);
+  console.log('alarmName :', alarmName);
+  console.log('alarm Data :', alarmData);
+  console.log('limit_defs :', currentLimitDefs);
+//if (!Array.isArray(currentLimitDefs)) currentLimitDefs = [currentLimitDefs];
+//   if (!currentLimitDefs || !Array.isArray(currentLimitDefs)) {
+//     alert('No limit_defs array found for this alarm.');
+//     return;
+//   }
+
+  const modalContent = document.getElementById('limitsModalContent');
+  modalContent.innerHTML = '';
+
+  // Find the matching limits definition by alarmName
+  const limitsDef = limitsDefsData.find(ld => ld.name === currentLimitDefs);
+  console.log("limitsDef :", limitsDef);
+  currentLimitDefs = limitsDef;
+  if (!Array.isArray(currentLimitDefs)) {
+        currentLimitDefs = [currentLimitDefs];
+  }
+  console.log("LimitDefs data:", currentLimitDefs);
+
+  if (!limitsDef) {
+    console.warn('No limits definition found for alarm:', alarmName);
+    clearLimitsModal();
+    return;
+  }
+
+  // Example: populate a label input if you have one
+  if (document.getElementById('limit1_label')) {
+    document.getElementById('limit1_label').value = limitsDef.limit1_label || '';
+  }
+
+  // Create table
+  const table = document.createElement('table');
+  table.classList.add('limits-table'); // add your CSS class if any
+
+  // Table header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col;
+    headerRow.appendChild(th);
+  });
+  // Add action column header
+  const actionTh = document.createElement('th');
+  actionTh.textContent = 'Actions';
+  headerRow.appendChild(actionTh);
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Table body
+  const tbody = document.createElement('tbody');
+  console.log(" current limit defs 2 :", currentLimitDefs);
+  currentLimitDefs.forEach(item => {
+    const tr = document.createElement('tr');
+
+    columns.forEach(col => {
+      const td = document.createElement('td');
+      let cellValue = item[col];
+
+      // For write_data and read_data, stringify arrays or objects
+      if ((col === 'write_data' || col === 'read_data') && typeof cellValue !== 'string') {
+        try {
+          cellValue = JSON.stringify(cellValue || [], null, 2);
+        } catch {
+          cellValue = '';
+        }
+
+      } else if (cellValue == null) {
+        cellValue = '';
+      }
+
+      td.textContent = cellValue;
+      td.setAttribute('data-col', col);
+      td.setAttribute('contenteditable', 'true');
+      tr.appendChild(td);
+    });
+
+    // Actions cell with buttons
+    const actionTd = document.createElement('td');
+    actionTd.className = 'action-cell';
+
+    // const getBtn = document.createElement('button');
+    // getBtn.textContent = '📥 Get';
+    // getBtn.onclick = () => getTargetData(tr);
+    // actionTd.appendChild(getBtn);
+
+    // const setBtn = document.createElement('button');
+    // setBtn.textContent = '📤 Set';
+    // setBtn.onclick = () => setTargetData(tr);
+    // actionTd.appendChild(setBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.onclick = () => tr.remove();
+    actionTd.appendChild(delBtn);
+
+    tr.appendChild(actionTd);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  modalContent.appendChild(table);
+
+  // Show modal and backdrop
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function oldopenLimitsModal(cell) {
+  currentLimitsCell = cell;
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+  const alarmName = tr.querySelector('td[data-col="alarm_name"]').textContent.trim();
+
+  // Find the alarm data in your global data model
+  currentLimitDefs = null;
+  console.log('alarmNum :',alarmNum);
+  console.log('alarmName :',alarmName);
+
+
+
+
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      console.log('alarm  :',alarm);
+      currentLimitDefs = alarm.limit_defs || [];
+      break;
+    }
+  }
+
+  if (!currentLimitDefs || !Array.isArray(currentLimitDefs)) {
+    alert('No limit_defs array found for this alarm.');
+    return;
+  }
+
+  //console.log('currentLimitDefs :',currentLimitDefs);
+
+  const modalContent = document.getElementById('limitsModalContent');
+  modalContent.innerHTML = '';
+
+// Find the matching limits definition
+    const limitsDef = limitsDefsData.find(ld => ld.alarm_name === alarmName);
+
+    if (!limitsDef) {
+        console.warn('No limits definition found for alarm:', alarmName);
+        clearLimitsModal();
+        return;
+    }
+
+    // Populate modal fields
+    document.getElementById('limit1_label').value = limitsDef.limit1_label || '';
+
+  // Create table
+  const table = document.createElement('table');
+  table.classList.add('limits-table'); // add your CSS class if any
+
+  // Table header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col;
+    headerRow.appendChild(th);
+  });
+  // Add action column header
+  const actionTh = document.createElement('th');
+  actionTh.textContent = 'Actions';
+  headerRow.appendChild(actionTh);
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Table body
+  const tbody = document.createElement('tbody');
+
+  currentLimitDefs.forEach(item => {
+    const tr = document.createElement('tr');
+
+    columns.forEach(col => {
+      const td = document.createElement('td');
+      let cellValue = item[col];
+
+      // For write_data and read_data, stringify arrays or objects
+      if ((col === 'write_data' || col === 'read_data') && typeof cellValue !== 'string') {
+        try {
+          cellValue = JSON.stringify(cellValue || [], null, 2);
+        } catch {
+          cellValue = '';
+        }
+      } else if (cellValue == null) {
+        cellValue = '';
+      }
+
+      td.textContent = cellValue;
+      td.setAttribute('data-col', col);
+      td.setAttribute('contenteditable', 'true');
+      tr.appendChild(td);
+    });
+
+    // Actions cell with buttons
+    const actionTd = document.createElement('td');
+    actionTd.className = 'action-cell';
+
+    const getBtn = document.createElement('button');
+    getBtn.textContent = '📥 Get';
+    getBtn.onclick = () => getTargetData(tr);
+    actionTd.appendChild(getBtn);
+
+    const setBtn = document.createElement('button');
+    setBtn.textContent = '📤 Set';
+    setBtn.onclick = () => setTargetData(tr);
+    actionTd.appendChild(setBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.onclick = () => tr.remove();
+    actionTd.appendChild(delBtn);
+
+    tr.appendChild(actionTd);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  modalContent.appendChild(table);
+
+  // Show modal and backdrop
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+function xxxopenLimitsModal(cell) {
+  currentLimitsCell = cell;
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+  // Find the alarm data in your global data model
+  currentLimitDefs = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      currentLimitDefs = alarm.limit_defs || {};
+      break;
+    }
+  }
+
+  if (!currentLimitDefs) {
+    alert('No limit_defs found for this alarm.');
+    return;
+  }
+
+  // Build editable form for limit_defs
+  const modalContent = document.getElementById('limitsModalContent');
+  modalContent.innerHTML = '';
+
+  // Create input fields for each key except write_data and read_data
+  ['name', 'sm_name', 'reg_type', 'offset', 'num'].forEach(key => {
+    const label = document.createElement('label');
+    label.textContent = key + ': ';
+    const input = document.createElement('input');
+    input.type = (key === 'num') ? 'number' : 'text';
+    input.value = currentLimitDefs[key] || '';
+    input.id = 'limitDef_' + key;
+    input.style.marginRight = '10px';
+    label.appendChild(input);
+    modalContent.appendChild(label);
+  });
+
+  // Create editable textarea for write_data and read_data arrays
+  ['write_data', 'read_data'].forEach(key => {
+    const label = document.createElement('label');
+    label.textContent = key + ': ';
+    const textarea = document.createElement('textarea');
+    textarea.id = 'limitDef_' + key;
+    textarea.style.width = '100%';
+    textarea.style.height = '80px';
+    textarea.value = JSON.stringify(currentLimitDefs[key] || [], null, 2);
+    label.appendChild(textarea);
+    modalContent.appendChild(label);
+  });
+
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function xxopenLimitsModal(cell) {
+  currentLimitsCell = cell;
+  // Find the alarm row data from the cell's row
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+  // Find the alarm data in your data model (assuming you have it in a global variable `alarmDefsData`)
+  currentLimitDefs = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      currentLimitDefs = alarm.limit_defs || {};
+      break;
+    }
+  }
+
+  if (!currentLimitDefs) {
+    alert('No limit_defs found for this alarm.');
+    return;
+  }
+
+  // Show pretty JSON in modal content
+  document.getElementById('limitsModalContent').textContent = JSON.stringify(currentLimitDefs, null, 2);
+
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function closeLimitsModal() {
+  document.getElementById('limitsModal').style.display = 'none';
+  document.getElementById('modalBackdrop').style.display = 'none';
+  currentLimitsCell = null;
+  currentLimitDefs = null;
+}
+
+function countLimitsDefUsers(defName) {
+  console.log("table name :", defName);
+
+  if (!defName) return 0;
+  let count = 0;
+  for (const alarm of alarmDefsData) {
+    if ((alarm.limits_def_name || alarm.limit_def_name || alarm.limits_def || alarm.limit_defs_name) === defName) {
+      // (adjust key name to whatever your alarm refers to the def by)
+      count++;
+    }
+    // fallback: if alarms hold reference inside alarm.limit_defs.alarm_name etc:
+    if (Array.isArray(alarm.limit_defs) && alarm.limit_defs.length) {
+      // This is only if alarms embed the name inside; adjust as needed.
+      if (alarm.limit_defs_name && alarm.limit_defs_name === defName) count++;
+    }
+  }
+  return count;
+}
+
+function marshalLimitsTableToJsonString() {
+  const table = document.getElementById('limitsModal');
+  if (!table) {
+    console.log("no table :");
+    return '[]';
+  }
+  const rows = Array.from(table.querySelectorAll('tbody tr'));
+  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+
+  const arr = rows.map(row => {
+    const obj = {};
+    columns.forEach(col => {
+      const td = row.querySelector(`td[data-col="${col}"]`);
+      let val = td ? td.textContent.trim() : '';
+      // try parse JSON for write_data/read_data
+      if ((col === 'write_data' || col === 'read_data') && val) {
+        try { obj[col] = JSON.parse(val); }
+        catch { obj[col] = val; } // leave as string if invalid JSON
+      } else if (col === 'num') {
+        // coerce number fields
+        const n = parseInt(val, 10);
+        obj[col] = Number.isNaN(n) ? val : n;
+      } else {
+        obj[col] = val;
+      }
+    });
+    return obj;
+  });
+
+  return JSON.stringify(arr);
+}
+
+document.getElementById('getLimitsBtn').addEventListener('click', () => {
+    let tableName = '';
+    const jstring = marshalLimitsTableToJsonString();
+    try {
+        const arr = JSON.parse(jstring);
+        if (Array.isArray(arr) && arr.length > 0) {
+            tableName = arr[0].name;  // "Terminal Over Voltage"
+            console.log('Table name:', tableName);
+        } else {
+            console.log('JSON array is empty or invalid');
+        }
+    } catch (e) {
+        console.error('Invalid JSON string', e);
+    }
+
+    console.log('looking for limit :', tableName);
+     // Find the matching limits definition by alarmName
+    let limitsDef = limitsDefsData.find(ld => ld.name === tableName);
+    console.log("limitsDef :", limitsDef);
+  
+    if (!Array.isArray(limitsDef)) {
+        limitsDef = [limitsDef];
+  }
+  console.log("LimitDefs data:", limitsDef);
+  // TODO populate modal with data
+  // add update alarm button
+  // if defs not found add define new Limit Definitions button
+});
+
+
+
+document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+  try {
+    let tableName = '';
+    const jstring = marshalLimitsTableToJsonString();
+
+    try {
+        const arr = JSON.parse(jstring);
+        if (Array.isArray(arr) && arr.length > 0) {
+            tableName = arr[0].name;  // "Terminal Over Voltage"
+            console.log('Table name:', tableName);
+        } else {
+            console.log('JSON array is empty or invalid');
+        }
+    } catch (e) {
+        console.error('Invalid JSON string', e);
+    }
+
+    
+    console.log("jstring :",jstring);
+    const users = countLimitsDefUsers(tableName);
+    console.log(" users :",users);
+
+    return;
+
+    const editedText = document.getElementById('limitsModalContent').textContent;
+    const parsed = JSON.parse(editedText);
+    // Update currentLimitDefs and cell display
+    currentLimitDefs = parsed;
+
+    // Update the alarmDefsData model
+    for (const alarm of alarmDefsData) {
+      if (String(alarm.alarm_num) === currentLimitsCell.parentElement.querySelector('td[data-col="alarm_num"]').textContent.trim()) {
+        alarm.limit_defs = currentLimitDefs;
+        // Update limits_structure cell text to new name if changed
+        const limitsCell = currentLimitsCell;
+        limitsCell.textContent = currentLimitDefs.name || limitsCell.textContent;
+        break;
+      }
+    }
+
+    closeLimitsModal();
+  } catch (e) {
+    alert('Invalid JSON: ' + e.message);
+  }
+});
+
+document.getElementById('cancelLimitsBtn').addEventListener('click', () => {
+  closeLimitsModal();
+});
+
+// Dummy get/set target buttons
+document.getElementById('getTargetBtn').addEventListener('click', () => {
+  alert('Dummy Get Target operation - implement your logic here');
+});
+
+document.getElementById('setTargetBtn').addEventListener('click', () => {
+  alert('Dummy Set Target operation - implement your logic here');
+});
+// let currentLimitsCell = null;
+
+// function openLimitsModal(cell) {
+//   currentLimitsCell = cell;
+//   const limitsName = cell.textContent.trim();
+//   // TODO: Load limits data by limitsName from your data model or API
+//   // For now, just show the name in the textarea
+//   document.getElementById('limitsEditor').value = JSON.stringify({ limits_structure: limitsName }, null, 2);
+//   document.getElementById('limitsModal').style.display = 'block';
+//   document.getElementById('modalBackdrop').style.display = 'block';
+// }
+
+// function closeLimitsModal() {
+//   document.getElementById('limitsModal').style.display = 'none';
+//   document.getElementById('modalBackdrop').style.display = 'none';
+//   currentLimitsCell = null;
+// }
+
+// document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+//   try {
+//     const edited = JSON.parse(document.getElementById('limitsEditor').value);
+//     // TODO: Validate and save edited limits data back to your model or API
+//     if (currentLimitsCell) {
+//       currentLimitsCell.textContent = edited.limits_structure || currentLimitsCell.textContent;
+//     }
+//     closeLimitsModal();
+//   } catch (e) {
+//     alert('Invalid JSON: ' + e.message);
+//   }
+// });
+
+// document.getElementById('cancelLimitsBtn').addEventListener('click', () => {
+//   closeLimitsModal();
+// });
+
+
 // actions modal
 let currentCell = null;
 

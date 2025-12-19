@@ -3,6 +3,7 @@ import os
 from flask import Flask, send_from_directory
 from flask_restx import Api
 from extensions import db
+import json
 
 def create_app():
     app = Flask(__name__)
@@ -42,6 +43,7 @@ def create_app():
         AlarmDefinition,
         AlarmLevelAction,
         LimitsValues,
+        LimitsDef,
         AlarmHistory
     )
 
@@ -83,8 +85,8 @@ def bootstrap_databases(app):
     Create initial contents from alarm_definition.csv and data_definition.json
     if the respective tables are empty.
     """
-    from alarm_models import AlarmDefinition, DataDefinition
-    from alarm_utils import load_alarm_defs_from_csv, load_data_defs_from_json, load_alarm_defs_from_json
+    from alarm_models import AlarmDefinition, DataDefinition, LimitsDef
+    from alarm_utils import load_alarm_defs_from_csv, load_data_defs_from_json, load_alarm_defs_from_json, load_limits_def_from_json
 
     base_dir = app.root_path
 
@@ -102,6 +104,7 @@ def bootstrap_databases(app):
         if json_file:
             print(f"   Found JSON: {json_file}")
             load_alarm_defs_from_json(json_file, verbose=True)
+            load_limits_def_from_json(json_file, verbose=True)
         else:
             print(f"   ⚠️  alarm_definition.json not found in: {json_paths}")
     else:

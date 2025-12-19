@@ -5,7 +5,7 @@ from datetime import datetime
 from flask import request
 from flask_restx import Namespace, Resource, fields
 from extensions import db
-from alarm_models import AlarmDefinition, AlarmLevelAction, LimitsValues, DataDefinition
+from alarm_models import AlarmDefinition, AlarmLevelAction, LimitsValues, DataDefinition, LimitsDef
 from alarm_utils import (
     load_alarm_defs_from_csv,
     export_alarm_definitions_to_csv,
@@ -25,12 +25,22 @@ from target_client import TargetClient
 ns = Namespace('alarms', description='Alarm management operations')
 
 # --- Flask-RESTX Models for API documentation ---
+limits_def_model = ns.model('LimitsDef', {
+    'name': fields.String(description='Limit name'),
+    'sm_name': fields.String(description='SM name'),
+    'reg_type': fields.String(description='Register type'),
+    'offset': fields.String(description='Offset'),
+    'num': fields.Integer(description='Number of registers'),
+    'write_data': fields.String(description='Write data JSON string'),
+    'read_data': fields.String(description='Read data JSON string'),
+})
+
+
 alarm_def_model = ns.model('AlarmDefinition', {
     'alarm_num': fields.Integer(required=True, description='Alarm number (primary key)'),
     'alarm_name': fields.String(required=True, description='Alarm name'),
     'num_levels': fields.Integer(required=True, description='Number of alarm levels (1-3)'),
     'measured_variable': fields.String(description='Measured variable reference'),
-    'limits_structure': fields.String(description='Limits structure reference'),
     'comparison_type': fields.String(
         description='Comparison type',
         enum=['greater_than', 'less_than', 'equal', 'not_equal', 'greater_or_equal', 'less_or_equal', 'aggregate'],
@@ -39,6 +49,8 @@ alarm_def_model = ns.model('AlarmDefinition', {
     'alarm_variable': fields.String(description='Alarm variable reference'),
     'latched_variable': fields.String(description='Latched variable reference'),
     'notes': fields.String(description='Notes'),
+    'limits_def': fields.String(description='limits_def structure'),
+
 })
 
 alarm_level_action_model = ns.model('AlarmLevelAction', {
@@ -62,10 +74,12 @@ limits_value_model = ns.model('LimitsValue', {
     'alarm_name': fields.String(description='Alarm name (for display)'),
 })
 
+
 alarm_config_model = ns.model('AlarmConfig', {
     'alarm_definitions': fields.List(fields.Nested(alarm_def_model)),
     'alarm_level_actions': fields.List(fields.Nested(alarm_level_action_model)),
     'limits_values': fields.List(fields.Nested(limits_value_model)),
+    'limits_def': fields.List(fields.Nested(limits_def_model)),
 })
 
 csv_operation_model = ns.model('CSVOperation', {
@@ -129,6 +143,8 @@ class AlarmConfig(Resource):
         alarm_defs = AlarmDefinition.query.all()
         alarm_levels = AlarmLevelAction.query.all()
         limits_vals = LimitsValues.query.all()
+        limits_def = LimitsDef.query.all()
+
         if alarm_levels:
             first_level = alarm_levels[0]
             print(f"First alarm level: alarm_num={first_level.alarm_num}, level={first_level.level}, duration={first_level.duration!r}")
@@ -138,6 +154,11 @@ class AlarmConfig(Resource):
         # Create a lookup for alarm_name by alarm_num
         alarm_name_lookup = {ad.alarm_num: ad.alarm_name for ad in alarm_defs}
 
+        limits_by_structure = {}
+        for lv in limits_vals:
+            limits_by_structure.setdefault(lv.limits_structure, []).append(lv.to_dict())
+
+        # Prepare alarm_level_actions with alarm_name
         # Prepare alarm_level_actions with alarm_name
         prepared_alarm_levels = []
         for al in alarm_levels:
@@ -165,8 +186,26 @@ class AlarmConfig(Resource):
             limits_dict['alarm_name'] = limits_structure_to_alarm_name.get(lv.limits_structure, 'N/A')
             prepared_limits_vals.append(limits_dict)
 
+        # Enrich alarm definitions with limits_def field
+        enriched_alarm_defs = []
+        for ad in alarm_defs:
+            ad_dict = ad.to_dict()
+            # Attach limits_def list for this alarm's limits_structure, or empty list if none
+            # ad_dict['limits_def'] = limits_by_structure.get(ad.limits_structure, [])
+            enriched_alarm_defs.append(ad_dict)
+
+
+        enriched_limits_def = []
+        for ad in limits_def:
+            ad_dict = ad.to_dict()
+            # Attach limits_def list for this alarm's limits_structure, or empty list if none
+            # ad_dict['limits_def'] = limits_by_structure.get(ad.limits_structure, [])
+            enriched_limits_def.append(ad_dict)
+
+
         return {
-            'alarm_definitions': [ad.to_dict() for ad in alarm_defs],
+            'limits_def': enriched_limits_def,
+            'alarm_definitions': enriched_alarm_defs, #[ad.to_dict() for ad in alarm_defs],
             'alarm_level_actions': prepared_alarm_levels,
             'limits_values': prepared_limits_vals
         }

@@ -63,6 +63,7 @@
             margin-bottom: 8px;
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
         .tab-controls button {
             padding: 4px 8px;
@@ -210,21 +211,81 @@
             background: #fffef0;
             cursor: text;
         }
+        .modal-backdrop {
+            position: fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        #jsonModal {
+        display: none;
+        position: fixed;
+        top: 10%;
+        left: 10%;
+        width: 80%;
+        height: 80%;
+        background: #fff8b3; /* soft yellow */
+        border: 2px solid #f1c40f; /* golden yellow border */
+        border-radius: 12px; /* rounded corners */
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: auto;
+        z-index: 1000;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #jsonEditor {
+        width: 100%;
+        height: 70%;
+        font-family: monospace;
+        font-size: 14px;
+        border: 1px solid #f1c40f;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: #fffde7; /* lighter yellow */
+        resize: vertical;
+        }
+
+        #saveJsonBtn, #cancelJsonBtn {
+        background-color: #f1c40f;
+        border: none;
+        color: #333;
+        padding: 8px 16px;
+        margin-right: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+        }
+
+        #saveJsonBtn:hover, #cancelJsonBtn:hover {
+        background-color: #d4ac0d;
+        }
+
+        .limits-structure-cell {
+        background-color: #4ada45; /* light yellow */
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 4px 8px;
+        }
     </style>
 </head>
 <body>
 <header>
-    <h1>Alarm Config Editor</h1>
+    <h1>Alarm Config Editor ver 9a</h1>
     <div class="controls">
-        <label>CSV Dir:
-            <input type="text" id="csvDirInput" value="csv_exports">
+        <label>JSON Dir:
+            <input type="text" id="jsonDirInput" value="json_exports">
         </label>
         <button id="loadBtn">Load from DB</button>
         <button id="saveBtn">Save to DB</button>
-        <button id="exportBtn">Export CSV</button>
-        <button id="importBtn">Import CSV</button>
+        <button id="exportBtn">Export JSON</button>
+        <button id="importBtn">Import JSON</button>
     </div>
 </header>
+
+<div id="modalBackdrop" class="modal-backdrop"></div>
 
 <div class="tabs">
     <div class="tab active" data-target="tab-defs">alarm_definitions</div>
@@ -253,9 +314,7 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- filled by JS -->
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
 
@@ -272,9 +331,7 @@
                 <th>notes</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- filled by JS -->
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
 
@@ -292,11 +349,45 @@
                 <th>notes</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- filled by JS -->
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
+
+<div id="jsonModal" class="modal" 
+         style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; 
+          background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000;">
+  <h3>Edit Actions JSON</h3>
+  <textarea id="jsonEditor" style="width:100%; height:70%; font-family: monospace;"></textarea>
+  <br/>
+  <button id="saveJsonBtn">Save</button>
+  <button id="cancelJsonBtn">Cancel</button>
+</div>
+<!-- <div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000;">
+  <h3>Edit Limits Structure</h3>
+  <div id="limitsModalContent">
+   
+    <textarea id="limitsEditor" style="width:100%; height:70%; font-family: monospace;"></textarea>
+  </div>
+  <br/>
+  <button id="saveLimitsBtn">Save</button>
+  <button id="cancelLimitsBtn">Cancel</button>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop"></div> -->
+
+<div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000; border-radius: 12px;">
+  <h3>Edit Limit Definitions</h3>
+  <pre id="limitsModalContent" style="background:#f9f9f9; padding:10px; border-radius:8px; height:60%; overflow:auto; font-family: monospace;"></pre>
+  <div style="margin-top: 10px;">
+    <button id="getTargetBtn">Get Target</button>
+    <button id="setTargetBtn">Set Target</button>
+    <button id="saveLimitsBtn">Save</button>
+    <button id="cancelLimitsBtn">Cancel</button>
+  </div>
+</div>
+<div id="modalBackdrop" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999;">
+</div>
+
 
 <div id="tab-target" class="tab-content">
     <div class="target-section">
@@ -312,7 +403,8 @@
 
     <div class="target-section">
         <h3>Variable Get/Set</h3>
-        <!-- NEW: Variable list selection controls -->
+
+        <!-- Var list selection row -->
         <div class="tab-controls">
             <label style="font-size: 12px;">
                 Var List:
@@ -322,14 +414,17 @@
             </label>
             <button onclick="reloadVarListOptions()">🔄 Refresh Lists</button>
             <button onclick="loadSelectedVarList()">📂 Load List</button>
-            <button onclick="saveCurrentVarList()">💾 Save List</button>
-            <button onclick="getAllTargetVars()">📥 Get All</button>
-            <button onclick="setAllTargetVars()">📤 Set All</button>
+            <button onclick="getAllTarget()">📥 Get All</button>
+            <button onclick="setAllTarget()">📤 Save All</button>
         </div>
+
+        <!-- Row-level and bulk operations -->
         <div class="tab-controls">
             <button onclick="addTargetVar()">➕ Add Variable</button>
-            <span style="color: #666; font-size: 11px;">Type variable name or shared mem ref, then click Get/Set</span>
+            <button onclick="saveVarList()">💾 Save List</button>
+            <span style="color: #666; font-size: 11px;">Type variable name or shared mem ref, then click Get/Set.</span>
         </div>
+
         <table id="targetVarsTable">
             <thead>
                 <tr>
@@ -338,14 +433,12 @@
                     <th>reg_type</th>
                     <th>offset</th>
                     <th>num</th>
-                    <th>write_data (JSON array)</th>
-                    <th>read_data (JSON array)</th>
+                    <th>write data</th>
+                    <th>read data</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- filled by JS -->
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
@@ -355,7 +448,9 @@
 </div>
 
 <script>
+let alarmDefsData = []; // This will be populated when you load the data
 const apiBase = location.origin + '/api/alarms';
+const pubApiBase = location.origin + '/api/pub_defs';
 
 const COMPARISON_OPTIONS = [
     'greater_than',
@@ -377,9 +472,7 @@ function makeComparisonTypeEditable(td) {
         const o = document.createElement('option');
         o.value = opt;
         o.textContent = opt;
-        if (opt === current) {
-            o.selected = true;
-        }
+        if (opt === current) o.selected = true;
         select.appendChild(o);
     });
 
@@ -422,14 +515,18 @@ function renderDefs(data) {
         const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_structure','comparison_type','alarm_variable','latched_variable','notes'];
         cols.forEach(col => {
             const td = document.createElement('td');
-            td.textContent = row[col] ?? '';
+            if (col === 'limits_structure') {
+                // Show limit_defs.name if available, else fallback to limits_structure string
+                td.textContent = (row.limit_defs && row.limit_defs.name) || row.limits_structure || '';
+            } else {
+                td.textContent = row[col] ?? '';
+            }
+            //td.textContent = row[col] ?? '';
             td.setAttribute('data-col', col);
             if (col !== 'alarm_num') {
                 if (col === 'comparison_type') {
                     td.classList.add('selectable-cell');
-                    td.addEventListener('click', () => {
-                    makeComparisonTypeEditable(td);
-                    });
+                    td.addEventListener('click', () => makeComparisonTypeEditable(td));
                     td.setAttribute('contentselect', 'true');
                 } else {
                     td.setAttribute('contenteditable', 'true');
@@ -437,7 +534,7 @@ function renderDefs(data) {
             }
             tr.appendChild(td);
         });
-        
+
         const actionTd = document.createElement('td');
         actionTd.className = 'action-cell';
         const deleteBtn = document.createElement('button');
@@ -445,9 +542,16 @@ function renderDefs(data) {
         deleteBtn.onclick = () => toggleDeleteRow(tr);
         actionTd.appendChild(deleteBtn);
         tr.appendChild(actionTd);
-        
+
         tbody.appendChild(tr);
     });
+    function attachLimitsStructureClickHandlers() {
+        document.querySelectorAll('#defsTable tbody tr td[data-col="limits_structure"]').forEach(cell => {
+            cell.classList.add('limits-structure-cell');
+            cell.addEventListener('click', () => openLimitsModal(cell));
+        });
+    }
+    attachLimitsStructureClickHandlers()
 }
 
 function renderLevels(data) {
@@ -471,6 +575,11 @@ function renderLevels(data) {
         });
         tbody.appendChild(tr);
     });
+    document.querySelectorAll('#levelsTable tbody tr td[data-col="actions"]').forEach(cell => {
+        cell.style.cursor = 'pointer';
+        cell.addEventListener('click', () => openJsonModal(cell));
+    });
+
 }
 
 function renderLimits(data) {
@@ -513,15 +622,15 @@ function addNewAlarm() {
     
     const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_structure','comparison_type','alarm_variable','latched_variable','notes'];
     const defaults = {
-        'alarm_num': newAlarmNum,
-        'alarm_name': 'New Alarm',
-        'num_levels': 1,
-        'measured_variable': '',
-        'limits_structure': '',
-        'comparison_type': 'greater_than',
-        'alarm_variable': '',
-        'latched_variable': '',
-        'notes': ''
+        alarm_num: newAlarmNum,
+        alarm_name: 'New Alarm',
+        num_levels: 1,
+        measured_variable: '',
+        limits_structure: '',
+        comparison_type: 'greater_than',
+        alarm_variable: '',
+        latched_variable: '',
+        notes: ''
     };
     
     cols.forEach(col => {
@@ -603,7 +712,7 @@ function collectLevels() {
             } else if (col === 'enabled') {
                 val = val === '' ? false : (val === '1' || val.toLowerCase() === 'true');
             } else if (col === 'duration') {
-                val = val === '' ? null : Number(val);
+                val = val === '' ? "5:5" : val;
             }
             obj[col] = val === '' ? null : val;
         });
@@ -641,6 +750,7 @@ async function loadFromDB() {
         const res = await fetch(apiBase + '/config');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
+        alarmDefsData = data.alarm_definitions || [];
         renderDefs(data.alarm_definitions || []);
         renderLevels(data.alarm_level_actions || []);
         renderLimits(data.limits_values || []);
@@ -674,42 +784,217 @@ async function saveToDB() {
     }
 }
 
-async function exportCSV() {
-    const dir = document.getElementById('csvDirInput').value.trim() || 'csv_exports';
-    setStatus('Exporting CSV to dir: ' + dir + ' ...');
+async function exportJSON() {
+    const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+    setStatus('Exporting JSON to dir: ' + dir + ' ...');
     try {
-        const res = await fetch(apiBase + '/export-csv', {
+        const res = await fetch(apiBase + '/export-json', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ directory: dir })
+            body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json' })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-        setStatus('Exported CSV to: ' + data.message, false);
+        setStatus('Exported JSON to: ' + data.message, false);
     } catch (err) {
         console.error(err);
-        setStatus('Error exporting CSV: ' + err.message, true);
+        setStatus('Error exporting JSON: ' + err.message, true);
     }
 }
 
-async function importCSV() {
-    const dir = document.getElementById('csvDirInput').value.trim() || 'csv_exports';
-    setStatus('Importing CSV from dir: ' + dir + ' ...');
+async function importJSON() {
+    const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+    setStatus('Importing JSON from dir: ' + dir + ' ...');
+    console.log('Importing JSON from dir: ' + dir + ' ...');
     try {
-        const res = await fetch(apiBase + '/import-csv', {
+        const res = await fetch(apiBase + '/import-json', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ directory: dir })
+            body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json' })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-        setStatus('Imported CSV from: ' + dir + '. Reloading ...', false);
+        setStatus('Imported JSON from: ' + dir + '. Reloading ...', false);
         await loadFromDB();
     } catch (err) {
         console.error(err);
-        setStatus('Error importing CSV: ' + err.message, true);
+        setStatus('Error importing JSON: ' + err.message, true);
     }
 }
+// limits modal
+
+let currentLimitsCell = null;
+let currentLimitDefs = null;
+
+function openLimitsModal(cell) {
+  currentLimitsCell = cell;
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+  // Find the alarm data in your global data model
+  currentLimitDefs = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      currentLimitDefs = alarm.limit_defs || {};
+      break;
+    }
+  }
+
+  if (!currentLimitDefs) {
+    alert('No limit_defs found for this alarm.');
+    return;
+  }
+
+  document.getElementById('limitsModalContent').textContent = JSON.stringify(currentLimitDefs, null, 2);
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function xxopenLimitsModal(cell) {
+  currentLimitsCell = cell;
+  // Find the alarm row data from the cell's row
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+  // Find the alarm data in your data model (assuming you have it in a global variable `alarmDefsData`)
+  currentLimitDefs = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      currentLimitDefs = alarm.limit_defs || {};
+      break;
+    }
+  }
+
+  if (!currentLimitDefs) {
+    alert('No limit_defs found for this alarm.');
+    return;
+  }
+
+  // Show pretty JSON in modal content
+  document.getElementById('limitsModalContent').textContent = JSON.stringify(currentLimitDefs, null, 2);
+
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function closeLimitsModal() {
+  document.getElementById('limitsModal').style.display = 'none';
+  document.getElementById('modalBackdrop').style.display = 'none';
+  currentLimitsCell = null;
+  currentLimitDefs = null;
+}
+
+document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+  try {
+    const editedText = document.getElementById('limitsModalContent').textContent;
+    const parsed = JSON.parse(editedText);
+    // Update currentLimitDefs and cell display
+    currentLimitDefs = parsed;
+
+    // Update the alarmDefsData model
+    for (const alarm of alarmDefsData) {
+      if (String(alarm.alarm_num) === currentLimitsCell.parentElement.querySelector('td[data-col="alarm_num"]').textContent.trim()) {
+        alarm.limit_defs = currentLimitDefs;
+        // Update limits_structure cell text to new name if changed
+        const limitsCell = currentLimitsCell;
+        limitsCell.textContent = currentLimitDefs.name || limitsCell.textContent;
+        break;
+      }
+    }
+
+    closeLimitsModal();
+  } catch (e) {
+    alert('Invalid JSON: ' + e.message);
+  }
+});
+
+document.getElementById('cancelLimitsBtn').addEventListener('click', () => {
+  closeLimitsModal();
+});
+
+// Dummy get/set target buttons
+document.getElementById('getTargetBtn').addEventListener('click', () => {
+  alert('Dummy Get Target operation - implement your logic here');
+});
+
+document.getElementById('setTargetBtn').addEventListener('click', () => {
+  alert('Dummy Set Target operation - implement your logic here');
+});
+// let currentLimitsCell = null;
+
+// function openLimitsModal(cell) {
+//   currentLimitsCell = cell;
+//   const limitsName = cell.textContent.trim();
+//   // TODO: Load limits data by limitsName from your data model or API
+//   // For now, just show the name in the textarea
+//   document.getElementById('limitsEditor').value = JSON.stringify({ limits_structure: limitsName }, null, 2);
+//   document.getElementById('limitsModal').style.display = 'block';
+//   document.getElementById('modalBackdrop').style.display = 'block';
+// }
+
+// function closeLimitsModal() {
+//   document.getElementById('limitsModal').style.display = 'none';
+//   document.getElementById('modalBackdrop').style.display = 'none';
+//   currentLimitsCell = null;
+// }
+
+// document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+//   try {
+//     const edited = JSON.parse(document.getElementById('limitsEditor').value);
+//     // TODO: Validate and save edited limits data back to your model or API
+//     if (currentLimitsCell) {
+//       currentLimitsCell.textContent = edited.limits_structure || currentLimitsCell.textContent;
+//     }
+//     closeLimitsModal();
+//   } catch (e) {
+//     alert('Invalid JSON: ' + e.message);
+//   }
+// });
+
+// document.getElementById('cancelLimitsBtn').addEventListener('click', () => {
+//   closeLimitsModal();
+// });
+
+
+// actions modal
+let currentCell = null;
+
+function openJsonModal(cell) {
+  currentCell = cell;
+  const jsonText = cell.textContent.trim();
+  try {
+    const parsed = JSON.parse(jsonText);
+    document.getElementById('jsonEditor').value = JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    // If invalid JSON, just show raw text
+    document.getElementById('jsonEditor').value = jsonText;
+  }
+  document.getElementById('jsonModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function closeJsonModal() {
+  document.getElementById('jsonModal').style.display = 'none';
+  document.getElementById('modalBackdrop').style.display = 'none';
+  currentCell = null;
+}
+
+document.getElementById('saveJsonBtn').addEventListener('click', () => {
+  const editedText = document.getElementById('jsonEditor').value;
+  try {
+    JSON.parse(editedText); // Validate JSON
+    if (currentCell) {
+      currentCell.textContent = editedText;
+    }
+    closeJsonModal();
+  } catch (e) {
+    alert('Invalid JSON: ' + e.message);
+  }
+});
+
+document.getElementById('cancelJsonBtn').addEventListener('click', () => {
+  closeJsonModal();
+});
 
 // --- Target tab functions ---
 
@@ -755,28 +1040,21 @@ function addTargetVar() {
     const tbody = document.querySelector('#targetVarsTable tbody');
     const tr = document.createElement('tr');
     
-    const cols = ['var_name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+    const cols = ['var_name', 'sm_name', 'reg_type', 'offset', 'num', 'data'];
     const defaults = {
-        'var_name': 'rtos:hold:alarm_limits',
-        'sm_name': 'rtos',
-        'reg_type': 'mb_hold',
-        'offset': '9',
-        'num': '4',
-        'write_data': '[]',
-        'read_data': '[]'
+        var_name: 'rtos:hold:alarm_limits',
+        sm_name: 'rtos',
+        reg_type: 'mb_hold',
+        offset: '9',
+        num: '4',
+        data: '[]'
     };
     
     cols.forEach(col => {
         const td = document.createElement('td');
         td.textContent = defaults[col];
         td.setAttribute('data-col', col);
-        // Only write_data and first 5 cols are editable, read_data is read-only
-        if (col !== 'read_data') {
-            td.setAttribute('contenteditable', 'true');
-        } else {
-            td.style.background = '#f0f0f0';
-            td.style.color = '#666';
-        }
+        td.setAttribute('contenteditable', 'true');
         tr.appendChild(td);
     });
     
@@ -821,7 +1099,7 @@ async function getTargetData(tr) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
         
-        // Update read_data column (index 6)
+        // Update data column
         cells[6].textContent = JSON.stringify(data.read_data || []);
         setStatus('Got data: ' + JSON.stringify(data), false);
     } catch (err) {
@@ -832,12 +1110,12 @@ async function getTargetData(tr) {
 
 async function setTargetData(tr) {
     const cells = tr.querySelectorAll('td[data-col]');
-    const writeDataStr = cells[5].textContent.trim();
-    let writeDataArray;
+    const dataStr = cells[5].textContent.trim();
+    let dataArray;
     try {
-        writeDataArray = JSON.parse(writeDataStr);
+        dataArray = JSON.parse(dataStr);
     } catch (e) {
-        setStatus('Invalid JSON in write_data field', true);
+        setStatus('Invalid JSON in data field', true);
         return;
     }
     
@@ -845,7 +1123,7 @@ async function setTargetData(tr) {
         sm_name: cells[1].textContent.trim(),
         reg_type: cells[2].textContent.trim(),
         offset: cells[3].textContent.trim(),
-        write_data: writeDataArray
+        write_data: dataArray
     };
     
     setStatus('Setting data on target...');
@@ -865,98 +1143,7 @@ async function setTargetData(tr) {
     }
 }
 
-// Get data from target for all rows in the table
-async function getAllTargetVars() {
-    const tbody = document.querySelector('#targetVarsTable tbody');
-    if (!tbody) return;
-    
-    const rows = tbody.querySelectorAll('tr');
-    if (rows.length === 0) {
-        setStatus('No variables to get.', true);
-        return;
-    }
-    
-    setStatus('Getting all variables (' + rows.length + ')...');
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const tr of rows) {
-        try {
-            await getTargetData(tr);
-            successCount++;
-        } catch (err) {
-            console.error('Error getting data for row:', err);
-            errorCount++;
-        }
-        // Small delay to avoid overwhelming the target
-        await new Promise(resolve => setTimeout(resolve, 50));
-    }
-    
-    setStatus(`Get All complete: ${successCount} success, ${errorCount} errors.`, errorCount > 0);
-}
-
-// Set data on target for all rows in the table (skip empty write_data)
-async function setAllTargetVars() {
-    const tbody = document.querySelector('#targetVarsTable tbody');
-    if (!tbody) return;
-    
-    const rows = tbody.querySelectorAll('tr');
-    if (rows.length === 0) {
-        setStatus('No variables to set.', true);
-        return;
-    }
-    
-    setStatus('Setting all variables with write_data...');
-    
-    let successCount = 0;
-    let errorCount = 0;
-    let skippedCount = 0;
-    
-    for (const tr of rows) {
-        const cells = tr.querySelectorAll('td[data-col]');
-        if (cells.length < 6) {
-            skippedCount++;
-            continue;
-        }
-        
-        const writeDataStr = cells[5].textContent.trim();
-        let writeDataArray;
-        
-        try {
-            writeDataArray = JSON.parse(writeDataStr);
-        } catch (e) {
-            console.warn('Invalid write_data JSON, skipping row');
-            skippedCount++;
-            continue;
-        }
-        
-        // Skip if write_data is empty array or not an array
-        if (!Array.isArray(writeDataArray) || writeDataArray.length === 0) {
-            skippedCount++;
-            continue;
-        }
-        
-        try {
-            await setTargetData(tr);
-            successCount++;
-        } catch (err) {
-            console.error('Error setting data for row:', err);
-            errorCount++;
-        }
-        
-        // Small delay to avoid overwhelming the target
-        await new Promise(resolve => setTimeout(resolve, 50));
-    }
-    
-    setStatus(`Set All complete: ${successCount} success, ${errorCount} errors, ${skippedCount} skipped (empty write_data).`, errorCount > 0);
-}
-// --- Variable list handling ---
-
-
-// --- Variable list handling ---
-
-const pubApiBase = location.origin + '/api/pub_defs';
+// --- Var-list integration ---
 
 async function reloadVarListOptions() {
     setStatus('Loading variable lists...');
@@ -994,9 +1181,8 @@ async function reloadVarListOptions() {
     }
 }
 
-// Interpret a variable list JSON and populate targetVarsTable.
-// Format: array of table objects, each with "table" and "items" array
 function populateTargetVarsFromVarList(varListJson) {
+    console.log(" running pop function\n");
     const tbody = document.querySelector('#targetVarsTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -1022,7 +1208,7 @@ function populateTargetVarsFromVarList(varListJson) {
             const offset = item.offset != null ? String(item.offset) : '0';
             const num = item.num != null ? String(item.num) : '1';
 
-            // Prefer write_data, fallback to read_data, then empty array
+            let dataArray = [];
             let writeDataArray = [];
             if (Array.isArray(item.write_data)) {
                 writeDataArray = item.write_data;
@@ -1031,7 +1217,6 @@ function populateTargetVarsFromVarList(varListJson) {
             }
 
             const tr = document.createElement('tr');
-            
             // IMPORTANT: Must match the exact column structure of addTargetVar()
             const cols = ['var_name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
             const defaults = {
@@ -1041,21 +1226,14 @@ function populateTargetVarsFromVarList(varListJson) {
                 offset: offset,
                 num: num,
                 write_data: JSON.stringify(writeDataArray),
-                read_data: '[]'  // Start empty, will be filled by Get
+                read_data: '[]' // JSON.stringify(writeDataArray)
             };
-
+ 
             cols.forEach(col => {
                 const td = document.createElement('td');
                 td.textContent = defaults[col] ?? '';
                 td.setAttribute('data-col', col);
-                
-                // Only write_data and first 5 cols are editable, read_data is read-only
-                if (col !== 'read_data') {
-                    td.setAttribute('contenteditable', 'true');
-                } else {
-                    td.style.background = '#f0f0f0';
-                    td.style.color = '#666';
-                }
+                td.setAttribute('contenteditable', 'true');
                 tr.appendChild(td);
             });
 
@@ -1086,326 +1264,6 @@ function populateTargetVarsFromVarList(varListJson) {
     setStatus('Loaded ' + totalVars + ' variable(s) from list.', false);
 }
 
-// async function loadSelectedVarList() {
-//     const select = document.getElementById('varListSelect');
-//     if (!select || !select.value) {
-//         setStatus('No variable list selected.', true);
-//         return;
-//     }
-
-//     const fileName = select.value;
-//     setStatus('Loading var list: ' + fileName + ' ...');
-
-//     try {
-//         const res = await fetch(pubApiBase + '/load_var_list', {
-//             method: 'POST',
-//             headers: {'Content-Type': 'application/json'},
-//             body: JSON.stringify({ file_name: fileName })
-//         });
-//         const data = await res.json();
-//         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-
-//         populateTargetVarsFromVarList(data);
-//     } catch (err) {
-//         console.error(err);
-//         setStatus('Error loading var list: ' + err.message, true);
-//     }
-// }
-
-// Collect current target vars table into var list JSON format
-function collectTargetVarsAsVarList() {
-    const tbody = document.querySelector('#targetVarsTable tbody');
-    if (!tbody) return [];
-
-    const items = [];
-    tbody.querySelectorAll('tr').forEach(tr => {
-        const cells = tr.querySelectorAll('td[data-col]');
-        if (cells.length < 7) return;
-
-        const varName = cells[0].textContent.trim();
-        const smName = cells[1].textContent.trim();
-        const regType = cells[2].textContent.trim();
-        const offset = cells[3].textContent.trim();
-        const num = parseInt(cells[4].textContent.trim()) || 1;
-        const writeDataStr = cells[5].textContent.trim();
-        const readDataStr = cells[6].textContent.trim();
-
-        let writeData = [];
-        let readData = [];
-
-        try {
-            writeData = JSON.parse(writeDataStr);
-        } catch (e) {
-            console.warn('Invalid write_data JSON for var:', varName);
-        }
-
-        try {
-            readData = JSON.parse(readDataStr);
-        } catch (e) {
-            // read_data can be empty, that's ok
-        }
-
-        items.push({
-            name: varName,
-            sm_name: smName,
-            reg_type: regType,
-            offset: offset,
-            num: num,
-            write_data: writeData,
-            read_data: readData
-        });
-    });
-
-    // Wrap in the expected format: array with one table object
-    return [{
-        table: 'target_vars',
-        items: items
-    }];
-}
-
-// Save current target vars table to a var list JSON file
-async function saveCurrentVarList() {
-    const sel = document.getElementById('varListSelect');
-    //let fileName = sel ? sel.value.trim() : '';
-
-    let currentFileName = sel ? sel.value.trim() : '';
-    
-    // Always prompt, but use current selection as default
-    let fileName = prompt('Enter a name for this variable list:', currentFileName || 'my_vars.json');
-
-    if (!fileName || fileName.trim() === '') {
-        setStatus('Save cancelled: no file name.', true);
-        return;
-    }
-    
-    fileName = fileName.trim();
-    // Ensure .json extension
-    if (!fileName.endsWith('.json')) {
-        fileName += '.json';
-    }
-
-
-    const varListData = collectTargetVarsAsVarList();
-
-    setStatus('Saving var list: ' + fileName + ' ...');
-
-    try {
-        const res = await fetch(pubApiBase + '/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                file_name: fileName,
-                directory: 'var_lists',  // Save to var_lists/ directory
-                data: varListData
-            })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-
-        setStatus('Var list saved: ' + fileName, false);
-
-        // Refresh dropdown and select the saved file
-        //await refreshVarLists();
-        await reloadVarListOptions();
-
-        if (sel) sel.value = fileName;
-
-    } catch (err) {
-        console.error(err);
-        setStatus('Error saving var list: ' + err.message, true);
-    }
-}
-
-// const pubApiBase = location.origin + '/api/pub_defs';
-
-// async function reloadVarListOptions() {
-//     setStatus('Loading variable lists...');
-//     const select = document.getElementById('varListSelect');
-//     if (!select) return;
-
-//     try {
-//         const res = await fetch(pubApiBase + '/list');
-//         if (!res.ok) throw new Error('HTTP ' + res.status);
-//         const data = await res.json();
-//         const files = data.files || [];
-
-//         select.innerHTML = '';
-//         if (files.length === 0) {
-//             const opt = document.createElement('option');
-//             opt.value = '';
-//             opt.textContent = '(no var_lists/*.json found)';
-//             select.appendChild(opt);
-//             setStatus('No var list files found in var_lists.', true);
-//             return;
-//         }
-
-//         files.forEach(f => {
-//             const opt = document.createElement('option');
-//             opt.value = f;
-//             opt.textContent = f;
-//             select.appendChild(opt);
-//         });
-
-//         setStatus('Variable lists loaded from ' + (data.directory || 'var_lists') + '.', false);
-//     } catch (err) {
-//         console.error(err);
-//         setStatus('Error loading var list files: ' + err.message, true);
-//     }
-// }
-// // Interpret a variable list JSON and populate targetVarsTable.
-// // Assumes a simple structure like:
-// // {
-// //   "pub": "config",
-// //   "items": [
-// //      { "name": "alarm_limits", "src": "rtos:hold:alarm_limits", "type": "u16x4", "write_data": [0,0,0,0], "read_data": [0,0,0,0] },
-// //      ...
-// //   ]
-// // }
-// function populateTargetVarsFromVarList(varListJson) {
-//     const tbody = document.querySelector('#targetVarsTable tbody');
-//     if (!tbody) return;
-//     tbody.innerHTML = '';
-
-//     if (!Array.isArray(varListJson)) {
-//         console.warn('Var list JSON is not an array:', varListJson);
-//         setStatus('Var list format error: expected array of tables.', true);
-//         return;
-//     }
-
-//     let totalVars = 0;
-//     // if (!varListJson || !Array.isArray(varListJson.items)) {
-//     //     console.warn('Var list JSON has no items[]:', varListJson);
-//     //     setStatus('Var list has no items[] section.', true);
-//     //     return;
-//     // }
-
-//     varListJson.forEach(tableObj => {
-//             if (!tableObj.items || !Array.isArray(tableObj.items)) {
-//                 console.warn('Table object missing items[]:', tableObj);
-//                 return;
-//             }
-
-//             tableObj.items.forEach(item => {
-//                 const varName = item.name || '';
-//                 const smName = item.sm_name || 'rtos';
-//                 const regType = item.reg_type || 'mb_hold';
-//                 const offset = item.offset != null ? String(item.offset) : '0';
-//                 const num = item.num != null ? String(item.num) : '1';
-
-//                 // Prefer read_data, fallback to write_data, then empty array
-//                 let dataArray = [];
-//                 if (Array.isArray(item.read_data)) {
-//                     dataArray = item.read_data;
-//                 } else if (Array.isArray(item.write_data)) {
-//                     dataArray = item.write_data;
-//                 }
-
-//                 const tr = document.createElement('tr');
-//                 const cols = ['var_name', 'sm_name', 'reg_type', 'offset', 'num', 'data'];
-//                 const defaults = {
-//                     var_name: varName,
-//                     sm_name: smName,
-//                     reg_type: regType,
-//                     offset: offset,
-//                     num: num,
-//                     data: JSON.stringify(dataArray)
-//                 };
-
-//                 cols.forEach(col => {
-//                     const td = document.createElement('td');
-//                     td.textContent = defaults[col] ?? '';
-//                     td.setAttribute('data-col', col);
-//                     td.setAttribute('contenteditable', 'true');
-//                     tr.appendChild(td);
-//                 });
-
-//                 const actionTd = document.createElement('td');
-//                 actionTd.className = 'action-cell';
-
-//                 const getBtn = document.createElement('button');
-//                 getBtn.textContent = '📥 Get';
-//                 getBtn.onclick = () => getTargetData(tr);
-//                 actionTd.appendChild(getBtn);
-
-//                 const setBtn = document.createElement('button');
-//                 setBtn.textContent = '📤 Set';
-//                 setBtn.onclick = () => setTargetData(tr);
-//                 actionTd.appendChild(setBtn);
-
-//                 const delBtn = document.createElement('button');
-//                 delBtn.textContent = '🗑️';
-//                 delBtn.onclick = () => tr.remove();
-//                 actionTd.appendChild(delBtn);
-
-//                 tr.appendChild(actionTd);
-//                 tbody.appendChild(tr);
-//                 totalVars++;
-//             });
-//         });
-
-//         setStatus('Loaded ' + totalVars + ' variable(s) from list.', false);
-//     }
-
-    // varListJson.items.forEach(item => {
-    //     // You may need to adapt this mapping to your actual schema in hithium_vars.json
-    //     const varName = item.src || item.name || '';
-    //     const smName = (item.sm_name || 'rtos');
-    //     const regType = (item.reg_type || 'mb_hold');
-    //     const offset = (item.offset != null ? String(item.offset) : '0');
-    //     const num = (item.size != null ? String(item.size) : '1');
-
-    //     // Prefer read_data as default data shown in UI; fallback to write_data; then empty array.
-    //     let dataArray = [];
-    //     if (Array.isArray(item.read_data)) {
-    //         dataArray = item.read_data;
-    //     } else if (Array.isArray(item.write_data)) {
-    //         dataArray = item.write_data;
-    //     }
-
-    //     const tr = document.createElement('tr');
-    //     const cols = ['var_name', 'sm_name', 'reg_type', 'offset', 'num', 'data'];
-    //     const defaults = {
-    //         var_name: varName,
-    //         sm_name: smName,
-    //         reg_type: regType,
-    //         offset: offset,
-    //         num: num,
-    //         data: JSON.stringify(dataArray)
-    //     };
-
-    //     cols.forEach(col => {
-    //         const td = document.createElement('td');
-    //         td.textContent = defaults[col] ?? '';
-    //         td.setAttribute('data-col', col);
-    //         td.setAttribute('contenteditable', 'true');
-    //         tr.appendChild(td);
-    //     });
-
-    //     const actionTd = document.createElement('td');
-    //     actionTd.className = 'action-cell';
-
-    //     const getBtn = document.createElement('button');
-    //     getBtn.textContent = '📥 Get';
-    //     getBtn.onclick = () => getTargetData(tr);
-    //     actionTd.appendChild(getBtn);
-
-    //     const setBtn = document.createElement('button');
-    //     setBtn.textContent = '📤 Set';
-    //     setBtn.onclick = () => setTargetData(tr);
-    //     actionTd.appendChild(setBtn);
-
-    //     const delBtn = document.createElement('button');
-    //     delBtn.textContent = '🗑️';
-    //     delBtn.onclick = () => tr.remove();
-    //     actionTd.appendChild(delBtn);
-
-    //     tr.appendChild(actionTd);
-    //     tbody.appendChild(tr);
-    // });
-
-//     setStatus('Loaded ' + varListJson.items.length + ' variable(s) from list.', false);
-// }
-
 async function loadSelectedVarList() {
     const select = document.getElementById('varListSelect');
     if (!select || !select.value) {
@@ -1431,44 +1289,228 @@ async function loadSelectedVarList() {
         setStatus('Error loading var list: ' + err.message, true);
     }
 }
-// async function loadSelectedVarList() {
-//     const select = document.getElementById('varListSelect');
-//     if (!select || !select.value) {
-//         setStatus('No variable list selected.', true);
-//         return;
-//     }
 
-//     const fileName = select.value;
-//     setStatus('Loading var list: ' + fileName + ' ...');
+// --- Save List / Get All / Save All ---
 
-//     try {
-//         const res = await fetch(pubApiBase + '/load_var_list', {
-//             method: 'POST',
-//             headers: {'Content-Type': 'application/json'},
-//             body: JSON.stringify({ file_name: fileName })
-//         });
-//         const data = await res.json();
-//         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+function collectVarRows() {
+    const rows = [];
+    document.querySelectorAll('#targetVarsTable tbody tr').forEach(tr => {
+        const obj = {};
+        tr.querySelectorAll('td[data-col]').forEach(td => {
+            const col = td.getAttribute('data-col');
+            let val = td.textContent.trim();
+            // if (col === 'offset' || col === 'num') {
+            //     val = val === '' ? null : Number(val);
+            // }
+            obj[col] = val;
+        });
+        rows.push(obj);
+    });
+    return rows;
+}
 
-//         populateTargetVarsFromVarList(data);
-//     } catch (err) {
-//         console.error(err);
-//         setStatus('Error loading var list: ' + err.message, true);
-//     }
-// }
+async function saveVarList() {
+    const select = document.getElementById('varListSelect');
+    const currentFileName = select && select.value ? select.value : '';
+
+    // Prompt user for filename
+    const fileName = prompt('Enter filename to save (e.g., my_vars.json):', currentFileName);
+    
+    if (!fileName || fileName.trim() === '') {
+        setStatus('Save cancelled - no filename provided.', true);
+        return;
+    }
+
+    const finalFileName = fileName.trim().endsWith('.json') ? fileName.trim() : fileName.trim() + '.json';
+
+    const items = collectVarRows().map(r => {
+        // offset: always text
+        const offsetText = (r.offset ?? '').toString().trim();
+
+        // num: still numeric for now (can also make text if you want)
+        const numText = (r.num ?? '').toString().trim();
+        const numVal = numText === '' ? 1 : Number(numText);
+
+        let writeData = [];
+        try {
+            writeData = r.write_data ? JSON.parse(r.write_data) : [];
+        } catch (e) {
+            writeData = [];
+        }
+
+        return {
+            name: r.var_name,
+            sm_name: r.sm_name || 'rtos',
+            reg_type: r.reg_type || 'mb_hold',
+            offset: offsetText,          // <- TEXT
+            num: isNaN(numVal) ? 1 : numVal,
+            write_data: writeData
+        };
+    });
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + finalFileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: finalFileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + finalFileName + '.', false);
+        
+        await reloadVarListOptions();
+        if (select) {
+            select.value = finalFileName;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+async function xxsaveVarList() {
+    const select = document.getElementById('varListSelect');
+    const currentFileName = select && select.value ? select.value : '';
+
+    // Prompt user for filename
+    const fileName = prompt('Enter filename to save (e.g., my_vars.json):', currentFileName);
+
+    if (!fileName || fileName.trim() === '') {
+        setStatus('Save cancelled - no filename provided.', true);
+        return;
+    }
+
+    const finalFileName = fileName.trim().endsWith('.json') ? fileName.trim() : fileName.trim() + '.json';
+
+    const items = collectVarRows().map(r => ({
+        name: r.var_name,
+        sm_name: r.sm_name || 'rtos',
+        reg_type: r.reg_type || 'mb_hold',
+        offset: r.offset != null ? Number(r.offset) : 0,
+        num: r.num != null ? Number(r.num) : 1,
+        write_data: r.write_data ? JSON.parse(r.write_data || '[]') : []
+    }));
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + finalFileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: finalFileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + finalFileName + '.', false);
+
+        // Refresh the dropdown to show the new file
+        await reloadVarListOptions();
+
+        // Select the newly saved file in the dropdown
+        if (select) {
+            select.value = finalFileName;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+
+async function xxsaveVarList() {
+    const select = document.getElementById('varListSelect');
+    const fileName = select && select.value ? select.value : null;
+
+    if (!fileName) {
+        setStatus('Select a var list file before saving.', true);
+        return;
+    }
+
+    const items = collectVarRows().map(r => ({
+        name: r.var_name,
+        sm_name: r.sm_name || 'rtos',
+        reg_type: r.reg_type || 'mb_hold',
+        offset: r.offset != null ? Number(r.offset) : 0,
+        num: r.num != null ? Number(r.num) : 1,
+        write_data: r.data ? JSON.parse(r.data || '[]') : []
+    }));
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + fileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: fileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + fileName + '.', false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+async function getAllTarget() {
+    const rows = Array.from(document.querySelectorAll('#targetVarsTable tbody tr'));
+    if (!rows.length) {
+        setStatus('No rows to Get.', true);
+        return;
+    }
+
+    setStatus('Getting data for all rows...');
+    for (const tr of rows) {
+        await getTargetData(tr);
+    }
+    setStatus('Completed Get All.', false);
+}
+
+async function setAllTarget() {
+    const rows = Array.from(document.querySelectorAll('#targetVarsTable tbody tr'));
+    if (!rows.length) {
+        setStatus('No rows to Save.', true);
+        return;
+    }
+
+    setStatus('Saving data for all rows...');
+    for (const tr of rows) {
+        await setTargetData(tr);
+    }
+    setStatus('Completed Save All.', false);
+}
 
 // Wire buttons
 document.getElementById('loadBtn').addEventListener('click', loadFromDB);
 document.getElementById('saveBtn').addEventListener('click', saveToDB);
-document.getElementById('exportBtn').addEventListener('click', exportCSV);
-document.getElementById('importBtn').addEventListener('click', importCSV);
+document.getElementById('exportBtn').addEventListener('click', exportJSON);
+document.getElementById('importBtn').addEventListener('click', importJSON);
 document.getElementById('addAlarmBtn').addEventListener('click', addNewAlarm);
 
 // Initial load
 loadFromDB();
 loadTargetConfig();
 reloadVarListOptions();
-
 </script>
 </body>
 </html>
