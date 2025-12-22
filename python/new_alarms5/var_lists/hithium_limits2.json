@@ -1,0 +1,159 @@
+[
+  {
+    "table": "vars",
+    "items": [
+      {
+        "name": "Terminal Over Voltage 2",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "Terminal Under Voltage",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "discharge_curr_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "fast_charge_curr_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "insulation_resistance_under",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_charge_temp_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_charge_temp_under",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_voltage_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_voltage_under",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_voltage_diff",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_temp_diff",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_soc_under",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "poll_temp_over_offset",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": 49,
+        "num": 3,
+        "write_data": []
+      },
+      {
+        "name": "poll_temp_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": 52,
+        "num": 1,
+        "write_data": []
+      },
+      {
+        "name": "mod_volt_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "mod_volt_under",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_discharge_temp_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_discharge_temp_under",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      },
+      {
+        "name": "single_soc_over",
+        "sm_name": "rtos",
+        "reg_type": "mb_hold",
+        "offset": null,
+        "num": 4,
+        "write_data": []
+      }
+    ]
+  }
+]

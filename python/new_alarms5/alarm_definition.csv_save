@@ -1,0 +1,12 @@
+alarm_num,alarm_name,num_levels,measured_variable,limits_structure,comparison_type,alarm_variable,latched_variable,notes
+0,Cell Voltage Too High,3,sbmu:input:Max_cell_temp,rtos:hold:at_cell_voltage_high,greater_than,rtos:bits:cell_voltage_high,rtos:bits:cell_voltage_high_latch,some notes
+1,Cell Voltage Too Low,3,sbmu:input:Min_cell_voltage,rtos:hold:at_cell_voltage_low,greater_than,rtos:bits:cell_voltage_low,rtos:bits:cell_voltage_low_latch,some random notes
+10,Intra-Cluster Battery Box Voltage Difference,3,,,greater_than,,,
+11,Cluster Voltage Upper Limit,3,,,greater_than,,,
+12,Cluster Voltage Lower Limit,3,,,greater_than,,,
+14,Battery Box Power Line Temperature,3,,,greater_than,,,
+15,Cluster Charging Current,3,,,greater_than,,,
+27,Inter-Cluster Current Imbalance,3,,,greater_than,,,
+28,Display-Master Communication Fault,3,,,greater_than,,,
+29,Master-Slave Communication Fault,3,,,greater_than,,,
+30,BMS-PCS Communication Fault,3,,,greater_than,,,

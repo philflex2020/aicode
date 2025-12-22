@@ -1,0 +1,2661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alarm Config Editor</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #222;
+            color: #eee;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        header .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        header input[type="text"] {
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+        header button {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ccc;
+            background: #f0f0f0;
+        }
+        .tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-right: 1px solid #ccc;
+        }
+        .tab.active {
+            background: #fff;
+            border-bottom: 2px solid #007bff;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            padding: 10px;
+            overflow: auto;
+            max-height: calc(100vh - 150px);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tab-controls {
+            margin-bottom: 8px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tab-controls button {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        th {
+            background: #f9f9f9;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+        tbody tr.new-row {
+            background: #e8f5e9;
+        }
+        tbody tr.deleted-row {
+            background: #ffebee;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        td[contenteditable="true"] {
+            background: #fffef0;
+        }
+        td[contentselect="true"] {
+            background: #fffef0;
+        }
+        td select {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background-color: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            line-height: inherit;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        td select:focus {
+            outline: none;
+        }
+        td.selectable-cell {
+            position: relative;
+            padding-right: 16px;
+            cursor: pointer;
+        }
+        td.selectable-cell::after {
+            content: "▼";
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 9px;
+            color: #888;
+            pointer-events: none;
+        }
+        td.selectable-cell:hover::after {
+            color: #333;
+        }
+        td.action-cell {
+            text-align: center;
+        }
+        td.action-cell button {
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .status-bar {
+            padding: 6px 10px;
+            background: #f8f8f8;
+            border-top: 1px solid #ddd;
+            font-size: 11px;
+            color: #555;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .status-bar span {
+            margin-right: 15px;
+        }
+        .status-ok {
+            color: #0a0;
+        }
+        .status-error {
+            color: #a00;
+        }
+        
+        /* Target tab specific styles */
+        .target-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .target-section h3 {
+            margin-top: 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .target-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .target-form label {
+            font-size: 12px;
+        }
+        .target-form input[type="text"],
+        .target-form input[type="number"] {
+            padding: 4px 6px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .target-form input[type="checkbox"] {
+            margin-left: 4px;
+        }
+        .target-form button {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        #targetVarsTable td[contenteditable="true"] {
+            background: #fffef0;
+            cursor: text;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        #jsonModal {
+        display: none;
+        position: fixed;
+        top: 10%;
+        left: 10%;
+        width: 80%;
+        height: 80%;
+        background: #fff8b3; /* soft yellow */
+        border: 2px solid #f1c40f; /* golden yellow border */
+        border-radius: 12px; /* rounded corners */
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: auto;
+        z-index: 1000;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #jsonEditor {
+        width: 100%;
+        height: 70%;
+        font-family: monospace;
+        font-size: 14px;
+        border: 1px solid #f1c40f;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: #fffde7; /* lighter yellow */
+        resize: vertical;
+        }
+
+        #saveJsonBtn, #cancelJsonBtn {
+        background-color: #f1c40f;
+        border: none;
+        color: #333;
+        padding: 8px 16px;
+        margin-right: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+        }
+
+        #saveJsonBtn:hover, #cancelJsonBtn:hover {
+        background-color: #d4ac0d;
+        }
+
+        .limits-structure-cell {
+        background-color: #4ada45; /* light yellow */
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 4px 8px;
+        }
+        .limits-def-cell {
+        background-color: #4ada45; /* light yellow */
+        cursor: pointer;
+        border-radius: 6px;
+        padding: 4px 8px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Alarm Config Editor ver 12</h1>
+    <div class="controls">
+        <label>JSON Dir:
+            <input type="text" id="jsonDirInput" value="json_exports">
+        </label>
+        <button id="loadBtn">Load from DB</button>
+        <button id="saveBtn">Save to DB</button>
+        <button id="exportBtn">Export JSON</button>
+        <button id="importBtn">Import JSON</button>
+    </div>
+</header>
+
+<div id="modalBackdrop" class="modal-backdrop"></div>
+
+<div class="tabs">
+    <div class="tab active" data-target="tab-defs">alarm_definitions</div>
+    <div class="tab" data-target="tab-levels">alarm_level_actions</div>
+    <div class="tab" data-target="tab-limits">limits_values</div>
+    <div class="tab" data-target="tab-target">target</div>
+</div>
+
+<div id="tab-defs" class="tab-content active">
+    <div class="tab-controls">
+        <button id="addAlarmBtn">➕ Add Alarm</button>
+        <span style="color: #666; font-size: 11px;">Click "Delete" on a row to mark for deletion. Save to apply changes.</span>
+    </div>
+    <table id="defsTable">
+        <thead>
+            <tr>
+                <th>alarm_num</th>
+                <th>alarm_name</th>
+                <th>num_levels</th>
+                <th>measured_variable</th>
+                <th>limits_def</th>
+                <th>comparison_type</th>
+                <th>alarm_variable</th>
+                <th>latched_variable</th>
+                <th>notes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="tab-levels" class="tab-content">
+    <table id="levelsTable">
+        <thead>
+            <tr>
+                <th>alarm_num</th>
+                <th>alarm_name</th>
+                <th>level</th>
+                <th>enabled</th>
+                <th>duration</th>
+                <th>actions</th>
+                <th>notes</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="tab-limits" class="tab-content">
+    <table id="limitsTable">
+        <thead>
+            <tr>
+                <th>limits_structure</th>
+                <th>alarm_name</th>
+                <th>level1_limit</th>
+                <th>level2_limit</th>
+                <th>level3_limit</th>
+                <th>hysteresis</th>
+                <th>last_updated</th>
+                <th>notes</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="jsonModal" class="modal" 
+         style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; 
+          background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000;">
+  <h3>Edit Actions JSON</h3>
+  <textarea id="jsonEditor" style="width:100%; height:70%; font-family: monospace;"></textarea>
+  <br/>
+  <button id="saveJsonBtn">Save</button>
+  <button id="cancelJsonBtn">Cancel</button>
+</div>
+<!-- <div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000;">
+  <h3>Edit Limits Structure</h3>
+  <div id="limitsModalContent">
+   
+    <textarea id="limitsEditor" style="width:100%; height:70%; font-family: monospace;"></textarea>
+  </div>
+  <br/>
+  <button id="saveLimitsBtn">Save</button>
+  <button id="cancelLimitsBtn">Cancel</button>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop"></div> -->
+
+<div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000; border-radius: 12px;">
+  <h3>Edit Limit Definitions</h3>
+  <pre id="limitsModalContent" style="background:#f9f9f9; padding:10px; border-radius:8px; height:60%; overflow:auto; font-family: monospace;"></pre>
+  <div style="margin-top: 10px;">
+    <button id="getTargetBtn">Get Target</button>
+    <button id="setTargetBtn">Set Target</button>
+    <button id="getLimitsBtn">Get Def</button>
+    <button id="updateLimitsBtn">Update Limit Def</button>
+    <button id="saveLimitsBtn">Save</button>
+    <button id="saveLimitsAsBtn">Save as</button>
+    <button id="cancelLimitsBtn">Cancel</button>
+  </div>
+</div>
+<div id="modalBackdrop" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999;">
+</div>
+
+
+<div id="tab-target" class="tab-content">
+    <div class="target-section">
+        <h3>Target Connection</h3>
+        <div class="target-form">
+            <label>IP: <input type="text" id="targetIp" value="127.0.0.1" /></label>
+            <label>Port: <input type="number" id="targetPort" value="8080" /></label>
+            <label>Secure: <input type="checkbox" id="targetSecure" /></label>
+            <button onclick="saveTargetConfig()">💾 Save Config</button>
+            <button onclick="loadTargetConfig()">🔄 Load Config</button>
+        </div>
+    </div>
+
+    <div class="target-section">
+        <h3>Variable Get/Set</h3>
+
+        <!-- Var list selection row -->
+        <div class="tab-controls">
+            <label style="font-size: 12px;">
+                Var List:
+                <select id="varListSelect" style="font-size: 12px; padding: 2px 4px; min-width: 160px;">
+                    <!-- options filled by JS -->
+                </select>
+            </label>
+            <button onclick="reloadVarListOptions()">🔄 Refresh Lists</button>
+            <button onclick="loadSelectedVarList()">📂 Load List</button>
+            <button onclick="getAllTarget()">📥 Get All</button>
+            <button onclick="setAllTarget()">📤 Save All</button>
+        </div>
+
+        <!-- Row-level and bulk operations -->
+        <div class="tab-controls">
+            <button onclick="addTargetVar()">➕ Add Variable</button>
+            <button onclick="saveVarList()">💾 Save List</button>
+            <span style="color: #666; font-size: 11px;">Type variable name or shared mem ref, then click Get/Set.</span>
+        </div>
+
+        <table id="targetVarsTable">
+            <thead>
+                <tr>
+                    <th>Variable Name / Ref</th>
+                    <th>sm_name</th>
+                    <th>reg_type</th>
+                    <th>offset</th>
+                    <th>num</th>
+                    <th>write data</th>
+                    <th>read data</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="status-bar">
+    <span id="statusText">Ready.</span>
+</div>
+
+<script>
+let alarmDefsData = []; // This will be populated when you load the data
+let limitsDefsData = []; // This will be populated when you load the data
+let limitsDefsMap = new Map();; // This will be populated when you load the data
+const apiBase = location.origin + '/api/alarms';
+const pubApiBase = location.origin + '/api/pub_defs';
+
+const COMPARISON_OPTIONS = [
+    'greater_than',
+    'less_than',
+    'equal',
+    'not_equal',
+    'greater_or_equal',
+    'less_or_equal',
+    'aggregate'
+];
+
+function makeComparisonTypeEditable(td) {
+    if (td.querySelector('select')) return;
+
+    const current = (td.textContent || '').trim() || 'greater_than';
+
+    const select = document.createElement('select');
+    COMPARISON_OPTIONS.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        if (opt === current) o.selected = true;
+        select.appendChild(o);
+    });
+
+    td.textContent = '';
+    td.appendChild(select);
+    select.focus();
+
+    const finalize = () => {
+        const value = select.value;
+        td.removeChild(select);
+        td.textContent = value;
+    };
+
+    select.addEventListener('blur', finalize);
+    select.addEventListener('change', finalize);
+}
+
+function setStatus(msg, isError = false) {
+    const el = document.getElementById('statusText');
+    el.textContent = msg;
+    el.className = isError ? 'status-error' : 'status-ok';
+}
+
+// Simple tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.target).classList.add('active');
+    });
+});
+
+// Render helpers
+function renderDefs(data) {
+    const tbody = document.querySelector('#defsTable tbody');
+    tbody.innerHTML = '';
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_def','comparison_type','alarm_variable','latched_variable','notes'];
+        cols.forEach(col => {
+            const td = document.createElement('td');
+            if (col === 'limits_def') {
+                // Show limit_defs.name if available, else fallback to limits_structure string
+                td.textContent = row.limits_def; // && row.limit_defs.name) || row.limits_structure || '';
+            } else {
+                td.textContent = row[col] ?? '';
+            }
+            //td.textContent = row[col] ?? '';
+            td.setAttribute('data-col', col);
+            if (col !== 'alarm_num') {
+                if (col === 'comparison_type') {
+                    td.classList.add('selectable-cell');
+                    td.addEventListener('click', () => makeComparisonTypeEditable(td));
+                    td.setAttribute('contentselect', 'true');
+                } else {
+                    td.setAttribute('contenteditable', 'true');
+                }
+            }
+            tr.appendChild(td);
+        });
+
+        const actionTd = document.createElement('td');
+        actionTd.className = 'action-cell';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️ Delete';
+        deleteBtn.onclick = () => toggleDeleteRow(tr);
+        actionTd.appendChild(deleteBtn);
+        tr.appendChild(actionTd);
+
+        tbody.appendChild(tr);
+    });
+    function attachLimitsStructureClickHandlers() {
+        document.querySelectorAll('#defsTable tbody tr td[data-col="limits_def"]').forEach(cell => {
+            cell.classList.add('limits-def-cell');
+            cell.addEventListener('click', () => openLimitsModal(cell));
+        });
+    }
+    attachLimitsStructureClickHandlers()
+}
+
+function renderLevels(data) {
+    const tbody = document.querySelector('#levelsTable tbody');
+    tbody.innerHTML = '';
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        const cols = ['alarm_num','alarm_name','level','enabled','duration','actions','notes'];
+        cols.forEach(col => {
+            const td = document.createElement('td');
+            let val = row[col];
+            if (col === 'enabled') {
+                val = row[col] ? 1 : 0;
+            }
+            td.textContent = val ?? '';
+            td.setAttribute('data-col', col);
+            if (col !== 'alarm_num' && col !== 'alarm_name' && col !== 'level') {
+                td.setAttribute('contenteditable', 'true');
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    document.querySelectorAll('#levelsTable tbody tr td[data-col="actions"]').forEach(cell => {
+        cell.style.cursor = 'pointer';
+        cell.addEventListener('click', () => openJsonModal(cell));
+    });
+
+}
+
+function renderLimits(data) {
+    const tbody = document.querySelector('#limitsTable tbody');
+    tbody.innerHTML = '';
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        const cols = ['limits_structure','alarm_name','level1_limit','level2_limit','level3_limit','hysteresis','last_updated','notes'];
+        cols.forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = row[col] ?? '';
+            td.setAttribute('data-col', col);
+            if (col !== 'limits_structure' && col !== 'alarm_name' && col !== 'last_updated') {
+                td.setAttribute('contenteditable', 'true');
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+function addNewAlarm() {
+    const tbody = document.querySelector('#defsTable tbody');
+    const existingRows = tbody.querySelectorAll('tr:not(.deleted-row)');
+    
+    let maxAlarmNum = -1;
+    existingRows.forEach(tr => {
+        const numCell = tr.querySelector('td[data-col="alarm_num"]');
+        if (numCell) {
+            const num = parseInt(numCell.textContent);
+            if (!isNaN(num) && num > maxAlarmNum) {
+                maxAlarmNum = num;
+            }
+        }
+    });
+    const newAlarmNum = maxAlarmNum + 1;
+    
+    const tr = document.createElement('tr');
+    tr.className = 'new-row';
+    
+    const cols = ['alarm_num','alarm_name','num_levels','measured_variable','limits_def','comparison_type','alarm_variable','latched_variable','notes'];
+    const defaults = {
+        alarm_num: newAlarmNum,
+        alarm_name: 'New Alarm',
+        num_levels: 1,
+        measured_variable: '',
+        limits_def: 'New Alarm',
+        comparison_type: 'greater_than',
+        alarm_variable: '',
+        latched_variable: '',
+        notes: ''
+    };
+    
+    cols.forEach(col => {
+        const td = document.createElement('td');
+        td.textContent = defaults[col];
+        td.setAttribute('data-col', col);
+        if (col !== 'alarm_num') {
+            td.setAttribute('contenteditable', 'true');
+        }
+        tr.appendChild(td);
+    });
+    
+    const actionTd = document.createElement('td');
+    actionTd.className = 'action-cell';
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️ Delete';
+    deleteBtn.onclick = () => toggleDeleteRow(tr);
+    actionTd.appendChild(deleteBtn);
+    tr.appendChild(actionTd);
+    
+    tbody.appendChild(tr);
+    setStatus('New alarm added. Edit and click "Save to DB" to persist.', false);
+}
+
+function toggleDeleteRow(tr) {
+    if (tr.classList.contains('deleted-row')) {
+        tr.classList.remove('deleted-row');
+        setStatus('Row unmarked for deletion.', false);
+    } else {
+        tr.classList.add('deleted-row');
+        setStatus('Row marked for deletion. Click "Save to DB" to apply.', false);
+    }
+}
+
+function collectDefs() {
+    const rows = [];
+    document.querySelectorAll('#defsTable tbody tr:not(.deleted-row)').forEach(tr => {
+        const obj = {};
+        tr.querySelectorAll('td[data-col]').forEach(td => {
+            const col = td.getAttribute('data-col');
+            let val = td.textContent.trim();
+
+            if (col === 'alarm_num' || col === 'num_levels') {
+                val = val === '' ? null : Number(val);
+            }
+
+            obj[col] = (val === '' ? null : val);
+        });
+
+        if (obj.alarm_num == null) {
+            console.warn('Skipping row without alarm_num:', obj);
+            return;
+        }
+        if (!obj.alarm_name || obj.alarm_name.toString().trim() === '') {
+            console.warn('Skipping row without alarm_name:', obj);
+            return;
+        }
+        if (obj.num_levels == null || isNaN(obj.num_levels)) {
+            console.warn('Skipping row without valid num_levels:', obj);
+            return;
+        }
+
+        rows.push(obj);
+    });
+    return rows;
+}
+
+function collectLevels() {
+    const rows = [];
+    document.querySelectorAll('#levelsTable tbody tr').forEach(tr => {
+        const obj = {};
+        tr.querySelectorAll('td').forEach(td => {
+            const col = td.getAttribute('data-col');
+            if (col === 'alarm_name') return;
+            
+            let val = td.textContent.trim();
+            if (col === 'alarm_num' || col === 'level') {
+                val = val === '' ? null : Number(val);
+            } else if (col === 'enabled') {
+                val = val === '' ? false : (val === '1' || val.toLowerCase() === 'true');
+            } else if (col === 'duration') {
+                val = val === '' ? "5:5" : val;
+            }
+            obj[col] = val === '' ? null : val;
+        });
+        if (obj.alarm_num != null && obj.level != null) {
+            rows.push(obj);
+        }
+    });
+    return rows;
+}
+
+function collectLimits() {
+    const rows = [];
+    document.querySelectorAll('#limitsTable tbody tr').forEach(tr => {
+        const obj = {};
+        tr.querySelectorAll('td').forEach(td => {
+            const col = td.getAttribute('data-col');
+            if (col === 'alarm_name') return;
+            
+            let val = td.textContent.trim();
+            if (['level1_limit','level2_limit','level3_limit','hysteresis'].includes(col)) {
+                val = val === '' ? null : Number(val);
+            }
+            obj[col] = val === '' ? null : val;
+        });
+        if (obj.limits_structure) {
+            rows.push(obj);
+        }
+    });
+    return rows;
+}
+
+/**
+ * Returns an array of strings representing all table names.
+ * @param {Array} data - The nested limitsDefsMap array.
+ * @returns {Array<string>} - e.g., ["target_vars", "system_vars", "cell_limits"]
+ */
+/*
+    Usage Examples (2025 Standard)
+    1. Basic List:
+    javascript
+    const tables = getTableNames(limitsDefsMap);
+    console.log(tables); // ["target_vars", "rtos_limits", ...]
+    Use code with caution.
+
+    2. Populating a Dropdown (HTML):
+    If you want to use this list to fill a <select> menu in your UI:
+    javascript
+    const selectMenu = document.getElementById('tableSelect');
+    const tables = getTableNames(limitsDefsMap);
+
+    selectMenu.innerHTML = tables
+        .map(name => `<option value="${name}">${name}</option>`)
+        .join('');
+*/
+
+function getTableNames(data) {
+    return data.map(entry => entry.table);
+}
+
+function buildLimitsDefNestedFromMap() {
+    const grouped = {};
+
+    for (const [key, item] of limitsDefsMap.entries()) {
+        // key format: "table:name"
+        const [table, name] = key.split(':');
+        if (!grouped[table]) grouped[table] = [];
+        grouped[table].push(item);
+    }
+
+    // Convert grouped object to array of {table, items}
+    return Object.entries(grouped).map(([table, items]) => ({
+        table,
+        items
+    }));
+}
+
+async function loadFromDB() {
+    setStatus('Loading from /api/alarms/config ...');
+    try {
+        const res = await fetch(apiBase + '/config');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        alarmDefsData = data.alarm_definitions || [];
+        limitsDefsData = data.limits_def || [];
+        // In your fetchConfig or where you process the config data:
+        data.limits_def.forEach(tableGroup => {
+            const tableName = tableGroup.table;
+            tableGroup.items.forEach(item => {
+                limitsDefsMap.set(`${tableName}:${item.name}`, item);
+            });
+        });
+        renderDefs(data.alarm_definitions || []);
+        renderLevels(data.alarm_level_actions || []);
+        renderLimits(data.limits_values || []);
+        setStatus('Loaded configuration from DB.', false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error loading config: ' + err.message, true);
+    }
+}
+
+async function saveToDB() {
+    const payload = {
+        alarm_definitions: collectDefs(),
+        alarm_level_actions: collectLevels(),
+        limits_values: collectLimits(),
+        limits_def: buildLimitsDefNestedFromMap()  // include updated limits_def
+    };
+    setStatus('Saving to /api/alarms/config ...');
+    try {
+        const res = await fetch(apiBase + '/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved configuration to DB. Reloading...', false);
+        await loadFromDB();
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving config: ' + err.message, true);
+    }
+}
+// Helper function to build actions array for an alarm
+function buildActionsForAlarm(alarmNum, alarmLevelActions) {
+    // Filter actions for this specific alarm
+    const actionsForThisAlarm = alarmLevelActions.filter(action => 
+        action.alarm_num === alarmNum
+    );
+    
+    // Sort by level and build the actions array
+    return actionsForThisAlarm
+        .sort((a, b) => a.level - b.level)
+        .map(action => ({
+            level: action.level,
+            level_enabled: action.enabled,
+            duration: action.duration || "2:3",
+            actions: action.actions ? JSON.parse(action.actions) : [],
+            notes: action.notes || ""
+        }));
+}
+
+// Updated exportJSON function
+async function exportJSON() {
+    const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+    setStatus('Exporting JSON to dir: ' + dir + ' ...');
+
+    // Collect current data
+    const alarmDefinitions = collectDefs();
+    const alarmLevelActions = collectLevels();
+    const limitsValues = collectLimits();
+    const limitsDef = buildLimitsDefNestedFromMap();
+
+    // Build alarms array with embedded actions (matching original format)
+    const alarms = alarmDefinitions.map(alarm => {
+        // Build actions array for this alarm
+        const actions = buildActionsForAlarm(alarm.alarm_num, alarmLevelActions);
+        
+        // Build limits array from limits_values
+        let limitsArray = [0, 0, 0, 0];
+        if (alarm.limits_structure) {
+            const matchingLimit = limitsValues.find(lv => 
+                lv.limits_structure === alarm.limits_structure
+            );
+            if (matchingLimit) {
+                limitsArray = [
+                    matchingLimit.level1_limit || 0,
+                    matchingLimit.level2_limit || 0,
+                    matchingLimit.level3_limit || 0,
+                    matchingLimit.hysteresis || 0
+                ];
+            }
+        }
+        
+        return {
+            num: alarm.alarm_num,
+            name: alarm.alarm_name,
+            levels: alarm.num_levels,
+            measured: alarm.measured_variable || "",
+            limits: limitsArray,
+            compare: alarm.comparison_type || "greater_than",
+            alarm_var: alarm.alarm_variable || "",
+            latch_var: alarm.latched_variable || "",
+            limits_var: alarm.limits_structure || "",
+            notes: alarm.notes || "",
+            actions: actions  // Embedded actions array
+        };
+    });
+
+    // Build the export config in the original format
+    const config = {
+        alarms: alarms
+    };
+
+    try {
+        const res = await fetch(apiBase + '/export-json', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                directory: dir, 
+                file_name: 'alarm_config.json', 
+                config: config 
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Exported JSON to: ' + data.message, false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error exporting JSON: ' + err.message, true);
+    }
+}
+
+// async function exportJSON() {
+//     const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+//     setStatus('Exporting JSON to dir: ' + dir + ' ...');
+
+//     // Build full config from in-memory data (same approach as saveToDB)
+//     const config = {
+//         alarm_definitions: collectDefs(),      // Use collect function
+//         alarm_level_actions: collectLevels(),  // Use collect function
+//         limits_values: collectLimits(),        // Use collect function
+//         limits_def: buildLimitsDefNestedFromMap()  // Use same build function
+//     };
+//     // // Build full config from in-memory data
+//     // const config = {
+//     //     alarm_definitions: alarmDefsData,  // your in-memory alarm defs
+//     //     alarm_level_actions: currentAlarmLevelActions,
+//     //     limits_values: currentLimitsValues,
+//     //     limits_def: currentLimitsDef,  // make sure this is up-to-date
+//     // };
+
+//     try {
+//         const res = await fetch(apiBase + '/export-json', {
+//             method: 'POST',
+//             headers: {'Content-Type': 'application/json'},
+//             body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json', config: config })
+//         });
+//         const data = await res.json();
+//         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+//         setStatus('Exported JSON to: ' + data.message, false);
+//     } catch (err) {
+//         console.error(err);
+//         setStatus('Error exporting JSON: ' + err.message, true);
+//     }
+// }
+// async function exportJSON() {
+//     const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+//     setStatus('Exporting JSON to dir: ' + dir + ' ...');
+//     try {
+//         const res = await fetch(apiBase + '/export-json', {
+//             method: 'POST',
+//             headers: {'Content-Type': 'application/json'},
+//             body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json' })
+//         });
+//         const data = await res.json();
+//         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+//         setStatus('Exported JSON to: ' + data.message, false);
+//     } catch (err) {
+//         console.error(err);
+//         setStatus('Error exporting JSON: ' + err.message, true);
+//     }
+// }
+
+async function importJSON() {
+    const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+    setStatus('Importing JSON from dir: ' + dir + ' ...');
+    console.log('Importing JSON from dir: ' + dir + ' ...');
+    try {
+        const res = await fetch(apiBase + '/import-json', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json' })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Imported JSON from: ' + dir + '. Reloading ...', false);
+        await loadFromDB();
+    } catch (err) {
+        console.error(err);
+        setStatus('Error importing JSON: ' + err.message, true);
+    }
+}
+// limits modal
+
+let currentLimitsCell = null;
+let currentLimitDefs = null;
+
+function clearLimitsModal() {
+  // Clear any input fields (e.g., limit labels)
+  const inputs = document.querySelectorAll('#limitsModal input');
+  inputs.forEach(input => {
+    input.value = '';
+  });
+
+  // Clear the table content
+  const modalContent = document.getElementById('limitsModalContent');
+  if (modalContent) {
+    modalContent.innerHTML = '';
+  }
+}
+
+function openLimitsModal(cell) {
+  currentLimitsCell = cell;
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+  const alarmName = tr.querySelector('td[data-col="alarm_name"]').textContent.trim();
+  // Update modal header with alarm name
+  document.querySelector('#limitsModal h3').textContent = `Edit Limit Definitions for "${alarmName}"`;
+
+  // Find alarm data
+  let alarmData = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      alarmData = alarm;
+      break;
+    }
+  }
+  if (!alarmData) {
+    alert('Alarm data not found.');
+    return;
+  }
+
+  // Find the alarm data in your global data model
+  currentLimitDefs = null;
+  currentLimitDefs = alarmData.limits_def || [];
+  console.log('alarmNum :', alarmNum);
+  console.log('alarmName :', alarmName);
+  console.log('alarm Data :', alarmData);
+  console.log('limit_defs :', currentLimitDefs);
+//if (!Array.isArray(currentLimitDefs)) currentLimitDefs = [currentLimitDefs];
+//   if (!currentLimitDefs || !Array.isArray(currentLimitDefs)) {
+//     alert('No limit_defs array found for this alarm.');
+//     return;
+//   }
+
+  const modalContent = document.getElementById('limitsModalContent');
+  modalContent.innerHTML = '';
+
+  // Find the matching limits definition by alarmName
+//      const existingDef = findLimitByPath(limitsDefsMap, "target_vars.online");
+  const limitsDef = findLimitByPathName(limitsDefsMap, "alarm_limits", currentLimitDefs);
+  //const limitsDef = limitsDefsMap.find(ld => ld.name === currentLimitDefs);
+  console.log("limitsDef :", limitsDef);
+  currentLimitDefs = limitsDef;
+  if (!Array.isArray(currentLimitDefs)) {
+        currentLimitDefs = [currentLimitDefs];
+  }
+  console.log("LimitDefs data:", currentLimitDefs);
+
+  if (!limitsDef) {
+    console.warn('No limits definition found for alarm:', alarmName);
+    clearLimitsModal();
+    return;
+  }
+
+  // Example: populate a label input if you have one
+  if (document.getElementById('limit1_label')) {
+    document.getElementById('limit1_label').value = limitsDef.limit1_label || '';
+  }
+
+  // Create table
+  const table = document.createElement('table');
+  table.classList.add('limits-table'); // add your CSS class if any
+
+  // Table header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col;
+    headerRow.appendChild(th);
+  });
+  // Add action column header
+  const actionTh = document.createElement('th');
+  actionTh.textContent = 'Actions';
+  headerRow.appendChild(actionTh);
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Table body
+  const tbody = document.createElement('tbody');
+  console.log(" current limit defs 2 :", currentLimitDefs);
+  currentLimitDefs.forEach(item => {
+    const tr = document.createElement('tr');
+
+    columns.forEach(col => {
+      const td = document.createElement('td');
+      let cellValue = item[col];
+
+      // For write_data and read_data, stringify arrays or objects
+      if ((col === 'write_data' || col === 'read_data') && typeof cellValue !== 'string') {
+        try {
+          cellValue = JSON.stringify(cellValue || [], null, 2);
+        } catch {
+          cellValue = '';
+        }
+
+      } else if (cellValue == null) {
+        cellValue = '';
+      }
+
+      td.textContent = cellValue;
+      td.setAttribute('data-col', col);
+      td.setAttribute('contenteditable', 'true');
+      tr.appendChild(td);
+    });
+
+    // Actions cell with buttons
+    const actionTd = document.createElement('td');
+    actionTd.className = 'action-cell';
+
+    // const getBtn = document.createElement('button');
+    // getBtn.textContent = '📥 Get';
+    // getBtn.onclick = () => getTargetData(tr);
+    // actionTd.appendChild(getBtn);
+
+    // const setBtn = document.createElement('button');
+    // setBtn.textContent = '📤 Set';
+    // setBtn.onclick = () => setTargetData(tr);
+    // actionTd.appendChild(setBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.onclick = () => tr.remove();
+    actionTd.appendChild(delBtn);
+
+    tr.appendChild(actionTd);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  modalContent.appendChild(table);
+
+  // Show modal and backdrop
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function oldopenLimitsModal(cell) {
+  currentLimitsCell = cell;
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+  const alarmName = tr.querySelector('td[data-col="alarm_name"]').textContent.trim();
+
+  // Find the alarm data in your global data model
+  currentLimitDefs = null;
+  console.log('alarmNum :',alarmNum);
+  console.log('alarmName :',alarmName);
+
+
+
+
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      console.log('alarm  :',alarm);
+      currentLimitDefs = alarm.limit_defs || [];
+      break;
+    }
+  }
+
+  if (!currentLimitDefs || !Array.isArray(currentLimitDefs)) {
+    alert('No limit_defs array found for this alarm.');
+    return;
+  }
+
+  //console.log('currentLimitDefs :',currentLimitDefs);
+
+  const modalContent = document.getElementById('limitsModalContent');
+  modalContent.innerHTML = '';
+
+// Find the matching limits definition
+//    const existingDef = findLimitByPath(limitsDefsMap, "target_vars.online");
+    const limitsDef = findLimitByPathName(limitsDefsMap, "alarm_limits", alarmName);
+    //const limitsDef = limitsDefsData.find(ld => ld.alarm_name === alarmName);
+
+    if (!limitsDef) {
+        console.warn('No limits definition found for alarm:', alarmName);
+        clearLimitsModal();
+        return;
+    }
+
+    // Populate modal fields
+    document.getElementById('limit1_label').value = limitsDef.limit1_label || '';
+
+  // Create table
+  const table = document.createElement('table');
+  table.classList.add('limits-table'); // add your CSS class if any
+
+  // Table header
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col;
+    headerRow.appendChild(th);
+  });
+  // Add action column header
+  const actionTh = document.createElement('th');
+  actionTh.textContent = 'Actions';
+  headerRow.appendChild(actionTh);
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Table body
+  const tbody = document.createElement('tbody');
+
+  currentLimitDefs.forEach(item => {
+    const tr = document.createElement('tr');
+
+    columns.forEach(col => {
+      const td = document.createElement('td');
+      let cellValue = item[col];
+
+      // For write_data and read_data, stringify arrays or objects
+      if ((col === 'write_data' || col === 'read_data') && typeof cellValue !== 'string') {
+        try {
+          cellValue = JSON.stringify(cellValue || [], null, 2);
+        } catch {
+          cellValue = '';
+        }
+      } else if (cellValue == null) {
+        cellValue = '';
+      }
+
+      td.textContent = cellValue;
+      td.setAttribute('data-col', col);
+      td.setAttribute('contenteditable', 'true');
+      tr.appendChild(td);
+    });
+
+    // Actions cell with buttons
+    const actionTd = document.createElement('td');
+    actionTd.className = 'action-cell';
+
+    const getBtn = document.createElement('button');
+    getBtn.textContent = '📥 Get';
+    getBtn.onclick = () => getTargetData(tr);
+    actionTd.appendChild(getBtn);
+
+    const setBtn = document.createElement('button');
+    setBtn.textContent = '📤 Set';
+    setBtn.onclick = () => setTargetData(tr);
+    actionTd.appendChild(setBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.onclick = () => tr.remove();
+    actionTd.appendChild(delBtn);
+
+    tr.appendChild(actionTd);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  modalContent.appendChild(table);
+
+  // Show modal and backdrop
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+function xxxopenLimitsModal(cell) {
+  currentLimitsCell = cell;
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+  // Find the alarm data in your global data model
+  currentLimitDefs = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      currentLimitDefs = alarm.limit_defs || {};
+      break;
+    }
+  }
+
+  if (!currentLimitDefs) {
+    alert('No limit_defs found for this alarm.');
+    return;
+  }
+
+  // Build editable form for limit_defs
+  const modalContent = document.getElementById('limitsModalContent');
+  modalContent.innerHTML = '';
+
+  // Create input fields for each key except write_data and read_data
+  ['name', 'sm_name', 'reg_type', 'offset', 'num'].forEach(key => {
+    const label = document.createElement('label');
+    label.textContent = key + ': ';
+    const input = document.createElement('input');
+    input.type = (key === 'num') ? 'number' : 'text';
+    input.value = currentLimitDefs[key] || '';
+    input.id = 'limitDef_' + key;
+    input.style.marginRight = '10px';
+    label.appendChild(input);
+    modalContent.appendChild(label);
+  });
+
+  // Create editable textarea for write_data and read_data arrays
+  ['write_data', 'read_data'].forEach(key => {
+    const label = document.createElement('label');
+    label.textContent = key + ': ';
+    const textarea = document.createElement('textarea');
+    textarea.id = 'limitDef_' + key;
+    textarea.style.width = '100%';
+    textarea.style.height = '80px';
+    textarea.value = JSON.stringify(currentLimitDefs[key] || [], null, 2);
+    label.appendChild(textarea);
+    modalContent.appendChild(label);
+  });
+
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function xxopenLimitsModal(cell) {
+  currentLimitsCell = cell;
+  // Find the alarm row data from the cell's row
+  const tr = cell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+  // Find the alarm data in your data model (assuming you have it in a global variable `alarmDefsData`)
+  currentLimitDefs = null;
+  for (const alarm of alarmDefsData) {
+    if (String(alarm.alarm_num) === alarmNum) {
+      currentLimitDefs = alarm.limit_defs || {};
+      break;
+    }
+  }
+
+  if (!currentLimitDefs) {
+    alert('No limit_defs found for this alarm.');
+    return;
+  }
+
+  // Show pretty JSON in modal content
+  document.getElementById('limitsModalContent').textContent = JSON.stringify(currentLimitDefs, null, 2);
+
+  document.getElementById('limitsModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function closeLimitsModal() {
+  document.getElementById('limitsModal').style.display = 'none';
+  document.getElementById('modalBackdrop').style.display = 'none';
+  currentLimitsCell = null;
+  currentLimitDefs = null;
+}
+
+function countLimitsDefUsers(defName) {
+  console.log("table name :", defName);
+
+  if (!defName) return 0;
+  let count = 0;
+  for (const alarm of alarmDefsData) {
+    if ((alarm.limits_def_name || alarm.limit_def_name || alarm.limits_def || alarm.limit_defs_name) === defName) {
+      // (adjust key name to whatever your alarm refers to the def by)
+      count++;
+    }
+    // fallback: if alarms hold reference inside alarm.limit_defs.alarm_name etc:
+    if (Array.isArray(alarm.limit_defs) && alarm.limit_defs.length) {
+      // This is only if alarms embed the name inside; adjust as needed.
+      if (alarm.limit_defs_name && alarm.limit_defs_name === defName) count++;
+    }
+  }
+  return count;
+}
+
+function populateLimitsModalTable(limitsDef) {
+  const modalContent = document.getElementById('limitsModalContent');
+  modalContent.innerHTML = '';
+
+  const table = document.createElement('table');
+  table.classList.add('limits-table');
+  table.id = 'limitsModalTable';
+
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col;
+    headerRow.appendChild(th);
+  });
+  const selectTh = document.createElement('th');
+  selectTh.textContent = 'Select';
+  headerRow.appendChild(selectTh);
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  limitsDef.forEach(item => {
+    const row = document.createElement('tr');
+
+    columns.forEach(col => {
+      const td = document.createElement('td');
+      let cellValue = item[col];
+      if ((col === 'write_data' || col === 'read_data') && typeof cellValue !== 'string') {
+        try { cellValue = JSON.stringify(cellValue || [], null, 2); } catch { cellValue = ''; }
+      } else if (cellValue == null) {
+        cellValue = '';
+      }
+      td.textContent = cellValue;
+      td.setAttribute('data-col', col);
+      td.setAttribute('contenteditable', 'true');
+      row.appendChild(td);
+    });
+
+    const selTd = document.createElement('td');
+    selTd.className = 'select-cell';
+    selTd.textContent = '◯';
+    selTd.style.cursor = 'pointer';
+    selTd.onclick = () => toggleRowSelect(row);
+    row.appendChild(selTd);
+
+    tbody.appendChild(row);
+  });
+
+  table.appendChild(tbody);
+  modalContent.appendChild(table);
+
+  selectedLimitRow = null;
+}
+
+function marshalLimitsTableToJsonString() {
+  const table = document.getElementById('limitsModal');
+  if (!table) {
+    console.log("no table :");
+    return '[]';
+  }
+  const rows = Array.from(table.querySelectorAll('tbody tr'));
+  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+
+  const arr = rows.map(row => {
+    const obj = {};
+    columns.forEach(col => {
+      const td = row.querySelector(`td[data-col="${col}"]`);
+      let val = td ? td.textContent.trim() : '';
+      // try parse JSON for write_data/read_data
+      if ((col === 'write_data' || col === 'read_data') && val) {
+        try { obj[col] = JSON.parse(val); }
+        catch { obj[col] = val; } // leave as string if invalid JSON
+      } else if (col === 'num') {
+        // coerce number fields
+        const n = parseInt(val, 10);
+        obj[col] = Number.isNaN(n) ? val : n;
+      } else {
+        obj[col] = val;
+      }
+    });
+    return obj;
+  });
+
+  return JSON.stringify(arr);
+}
+
+function areLimitDefsEqual(defA, defB) {
+  if (!Array.isArray(defA) || !Array.isArray(defB)) return false;
+  if (defA.length !== defB.length) return false;
+
+  for (let i = 0; i < defA.length; i++) {
+    const a = defA[i];
+    const b = defB[i];
+
+    for (const key in a) {
+      let valA = a[key];
+      let valB = b[key];
+
+      // Normalize arrays/objects to JSON strings for comparison
+      if (typeof valA !== 'string' && (Array.isArray(valA) || typeof valA === 'object')) {
+        try { valA = JSON.stringify(valA); } catch {}
+      }
+      if (typeof valB !== 'string' && (Array.isArray(valB) || typeof valB === 'object')) {
+        try { valB = JSON.stringify(valB); } catch {}
+      }
+
+      // Normalize strings (trim, remove extra spaces)
+      if (typeof valA === 'string') valA = valA.replace(/\s+/g, '');
+      if (typeof valB === 'string') valB = valB.replace(/\s+/g, '');
+
+      if (valA !== valB) {
+        console.log(`Mismatch in key "${key}":`, valA, 'vs', valB);
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+function xxareLimitDefsEqual(defA, defB) {
+    console.log("def A:  ", defA);
+    console.log("def B:  ", defB);
+
+    if (!Array.isArray(defA)) 
+    {
+      console.log("def A is not an array ", defA);
+      return false;
+    }
+    if (!Array.isArray(defB)) 
+    {
+      console.log("def B is not an array ", defB);
+      return false;
+    }
+    if (defA.length !== defB.length) {
+      console.log("defs have different lengths");
+      return false;
+    }
+    for (let i = 0; i < defA.length; i++) {
+      const a = defA[i];
+     const b = defB[i];
+    // Compare all keys (assuming same keys)
+    for (const key in a) {
+      if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) {
+        console.log("def KEY DIFF", key);
+        console.log("def A string", JSON.stringify(a[key]));
+        console.log("def B string", JSON.stringify(b[key]));
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+
+/**
+ * Finds a nested definition using "table.item" notation.
+ * @param {Array} data - The nested limitsDefsMap array.
+ * @param {string} path - The string path (e.g., "target_vars.online").
+ * @returns {Object|null} - The found item object or null.
+ use: 
+    const existingDef = findLimitByPath(limitsDefsMap, "target_vars.online");
+
+    if (existingDef) {
+        console.log("Found definition:", existingDef);
+    } else {
+        console.log("Definition not found.");
+    }
+ */
+
+function findLimitByPathName(data, tableName, itemName) {
+
+    // If you're using the nested structure:
+    return limitsDefsMap.get(`${tableName}:${itemName}`);
+    
+}
+
+
+function findLimitByPath(data, path) {
+    if (!path || !path.includes('.')) return null;
+
+    const [tableName, itemName] = path.split('.');
+
+    return findLimitByPathName(data, tableName, itemName);
+}
+
+
+/**
+ * Adds a new definition to a specific table in the nested limitsDefsMap.
+ * If the table doesn't exist, it creates it.
+ * 
+ * @param {Array} data - The nested limitsDefsMap array.
+ * @param {string} tableName - The table to add to (e.g., "target_vars").
+ * @param {string} itemName - The name of the new definition.
+ * @param {Object} itemContent - The modal/limit data to store.
+ * 
+ * // Example: newLimitsName is "target_vars.online"
+        if (!existingDef) {
+            const [tableName, itemName] = newLimitsName.includes('.') 
+                ? newLimitsName.split('.') 
+                : ["default_table", newLimitsName];
+
+            const success = addNewLimitDefinition(
+                limitsDefsData, 
+                tableName, 
+                itemName, 
+                modalData
+            );
+
+            if (success) {
+                alert(`Created new limits definition "${itemName}" in table "${tableName}".`);
+            }
+        }
+
+ */
+function addNewLimitDefinition(data, tableName, itemName, itemContent) {
+    // 1. Find or create the table
+    let tableObj = data.find(t => t.table === tableName);
+
+    if (!tableObj) {
+        tableObj = {
+            table: tableName,
+            items: []
+        };
+        data.push(tableObj);
+    }
+
+    // 2. Double-check for duplicates within this specific table
+    const exists = tableObj.items.some(i => i.name === itemName);
+    if (exists) {
+        console.warn(`Definition "${itemName}" already exists in "${tableName}".`);
+        return false;
+    }
+
+    // 3. Create and push the new item
+    const newItem = {
+        name: itemName,
+        limit_defs: itemContent
+    };
+
+    tableObj.items.push(newItem);
+    return true;
+}
+
+document.getElementById('updateLimitsBtn').addEventListener('click', () => {
+  if (!currentLimitsCell) {
+    alert('No alarm selected.');
+    return;
+  }
+
+  const tr = currentLimitsCell.parentElement;
+  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+  const alarm = alarmDefsData.find(a => String(a.alarm_num) === alarmNum);
+  if (!alarm) {
+    alert('Alarm not found.');
+    return;
+  }
+
+  const modalTable = document.querySelector('#limitsModalContent table');
+  if (!modalTable) {
+    alert('No limits table found.');
+    return;
+  }
+
+  const firstRow = modalTable.querySelector('tbody tr');
+  if (!firstRow) {
+    alert('No data in limits table.');
+    return;
+  }
+
+  const nameCell = firstRow.querySelector('td[data-col="name"]');
+  if (!nameCell) {
+    alert('Limits def name cell not found.');
+    return;
+  }
+
+  const newLimitsName = nameCell.textContent.trim();
+  if (!newLimitsName) {
+    alert('Limits def name is empty.');
+    return;
+  }
+  console.log("newLimitsName :", newLimitsName);
+
+  // Marshal modal table data to array
+  const modalData = JSON.parse(marshalLimitsTableToJsonString());
+
+  // Use limitsDefsMap keyed by "alarm_limits:<name>"
+  const key = `alarm_limits:${newLimitsName}`;
+  let existingDef = limitsDefsMap.get(key);
+  console.log("existingDef :", existingDef);
+
+  if (!existingDef) {
+    // New def: add to map
+    modalData.forEach(item => {
+      limitsDefsMap.set(`alarm_limits:${item.name}`, item);
+    });
+    alert(`Created new limits definition "${newLimitsName}".`);
+  } else {
+    // Existing def: compare modal data with saved def
+    if (!areLimitDefsEqual([existingDef], modalData)) {
+      console.log("existing limits_defs:", existingDef);
+      console.log("modalData :", modalData);
+
+      const ok = confirm(`Limits definition "${newLimitsName}" has changes. Update the saved definition?`);
+      if (!ok) {
+        alert('Update cancelled.');
+        return;
+      }
+      // Update all items in map for this limits def
+      modalData.forEach(item => {
+        limitsDefsMap.set(`alarm_limits:${item.name}`, item);
+      });
+      alert(`Limits definition "${newLimitsName}" updated.`);
+    } else {
+      alert(`No changes detected in limits definition "${newLimitsName}".`);
+    }
+  }
+
+  // Update alarm's limits_def name and embedded defs
+  alarm.limits_def = newLimitsName;
+  alarm.limit_defs = modalData;
+
+  // Update limits_def cell in alarm table
+  const limitsDefCell = tr.querySelector('td[data-col="limits_def"]');
+  if (limitsDefCell) {
+    limitsDefCell.textContent = newLimitsName;
+  }
+
+  // Optionally close modal or keep open
+});
+
+// document.getElementById('updateLimitsBtn').addEventListener('click', () => {
+//   if (!currentLimitsCell) {
+//     alert('No alarm selected.');
+//     return;
+//   }
+
+//   const tr = currentLimitsCell.parentElement;
+//   const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+//   const alarm = alarmDefsData.find(a => String(a.alarm_num) === alarmNum);
+//   if (!alarm) {
+//     alert('Alarm not found.');
+//     return;
+//   }
+
+//   const modalTable = document.querySelector('#limitsModalContent table');
+//   if (!modalTable) {
+//     alert('No limits table found.');
+//     return;
+//   }
+
+//   const firstRow = modalTable.querySelector('tbody tr');
+//   if (!firstRow) {
+//     alert('No data in limits table.');
+//     return;
+//   }
+
+//   const nameCell = firstRow.querySelector('td[data-col="name"]');
+//   if (!nameCell) {
+//     alert('Limits def name cell not found.');
+//     return;
+//   }
+
+//   const newLimitsName = nameCell.textContent.trim();
+//   if (!newLimitsName) {
+//     alert('Limits def name is empty.');
+//     return;
+//   }
+//   console.log("newLimitsName :", newLimitsName);
+
+//   // Marshal modal table data to array
+//   const modalData = JSON.parse(marshalLimitsTableToJsonString());
+
+//   // Find existing def by name
+// //      const existingDef = findLimitByPathName(limitsDefsMap, "target_vars", newLImitsName);
+
+//   let existingDef = findLimitByPathName(limitsDefsMap, "alarm_limits", newLimitsName);
+//   console.log("existingDef :", existingDef);
+
+//   if (!existingDef) {
+//     // New def: create it with modal data
+//     limitsDefsData.push({
+//       name: newLimitsName,
+//       limit_defs: modalData
+//     });
+//     alert(`Created new limits definition "${newLimitsName}".`);
+//   } else {
+//     // Existing def: compare modal data with saved def
+//     //if (!areLimitDefsEqual(existingDef.limit_defs, modalData)) {
+//     if (!areLimitDefsEqual([existingDef], modalData)) {
+//         console.log("existing limits_defs:", existingDef.limit_defs);
+//         console.log("modalData :", modalData);
+
+//       const ok = confirm(`Limits definition "${newLimitsName}" has changes. Update the saved definition?`);
+//       if (!ok) {
+//         alert('Update cancelled.');
+//         return;
+//       }
+//       // Update saved def with modal data
+//       existingDef.limit_defs = modalData;
+//       alert(`Limits definition "${newLimitsName}" updated.`);
+//     } else {
+//       alert(`No changes detected in limits definition "${newLimitsName}".`);
+//     }
+//   }
+
+//   // Update alarm's limits_def_name and embedded defs
+//   alarm.limits_def = newLimitsName;
+//   alarm.limit_defs = modalData;
+
+//   // Update limits_def cell in alarm table
+//   const limitsDefCell = tr.querySelector('td[data-col="limits_def"]');
+//   if (limitsDefCell) {
+//     limitsDefCell.textContent = newLimitsName;
+//   }
+
+//   // Optionally close modal or keep open
+// });
+
+
+
+// document.getElementById('updateLimitsBtn').addEventListener('click', () => {
+//   if (!currentLimitsCell) {
+//     alert('No alarm selected.');
+//     return;
+//   }
+
+//   const tr = currentLimitsCell.parentElement;
+//   const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+//   const alarm = alarmDefsData.find(a => String(a.alarm_num) === alarmNum);
+//   if (!alarm) {
+//     alert('Alarm not found.');
+//     return;
+//   }
+
+//   const modalTable = document.querySelector('#limitsModalContent table');
+//   if (!modalTable) {
+//     alert('No limits table found.');
+//     return;
+//   }
+
+//   const firstRow = modalTable.querySelector('tbody tr');
+//   if (!firstRow) {
+//     alert('No data in limits table.');
+//     return;
+//   }
+
+//   const nameCell = firstRow.querySelector('td[data-col="name"]');
+//   if (!nameCell) {
+//     alert('Limits def name cell not found.');
+//     return;
+//   }
+
+//   const newLimitsName = nameCell.textContent.trim();
+//   if (!newLimitsName) {
+//     alert('Limits def name is empty.');
+//     return;
+//   }
+
+//   // Update alarm's limits_def_name
+//   alarm.limits_def = newLimitsName;
+
+//   // Update limits_def cell in alarm table
+//   const limitsDefCell = tr.querySelector('td[data-col="limits_def"]');
+//   if (limitsDefCell) {
+//     limitsDefCell.textContent = newLimitsName;
+//   }
+
+//   // --- NEW: Update limitsDefsData with new limits def data ---
+//   const jsonString = marshalLimitsTableToJsonString();
+//   let newLimitsDefEntry = limitsDefsData.find(ld => ld.name === newLimitsName);
+//   if (newLimitsDefEntry) {
+//     // Update existing def
+//     newLimitsDefEntry.limit_defs = JSON.parse(jsonString);
+//   } else {
+//     // Create new def entry
+//     limitsDefsData.push({
+//       name: newLimitsName,
+//       limit_defs: JSON.parse(jsonString)
+//     });
+//   }
+
+//   alert(`Limits definition updated to "${newLimitsName}" for alarm ${alarmNum}.`);
+// });
+
+// 
+// document.getElementById('updateLimitsBtn').addEventListener('click', () => {
+//   if (!currentLimitsCell) {
+//     alert('No alarm selected.');
+//     return;
+//   }
+
+//   const tr = currentLimitsCell.parentElement;
+//   const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
+
+//   // Find the alarm in alarmDefsData
+//   const alarm = alarmDefsData.find(a => String(a.alarm_num) === alarmNum);
+//   if (!alarm) {
+//     alert('Alarm not found.');
+//     return;
+//   }
+
+//   // Get the new limits def name from the modal header or input field
+//   // Assuming you have an input field for limits def name, e.g.:
+//   const newLimitsNameInput = document.getElementById('limitsDefName');
+//   const newLimitsName = newLimitsNameInput ? newLimitsNameInput.value.trim() : '';
+
+//   if (!newLimitsName) {
+//     alert('Please enter a limits definition name.');
+//     return;
+//   }
+
+//   // Update the alarm's limits_def name field (adjust field name as per your model)
+//   alarm.limits_def_name = newLimitsName;
+
+//   // Update the alarm_name cell in the table (assuming you want to show limits_def name there)
+//   // Or update the limits_def cell if you have one
+//   const limitsDefCell = tr.querySelector('td[data-col="limits_def"]') || tr.querySelector('td[data-col="limits_def_name"]');
+//   if (limitsDefCell) {
+//     limitsDefCell.textContent = newLimitsName;
+//   } else {
+//     // If no dedicated cell, you can add one or update alarm_name cell as fallback
+//     const alarmNameCell = tr.querySelector('td[data-col="alarm_name"]');
+//     if (alarmNameCell) {
+//       alarmNameCell.textContent = newLimitsName;
+//     }
+//   }
+
+//   alert(`Limits definition name updated to "${newLimitsName}" for alarm ${alarmNum}. Don't forget to save changes.`);
+
+//   // Optionally close modal or keep open
+//   // document.getElementById('limitsModal').style.display = 'none';
+//   // document.getElementById('modalBackdrop').style.display = 'none';
+// });
+
+
+document.getElementById('getLimitsBtn').addEventListener('click', () => {
+  const jstring = marshalLimitsTableToJsonString();
+
+  let tableName = '';
+  try {
+    const arr = JSON.parse(jstring);
+    if (Array.isArray(arr) && arr.length > 0) {
+      tableName = arr[0].name;
+      console.log('Table name:', tableName);
+    } else {
+      alert('No limits data found in the table.');
+      return;
+    }
+  } catch (e) {
+    alert('Failed to parse limits data.');
+    return;
+  }
+
+  console.log('Looking for limits def:', tableName);
+//      const existingDef = findLimitByPath(limitsDefsData, "target_vars.online");
+
+  let limitsDef = findLimitByPathName(limitsDefsMap, "alarm_limits", tableName);
+  //let limitsDef = limitsDefsData.find(ld => ld.name === tableName);
+
+  if (!limitsDef) {
+    alert(`Limits definition named "${tableName}" not found.`);
+    return;
+  }
+
+  if (!Array.isArray(limitsDef)) {
+    limitsDef = [limitsDef];
+  }
+
+  console.log('LimitsDef data:', limitsDef);
+
+  populateLimitsModalTable(limitsDef);
+});
+
+// document.getElementById('getLimitsBtn').addEventListener('click', () => {
+//     let tableName = '';
+//     const jstring = marshalLimitsTableToJsonString();
+//     try {
+//         const arr = JSON.parse(jstring);
+//         if (Array.isArray(arr) && arr.length > 0) {
+//             tableName = arr[0].name;  // "Terminal Over Voltage"
+//             console.log('Table name:', tableName);
+//         } else {
+//             console.log('JSON array is empty or invalid');
+//         }
+//     } catch (e) {
+//         console.error('Invalid JSON string', e);
+//     }
+
+//     console.log('looking for limit :', tableName);
+//      // Find the matching limits definition by alarmName
+//     let limitsDef = limitsDefsData.find(ld => ld.name === tableName);
+//     console.log("limitsDef :", limitsDef);
+  
+//     if (!Array.isArray(limitsDef)) {
+//         limitsDef = [limitsDef];
+//   }
+//   console.log("LimitDefs data:", limitsDef);
+//   // TODO populate modal with data
+//   // add update alarm button
+//   // if defs not found add define new Limit Definitions button
+// });
+
+
+
+document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+  try {
+    let tableName = '';
+    const jstring = marshalLimitsTableToJsonString();
+
+    try {
+        const arr = JSON.parse(jstring);
+        if (Array.isArray(arr) && arr.length > 0) {
+            tableName = arr[0].name;  // "Terminal Over Voltage"
+            console.log('Table name:', tableName);
+        } else {
+            console.log('JSON array is empty or invalid');
+        }
+    } catch (e) {
+        console.error('Invalid JSON string', e);
+    }
+
+    
+    console.log("jstring :",jstring);
+    const users = countLimitsDefUsers(tableName);
+    console.log(" users :",users);
+
+    return;
+
+    const editedText = document.getElementById('limitsModalContent').textContent;
+    const parsed = JSON.parse(editedText);
+    // Update currentLimitDefs and cell display
+    currentLimitDefs = parsed;
+
+    // Update the alarmDefsData model
+    for (const alarm of alarmDefsData) {
+      if (String(alarm.alarm_num) === currentLimitsCell.parentElement.querySelector('td[data-col="alarm_num"]').textContent.trim()) {
+        alarm.limit_defs = currentLimitDefs;
+        // Update limits_structure cell text to new name if changed
+        const limitsCell = currentLimitsCell;
+        limitsCell.textContent = currentLimitDefs.name || limitsCell.textContent;
+        break;
+      }
+    }
+
+    closeLimitsModal();
+  } catch (e) {
+    alert('Invalid JSON: ' + e.message);
+  }
+});
+
+document.getElementById('cancelLimitsBtn').addEventListener('click', () => {
+  closeLimitsModal();
+});
+
+// Dummy get/set target buttons
+document.getElementById('getTargetBtn').addEventListener('click', () => {
+  alert('Dummy Get Target operation - implement your logic here');
+});
+
+document.getElementById('setTargetBtn').addEventListener('click', () => {
+  alert('Dummy Set Target operation - implement your logic here');
+});
+// let currentLimitsCell = null;
+
+// function openLimitsModal(cell) {
+//   currentLimitsCell = cell;
+//   const limitsName = cell.textContent.trim();
+//   // TODO: Load limits data by limitsName from your data model or API
+//   // For now, just show the name in the textarea
+//   document.getElementById('limitsEditor').value = JSON.stringify({ limits_structure: limitsName }, null, 2);
+//   document.getElementById('limitsModal').style.display = 'block';
+//   document.getElementById('modalBackdrop').style.display = 'block';
+// }
+
+// function closeLimitsModal() {
+//   document.getElementById('limitsModal').style.display = 'none';
+//   document.getElementById('modalBackdrop').style.display = 'none';
+//   currentLimitsCell = null;
+// }
+
+// document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+//   try {
+//     const edited = JSON.parse(document.getElementById('limitsEditor').value);
+//     // TODO: Validate and save edited limits data back to your model or API
+//     if (currentLimitsCell) {
+//       currentLimitsCell.textContent = edited.limits_structure || currentLimitsCell.textContent;
+//     }
+//     closeLimitsModal();
+//   } catch (e) {
+//     alert('Invalid JSON: ' + e.message);
+//   }
+// });
+
+// document.getElementById('cancelLimitsBtn').addEventListener('click', () => {
+//   closeLimitsModal();
+// });
+
+
+// actions modal
+let currentCell = null;
+
+function openJsonModal(cell) {
+  currentCell = cell;
+  const jsonText = cell.textContent.trim();
+  try {
+    const parsed = JSON.parse(jsonText);
+    document.getElementById('jsonEditor').value = JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    // If invalid JSON, just show raw text
+    document.getElementById('jsonEditor').value = jsonText;
+  }
+  document.getElementById('jsonModal').style.display = 'block';
+  document.getElementById('modalBackdrop').style.display = 'block';
+}
+
+function closeJsonModal() {
+  document.getElementById('jsonModal').style.display = 'none';
+  document.getElementById('modalBackdrop').style.display = 'none';
+  currentCell = null;
+}
+
+document.getElementById('saveJsonBtn').addEventListener('click', () => {
+  const editedText = document.getElementById('jsonEditor').value;
+  try {
+    JSON.parse(editedText); // Validate JSON
+    if (currentCell) {
+      currentCell.textContent = editedText;
+    }
+    closeJsonModal();
+  } catch (e) {
+    alert('Invalid JSON: ' + e.message);
+  }
+});
+
+document.getElementById('cancelJsonBtn').addEventListener('click', () => {
+  closeJsonModal();
+});
+
+// --- Target tab functions ---
+
+async function loadTargetConfig() {
+    setStatus('Loading target config...');
+    try {
+        const res = await fetch(apiBase + '/target/config');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const config = await res.json();
+        document.getElementById('targetIp').value = config.ip;
+        document.getElementById('targetPort').value = config.port;
+        document.getElementById('targetSecure').checked = config.secure;
+        setStatus('Target config loaded.', false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error loading target config: ' + err.message, true);
+    }
+}
+
+async function saveTargetConfig() {
+    const config = {
+        ip: document.getElementById('targetIp').value,
+        port: parseInt(document.getElementById('targetPort').value),
+        secure: document.getElementById('targetSecure').checked
+    };
+    setStatus('Saving target config...');
+    try {
+        const res = await fetch(apiBase + '/target/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(config)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Target config saved.', false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving target config: ' + err.message, true);
+    }
+}
+
+function addTargetVar() {
+    const tbody = document.querySelector('#targetVarsTable tbody');
+    const tr = document.createElement('tr');
+    
+    const cols = ['var_name', 'sm_name', 'reg_type', 'offset', 'num', 'data'];
+    const defaults = {
+        var_name: 'rtos:hold:alarm_limits',
+        sm_name: 'rtos',
+        reg_type: 'mb_hold',
+        offset: '9',
+        num: '4',
+        data: '[]'
+    };
+    
+    cols.forEach(col => {
+        const td = document.createElement('td');
+        td.textContent = defaults[col];
+        td.setAttribute('data-col', col);
+        td.setAttribute('contenteditable', 'true');
+        tr.appendChild(td);
+    });
+    
+    const actionTd = document.createElement('td');
+    actionTd.className = 'action-cell';
+    
+    const getBtn = document.createElement('button');
+    getBtn.textContent = '📥 Get';
+    getBtn.onclick = () => getTargetData(tr);
+    actionTd.appendChild(getBtn);
+    
+    const setBtn = document.createElement('button');
+    setBtn.textContent = '📤 Set';
+    setBtn.onclick = () => setTargetData(tr);
+    actionTd.appendChild(setBtn);
+    
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑️';
+    delBtn.onclick = () => tr.remove();
+    actionTd.appendChild(delBtn);
+    
+    tr.appendChild(actionTd);
+    tbody.appendChild(tr);
+}
+
+async function getTargetData(tr) {
+    const cells = tr.querySelectorAll('td[data-col]');
+    const payload = {
+        sm_name: cells[1].textContent.trim(),
+        reg_type: cells[2].textContent.trim(),
+        offset: cells[3].textContent.trim(),
+        num: parseInt(cells[4].textContent.trim())
+    };
+    
+    setStatus('Getting data from target...');
+    try {
+        const res = await fetch(apiBase + '/target/get', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        
+        // Update data column
+        cells[6].textContent = JSON.stringify(data.read_data || []);
+        setStatus('Got data: ' + JSON.stringify(data), false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error getting data: ' + err.message, true);
+    }
+}
+
+async function setTargetData(tr) {
+    const cells = tr.querySelectorAll('td[data-col]');
+    const dataStr = cells[5].textContent.trim();
+    let dataArray;
+    try {
+        dataArray = JSON.parse(dataStr);
+    } catch (e) {
+        setStatus('Invalid JSON in data field', true);
+        return;
+    }
+    
+    const payload = {
+        sm_name: cells[1].textContent.trim(),
+        reg_type: cells[2].textContent.trim(),
+        offset: cells[3].textContent.trim(),
+        write_data: dataArray
+    };
+    
+    setStatus('Setting data on target...');
+    try {
+        const res = await fetch(apiBase + '/target/set', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        
+        setStatus('Set data: ' + JSON.stringify(data), false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error setting data: ' + err.message, true);
+    }
+}
+
+// --- Var-list integration ---
+
+async function reloadVarListOptions() {
+    setStatus('Loading variable lists...');
+    const select = document.getElementById('varListSelect');
+    if (!select) return;
+
+    try {
+        const res = await fetch(pubApiBase + '/list');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const files = data.files || [];
+
+        select.innerHTML = '<option value="">(select a file)</option>';
+        
+        if (files.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '(no var_lists/*.json found)';
+            select.appendChild(opt);
+            setStatus('No var list files found in var_lists.', true);
+            return;
+        }
+
+        files.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f;
+            select.appendChild(opt);
+        });
+
+        setStatus('Variable lists loaded from ' + (data.directory || 'var_lists') + '.', false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error loading var list files: ' + err.message, true);
+    }
+}
+
+function populateTargetVarsFromVarList(varListJson) {
+    console.log(" running pop function\n");
+    const tbody = document.querySelector('#targetVarsTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!Array.isArray(varListJson)) {
+        console.warn('Var list JSON is not an array:', varListJson);
+        setStatus('Var list format error: expected array of tables.', true);
+        return;
+    }
+
+    let totalVars = 0;
+
+    varListJson.forEach(tableObj => {
+        if (!tableObj.items || !Array.isArray(tableObj.items)) {
+            console.warn('Table object missing items[]:', tableObj);
+            return;
+        }
+
+        tableObj.items.forEach(item => {
+            const varName = item.name || '';
+            const smName = item.sm_name || 'rtos';
+            const regType = item.reg_type || 'mb_hold';
+            const offset = item.offset != null ? String(item.offset) : '0';
+            const num = item.num != null ? String(item.num) : '1';
+
+            let dataArray = [];
+            let writeDataArray = [];
+            if (Array.isArray(item.write_data)) {
+                writeDataArray = item.write_data;
+            } else if (Array.isArray(item.read_data)) {
+                writeDataArray = item.read_data;
+            }
+
+            const tr = document.createElement('tr');
+            // IMPORTANT: Must match the exact column structure of addTargetVar()
+            const cols = ['var_name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
+            const defaults = {
+                var_name: varName,
+                sm_name: smName,
+                reg_type: regType,
+                offset: offset,
+                num: num,
+                write_data: JSON.stringify(writeDataArray),
+                read_data: '[]' // JSON.stringify(writeDataArray)
+            };
+ 
+            cols.forEach(col => {
+                const td = document.createElement('td');
+                td.textContent = defaults[col] ?? '';
+                td.setAttribute('data-col', col);
+                td.setAttribute('contenteditable', 'true');
+                tr.appendChild(td);
+            });
+
+            const actionTd = document.createElement('td');
+            actionTd.className = 'action-cell';
+
+            const getBtn = document.createElement('button');
+            getBtn.textContent = '📥 Get';
+            getBtn.onclick = () => getTargetData(tr);
+            actionTd.appendChild(getBtn);
+
+            const setBtn = document.createElement('button');
+            setBtn.textContent = '📤 Set';
+            setBtn.onclick = () => setTargetData(tr);
+            actionTd.appendChild(setBtn);
+
+            const delBtn = document.createElement('button');
+            delBtn.textContent = '🗑️';
+            delBtn.onclick = () => tr.remove();
+            actionTd.appendChild(delBtn);
+
+            tr.appendChild(actionTd);
+            tbody.appendChild(tr);
+            totalVars++;
+        });
+    });
+
+    setStatus('Loaded ' + totalVars + ' variable(s) from list.', false);
+}
+
+async function loadSelectedVarList() {
+    const select = document.getElementById('varListSelect');
+    if (!select || !select.value) {
+        setStatus('No variable list selected.', true);
+        return;
+    }
+
+    const fileName = select.value;
+    setStatus('Loading var list: ' + fileName + ' ...');
+
+    try {
+        const res = await fetch(pubApiBase + '/load_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: fileName })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+
+        populateTargetVarsFromVarList(data);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error loading var list: ' + err.message, true);
+    }
+}
+
+// --- Save List / Get All / Save All ---
+
+function collectVarRows() {
+    const rows = [];
+    document.querySelectorAll('#targetVarsTable tbody tr').forEach(tr => {
+        const obj = {};
+        tr.querySelectorAll('td[data-col]').forEach(td => {
+            const col = td.getAttribute('data-col');
+            let val = td.textContent.trim();
+            // if (col === 'offset' || col === 'num') {
+            //     val = val === '' ? null : Number(val);
+            // }
+            obj[col] = val;
+        });
+        rows.push(obj);
+    });
+    return rows;
+}
+
+async function saveVarList() {
+    const select = document.getElementById('varListSelect');
+    const currentFileName = select && select.value ? select.value : '';
+
+    // Prompt user for filename
+    const fileName = prompt('Enter filename to save (e.g., my_vars.json):', currentFileName);
+    
+    if (!fileName || fileName.trim() === '') {
+        setStatus('Save cancelled - no filename provided.', true);
+        return;
+    }
+
+    const finalFileName = fileName.trim().endsWith('.json') ? fileName.trim() : fileName.trim() + '.json';
+
+    const items = collectVarRows().map(r => {
+        // offset: always text
+        const offsetText = (r.offset ?? '').toString().trim();
+
+        // num: still numeric for now (can also make text if you want)
+        const numText = (r.num ?? '').toString().trim();
+        const numVal = numText === '' ? 1 : Number(numText);
+
+        let writeData = [];
+        try {
+            writeData = r.write_data ? JSON.parse(r.write_data) : [];
+        } catch (e) {
+            writeData = [];
+        }
+
+        return {
+            name: r.var_name,
+            sm_name: r.sm_name || 'rtos',
+            reg_type: r.reg_type || 'mb_hold',
+            offset: offsetText,          // <- TEXT
+            num: isNaN(numVal) ? 1 : numVal,
+            write_data: writeData
+        };
+    });
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + finalFileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: finalFileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + finalFileName + '.', false);
+        
+        await reloadVarListOptions();
+        if (select) {
+            select.value = finalFileName;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+async function xxsaveVarList() {
+    const select = document.getElementById('varListSelect');
+    const currentFileName = select && select.value ? select.value : '';
+
+    // Prompt user for filename
+    const fileName = prompt('Enter filename to save (e.g., my_vars.json):', currentFileName);
+
+    if (!fileName || fileName.trim() === '') {
+        setStatus('Save cancelled - no filename provided.', true);
+        return;
+    }
+
+    const finalFileName = fileName.trim().endsWith('.json') ? fileName.trim() : fileName.trim() + '.json';
+
+    const items = collectVarRows().map(r => ({
+        name: r.var_name,
+        sm_name: r.sm_name || 'rtos',
+        reg_type: r.reg_type || 'mb_hold',
+        offset: r.offset != null ? Number(r.offset) : 0,
+        num: r.num != null ? Number(r.num) : 1,
+        write_data: r.write_data ? JSON.parse(r.write_data || '[]') : []
+    }));
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + finalFileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: finalFileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + finalFileName + '.', false);
+
+        // Refresh the dropdown to show the new file
+        await reloadVarListOptions();
+
+        // Select the newly saved file in the dropdown
+        if (select) {
+            select.value = finalFileName;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+
+async function xxsaveVarList() {
+    const select = document.getElementById('varListSelect');
+    const fileName = select && select.value ? select.value : null;
+
+    if (!fileName) {
+        setStatus('Select a var list file before saving.', true);
+        return;
+    }
+
+    const items = collectVarRows().map(r => ({
+        name: r.var_name,
+        sm_name: r.sm_name || 'rtos',
+        reg_type: r.reg_type || 'mb_hold',
+        offset: r.offset != null ? Number(r.offset) : 0,
+        num: r.num != null ? Number(r.num) : 1,
+        write_data: r.data ? JSON.parse(r.data || '[]') : []
+    }));
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + fileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: fileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + fileName + '.', false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+async function getAllTarget() {
+    const rows = Array.from(document.querySelectorAll('#targetVarsTable tbody tr'));
+    if (!rows.length) {
+        setStatus('No rows to Get.', true);
+        return;
+    }
+
+    setStatus('Getting data for all rows...');
+    for (const tr of rows) {
+        await getTargetData(tr);
+    }
+    setStatus('Completed Get All.', false);
+}
+
+async function setAllTarget() {
+    const rows = Array.from(document.querySelectorAll('#targetVarsTable tbody tr'));
+    if (!rows.length) {
+        setStatus('No rows to Save.', true);
+        return;
+    }
+
+    setStatus('Saving data for all rows...');
+    for (const tr of rows) {
+        await setTargetData(tr);
+    }
+    setStatus('Completed Save All.', false);
+}
+
+// Wire buttons
+document.getElementById('loadBtn').addEventListener('click', loadFromDB);
+document.getElementById('saveBtn').addEventListener('click', saveToDB);
+document.getElementById('exportBtn').addEventListener('click', exportJSON);
+document.getElementById('importBtn').addEventListener('click', importJSON);
+document.getElementById('addAlarmBtn').addEventListener('click', addNewAlarm);
+
+// Initial load
+loadFromDB();
+loadTargetConfig();
+reloadVarListOptions();
+</script>
+</body>
+</html>

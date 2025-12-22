@@ -1,0 +1,264 @@
+[
+    {
+        "table": "target_vars",
+        "items": [
+            {
+                "name": "total_v_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_total_v_over",
+                "num": 4,
+                "write_data": [
+                    14768,
+                    15101,
+                    15392,
+                    416
+                ],
+                "read_data": [
+                    14768,
+                    15101,
+                    15392,
+                    416
+                ]
+            },
+            {
+                "name": "total_v_under",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_total_v_under",
+                "num": 4,
+                "write_data": [
+                    12272,
+                    10400,
+                    9984,
+                    416
+                ],
+                "read_data": []
+            },
+            {
+                "name": "discharge_curr_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_discharge_curr_over",
+                "num": 4,
+                "write_data": [
+                    4420,
+                    4620,
+                    4820,
+                    200
+                ],
+                "read_data": []
+            },
+            {
+                "name": "fast_charge_curr_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_fast_charge_curr_over",
+                "num": 4,
+                "write_data": [
+                    4420,
+                    4620,
+                    4820,
+                    200
+                ],
+                "read_data": []
+            },
+            {
+                "name": "insulation_resistance_under",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_insulation_resistance_under",
+                "num": 4,
+                "write_data": [
+                    3393,
+                    2662,
+                    1331,
+                    200
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_charge_temp_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_charge_temp_over",
+                "num": 4,
+                "write_data": [
+                    950,
+                    1000,
+                    1050,
+                    50
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_charge_temp_under",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_charge_temp_under",
+                "num": 4,
+                "write_data": [
+                    450,
+                    400,
+                    100,
+                    50
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_voltage_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_voltage_over",
+                "num": 4,
+                "write_data": [
+                    3550,
+                    3630,
+                    3700,
+                    100
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_voltage_under",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_voltage_under",
+                "num": 4,
+                "write_data": [
+                    2950,
+                    2500,
+                    2400,
+                    100
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_voltage_diff",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_voltage_diff",
+                "num": 4,
+                "write_data": [
+                    500,
+                    600,
+                    800,
+                    100
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_temp_diff",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_temp_diff",
+                "num": 4,
+                "write_data": [
+                    100,
+                    150,
+                    200,
+                    50
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_soc_under",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_soc_under",
+                "num": 4,
+                "write_data": [
+                    5,
+                    0,
+                    0,
+                    3
+                ],
+                "read_data": []
+            },
+            {
+                "name": "poll_temp_over_offset",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "49",
+                "num": 3,
+                "write_data": [
+                    1350,
+                    1400,
+                    1450
+                ],
+                "read_data": []
+            },
+            {
+                "name": "poll_temp_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "52",
+                "num": 1,
+                "write_data": [
+                    50
+                ],
+                "read_data": []
+            },
+            {
+                "name": "mod_volt_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_mod_volt_over",
+                "num": 4,
+                "write_data": [
+                    1846,
+                    1888,
+                    1924,
+                    52
+                ],
+                "read_data": []
+            },
+            {
+                "name": "mod_volt_under",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_mod_volt_under",
+                "num": 4,
+                "write_data": [
+                    1534,
+                    1300,
+                    1248,
+                    100
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_discharge_temp_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_discharge_temp_over",
+                "num": 4,
+                "write_data": [],
+                "read_data": []
+            },
+            {
+                "name": "single_discharge_temp_under",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_discharge_temp_under",
+                "num": 4,
+                "write_data": [
+                    200,
+                    150,
+                    100,
+                    50
+                ],
+                "read_data": []
+            },
+            {
+                "name": "single_soc_over",
+                "sm_name": "rtos",
+                "reg_type": "mb_hold",
+                "offset": "at_single_soc_over",
+                "num": 4,
+                "write_data": [],
+                "read_data": []
+            }
+        ]
+    }
+]

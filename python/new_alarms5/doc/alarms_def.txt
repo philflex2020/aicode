@@ -1,0 +1,32 @@
+{
+  "alarms": [
+    {
+      "num": 0,
+      "name": "Terminal Over Voltage",
+      "levels": 3,
+      "measured": "sbmu:bits:summary_total_overvoltage",
+      "limits": "rtos:hold:at_total_v_over",
+      "compare": "aggregate",
+      "alarm_var": "sbmu:bits:summary_total_overvoltage",
+      "latch_var": "sbmu:bits:summary_total_overvoltage_latched",
+      "notes": "some notes",
+      "actions": [
+        {"level": 1, "enabled": true, "on_duration": 3, "off_duration":3 ,"actions": [], "notes": ""},
+        {"level": 2, "enabled": true, "on_duration": 0, 
+              "actions": [
+                                                            {"on_set":[
+                                                                     "set_level2",
+                                                                     "disable_charge"
+                                                                    ]},
+                                                            {"on_clear":[
+                                                                       "reset_level2",
+								       "enable_charge"
+                                                              ]}
+                                                          ], 
+                "notes": ""},
+        {"level": 3, "enabled": true, "on_duration": 0, "actions": [], "notes": ""}
+      ],
+      "limits": [14768, 15101, 15932, 416]
+    }
+  ]
+}
