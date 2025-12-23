@@ -424,7 +424,7 @@
 </head>
 <body>
 <header>
-    <h1>Alarm Config Editor ver 15</h1>
+    <h1>Alarm Config Editor ver 14</h1>
     <div class="controls">
         <label>JSON Dir:
             <input type="text" id="jsonDirInput" value="json_exports">
@@ -510,6 +510,10 @@
                 <th>name</th>
                 <th>level1_limit</th>
                 <th>level2_limit</th>
+document.getElementById('saveLimitsTargetConfigBtn').addEventListener('click', saveLimitsTargetConfig);
+document.getElementById('loadLimitsTargetConfigBtn').addEventListener('click', loadLimitsTargetConfig);
+document.getElementById('saveTargetConfigBtn').addEventListener('click', saveTargetConfig);
+document.getElementById('loadTargetConfigBtn').addEventListener('click', loadTargetConfig);
                 <th>level3_limit</th>
                 <th>hysteresis</th>
                 <th>target_level1</th>
@@ -537,6 +541,8 @@
 </div>
 
 <!-- Limit Definition Editor Modal -->
+
+
 <div id="limitDefModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border-radius:12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding:20px; z-index:1000; font-family: 'Courier New', Courier, monospace;">
   <span class="close" style="position:absolute; top:12px; right:16px; font-size:28px; font-weight:bold; cursor:pointer;" onclick="closeLimitDefModal()">&times;</span>
   <h3 style="margin-top:0; margin-bottom:16px;">Edit Limit Definition</h3>
@@ -578,8 +584,49 @@
   </form>
 </div>
 
+<!-- <div id="limitDefModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border-radius:12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding:20px; z-index:1000; font-family: 'Courier New', Courier, monospace;">
+ <div id="limitDefModal" class="nice-modal" style="display:none;"> 
+   <div class="modal-content"> 
+  <div>
+    <span class="close">&times;</span>
+    <h3>Edit Limit Definition</h3>
+    <textarea id="limitsModalContent" style="width:100%; height:65%; border:1px solid #ccc; border-radius:8px; padding:12px; font-family: monospace; font-size:14px; resize: vertical; box-sizing: border-box;"></textarea> -->
 
-<!-- Limits Modal -->
+  <!-- <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+    <button id="getTargetBtn" class="modal-btn">Get Target</button>
+    <button id="setTargetBtn" class="modal-btn">Set Target</button>
+    <button id="getLimitsBtn" class="modal-btn">Get Def</button>
+    <button id="updateLimitsBtn" class="modal-btn">Update Limit Def</button>
+    <button id="saveLimitsBtn" class="modal-btn">Save</button>
+    <button id="saveLimitsAsBtn" class="modal-btn">Save as</button>
+  </div>
+   
+    <form id="limitDefForm">
+      <label>Name: <input type="text" id="limitDefName" readonly></label><br>
+      <label>SM Name: <input type="text" id="limitDefSmName"></label><br>
+      <label>Reg Type: <input type="text" id="limitDefRegType"></label><br>
+      <label>Offset: <input type="text" id="limitDefOffset"></label><br>
+      <label>Num: <input type="number" id="limitDefNum"></label><br>
+      <label>Defs: <input type="text" id="limitDefs"></label><br>
+      <button type="submit">Save</button>
+    </form>
+  </div>
+</div> -->
+<!-- <div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000;">
+  <h3>Edit Limits Structure</h3>
+  <div id="limitsModalContent">
+   
+    <textarea id="limitsEditor" style="width:100%; height:70%; font-family: monospace;"></textarea>
+  </div>
+  <br/>
+  <button id="saveLimitsBtn">Save</button>
+  <button id="cancelLimitsBtn">Cancel</button>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop"></div> -->
+
+
+
 <div id="limitsModal" class="modal" style="display:none; position:fixed; top:10%; left:10%; width:80%; height:80%; background:#fff; border:1px solid #ccc; padding:20px; overflow:auto; z-index:1000; border-radius: 12px;">
  <span class="close" style="float:right; font-size:24px; cursor:pointer;" onclick="closeLimitsModal()">&times;</span>
   <h3>Edit Limit Definitions</h3>
@@ -616,8 +663,8 @@
             <label>IP: <input type="text" id="targetIp" value="127.0.0.1" /></label>
             <label>Port: <input type="number" id="targetPort" value="8080" /></label>
             <label>Secure: <input type="checkbox" id="targetSecure" /></label>
-            <button onclick="saveTargetConfig()">💾 Save Config</button>
-            <button onclick="loadTargetConfig()">🔄 Load Config</button>
+            <button id="saveTargetConfigBtn">💾 Save Config</button>
+            <button id="loadTargetConfigBtn">🔄 Load Config</button>
         </div>
     </div>
 
@@ -872,6 +919,34 @@ function updateLimitsTargetUI() {
     document.getElementById('limitsSetAllBtn').disabled = !limitsTargetConnected;
 }
 
+// document.getElementById('limitsConnectBtn').addEventListener('click', async () => {
+//     const host = document.getElementById('limitsTargetHost').value;
+//     const port = document.getElementById('limitsTargetPort').value;
+//     try {
+//         const res = await fetch(`${apiBase}/target/connect`, {
+//             method: 'POST',
+//             headers: {'Content-Type': 'application/json'},
+//             body: JSON.stringify({ host, port })
+//         });
+//         if (!res.ok) throw new Error('Failed to connect');
+//         limitsTargetConnected = true;
+//         updateLimitsTargetUI();
+//     } catch (err) {
+//         alert('Connection error: ' +  err.message);
+//     }
+// });
+
+// document.getElementById('limitsDisconnectBtn').addEventListener('click', async () => {
+//     try {
+//         const res = await fetch(`${apiBase}/target/disconnect`, { method: 'POST' });
+//         if (!res.ok) throw new Error('Failed to disconnect');
+//         limitsTargetConnected = false;
+//         updateLimitsTargetUI();
+//     } catch (err) {
+//         alert('Disconnection error: ' +  err.message);
+//     }
+// });
+
 document.getElementById('limitsGetAllBtn').addEventListener('click', async () => {
     //if (!limitsTargetConnected) return alert('Not connected');
     await getAllLimitValues();
@@ -935,6 +1010,46 @@ function populateJsonDefSelect() {
     select.appendChild(option);
   });
 }
+// function populateJsonDefSelect() {
+//   const select = document.getElementById('jsonDefSelect');
+//   select.innerHTML = '<option value="">-- Select a Json Definition --</option>'; // reset options
+//   console.log("limitsDefMap:", limitsDefsMap);
+//   console.log("limitsDefList:", limitsDefList);
+
+//   // Iterate over limitsDefList (table names)
+//   limitsDefList.forEach(tableName => {
+//     // Create an optgroup for each tableName for better grouping in select
+//     const optgroup = document.createElement('optgroup');
+//     optgroup.label = tableName;
+
+//     // Filter keys in limitsDefsMap that start with this tableName + ':'
+//     for (const key of limitsDefsMap.keys()) {
+//       if (key.startsWith(tableName + ':')) {
+//         const option = document.createElement('option');
+//         option.value = key;
+//         // Show only the item name part after the colon for readability
+//         option.textContent = key.split(':')[1];
+//         optgroup.appendChild(option);
+//       }
+//     }
+
+//     select.appendChild(optgroup);
+//   });
+// }
+// // like the fileslect tab
+// function populateJsonDefSelect() {
+//   const select = document.getElementById('jsonDefSelect');
+//   select.innerHTML = '<option value="">-- Select a Json Definition --</option>'; // reset options
+//   console.log(" limitsDefMap :", limitsDefsMap);
+
+//   Object.keys(limitsDefsMap).forEach(key => {
+//     console.log(" Key found :", key)
+//     const option = document.createElement('option');
+//     option.value = key;
+//     option.textContent = key;
+//     select.appendChild(option);
+//   });
+// }
 
 async function getLimitVals(limit_name, index) {
 
@@ -1106,6 +1221,17 @@ async function getAllLimitValues() {
 
     setStatus('All limit values fetched.', false);
 }
+// async function getAllLimitValues() {
+//     try {
+//         const res = await fetch(`${apiBase}/target/limits`);
+//         if (!res.ok) throw new Error('Failed to get all limit values');
+//         const data = await res.json();
+//         currentLimitsValues = data;
+//         renderLimitsValuesTable();
+//     } catch (err) {
+//         alert('Error getting all limit values: ' + err.message);
+//     }
+// }
 
 function collectAllLimits() {
     const limits = [];
@@ -1510,6 +1636,57 @@ async function exportJSON() {
     }
 }
 
+// async function exportJSON() {
+//     const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+//     setStatus('Exporting JSON to dir: ' + dir + ' ...');
+
+//     // Build full config from in-memory data (same approach as saveToDB)
+//     const config = {
+//         alarm_definitions: collectDefs(),      // Use collect function
+//         alarm_level_actions: collectLevels(),  // Use collect function
+//         limits_values: collectLimits(),        // Use collect function
+//         limits_def: buildLimitsDefNestedFromMap()  // Use same build function
+//     };
+//     // // Build full config from in-memory data
+//     // const config = {
+//     //     alarm_definitions: alarmDefsData,  // your in-memory alarm defs
+//     //     alarm_level_actions: currentAlarmLevelActions,
+//     //     limits_values: currentLimitsValues,
+//     //     limits_def: currentLimitsDef,  // make sure this is up-to-date
+//     // };
+
+//     try {
+//         const res = await fetch(apiBase + '/export-json', {
+//             method: 'POST',
+//             headers: {'Content-Type': 'application/json'},
+//             body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json', config: config })
+//         });
+//         const data = await res.json();
+//         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+//         setStatus('Exported JSON to: ' + data.message, false);
+//     } catch (err) {
+//         console.error(err);
+//         setStatus('Error exporting JSON: ' + err.message, true);
+//     }
+// }
+// async function exportJSON() {
+//     const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
+//     setStatus('Exporting JSON to dir: ' + dir + ' ...');
+//     try {
+//         const res = await fetch(apiBase + '/export-json', {
+//             method: 'POST',
+//             headers: {'Content-Type': 'application/json'},
+//             body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json' })
+//         });
+//         const data = await res.json();
+//         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+//         setStatus('Exported JSON to: ' + data.message, false);
+//     } catch (err) {
+//         console.error(err);
+//         setStatus('Error exporting JSON: ' + err.message, true);
+//     }
+// }
+
 async function importJSON() {
     const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
     setStatus('Importing JSON from dir: ' + dir + ' ...');
@@ -1576,6 +1753,11 @@ function openLimitsModal(cell) {
   console.log('alarmName :', alarmName);
   console.log('alarm Data :', alarmData);
   console.log('limit_defs :', currentLimitDefs);
+//if (!Array.isArray(currentLimitDefs)) currentLimitDefs = [currentLimitDefs];
+//   if (!currentLimitDefs || !Array.isArray(currentLimitDefs)) {
+//     alert('No limit_defs array found for this alarm.');
+//     return;
+//   }
 
   const modalContent = document.getElementById('limitsModalContent');
   modalContent.innerHTML = '';
@@ -1655,7 +1837,16 @@ function openLimitsModal(cell) {
     const actionTd = document.createElement('td');
     actionTd.className = 'action-cell';
 
- 
+    // const getBtn = document.createElement('button');
+    // getBtn.textContent = '📥 Get';
+    // getBtn.onclick = () => getTargetData(tr);
+    // actionTd.appendChild(getBtn);
+
+    // const setBtn = document.createElement('button');
+    // setBtn.textContent = '📤 Set';
+    // setBtn.onclick = () => setTargetData(tr);
+    // actionTd.appendChild(setBtn);
+
     const delBtn = document.createElement('button');
     delBtn.textContent = '🗑️';
     delBtn.onclick = () => tr.remove();
@@ -2365,6 +2556,36 @@ async function setLimit(index) {
         alert('Set error: ' + err.message);
     }
 }
+// document.getElementById('getLimitsBtn').addEventListener('click', () => {
+//     let tableName = '';
+//     const jstring = marshalLimitsTableToJsonString();
+//     try {
+//         const arr = JSON.parse(jstring);
+//         if (Array.isArray(arr) && arr.length > 0) {
+//             tableName = arr[0].name;  // "Terminal Over Voltage"
+//             console.log('Table name:', tableName);
+//         } else {
+//             console.log('JSON array is empty or invalid');
+//         }
+//     } catch (e) {
+//         console.error('Invalid JSON string', e);
+//     }
+
+//     console.log('looking for limit :', tableName);
+//      // Find the matching limits definition by alarmName
+//     let limitsDef = limitsDefsData.find(ld => ld.name === tableName);
+//     console.log("limitsDef :", limitsDef);
+  
+//     if (!Array.isArray(limitsDef)) {
+//         limitsDef = [limitsDef];
+//   }
+//   console.log("LimitDefs data:", limitsDef);
+//   // TODO populate modal with data
+//   // add update alarm button
+//   // if defs not found add define new Limit Definitions button
+// });
+
+
 
 document.getElementById('saveLimitsBtn').addEventListener('click', () => {
   try {
@@ -2426,6 +2647,38 @@ document.getElementById('setTargetBtn').addEventListener('click', () => {
 });
 // let currentLimitsCell = null;
 
+// function openLimitsModal(cell) {
+//   currentLimitsCell = cell;
+//   const limitsName = cell.textContent.trim();
+//   // TODO: Load limits data by limitsName from your data model or API
+//   // For now, just show the name in the textarea
+//   document.getElementById('limitsEditor').value = JSON.stringify({ limits_structure: limitsName }, null, 2);
+//   document.getElementById('limitsModal').style.display = 'block';
+//   document.getElementById('modalBackdrop').style.display = 'block';
+// }
+
+// function closeLimitsModal() {
+//   document.getElementById('limitsModal').style.display = 'none';
+//   document.getElementById('modalBackdrop').style.display = 'none';
+//   currentLimitsCell = null;
+// }
+
+// document.getElementById('saveLimitsBtn').addEventListener('click', () => {
+//   try {
+//     const edited = JSON.parse(document.getElementById('limitsEditor').value);
+//     // TODO: Validate and save edited limits data back to your model or API
+//     if (currentLimitsCell) {
+//       currentLimitsCell.textContent = edited.limits_structure || currentLimitsCell.textContent;
+//     }
+//     closeLimitsModal();
+//   } catch (e) {
+//     alert('Invalid JSON: ' + e.message);
+//   }
+// });
+
+// document.getElementById('cancelLimitsBtn').addEventListener('click', () => {
+//   closeLimitsModal();
+// });
 
 function closeLimitsModal() {
   document.getElementById('limitsModal').style.display = 'none';
@@ -2852,6 +3105,32 @@ async function loadSelectedVarList() {
     setStatus('Error loading var list: ' + err.message, true);
   }
 }
+// async function loadSelectedVarList() {
+//     const select = document.getElementById('varListSelect');
+//     if (!select || !select.value) {
+//         setStatus('No variable list selected.', true);
+//         return;
+//     }
+
+//     const fileName = select.value;
+//     setStatus('Loading var list: ' + fileName + ' ...');
+
+//     try {
+//         const res = await fetch(pubApiBase + '/load_var_list', {
+//             method: 'POST',
+//             headers: {'Content-Type': 'application/json'},
+//             body: JSON.stringify({ file_name: fileName })
+//         });
+//         const data = await res.json();
+//         console.log(data);
+//         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+
+//         populateTargetVarsFromVarList(data);
+//     } catch (err) {
+//         console.error(err);
+//         setStatus('Error loading var list: ' + err.message, true);
+//     }
+// }
 
 // --- Save List / Get All / Save All ---
 
@@ -2967,7 +3246,168 @@ async function saveVarList() {
     setStatus('Please select a file or JSON group to save.', true);
   }
 }
+async function oldsaveVarList() {
+    const select = document.getElementById('varListSelect');
+    const currentFileName = select && select.value ? select.value : '';
 
+    // Prompt user for filename
+    const fileName = prompt('Enter filename to save (e.g., my_vars.json):', currentFileName);
+    
+    if (!fileName || fileName.trim() === '') {
+        setStatus('Save cancelled - no filename provided.', true);
+        return;
+    }
+
+    const finalFileName = fileName.trim().endsWith('.json') ? fileName.trim() : fileName.trim() + '.json';
+
+    const items = collectVarRows().map(r => {
+        // offset: always text
+        const offsetText = (r.offset ?? '').toString().trim();
+
+        // num: still numeric for now (can also make text if you want)
+        const numText = (r.num ?? '').toString().trim();
+        const numVal = numText === '' ? 1 : Number(numText);
+
+        let writeData = [];
+        try {
+            writeData = r.write_data ? JSON.parse(r.write_data) : [];
+        } catch (e) {
+            writeData = [];
+        }
+
+        return {
+            name: r.var_name,
+            sm_name: r.sm_name || 'rtos',
+            reg_type: r.reg_type || 'mb_hold',
+            offset: offsetText,          // <- TEXT
+            num: isNaN(numVal) ? 1 : numVal,
+            write_data: writeData
+        };
+    });
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + finalFileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: finalFileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + finalFileName + '.', false);
+        
+        await reloadVarListOptions();
+        if (select) {
+            select.value = finalFileName;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+async function xxsaveVarList() {
+    const select = document.getElementById('varListSelect');
+    const currentFileName = select && select.value ? select.value : '';
+
+    // Prompt user for filename
+    const fileName = prompt('Enter filename to save (e.g., my_vars.json):', currentFileName);
+
+    if (!fileName || fileName.trim() === '') {
+        setStatus('Save cancelled - no filename provided.', true);
+        return;
+    }
+
+    const finalFileName = fileName.trim().endsWith('.json') ? fileName.trim() : fileName.trim() + '.json';
+
+    const items = collectVarRows().map(r => ({
+        name: r.var_name,
+        sm_name: r.sm_name || 'rtos',
+        reg_type: r.reg_type || 'mb_hold',
+        offset: r.offset != null ? Number(r.offset) : 0,
+        num: r.num != null ? Number(r.num) : 1,
+        write_data: r.write_data ? JSON.parse(r.write_data || '[]') : []
+    }));
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + finalFileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: finalFileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + finalFileName + '.', false);
+
+        // Refresh the dropdown to show the new file
+        await reloadVarListOptions();
+
+        // Select the newly saved file in the dropdown
+        if (select) {
+            select.value = finalFileName;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
+
+
+async function xxsaveVarList() {
+    const select = document.getElementById('varListSelect');
+    const fileName = select && select.value ? select.value : null;
+
+    if (!fileName) {
+        setStatus('Select a var list file before saving.', true);
+        return;
+    }
+
+    const items = collectVarRows().map(r => ({
+        name: r.var_name,
+        sm_name: r.sm_name || 'rtos',
+        reg_type: r.reg_type || 'mb_hold',
+        offset: r.offset != null ? Number(r.offset) : 0,
+        num: r.num != null ? Number(r.num) : 1,
+        write_data: r.data ? JSON.parse(r.data || '[]') : []
+    }));
+
+    const payload = [
+        {
+            table: 'vars',
+            items: items
+        }
+    ];
+
+    setStatus('Saving variable list to ' + fileName + ' ...');
+    try {
+        const res = await fetch(pubApiBase + '/save_var_list', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ file_name: fileName, data: payload })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+        setStatus('Saved var list to ' + fileName + '.', false);
+    } catch (err) {
+        console.error(err);
+        setStatus('Error saving var list: ' + err.message, true);
+    }
+}
 
 async function getAllTarget() {
     const rows = Array.from(document.querySelectorAll('#targetVarsTable tbody tr'));

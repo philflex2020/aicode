@@ -15,6 +15,7 @@
       "alarm_var": "sbmu:bits:summary_total_overvoltage",
       "latch_var": "",
       "limits_var": "",
+      "limits_def": "Terminal Over Voltage",
       "notes": "voffset 32000",
       "actions": [
         {
@@ -97,6 +98,7 @@
       "alarm_var": "sbmu:bits:summary_total_undervoltage",
       "latch_var": "",
       "limits_var": "",
+      "limits_def": "Terminal Under Voltage",
       "notes": "note swap , check this voffset 32000",
       "actions": [
         {
@@ -179,6 +181,7 @@
       "alarm_var": "sbmu:bits:summary_overcurrent",
       "latch_var": "",
       "limits_var": "",
+      "limits_def": "Discharge Over Current",
       "notes": "",
       "actions": [
         {
@@ -261,6 +264,7 @@
       "alarm_var": "rtos:bits:cell_temp_low",
       "latch_var": "",
       "limits_var": "",
+      "limits_def": "FastCharge Over Current",
       "notes": "",
       "actions": [
         {
@@ -343,6 +347,7 @@
       "alarm_var": "rtos:bits:cell_soc_low",
       "latch_var": "",
       "limits_var": "",
+      "limits_def": "Insulation Low",
       "notes": "",
       "actions": [
         {
@@ -425,6 +430,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Charge Over Temp",
       "notes": "some notes",
       "actions": [
         {
@@ -507,6 +513,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Charge Under Temp",
       "notes": "some notes",
       "actions": [
         {
@@ -589,6 +596,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Over Voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -671,6 +679,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Under Voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -753,6 +762,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Voltage Diff",
       "notes": "some notes",
       "actions": [
         {
@@ -835,6 +845,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Temp Diff",
       "notes": "some notes",
       "actions": [
         {
@@ -917,6 +928,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "SOC Low",
       "notes": "some notes",
       "actions": [
         {
@@ -999,6 +1011,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Terminal Over Temp",
       "notes": "some notes",
       "actions": [
         {
@@ -1081,6 +1094,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module Over Voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -1163,6 +1177,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module Under Voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -1245,6 +1260,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI1 mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1285,6 +1301,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI2 mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1325,6 +1342,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI3 mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1365,6 +1383,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Di4 mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1405,6 +1424,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Di5 mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1445,6 +1465,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Di6 mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1485,6 +1506,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Di7 mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1525,6 +1547,7 @@
       "alarm_var": "const:1",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Di8 ,mcerror",
       "notes": "some notes",
       "actions": [
         {
@@ -1565,6 +1588,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Can0 Error",
       "notes": "some notes",
       "actions": [
         {
@@ -1605,6 +1629,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Voltage Lost",
       "notes": "some notes",
       "actions": [
         {
@@ -1645,6 +1670,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Temp Lost",
       "notes": "some notes",
       "actions": [
         {
@@ -1685,6 +1711,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "bg system alarm error",
       "notes": "some notes",
       "actions": [
         {
@@ -1725,6 +1752,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Group Volt Diff",
       "notes": "some notes",
       "actions": [
         {
@@ -1765,6 +1793,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Jump Instruction",
       "notes": "some notes",
       "actions": [
         {
@@ -1805,6 +1834,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Battery Extreme Error",
       "notes": "some notes",
       "actions": [
         {
@@ -1845,6 +1875,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Project Version Diff",
       "notes": "some notes",
       "actions": [
         {
@@ -1885,6 +1916,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "PCS comms Lost",
       "notes": "some notes",
       "actions": [
         {
@@ -1925,6 +1957,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "PCS debug Mode",
       "notes": "some notes",
       "actions": [
         {
@@ -1965,6 +1998,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Can Hall Sensor Comm Lost",
       "notes": "some notes",
       "actions": [
         {
@@ -2005,6 +2039,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "PCB Check error",
       "notes": "some notes",
       "actions": [
         {
@@ -2045,6 +2080,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "SVOL Harness Error",
       "notes": "some notes",
       "actions": [
         {
@@ -2085,6 +2121,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "EQ Error",
       "notes": "some notes",
       "actions": [
         {
@@ -2125,6 +2162,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Ems Comms Error",
       "notes": "some notes",
       "actions": [
         {
@@ -2165,6 +2203,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Bms Comms Error",
       "notes": "some notes",
       "actions": [
         {
@@ -2205,6 +2244,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Discharge Over Temp",
       "notes": "some notes",
       "actions": [
         {
@@ -2287,6 +2327,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Single Discharge Low Temp",
       "notes": "some notes",
       "actions": [
         {
@@ -2369,6 +2410,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "SOC Over",
       "notes": "some notes",
       "actions": [
         {
@@ -2451,6 +2493,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Bmm Charge Vo D Valuel",
       "notes": "some notes",
       "actions": [
         {
@@ -2533,6 +2576,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell discharge temp D Value",
       "notes": "some notes",
       "actions": [
         {
@@ -2615,6 +2659,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell charge temp D Value",
       "notes": "some notes",
       "actions": [
         {
@@ -2697,6 +2742,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Bmm Discharge Vol D Value",
       "notes": "some notes",
       "actions": [
         {
@@ -2779,6 +2825,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Circulation Warning",
       "notes": "some notes",
       "actions": [
         {
@@ -2819,6 +2866,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "HV Sample Volt Diff",
       "notes": "some notes",
       "actions": [
         {
@@ -2859,6 +2907,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell Charge Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -2899,6 +2948,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell Discharge Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -2939,6 +2989,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module Charge Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -2979,6 +3030,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module Discharge Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -3019,6 +3071,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module Vol D Charge",
       "notes": "some notes",
       "actions": [
         {
@@ -3059,6 +3112,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module Vol D Discharge",
       "notes": "some notes",
       "actions": [
         {
@@ -3099,6 +3153,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Charge Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -3139,6 +3194,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Discharge Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -3179,6 +3235,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Charge Cell Range Vol",
       "notes": "offset 308",
       "actions": [
         {
@@ -3219,6 +3276,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Discharge Cell Range Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -3259,6 +3317,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Charge Module Range Vol",
       "notes": "some notes",
       "actions": [
         {
@@ -3299,6 +3358,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Disharge Module Range Vol",
       "notes": "offset 311",
       "actions": [
         {
@@ -3339,6 +3399,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Charge Current",
       "notes": "some notes",
       "actions": [
         {
@@ -3379,6 +3440,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cluster Discharge Current",
       "notes": "some notes",
       "actions": [
         {
@@ -3419,6 +3481,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cutoff Cell High Temp",
       "notes": "some notes",
       "actions": [
         {
@@ -3459,6 +3522,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cutoff Cell Low Temp",
       "notes": "some notes",
       "actions": [
         {
@@ -3499,6 +3563,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cutoff Cluster Charge Cell Temp D",
       "notes": "offset 316",
       "actions": [
         {
@@ -3539,6 +3604,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cutoff Cluster Discharge Cell Temp D",
       "notes": "some notes",
       "actions": [
         {
@@ -3579,6 +3645,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Bmm Lost Status",
       "notes": "some notes",
       "actions": [
         {
@@ -4858,6 +4925,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "End of rtos:bits",
       "notes": "some notes",
       "actions": [
         {
@@ -4898,6 +4966,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -4938,6 +5007,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -4978,6 +5048,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI1 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5018,6 +5089,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI2 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5058,6 +5130,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI3 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5098,6 +5171,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI4 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5138,6 +5212,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI5 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5178,6 +5253,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI6 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5218,6 +5294,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI7 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5258,6 +5335,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI8 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5298,6 +5376,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI9 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5338,6 +5417,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI10 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5378,6 +5458,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI11 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5418,6 +5499,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "DI12 fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5458,6 +5540,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Internal CAN communication disconnection",
       "notes": "some notes",
       "actions": [
         {
@@ -5498,6 +5581,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell voltage DAQ abnormal",
       "notes": "some notes",
       "actions": [
         {
@@ -5538,6 +5622,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell temperature DAQ abnormal",
       "notes": "some notes",
       "actions": [
         {
@@ -5578,6 +5663,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "SBMS detection fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5618,6 +5704,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Rack voltage-difference high",
       "notes": "some notes",
       "actions": [
         {
@@ -5658,6 +5745,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Rack trip fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5698,6 +5786,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Battery limit fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5738,6 +5827,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Project software version inconsistent",
       "notes": "some notes",
       "actions": [
         {
@@ -5778,6 +5868,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "PCS communication fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5818,6 +5909,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "PC forced control mode",
       "notes": "some notes",
       "actions": [
         {
@@ -5858,6 +5950,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "CAN Hall sensor fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5898,6 +5991,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "CAN Hall sensor communication fault",
       "notes": "some notes",
       "actions": [
         {
@@ -5938,6 +6032,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Hardware self-inspect abnormal",
       "notes": "some notes",
       "actions": [
         {
@@ -5978,6 +6073,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Power supply under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6018,6 +6114,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Power supply over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6058,6 +6155,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -6098,6 +6196,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Pack terminal under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6138,6 +6237,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Pack terminal over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6178,6 +6278,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Fast charge over-current",
       "notes": "some notes",
       "actions": [
         {
@@ -6218,6 +6319,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Pole over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -6258,6 +6360,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Feed over-current",
       "notes": "some notes",
       "actions": [
         {
@@ -6298,6 +6401,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Discharge over-current",
       "notes": "some notes",
       "actions": [
         {
@@ -6338,6 +6442,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Isolation low",
       "notes": "some notes",
       "actions": [
         {
@@ -6378,6 +6483,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "LOW SOC",
       "notes": "some notes",
       "actions": [
         {
@@ -6418,6 +6524,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "HIGH SOC",
       "notes": "some notes",
       "actions": [
         {
@@ -6458,6 +6565,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6498,6 +6606,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6538,6 +6647,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell voltage-difference high",
       "notes": "some notes",
       "actions": [
         {
@@ -6578,6 +6688,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Charge over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -6618,6 +6729,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Charge under-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -6658,6 +6770,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Discharge over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -6698,6 +6811,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Discharge under-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -6738,6 +6852,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell temperature-difference high",
       "notes": "some notes",
       "actions": [
         {
@@ -6778,6 +6893,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "SOC DIFFERENCE HIGH",
       "notes": "some notes",
       "actions": [
         {
@@ -6818,6 +6934,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Temperature rise fast",
       "notes": "some notes",
       "actions": [
         {
@@ -6858,6 +6975,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6898,6 +7016,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -6938,6 +7057,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "EVBCM communication disconnection",
       "notes": "some notes",
       "actions": [
         {
@@ -6978,6 +7098,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "PCS communication disconnection",
       "notes": "some notes",
       "actions": [
         {
@@ -7018,6 +7139,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Power supply under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7058,6 +7180,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Power supply over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7098,6 +7221,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -7138,6 +7262,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Pack terminal under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7178,6 +7303,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Pack terminal over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7218,6 +7344,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Fast charge over-current",
       "notes": "some notes",
       "actions": [
         {
@@ -7258,6 +7385,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Pole over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -7298,6 +7426,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Feed over-current\"",
       "notes": "some notes",
       "actions": [
         {
@@ -7338,6 +7467,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Discharge over-current",
       "notes": "some notes",
       "actions": [
         {
@@ -7378,6 +7508,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Isolation low",
       "notes": "some notes",
       "actions": [
         {
@@ -7418,6 +7549,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "LOW SOC",
       "notes": "some notes",
       "actions": [
         {
@@ -7458,6 +7590,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "HIGH SOC",
       "notes": "some notes",
       "actions": [
         {
@@ -7498,6 +7631,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7538,6 +7672,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7578,6 +7713,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell voltage-difference high",
       "notes": "some notes",
       "actions": [
         {
@@ -7618,6 +7754,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Charge over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -7658,6 +7795,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Charge under-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -7698,6 +7836,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Discharge over-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -7738,6 +7877,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Discharge under-temperature",
       "notes": "some notes",
       "actions": [
         {
@@ -7778,6 +7918,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Cell temperature-difference high",
       "notes": "some notes",
       "actions": [
         {
@@ -7818,6 +7959,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "SOC DIFFERENCE HIGH",
       "notes": "some notes",
       "actions": [
         {
@@ -7858,6 +8000,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Temperature rise fast",
       "notes": "some notes",
       "actions": [
         {
@@ -7898,6 +8041,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module over-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7938,6 +8082,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Module under-voltage",
       "notes": "some notes",
       "actions": [
         {
@@ -7978,6 +8123,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "BMM external device fault (DI inspect)",
       "notes": "some notes",
       "actions": [
         {
@@ -8018,6 +8164,7 @@
       "alarm_var": "rtos:bits:cell_voltage_low",
       "latch_var": "rtos:bits:cell_voltage_high_latch",
       "limits_var": "",
+      "limits_def": "Balance board fault",
       "notes": "some notes",
       "actions": [
         {
@@ -8040,6 +8187,1983 @@
             }
           ],
           "notes": ""
+        }
+      ]
+    }
+  ],
+  "limits_def": [
+    {
+      "table": "alarm_limits",
+      "items": [
+        {
+          "table": null,
+          "name": "Terminal Over Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_total_v_over",
+          "num": 4,
+          "write_data": [
+            14768,
+            15101,
+            15392,
+            416
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Terminal Under Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_total_v_under",
+          "num": 4,
+          "write_data": [
+            12272,
+            10400,
+            9984,
+            416
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Discharge Over Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_discharge_curr_over",
+          "num": 4,
+          "write_data": [
+            4420,
+            4620,
+            4820,
+            200
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "FastCharge Over Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_fast_charge_curr_over",
+          "num": 4,
+          "write_data": [
+            4420,
+            4620,
+            4820,
+            200
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Insulation Low",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_insulation_resistance_under",
+          "num": 4,
+          "write_data": [
+            3393,
+            2662,
+            1331,
+            200
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Charge Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_charge_temp_over",
+          "num": 4,
+          "write_data": [
+            950,
+            1000,
+            1050,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Charge Under Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_charge_temp_under",
+          "num": 4,
+          "write_data": [
+            450,
+            400,
+            100,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Over Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_voltage_over",
+          "num": 4,
+          "write_data": [
+            3550,
+            3630,
+            3700,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Under Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_voltage_under",
+          "num": 4,
+          "write_data": [
+            2950,
+            2500,
+            2400,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Voltage Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_voltage_diff",
+          "num": 4,
+          "write_data": [
+            500,
+            600,
+            800,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Temp Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_temp_diff",
+          "num": 4,
+          "write_data": [
+            100,
+            150,
+            200,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "SOC Low",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_soc_under",
+          "num": 4,
+          "write_data": [
+            5,
+            0,
+            0,
+            3
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Terminal Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Terminal Over Temp",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module Over Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_mod_volt_over",
+          "num": 4,
+          "write_data": [
+            1846,
+            1888,
+            1924,
+            52
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module Under Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_mod_volt_under",
+          "num": 4,
+          "write_data": [
+            1534,
+            1300,
+            1248,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI1 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI1 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI2 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI2 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI3 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI3 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Di4 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di4 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Di5 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di5 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Di6 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di6 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Di7 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di7 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Di8 ,mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di8 ,mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Can0 Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Can0 Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Voltage Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Voltage Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Temp Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Temp Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "bg system alarm error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "bg system alarm error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Group Volt Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Group Volt Diff",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Jump Instruction",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Jump Instruction",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Battery Extreme Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Battery Extreme Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Project Version Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Project Version Diff",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "PCS comms Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS comms Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "PCS debug Mode",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS debug Mode",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Can Hall Sensor Comm Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Can Hall Sensor Comm Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "PCB Check error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCB Check error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "SVOL Harness Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SVOL Harness Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "EQ Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "EQ Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Ems Comms Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Ems Comms Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Bms Comms Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bms Comms Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Discharge Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_discharge_temp_over",
+          "num": 4,
+          "write_data": [
+            950,
+            1000,
+            1050,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Single Discharge Low Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Single Discharge Low Temp",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "SOC Over",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SOC Over",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Bmm Charge Vo D Valuel",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bmm Charge Vo D Valuel",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell discharge temp D Value",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell discharge temp D Value",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell charge temp D Value",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell charge temp D Value",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Bmm Discharge Vol D Value",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bmm Discharge Vol D Value",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Circulation Warning",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Circulation Warning",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "HV Sample Volt Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "HV Sample Volt Diff",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell Charge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell Charge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell Discharge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell Discharge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module Charge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Charge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module Discharge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Discharge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module Vol D Charge",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Vol D Charge",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module Vol D Discharge",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Vol D Discharge",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Charge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Discharge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Discharge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Charge Cell Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Cell Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Discharge Cell Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Discharge Cell Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Charge Module Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Module Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Disharge Module Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Disharge Module Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Charge Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cluster Discharge Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Discharge Current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cutoff Cell High Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cell High Temp",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cutoff Cell Low Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cell Low Temp",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cutoff Cluster Charge Cell Temp D",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cluster Charge Cell Temp D",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cutoff Cluster Discharge Cell Temp D",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cluster Discharge Cell Temp D",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Bmm Lost Status",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bmm Lost Status",
+          "num": 60,
+          "write_data": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "End of rtos:bits",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "End of rtos:bits",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI1 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI1 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI2 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI2 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI3 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI3 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI4 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI4 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI5 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI5 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI6 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI6 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI7 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI7 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI8 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI8 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI9 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI9 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI10 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI10 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI11 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI11 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "DI12 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI12 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Internal CAN communication disconnection",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Internal CAN communication disconnection",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell voltage DAQ abnormal",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell voltage DAQ abnormal",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell temperature DAQ abnormal",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell temperature DAQ abnormal",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "SBMS detection fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SBMS detection fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Rack voltage-difference high",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Rack voltage-difference high",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Rack trip fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Rack trip fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Battery limit fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Battery limit fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Project software version inconsistent",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Project software version inconsistent",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "PCS communication fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS communication fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "PC forced control mode",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PC forced control mode",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "CAN Hall sensor fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "CAN Hall sensor fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "CAN Hall sensor communication fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "CAN Hall sensor communication fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Hardware self-inspect abnormal",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Hardware self-inspect abnormal",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Power supply under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Power supply under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Power supply over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Power supply over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Module over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Pack terminal under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Pack terminal under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Pack terminal over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Pack terminal over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Fast charge over-current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Fast charge over-current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Pole over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Pole over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Feed over-current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Feed over-current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Discharge over-current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Discharge over-current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Isolation low",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Isolation low",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "LOW SOC",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "LOW SOC",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "HIGH SOC",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "HIGH SOC",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell voltage-difference high",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell voltage-difference high",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Charge over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Charge over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Charge under-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Charge under-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Discharge over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Discharge over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Discharge under-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Discharge under-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Cell temperature-difference high",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell temperature-difference high",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "SOC DIFFERENCE HIGH",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SOC DIFFERENCE HIGH",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Temperature rise fast",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Temperature rise fast",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "EVBCM communication disconnection",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "EVBCM communication disconnection",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "PCS communication disconnection",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS communication disconnection",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Feed over-current\"",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Feed over-current\"",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "BMM external device fault (DI inspect)",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "BMM external device fault (DI inspect)",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        },
+        {
+          "table": null,
+          "name": "Balance board fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Balance board fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "table": "chiller_limits",
+      "items": [
+        {
+          "name": "Chiller Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_total_v_over",
+          "num": 4,
+          "write_data": [
+            14768,
+            15101,
+            15392,
+            416
+          ]
+        },
+        {
+          "name": "Chiller Under Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "22",
+          "num": 4,
+          "write_data": []
         }
       ]
     }

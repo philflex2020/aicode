@@ -7979,6 +7979,30 @@
 
   "limits_def": [
     {  
+       "table":"chiller_limits",
+       "items": [
+        {
+          "name": "Chiller Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_total_v_over",
+          "num": 4,
+          "write_data": [
+            14768,
+            15101,
+            15392,
+            416
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+       ]
+    },
+    {
        "table":"alarm_limits",
        "items": [
         {
