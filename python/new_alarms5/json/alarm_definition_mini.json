@@ -1,0 +1,56 @@
+{
+  "alarms": [
+    {"num": 0,"name": "Terminal Over Voltage","levels": 3,"measured": "test yy","limits": [14768,15101,15392,416],"compare": "aggregate",
+      "alarm_var": "sbmu:bits:summary_total_overvoltage","latch_var": "","notes": "voffset 32000",
+      "actions": [
+        {"level": 1,"level_enabled": true,"duration": "0:0",
+          "actions": [
+            {"when_set": ["set_terminal_over_voltage_level1","log:TERMINAL_OVER_VOLTAGE_L1_ACTIVE","notify:ui_warning:Terminal Over Voltage Level 1 active ok"]},
+            {"when_clear": ["reset_terminal_over_voltage_level1","log:TERMINAL_OVER_VOLTAGE_L1_CLEAR"]}
+          ],"notes": ""},
+        {"level": 2,"level_enabled": true,"duration": "0:0",
+          "actions": [
+            {"when_set": ["set_terminal_over_voltage_level2","log:TERMINAL_OVER_VOLTAGE_L2_ACTIVE","notify:ui_warning:Terminal Over Voltage Level 2 active"]},
+            {"when_clear": ["reset_terminal_over_voltage_level2","log:TERMINAL_OVER_VOLTAGE_L2_CLEAR"]}
+          ],"notes": ""},
+        {"level": 3,"level_enabled": true,"duration": "0:0",
+          "actions": [
+            {"when_set": ["set_terminal_over_voltage_level3","log:TERMINAL_OVER_VOLTAGE_L3_ACTIVE","notify:ui_warning:Terminal Over Voltage Level 3 active"]},
+            {"when_clear": ["reset_terminal_over_voltage_level3","log:TERMINAL_OVER_VOLTAGE_L3_CLEAR"]}
+          ],"notes": ""}
+      ],"_limit_def_matched": "Terminal Over Voltage","limits_def": "Terminal Over Voltage"},
+    {"num": 1,"name": "Terminal Under Voltage","levels": 3,"measured": "","limits": [12272,10400,9984,416],"compare": "aggregate",
+      "alarm_var": "sbmu:bits:summary_total_undervoltage","latch_var": "","notes": "note swap , check this voffset 32000",
+      "actions": [
+        {"level": 1,"level_enabled": true,"duration": "0:0",
+          "actions": [
+            {"when_set": ["set_terminal_under_voltage_level1","log:TERMINAL_UNDER_VOLTAGE_L1_ACTIVE","notify:ui_warning:Terminal Under Voltage Level 1 active"]},
+            {"when_clear": ["reset_terminal_under_voltage_level1","log:TERMINAL_UNDER_VOLTAGE_L1_CLEAR"]}
+          ], "notes": ""
+        },
+        {"level": 2,"level_enabled": true,"duration": "0:0",
+          "actions": [
+            {"when_set": ["set_terminal_under_voltage_level2","log:TERMINAL_UNDER_VOLTAGE_L2_ACTIVE","notify:ui_warning:Terminal Under Voltage Level 2 active"]},
+            {"when_clear": ["reset_terminal_under_voltage_level2","log:TERMINAL_UNDER_VOLTAGE_L2_CLEAR"]}
+          ],"notes": ""},
+        {"level": 3,"level_enabled": true,"duration": "0:0",
+          "actions": [
+            {"when_set": ["set_terminal_under_voltage_level3","log:TERMINAL_UNDER_VOLTAGE_L3_ACTIVE","notify:ui_warning:Terminal Under Voltage Level 3 active"]},
+            {"when_clear": ["reset_terminal_under_voltage_level3","log:TERMINAL_UNDER_VOLTAGE_L3_CLEAR"]}
+          ],"notes": ""}
+      ],"_limit_def_matched": "Terminal Under Voltage","limits_def": "Terminal Under Voltage"}
+  ],
+   "limits_def": [
+    {  "table":"chiller_limits","items": [
+       {"name": "Chiller Over Temp","sm_name": "rtos","reg_type": "mb_hold","offset": "at_total_v_over","num": 4,"write_data": [14768,15101,15392,416],"read_data": [0,0,0,0]
+        }
+       ]
+    },
+    {
+       "table":"alarm_limits","items": [
+        {"name": "Terminal Over Voltage","sm_name": "rtos","reg_type": "mb_hold","offset": "at_total_v_over","num": 4,"write_data": [14768,15101,15392,416],"read_data": [0,0,0,0]},
+        {"name": "Terminal Under Voltage","sm_name": "rtos","reg_type": "mb_hold","offset": "at_total_v_under","num": 4,"write_data": [12272,10400,9984,416],"read_data": [0,0,0,0]}
+    ]
+    }
+   ]
+}

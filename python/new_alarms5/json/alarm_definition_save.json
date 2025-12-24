@@ -4,17 +4,16 @@
       "num": 0,
       "name": "Terminal Over Voltage",
       "levels": 3,
-      "measured": "test xxx",
+      "measured": "test yy",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        14768,
+        15101,
+        15392,
+        416
       ],
       "compare": "aggregate",
       "alarm_var": "sbmu:bits:summary_total_overvoltage",
       "latch_var": "",
-      "limits_var": "rtos:hold:at_total_v_over",
       "notes": "voffset 32000",
       "actions": [
         {
@@ -26,7 +25,7 @@
               "when_set": [
                 "set_terminal_over_voltage_level1",
                 "log:TERMINAL_OVER_VOLTAGE_L1_ACTIVE",
-                "notify:ui_warning:Terminal Over Voltage Level 1 active"
+                "notify:ui_warning:Terminal Over Voltage Level 1 active ok"
               ]
             },
             {
@@ -80,7 +79,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Terminal Over Voltage",
+      "limits_def": "Terminal Over Voltage"
     },
     {
       "num": 1,
@@ -88,15 +89,14 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        12272,
+        10400,
+        9984,
+        416
       ],
       "compare": "aggregate",
       "alarm_var": "sbmu:bits:summary_total_undervoltage",
       "latch_var": "",
-      "limits_var": "rtos:hold:at_total_v_under",
       "notes": "note swap , check this voffset 32000",
       "actions": [
         {
@@ -162,7 +162,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Terminal Under Voltage",
+      "limits_def": "Terminal Under Voltage"
     },
     {
       "num": 2,
@@ -170,10 +172,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        4420,
+        4620,
+        4820,
+        200
       ],
       "compare": "aggregate",
       "alarm_var": "sbmu:bits:summary_overcurrent",
@@ -243,7 +245,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Discharge Over Current",
+      "limits_def": "Discharge Over Current"
     },
     {
       "num": 3,
@@ -251,10 +255,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        4420,
+        4620,
+        4820,
+        200
       ],
       "compare": "aggregate",
       "alarm_var": "rtos:bits:cell_temp_low",
@@ -324,7 +328,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "FastCharge Over Current",
+      "limits_def": "FastCharge Over Current"
     },
     {
       "num": 4,
@@ -332,10 +338,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        3393,
+        2662,
+        1331,
+        200
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_soc_low",
@@ -405,7 +411,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Insulation Low",
+      "limits_def": "Insulation Low"
     },
     {
       "num": 10,
@@ -413,10 +421,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        950,
+        1000,
+        1050,
+        50
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -486,7 +494,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Charge Over Temp",
+      "limits_def": "Single Charge Over Temp"
     },
     {
       "num": 11,
@@ -494,10 +504,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        450,
+        400,
+        100,
+        50
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -567,7 +577,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Charge Under Temp",
+      "limits_def": "Single Charge Under Temp"
     },
     {
       "num": 12,
@@ -575,10 +587,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        3550,
+        3630,
+        3700,
+        100
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -648,7 +660,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Over Voltage",
+      "limits_def": "Single Over Voltage"
     },
     {
       "num": 13,
@@ -656,10 +670,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        2950,
+        2500,
+        2400,
+        100
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -729,7 +743,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Under Voltage",
+      "limits_def": "Single Under Voltage"
     },
     {
       "num": 14,
@@ -737,10 +753,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        500,
+        600,
+        800,
+        100
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -810,7 +826,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Voltage Diff",
+      "limits_def": "Single Voltage Diff"
     },
     {
       "num": 15,
@@ -818,10 +836,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        100,
+        150,
+        200,
+        50
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -891,7 +909,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Temp Diff",
+      "limits_def": "Single Temp Diff"
     },
     {
       "num": 16,
@@ -899,10 +919,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
+        5,
         0,
         0,
-        0,
-        0
+        3
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -972,7 +992,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "SOC Low",
+      "limits_def": "SOC Low"
     },
     {
       "num": 17,
@@ -980,7 +1002,6 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
         0,
         0,
         0
@@ -1053,7 +1074,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Terminal Over Temp",
+      "_limit_def_dummy": true,
+      "limits_def": "Terminal Over Temp"
     },
     {
       "num": 18,
@@ -1061,10 +1085,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        1846,
+        1888,
+        1924,
+        52
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -1134,7 +1158,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module Over Voltage",
+      "limits_def": "Module Over Voltage"
     },
     {
       "num": 19,
@@ -1142,10 +1168,10 @@
       "levels": 3,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        1534,
+        1300,
+        1248,
+        100
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -1215,7 +1241,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module Under Voltage",
+      "limits_def": "Module Under Voltage"
     },
     {
       "num": 20,
@@ -1223,9 +1251,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1254,7 +1279,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI1 mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "DI1 mcerror"
     },
     {
       "num": 21,
@@ -1262,9 +1290,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1293,7 +1318,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI2 mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "DI2 mcerror"
     },
     {
       "num": 22,
@@ -1301,9 +1329,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1332,7 +1357,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI3 mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "DI3 mcerror"
     },
     {
       "num": 23,
@@ -1340,9 +1368,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1371,7 +1396,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Di4 mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "Di4 mcerror"
     },
     {
       "num": 24,
@@ -1379,9 +1407,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1410,7 +1435,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Di5 mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "Di5 mcerror"
     },
     {
       "num": 25,
@@ -1418,9 +1446,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1449,7 +1474,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Di6 mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "Di6 mcerror"
     },
     {
       "num": 26,
@@ -1457,9 +1485,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1488,7 +1513,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Di7 mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "Di7 mcerror"
     },
     {
       "num": 27,
@@ -1496,9 +1524,6 @@
       "levels": 1,
       "measured": "",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_or_equal",
@@ -1527,7 +1552,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Di8 ,mcerror",
+      "_limit_def_dummy": true,
+      "limits_def": "Di8 ,mcerror"
     },
     {
       "num": 28,
@@ -1535,9 +1563,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1566,7 +1591,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Can0 Error",
+      "_limit_def_dummy": true,
+      "limits_def": "Can0 Error"
     },
     {
       "num": 29,
@@ -1574,9 +1602,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1605,7 +1630,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Voltage Lost",
+      "_limit_def_dummy": true,
+      "limits_def": "Voltage Lost"
     },
     {
       "num": 30,
@@ -1613,9 +1641,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1644,7 +1669,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Temp Lost",
+      "_limit_def_dummy": true,
+      "limits_def": "Temp Lost"
     },
     {
       "num": 31,
@@ -1652,9 +1680,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1683,7 +1708,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "bg system alarm error",
+      "_limit_def_dummy": true,
+      "limits_def": "bg system alarm error"
     },
     {
       "num": 32,
@@ -1691,9 +1719,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1722,7 +1747,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Group Volt Diff",
+      "_limit_def_dummy": true,
+      "limits_def": "Group Volt Diff"
     },
     {
       "num": 33,
@@ -1730,9 +1758,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1761,7 +1786,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Jump Instruction",
+      "_limit_def_dummy": true,
+      "limits_def": "Jump Instruction"
     },
     {
       "num": 34,
@@ -1769,9 +1797,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1800,7 +1825,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Battery Extreme Error",
+      "_limit_def_dummy": true,
+      "limits_def": "Battery Extreme Error"
     },
     {
       "num": 35,
@@ -1808,9 +1836,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1839,7 +1864,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Project Version Diff",
+      "_limit_def_dummy": true,
+      "limits_def": "Project Version Diff"
     },
     {
       "num": 37,
@@ -1847,9 +1875,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1878,7 +1903,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "PCS comms Lost",
+      "_limit_def_dummy": true,
+      "limits_def": "PCS comms Lost"
     },
     {
       "num": 40,
@@ -1886,9 +1914,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1917,7 +1942,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "PCS debug Mode",
+      "_limit_def_dummy": true,
+      "limits_def": "PCS debug Mode"
     },
     {
       "num": 41,
@@ -1925,9 +1953,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1956,7 +1981,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Can Hall Sensor Comm Lost",
+      "_limit_def_dummy": true,
+      "limits_def": "Can Hall Sensor Comm Lost"
     },
     {
       "num": 42,
@@ -1964,9 +1992,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -1995,7 +2020,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "PCB Check error",
+      "_limit_def_dummy": true,
+      "limits_def": "PCB Check error"
     },
     {
       "num": 43,
@@ -2003,9 +2031,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2034,7 +2059,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "SVOL Harness Error",
+      "_limit_def_dummy": true,
+      "limits_def": "SVOL Harness Error"
     },
     {
       "num": 44,
@@ -2042,9 +2070,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2073,7 +2098,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "EQ Error",
+      "_limit_def_dummy": true,
+      "limits_def": "EQ Error"
     },
     {
       "num": 45,
@@ -2081,9 +2109,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2112,7 +2137,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Ems Comms Error",
+      "_limit_def_dummy": true,
+      "limits_def": "Ems Comms Error"
     },
     {
       "num": 46,
@@ -2120,9 +2148,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2151,7 +2176,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Bms Comms Error",
+      "_limit_def_dummy": true,
+      "limits_def": "Bms Comms Error"
     },
     {
       "num": 47,
@@ -2159,10 +2187,10 @@
       "levels": 3,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
-        0
+        950,
+        1000,
+        1050,
+        50
       ],
       "compare": "greater_than",
       "alarm_var": "rtos:bits:cell_voltage_low",
@@ -2232,7 +2260,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Discharge Over Temp",
+      "limits_def": "Single Discharge Over Temp"
     },
     {
       "num": 48,
@@ -2240,7 +2270,6 @@
       "levels": 3,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
         0,
         0,
         0
@@ -2313,7 +2342,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Single Discharge Low Temp",
+      "_limit_def_dummy": true,
+      "limits_def": "Single Discharge Low Temp"
     },
     {
       "num": 49,
@@ -2321,7 +2353,6 @@
       "levels": 3,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
         0,
         0,
         0
@@ -2394,7 +2425,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "SOC Over",
+      "_limit_def_dummy": true,
+      "limits_def": "SOC Over"
     },
     {
       "num": 50,
@@ -2402,7 +2436,6 @@
       "levels": 3,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
         0,
         0,
         0
@@ -2475,7 +2508,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Bmm Charge Vo D Valuel",
+      "_limit_def_dummy": true,
+      "limits_def": "Bmm Charge Vo D Valuel"
     },
     {
       "num": 51,
@@ -2483,7 +2519,6 @@
       "levels": 3,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
         0,
         0,
         0
@@ -2556,7 +2591,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell discharge temp D Value",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell discharge temp D Value"
     },
     {
       "num": 52,
@@ -2564,7 +2602,6 @@
       "levels": 3,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
         0,
         0,
         0
@@ -2637,7 +2674,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell charge temp D Value",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell charge temp D Value"
     },
     {
       "num": 53,
@@ -2645,7 +2685,6 @@
       "levels": 3,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
         0,
         0,
         0
@@ -2718,7 +2757,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Bmm Discharge Vol D Value",
+      "_limit_def_dummy": true,
+      "limits_def": "Bmm Discharge Vol D Value"
     },
     {
       "num": 54,
@@ -2726,9 +2768,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2757,7 +2796,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Circulation Warning",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Circulation Warning"
     },
     {
       "num": 55,
@@ -2765,9 +2807,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2796,7 +2835,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "HV Sample Volt Diff",
+      "_limit_def_dummy": true,
+      "limits_def": "HV Sample Volt Diff"
     },
     {
       "num": 56,
@@ -2804,9 +2846,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2835,7 +2874,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell Charge Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell Charge Vol"
     },
     {
       "num": 57,
@@ -2843,9 +2885,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2874,7 +2913,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell Discharge Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell Discharge Vol"
     },
     {
       "num": 58,
@@ -2882,9 +2924,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2913,7 +2952,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module Charge Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Module Charge Vol"
     },
     {
       "num": 59,
@@ -2921,9 +2963,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2952,7 +2991,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module Discharge Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Module Discharge Vol"
     },
     {
       "num": 60,
@@ -2960,9 +3002,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -2991,7 +3030,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module Vol D Charge",
+      "_limit_def_dummy": true,
+      "limits_def": "Module Vol D Charge"
     },
     {
       "num": 61,
@@ -2999,9 +3041,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3030,7 +3069,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module Vol D Discharge",
+      "_limit_def_dummy": true,
+      "limits_def": "Module Vol D Discharge"
     },
     {
       "num": 62,
@@ -3038,9 +3080,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3069,7 +3108,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Charge Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Charge Vol"
     },
     {
       "num": 63,
@@ -3077,9 +3119,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3108,7 +3147,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Discharge Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Discharge Vol"
     },
     {
       "num": 64,
@@ -3116,9 +3158,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3147,7 +3186,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Charge Cell Range Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Charge Cell Range Vol"
     },
     {
       "num": 65,
@@ -3155,9 +3197,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3186,7 +3225,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Discharge Cell Range Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Discharge Cell Range Vol"
     },
     {
       "num": 66,
@@ -3194,9 +3236,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3225,7 +3264,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Charge Module Range Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Charge Module Range Vol"
     },
     {
       "num": 67,
@@ -3233,9 +3275,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3264,7 +3303,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Disharge Module Range Vol",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Disharge Module Range Vol"
     },
     {
       "num": 68,
@@ -3272,9 +3314,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3303,7 +3342,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Charge Current",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Charge Current"
     },
     {
       "num": 69,
@@ -3311,9 +3353,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3342,7 +3381,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cluster Discharge Current",
+      "_limit_def_dummy": true,
+      "limits_def": "Cluster Discharge Current"
     },
     {
       "num": 70,
@@ -3350,9 +3392,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3381,7 +3420,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cutoff Cell High Temp",
+      "_limit_def_dummy": true,
+      "limits_def": "Cutoff Cell High Temp"
     },
     {
       "num": 71,
@@ -3389,9 +3431,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3420,7 +3459,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cutoff Cell Low Temp",
+      "_limit_def_dummy": true,
+      "limits_def": "Cutoff Cell Low Temp"
     },
     {
       "num": 72,
@@ -3428,9 +3470,6 @@
       "levels": 1,
       "measured": "rtos:bits:316",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3459,7 +3498,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cutoff Cluster Charge Cell Temp D",
+      "_limit_def_dummy": true,
+      "limits_def": "Cutoff Cluster Charge Cell Temp D"
     },
     {
       "num": 73,
@@ -3467,9 +3509,6 @@
       "levels": 1,
       "measured": "rtos:bits:317",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -3498,7 +3537,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cutoff Cluster Discharge Cell Temp D",
+      "_limit_def_dummy": true,
+      "limits_def": "Cutoff Cluster Discharge Cell Temp D"
     },
     {
       "num": 74,
@@ -3506,6 +3548,62 @@
       "levels": 60,
       "measured": "rtos:bits:bmm_lost_status",
       "limits": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
         0,
         0,
         0,
@@ -4776,7 +4874,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Bmm Lost Status",
+      "_limit_def_dummy": true,
+      "limits_def": "Bmm Lost Status"
     },
     {
       "num": 75,
@@ -4784,9 +4885,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -4815,7 +4913,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "End of rtos:bits",
+      "_limit_def_dummy": true,
+      "limits_def": "End of rtos:bits"
     },
     {
       "num": 76,
@@ -4823,9 +4924,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -4854,7 +4952,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module over-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Module over-voltage"
     },
     {
       "num": 77,
@@ -4862,9 +4963,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -4893,7 +4991,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module under-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Module under-voltage"
     },
     {
       "num": 78,
@@ -4901,9 +5002,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -4932,7 +5030,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI1 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI1 fault"
     },
     {
       "num": 79,
@@ -4940,9 +5041,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -4971,7 +5069,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI2 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI2 fault"
     },
     {
       "num": 80,
@@ -4979,9 +5080,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5010,7 +5108,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI3 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI3 fault"
     },
     {
       "num": 81,
@@ -5018,9 +5119,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5049,7 +5147,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI4 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI4 fault"
     },
     {
       "num": 82,
@@ -5057,9 +5158,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5088,7 +5186,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI5 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI5 fault"
     },
     {
       "num": 83,
@@ -5096,9 +5197,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5127,7 +5225,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI6 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI6 fault"
     },
     {
       "num": 84,
@@ -5135,9 +5236,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5166,7 +5264,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI7 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI7 fault"
     },
     {
       "num": 85,
@@ -5174,9 +5275,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5205,7 +5303,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI8 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI8 fault"
     },
     {
       "num": 86,
@@ -5213,9 +5314,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5244,7 +5342,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI9 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI9 fault"
     },
     {
       "num": 87,
@@ -5252,9 +5353,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5283,7 +5381,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI10 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI10 fault"
     },
     {
       "num": 88,
@@ -5291,9 +5392,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5322,7 +5420,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI11 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI11 fault"
     },
     {
       "num": 89,
@@ -5330,9 +5431,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5361,7 +5459,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "DI12 fault",
+      "_limit_def_dummy": true,
+      "limits_def": "DI12 fault"
     },
     {
       "num": 90,
@@ -5369,9 +5470,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5400,7 +5498,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Internal CAN communication disconnection",
+      "_limit_def_dummy": true,
+      "limits_def": "Internal CAN communication disconnection"
     },
     {
       "num": 91,
@@ -5408,9 +5509,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5439,7 +5537,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell voltage DAQ abnormal",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell voltage DAQ abnormal"
     },
     {
       "num": 92,
@@ -5447,9 +5548,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5478,7 +5576,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell temperature DAQ abnormal",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell temperature DAQ abnormal"
     },
     {
       "num": 93,
@@ -5486,9 +5587,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5517,7 +5615,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "SBMS detection fault",
+      "_limit_def_dummy": true,
+      "limits_def": "SBMS detection fault"
     },
     {
       "num": 94,
@@ -5525,9 +5626,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5556,7 +5654,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Rack voltage-difference high",
+      "_limit_def_dummy": true,
+      "limits_def": "Rack voltage-difference high"
     },
     {
       "num": 95,
@@ -5564,9 +5665,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5595,7 +5693,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Rack trip fault",
+      "_limit_def_dummy": true,
+      "limits_def": "Rack trip fault"
     },
     {
       "num": 96,
@@ -5603,9 +5704,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5634,7 +5732,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Battery limit fault",
+      "_limit_def_dummy": true,
+      "limits_def": "Battery limit fault"
     },
     {
       "num": 97,
@@ -5642,9 +5743,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5673,7 +5771,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Project software version inconsistent",
+      "_limit_def_dummy": true,
+      "limits_def": "Project software version inconsistent"
     },
     {
       "num": 98,
@@ -5681,9 +5782,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5712,7 +5810,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "PCS communication fault",
+      "_limit_def_dummy": true,
+      "limits_def": "PCS communication fault"
     },
     {
       "num": 99,
@@ -5720,9 +5821,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5751,7 +5849,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "PC forced control mode",
+      "_limit_def_dummy": true,
+      "limits_def": "PC forced control mode"
     },
     {
       "num": 100,
@@ -5759,9 +5860,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5790,7 +5888,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "CAN Hall sensor fault",
+      "_limit_def_dummy": true,
+      "limits_def": "CAN Hall sensor fault"
     },
     {
       "num": 101,
@@ -5798,9 +5899,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5829,7 +5927,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "CAN Hall sensor communication fault",
+      "_limit_def_dummy": true,
+      "limits_def": "CAN Hall sensor communication fault"
     },
     {
       "num": 102,
@@ -5837,9 +5938,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5868,7 +5966,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Hardware self-inspect abnormal",
+      "_limit_def_dummy": true,
+      "limits_def": "Hardware self-inspect abnormal"
     },
     {
       "num": 103,
@@ -5876,9 +5977,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5907,7 +6005,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Power supply under-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Power supply under-voltage"
     },
     {
       "num": 104,
@@ -5915,9 +6016,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5946,7 +6044,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Power supply over-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Power supply over-voltage"
     },
     {
       "num": 105,
@@ -5954,9 +6055,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -5985,7 +6083,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module over-temperature",
+      "_limit_def_dummy": true,
+      "limits_def": "Module over-temperature"
     },
     {
       "num": 106,
@@ -5993,9 +6094,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6024,7 +6122,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Pack terminal under-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Pack terminal under-voltage"
     },
     {
       "num": 107,
@@ -6032,9 +6133,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6063,7 +6161,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Pack terminal over-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Pack terminal over-voltage"
     },
     {
       "num": 108,
@@ -6071,9 +6172,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6102,7 +6200,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Fast charge over-current",
+      "_limit_def_dummy": true,
+      "limits_def": "Fast charge over-current"
     },
     {
       "num": 109,
@@ -6110,9 +6211,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6141,7 +6239,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Pole over-temperature",
+      "_limit_def_dummy": true,
+      "limits_def": "Pole over-temperature"
     },
     {
       "num": 110,
@@ -6149,9 +6250,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6180,7 +6278,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Feed over-current",
+      "_limit_def_dummy": true,
+      "limits_def": "Feed over-current"
     },
     {
       "num": 111,
@@ -6188,9 +6289,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6219,7 +6317,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Discharge over-current",
+      "_limit_def_dummy": true,
+      "limits_def": "Discharge over-current"
     },
     {
       "num": 112,
@@ -6227,9 +6328,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6258,7 +6356,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Isolation low",
+      "_limit_def_dummy": true,
+      "limits_def": "Isolation low"
     },
     {
       "num": 113,
@@ -6266,9 +6367,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6297,7 +6395,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "LOW SOC",
+      "_limit_def_dummy": true,
+      "limits_def": "LOW SOC"
     },
     {
       "num": 114,
@@ -6305,9 +6406,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6336,7 +6434,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "HIGH SOC",
+      "_limit_def_dummy": true,
+      "limits_def": "HIGH SOC"
     },
     {
       "num": 115,
@@ -6344,9 +6445,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6375,7 +6473,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell over-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell over-voltage"
     },
     {
       "num": 116,
@@ -6383,9 +6484,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6414,7 +6512,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell under-voltage",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell under-voltage"
     },
     {
       "num": 117,
@@ -6422,9 +6523,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6453,7 +6551,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell voltage-difference high",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell voltage-difference high"
     },
     {
       "num": 118,
@@ -6461,9 +6562,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6492,7 +6590,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Charge over-temperature",
+      "_limit_def_dummy": true,
+      "limits_def": "Charge over-temperature"
     },
     {
       "num": 119,
@@ -6500,9 +6601,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6531,7 +6629,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Charge under-temperature",
+      "_limit_def_dummy": true,
+      "limits_def": "Charge under-temperature"
     },
     {
       "num": 120,
@@ -6539,9 +6640,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6570,7 +6668,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Discharge over-temperature",
+      "_limit_def_dummy": true,
+      "limits_def": "Discharge over-temperature"
     },
     {
       "num": 121,
@@ -6578,9 +6679,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6609,7 +6707,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Discharge under-temperature",
+      "_limit_def_dummy": true,
+      "limits_def": "Discharge under-temperature"
     },
     {
       "num": 122,
@@ -6617,9 +6718,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6648,7 +6746,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell temperature-difference high",
+      "_limit_def_dummy": true,
+      "limits_def": "Cell temperature-difference high"
     },
     {
       "num": 123,
@@ -6656,9 +6757,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6687,7 +6785,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "SOC DIFFERENCE HIGH",
+      "_limit_def_dummy": true,
+      "limits_def": "SOC DIFFERENCE HIGH"
     },
     {
       "num": 124,
@@ -6695,9 +6796,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6726,7 +6824,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Temperature rise fast",
+      "_limit_def_dummy": true,
+      "limits_def": "Temperature rise fast"
     },
     {
       "num": 125,
@@ -6734,9 +6835,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6765,7 +6863,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module over-voltage",
+      "limits_def": "Module over-voltage"
     },
     {
       "num": 126,
@@ -6773,9 +6873,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6804,7 +6901,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module under-voltage",
+      "limits_def": "Module under-voltage"
     },
     {
       "num": 127,
@@ -6812,9 +6911,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6843,7 +6939,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "EVBCM communication disconnection",
+      "_limit_def_dummy": true,
+      "limits_def": "EVBCM communication disconnection"
     },
     {
       "num": 128,
@@ -6851,9 +6950,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6882,7 +6978,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "PCS communication disconnection",
+      "_limit_def_dummy": true,
+      "limits_def": "PCS communication disconnection"
     },
     {
       "num": 129,
@@ -6890,9 +6989,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6921,7 +7017,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Power supply under-voltage",
+      "limits_def": "Power supply under-voltage"
     },
     {
       "num": 130,
@@ -6929,9 +7027,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6960,7 +7055,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Power supply over-voltage",
+      "limits_def": "Power supply over-voltage"
     },
     {
       "num": 131,
@@ -6968,9 +7065,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -6999,7 +7093,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module over-temperature",
+      "limits_def": "Module over-temperature"
     },
     {
       "num": 132,
@@ -7007,9 +7103,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7038,7 +7131,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Pack terminal under-voltage",
+      "limits_def": "Pack terminal under-voltage"
     },
     {
       "num": 133,
@@ -7046,9 +7141,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7077,7 +7169,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Pack terminal over-voltage",
+      "limits_def": "Pack terminal over-voltage"
     },
     {
       "num": 134,
@@ -7085,9 +7179,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7116,7 +7207,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Fast charge over-current",
+      "limits_def": "Fast charge over-current"
     },
     {
       "num": 135,
@@ -7124,9 +7217,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7155,7 +7245,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Pole over-temperature",
+      "limits_def": "Pole over-temperature"
     },
     {
       "num": 136,
@@ -7163,9 +7255,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7194,7 +7283,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Feed over-current\"",
+      "_limit_def_dummy": true,
+      "limits_def": "Feed over-current\""
     },
     {
       "num": 137,
@@ -7202,9 +7294,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7233,7 +7322,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Discharge over-current",
+      "limits_def": "Discharge over-current"
     },
     {
       "num": 138,
@@ -7241,9 +7332,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7272,7 +7360,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Isolation low",
+      "limits_def": "Isolation low"
     },
     {
       "num": 139,
@@ -7280,9 +7370,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7311,7 +7398,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "LOW SOC",
+      "limits_def": "LOW SOC"
     },
     {
       "num": 140,
@@ -7319,9 +7408,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7350,7 +7436,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "HIGH SOC",
+      "limits_def": "HIGH SOC"
     },
     {
       "num": 141,
@@ -7358,9 +7446,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7389,7 +7474,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell over-voltage",
+      "limits_def": "Cell over-voltage"
     },
     {
       "num": 142,
@@ -7397,9 +7484,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7428,7 +7512,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell under-voltage",
+      "limits_def": "Cell under-voltage"
     },
     {
       "num": 143,
@@ -7436,9 +7522,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7467,7 +7550,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell voltage-difference high",
+      "limits_def": "Cell voltage-difference high"
     },
     {
       "num": 144,
@@ -7475,9 +7560,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7506,7 +7588,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Charge over-temperature",
+      "limits_def": "Charge over-temperature"
     },
     {
       "num": 145,
@@ -7514,9 +7598,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7545,7 +7626,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Charge under-temperature",
+      "limits_def": "Charge under-temperature"
     },
     {
       "num": 146,
@@ -7553,9 +7636,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7584,7 +7664,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Discharge over-temperature",
+      "limits_def": "Discharge over-temperature"
     },
     {
       "num": 147,
@@ -7592,9 +7674,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7623,7 +7702,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Discharge under-temperature",
+      "limits_def": "Discharge under-temperature"
     },
     {
       "num": 148,
@@ -7631,9 +7712,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7662,7 +7740,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Cell temperature-difference high",
+      "limits_def": "Cell temperature-difference high"
     },
     {
       "num": 149,
@@ -7670,9 +7750,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7701,7 +7778,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "SOC DIFFERENCE HIGH",
+      "limits_def": "SOC DIFFERENCE HIGH"
     },
     {
       "num": 150,
@@ -7709,9 +7788,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7740,7 +7816,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Temperature rise fast",
+      "limits_def": "Temperature rise fast"
     },
     {
       "num": 151,
@@ -7748,9 +7826,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7779,7 +7854,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module over-voltage",
+      "limits_def": "Module over-voltage"
     },
     {
       "num": 152,
@@ -7787,9 +7864,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7818,7 +7892,9 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Module under-voltage",
+      "limits_def": "Module under-voltage"
     },
     {
       "num": 153,
@@ -7826,9 +7902,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7857,7 +7930,10 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "BMM external device fault (DI inspect)",
+      "_limit_def_dummy": true,
+      "limits_def": "BMM external device fault (DI inspect)"
     },
     {
       "num": 154,
@@ -7865,9 +7941,6 @@
       "levels": 1,
       "measured": "sbmu:input:Min_cell_temp",
       "limits": [
-        0,
-        0,
-        0,
         0
       ],
       "compare": "greater_than",
@@ -7896,12 +7969,1972 @@
           ],
           "notes": ""
         }
-      ]
+      ],
+      "_limit_def_matched": "Balance board fault",
+      "_limit_def_dummy": true,
+      "limits_def": "Balance board fault"
     }
   ],
-  "vars": {
-    "num_racks": 14,
-    "max_string_voltage": 1000,
-    "site_name": "Demo Site A"
-  }
+
+
+  "limits_def": [
+    {  
+       "table":"chiller_limits",
+       "items": [
+        {
+          "name": "Chiller Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_total_v_over",
+          "num": 4,
+          "write_data": [
+            14768,
+            15101,
+            15392,
+            416
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+       ]
+    },
+    {
+       "table":"alarm_limits",
+       "items": [
+        {
+          "name": "Terminal Over Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_total_v_over",
+          "num": 4,
+          "write_data": [
+            14768,
+            15101,
+            15392,
+            416
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Terminal Under Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_total_v_under",
+          "num": 4,
+          "write_data": [
+            12272,
+            10400,
+            9984,
+            416
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Discharge Over Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_discharge_curr_over",
+          "num": 4,
+          "write_data": [
+            4420,
+            4620,
+            4820,
+            200
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "FastCharge Over Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_fast_charge_curr_over",
+          "num": 4,
+          "write_data": [
+            4420,
+            4620,
+            4820,
+            200
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Insulation Low",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_insulation_resistance_under",
+          "num": 4,
+          "write_data": [
+            3393,
+            2662,
+            1331,
+            200
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Single Charge Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_charge_temp_over",
+          "num": 4,
+          "write_data": [
+            950,
+            1000,
+            1050,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Single Charge Under Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_charge_temp_under",
+          "num": 4,
+          "write_data": [
+            450,
+            400,
+            100,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Single Over Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_voltage_over",
+          "num": 4,
+          "write_data": [
+            3550,
+            3630,
+            3700,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Single Under Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_voltage_under",
+          "num": 4,
+          "write_data": [
+            2950,
+            2500,
+            2400,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Single Voltage Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_voltage_diff",
+          "num": 4,
+          "write_data": [
+            500,
+            600,
+            800,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Single Temp Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_temp_diff",
+          "num": 4,
+          "write_data": [
+            100,
+            150,
+            200,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "SOC Low",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_soc_under",
+          "num": 4,
+          "write_data": [
+            5,
+            0,
+            0,
+            3
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Terminal Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Terminal Over Temp",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module Over Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_mod_volt_over",
+          "num": 4,
+          "write_data": [
+            1846,
+            1888,
+            1924,
+            52
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Module Under Voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_mod_volt_under",
+          "num": 4,
+          "write_data": [
+            1534,
+            1300,
+            1248,
+            100
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "DI1 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI1 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI2 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI2 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI3 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI3 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Di4 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di4 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Di5 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di5 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Di6 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di6 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Di7 mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di7 mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Di8 ,mcerror",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Di8 ,mcerror",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Can0 Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Can0 Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Voltage Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Voltage Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Temp Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Temp Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "bg system alarm error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "bg system alarm error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Group Volt Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Group Volt Diff",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Jump Instruction",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Jump Instruction",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Battery Extreme Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Battery Extreme Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Project Version Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Project Version Diff",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "PCS comms Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS comms Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "PCS debug Mode",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS debug Mode",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Can Hall Sensor Comm Lost",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Can Hall Sensor Comm Lost",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "PCB Check error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCB Check error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "SVOL Harness Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SVOL Harness Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "EQ Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "EQ Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Ems Comms Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Ems Comms Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Bms Comms Error",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bms Comms Error",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Single Discharge Over Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "at_single_discharge_temp_over",
+          "num": 4,
+          "write_data": [
+            950,
+            1000,
+            1050,
+            50
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "Single Discharge Low Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Single Discharge Low Temp",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "SOC Over",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SOC Over",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Bmm Charge Vo D Valuel",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bmm Charge Vo D Valuel",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell discharge temp D Value",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell discharge temp D Value",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell charge temp D Value",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell charge temp D Value",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Bmm Discharge Vol D Value",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bmm Discharge Vol D Value",
+          "num": 3,
+          "write_data": [
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Circulation Warning",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Circulation Warning",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "HV Sample Volt Diff",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "HV Sample Volt Diff",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell Charge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell Charge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell Discharge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell Discharge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module Charge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Charge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module Discharge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Discharge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module Vol D Charge",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Vol D Charge",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module Vol D Discharge",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module Vol D Discharge",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Charge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Discharge Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Discharge Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Charge Cell Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Cell Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Discharge Cell Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Discharge Cell Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Charge Module Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Module Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Disharge Module Range Vol",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Disharge Module Range Vol",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Charge Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Charge Current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cluster Discharge Current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cluster Discharge Current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cutoff Cell High Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cell High Temp",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cutoff Cell Low Temp",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cell Low Temp",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cutoff Cluster Charge Cell Temp D",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cluster Charge Cell Temp D",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cutoff Cluster Discharge Cell Temp D",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cutoff Cluster Discharge Cell Temp D",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Bmm Lost Status",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Bmm Lost Status",
+          "num": 60,
+          "write_data": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "read_data": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "End of rtos:bits",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "End of rtos:bits",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI1 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI1 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI2 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI2 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI3 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI3 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI4 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI4 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI5 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI5 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI6 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI6 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI7 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI7 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI8 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI8 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI9 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI9 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI10 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI10 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI11 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI11 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "DI12 fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "DI12 fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Internal CAN communication disconnection",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Internal CAN communication disconnection",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell voltage DAQ abnormal",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell voltage DAQ abnormal",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell temperature DAQ abnormal",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell temperature DAQ abnormal",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "SBMS detection fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SBMS detection fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Rack voltage-difference high",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Rack voltage-difference high",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Rack trip fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Rack trip fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Battery limit fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Battery limit fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Project software version inconsistent",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Project software version inconsistent",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "PCS communication fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS communication fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "PC forced control mode",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PC forced control mode",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "CAN Hall sensor fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "CAN Hall sensor fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "CAN Hall sensor communication fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "CAN Hall sensor communication fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Hardware self-inspect abnormal",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Hardware self-inspect abnormal",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Power supply under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Power supply under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Power supply over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Power supply over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Module over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Module over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Pack terminal under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Pack terminal under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Pack terminal over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Pack terminal over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Fast charge over-current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Fast charge over-current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Pole over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Pole over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Feed over-current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Feed over-current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Discharge over-current",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Discharge over-current",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Isolation low",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Isolation low",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "LOW SOC",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "LOW SOC",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "HIGH SOC",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "HIGH SOC",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell over-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell over-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell under-voltage",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell under-voltage",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell voltage-difference high",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell voltage-difference high",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Charge over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Charge over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Charge under-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Charge under-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Discharge over-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Discharge over-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Discharge under-temperature",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Discharge under-temperature",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Cell temperature-difference high",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Cell temperature-difference high",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "SOC DIFFERENCE HIGH",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "SOC DIFFERENCE HIGH",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Temperature rise fast",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Temperature rise fast",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "EVBCM communication disconnection",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "EVBCM communication disconnection",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "PCS communication disconnection",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "PCS communication disconnection",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Feed over-current\"",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Feed over-current\"",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "BMM external device fault (DI inspect)",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "BMM external device fault (DI inspect)",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        },
+        {
+          "name": "Balance board fault",
+          "sm_name": "rtos",
+          "reg_type": "mb_hold",
+          "offset": "Balance board fault",
+          "num": 1,
+          "write_data": [
+            0
+          ],
+          "read_data": [
+            0
+          ],
+          "__dummy_created": true
+        }
+      ]
+    }
+  ]
 }
