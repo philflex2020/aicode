@@ -1,0 +1,84 @@
+TODO
+done  autoload refresh lists when the limits tab pops up
+
+done load file from saved file does not work check file data
+done save_var needs to extract just the data segment from the json
+
+
+
+done JSON DIr = project , add version box 
+
+consolidate load from db and export json
+defer no need for limit valiues modal
+almost done make limit values stick ()
+
+get / set on limit values
+ collectLimitsForAlarm
+
+ we need a setLimitsForAlarm whick uses collect and then puts the values back into lv.
+
+
+
+partially working
+ CurrentLimitsValues
+lv.name
+ lv.alarm_num
+ lv.level1_limit
+ lv.target_level1
+ lv.hysteresis
+ lv.target_hysteresis
+ look at setLimitValue(alarmNum)
+ 
+   collectLimitsForAlarm returns 
+   return {
+        alarm_num: alarmNum,
+        level1_limit: Number(tr.querySelector('input[data-col="level1_limit"]').value),
+        level2_limit: Number(tr.querySelector('input[data-col="level2_limit"]').value),
+        level3_limit: Number(tr.querySelector('input[data-col="level3_limit"]').value),
+        hysteresis: Number(tr.querySelector('input[data-col="hysteresis"]').value),
+    }
+    we need to set these values back into the CurentLimitsValues at the correct row number
+     const index = currentLimitsValues.findIndex(lv => lv.alarm_num === alarmNum);
+        if (index !== -1) {
+            currentLimitsValues[index] = {
+                ...currentLimitsValues[index],
+                ...collectedValues
+            };
+
+
+
+  
+write data read data boxes too big on target page ( scrolling)
+duplicate entries in the Json lists
+save json button not working on the target page
+need file <-> json on target page
+
+
+
+def2.Json
+ cat var_lists/hithium_def2.json
+[
+    {
+        "table": "target_vars",
+        "items": [
+            {"name": "online","sm_name": "rtos","reg_type": "mb_hold","offset": "online","num": 4,"write_data": [2,3,4,5],"read_data": []},
+            {"name": "comms","sm_name": "rtos","reg_type": "mb_input","offset": "rack_voltage","num": 4,"write_data": [3,4,5],"read_data": []},
+            {"name": "online","sm_name": "sbmu","reg_type": "sm16","offset": "0x4567","num": 4,"write_data": [2,3,4,5],"read_data": []},
+            {"name": "rtos:hold:alarm_limits","sm_name": "rtos","reg_type": "mb_hold","offset": "9","num": 4,"write_data": [1,2,3],"read_data": []},
+            {"name": "rtos:hold:alarm_limits","sm_name": "rtos","reg_type": "mb_hold","offset": "9","num": 4,"write_data": [7,8,9],"read_data": []},
+            {"name": "rtos:hold:alarm_limits","sm_name": "rtos","reg_type": "mb_hold","offset": "9","num": 4,"write_data": [10,11,12],"read_data": []}
+        ]
+ 
+
+def4.json
+ cat var_lists/hithium_def4.json
+{"file_name":"hithium_def4.json",
+"data":[{
+     "table":"vars","items":[
+        {"name":"online","sm_name":"rtos","reg_type":"mb_hold","offset":"online","num":4,"write_data":[2,3,4,5]},
+        {"name":"comms","sm_name":"rtos","reg_type":"mb_input","offset":"rack_voltage","num":4,"write_data":[3,4,5]},
+        {"name":"online","sm_name":"sbmu","reg_type":"sm16","offset":"0x4567","num":4,"write_data":[2,3,4,5]},
+        {"name":"rtos:hold:alarm_limits","sm_name":"rtos","reg_type":"mb_hold","offset":"9","num":4,"write_data":[1,2,3]},
+        {"name":"rtos:hold:alarm_limits","sm_name":"rtos","reg_type":"mb_hold","offset":"9","num":4,"write_data":[7,8,9]},
+        {"name":"rtos:hold:alarm_limits","sm_name":"rtos","reg_type":"mb_hold","offset":"9","num":4,"write_data":[10,11,12]}
+        ]}]}

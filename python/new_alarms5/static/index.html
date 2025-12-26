@@ -424,11 +424,10 @@
 </head>
 <body>
 <header>
-    <h1>Alarm Config Editor ver 15</h1>
+    <h1>Alarm Config Editor ver 18</h1>
     <div class="controls">
-        <label>JSON Dir:
-            <input type="text" id="jsonDirInput" value="json_exports">
-        </label>
+        <label>Project: <input type="text" id="projectInput" value="hithium"></label>
+        <label>Version: <input type="text" id="versionInput" value="0.42.1"></label>
         <button id="loadBtn">Load from DB</button>
         <button id="saveBtn">Save to DB</button>
         <button id="exportBtn">Export JSON</button>
@@ -926,8 +925,19 @@ function populateLimitsValuesTable() {
 
 function populateJsonDefSelect() {
   const select = document.getElementById('jsonDefSelect');
-  select.innerHTML = '<option value="">-- Select a Limits Group --</option>'; // reset options
+  
+  // Remove all existing options
+  while (select.firstChild) {
+    select.removeChild(select.firstChild);
+  }
+  
+  // Add the default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = "";
+  defaultOption.textContent = "-- Select a Limits Group --";
+  select.appendChild(defaultOption);
 
+  // Add the group options
   limitsDefList.forEach(groupName => {
     const option = document.createElement('option');
     option.value = groupName;
@@ -1056,6 +1066,36 @@ async function getLimitValue(alarmNum) {
     }
 }
 
+function updateLimitsValuesForAlarm(alarmNum) {
+    // Collect the limits from the DOM
+    const newLimits = collectLimitsForAlarm(alarmNum);
+    if (!newLimits) {
+        console.warn(`No limits found for alarmNum ${alarmNum}`);
+        return;
+    }
+
+    // Find the index in currentLimitsValues
+    const index = currentLimitsValues.findIndex(lv => lv.alarm_num === alarmNum);
+    if (index === -1) {
+        console.warn(`Alarm number ${alarmNum} not found in currentLimitsValues`);
+        return;
+    }
+
+    // Preserve existing target values if present
+    const existing = currentLimitsValues[index];
+    currentLimitsValues[index] = {
+        alarm_num: alarmNum,
+        level1_limit: newLimits.level1_limit,
+        level2_limit: newLimits.level2_limit,
+        level3_limit: newLimits.level3_limit,
+        hysteresis: newLimits.hysteresis,
+        target_level1: existing.target_level1 !== undefined ? existing.target_level1 : null,
+        target_level2: existing.target_level2 !== undefined ? existing.target_level2 : null,
+        target_level3: existing.target_level3 !== undefined ? existing.target_level3 : null,
+        target_hysteresis: existing.target_hysteresis !== undefined ? existing.target_hysteresis : null,
+    };
+}
+
 function collectLimitsForAlarm(alarmNum) {
     const tr = document.querySelector(`#limitsTable tr[data-alarm-num='${alarmNum}']`);
     if (!tr) return null;
@@ -1071,6 +1111,7 @@ function collectLimitsForAlarm(alarmNum) {
 
 async function setLimitValue(alarmNum) {
     try {
+        updateLimitsValuesForAlarm(alarmNum);
         const limits = collectLimitsForAlarm(alarmNum);
         if (!limits) throw new Error('No limits data found');
 
@@ -1385,6 +1426,7 @@ async function loadFromDB() {
         renderDefs(data.alarm_definitions || []);
         renderLevels(data.alarm_level_actions || []);
         renderLimits(data.limits_values || []);
+        populateJsonDefSelect();
         populateLimitsValuesTable();
         
         setStatus('Loaded configuration from DB.', false);
@@ -1438,8 +1480,11 @@ function buildActionsForAlarm(alarmNum, alarmLevelActions) {
 
 // Updated exportJSON function
 async function exportJSON() {
-    const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
-    setStatus('Exporting JSON to dir: ' + dir + ' ...');
+    const projectDir = document.getElementById('projectInput').value.trim() || 'hithium';
+    const version = document.getElementById('versionInput').value.trim() || '0.42.1';
+    setStatus('Exporting JSON to dir: ' + projectDir + ', version: ' + version + ' ...');
+    console.log('Exporting JSON to dir: ' + projectDir + ', version: ' + version + ' ...');
+
 
     // Collect current data
     const alarmDefinitions = collectDefs();
@@ -1496,7 +1541,8 @@ async function exportJSON() {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
-                directory: dir, 
+                directory: projectDir, 
+                version: version,
                 file_name: 'alarm_config.json', 
                 config: config 
             })
@@ -1511,18 +1557,19 @@ async function exportJSON() {
 }
 
 async function importJSON() {
-    const dir = document.getElementById('jsonDirInput').value.trim() || 'json_exports';
-    setStatus('Importing JSON from dir: ' + dir + ' ...');
-    console.log('Importing JSON from dir: ' + dir + ' ...');
+    const projectDir = document.getElementById('projectInput').value.trim() || 'hithium';
+    const version = document.getElementById('versionInput').value.trim() || '0.42.1';
+    setStatus('Importing JSON from dir: ' + projectDir + ', version: ' + version + ' ...');
+    console.log('Importing JSON from dir: ' + projectDir + ', version: ' + version + ' ...');
     try {
         const res = await fetch(apiBase + '/import-json', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ directory: dir, file_name: 'alarm_config.json' })
+            body: JSON.stringify({ directory: projectDir, version: version, file_name: 'alarm_config.json' })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-        setStatus('Imported JSON from: ' + dir + '. Reloading ...', false);
+        setStatus('Imported JSON from: ' + projectDir + '. Reloading ...', false);
         await loadFromDB();
     } catch (err) {
         console.error(err);
@@ -2670,8 +2717,8 @@ async function setTargetData(tr) {
 
 // --- Var-list integration ---
 async function reloadListOptions() {
-    reloadVarListOptions();
     populateJsonDefSelect();
+    reloadVarListOptions();
 
 }
 
@@ -3007,8 +3054,8 @@ document.getElementById('addAlarmBtn').addEventListener('click', addNewAlarm);
 // Initial load
 loadFromDB();
 loadTargetConfig();
-reloadVarListOptions();
 populateJsonDefSelect();
+reloadVarListOptions();
 
 // // Render limits values table on load
 // window.addEventListener('load', () => {

@@ -834,98 +834,207 @@ int main(int argc, char* argv[]) {
             });
         })
 
-        .post("/api/pub_defs/save_var_list", [](auto *res, auto *req) {
-            // Buffer to accumulate body data
-            std::shared_ptr<std::string> body = std::make_shared<std::string>();
+        // .post("/api/pub_defs/save_var_list", [](auto *res, auto *req) {
+        //     // Buffer to accumulate body data
+        //     std::shared_ptr<std::string> body = std::make_shared<std::string>();
 
-            // Handle client abort
-            res->onAborted([body]() {
-                body->clear();
-                std::cerr << "Request aborted by client" << std::endl;
-            });
+        //     // Handle client abort
+        //     res->onAborted([body]() {
+        //         body->clear();
+        //         std::cerr << "Request aborted by client" << std::endl;
+        //     });
 
-            // Handle incoming data chunks
-            res->onData([res, req, body](std::string_view data, bool last) {
-                body->append(data.data(), data.size());
+        //     // Handle incoming data chunks
+        //     res->onData([res, req, body](std::string_view data, bool last) {
+        //         body->append(data.data(), data.size());
 
-                if (!last) {
-                    return;
-                }
+        //         if (!last) {
+        //             return;
+        //         }
 
-                json response = json::object();
+        //         json response = json::object();
 
-                try {
-                    // Get filename from query parameter or JSON body
-                    std::string fileName;
+        //         try {
+        //             // Get filename from query parameter or JSON body
+        //             std::string fileName;
                     
-                    // Option 1: Get filename from query parameter
-                    std::string query(req->getQuery());
-                    // Simple parser for query params (you might want a more robust one)
-                    if (query.find("file_name=") != std::string::npos) {
-                        size_t start = query.find("file_name=") + 10;
-                        size_t end = query.find("&", start);
-                        if (end == std::string::npos) end = query.length();
-                        fileName = query.substr(start, end - start);
-                    }
+        //             // Option 1: Get filename from query parameter
+        //             std::string query(req->getQuery());
+        //             // Simple parser for query params (you might want a more robust one)
+        //             if (query.find("file_name=") != std::string::npos) {
+        //                 size_t start = query.find("file_name=") + 10;
+        //                 size_t end = query.find("&", start);
+        //                 if (end == std::string::npos) end = query.length();
+        //                 fileName = query.substr(start, end - start);
+        //             }
                     
-                    // Option 2: Get filename from JSON body (if not in query)
-                    if (fileName.empty() && !body->empty()) {
-                        try {
-                            auto parsed = json::parse(*body);
-                            if (parsed.contains("file_name") && parsed["file_name"].is_string()) {
-                                fileName = parsed["file_name"];
-                            }
-                        } catch (...) {
-                            // Ignore JSON parse error here, we'll handle it below
-                        }
-                    }
+        //             // Option 2: Get filename from JSON body (if not in query)
+        //             if (fileName.empty() && !body->empty()) {
+        //                 try {
+        //                     auto parsed = json::parse(*body);
+        //                     if (parsed.contains("file_name") && parsed["file_name"].is_string()) {
+        //                         fileName = parsed["file_name"];
+        //                     }
+        //                 } catch (...) {
+        //                     // Ignore JSON parse error here, we'll handle it below
+        //                 }
+        //             }
 
-                    // Validate filename
-                    if (fileName.empty()) {
-                        response["error"] = "Missing filename parameter";
-                        res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
-                        body->clear();
-                        return;
-                    }
+        //             // Validate filename
+        //             if (fileName.empty()) {
+        //                 response["error"] = "Missing filename parameter";
+        //                 res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
+        //                 body->clear();
+        //                 return;
+        //             }
 
-                    // Basic sanitization
-                    if (fileName.find("..") != std::string::npos || fileName.find('/') != std::string::npos) {
-                        response["error"] = "Invalid filename";
-                        res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
-                        body->clear();
-                        return;
-                    }
+        //             // Basic sanitization
+        //             if (fileName.find("..") != std::string::npos || fileName.find('/') != std::string::npos) {
+        //                 response["error"] = "Invalid filename";
+        //                 res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
+        //                 body->clear();
+        //                 return;
+        //             }
 
-                    // Ensure directory exists (you might want to create it if it doesn't exist)
-                    std::string filePath = "var_lists/" + fileName;
+        //             // Ensure directory exists (you might want to create it if it doesn't exist)
+        //             std::string filePath = "var_lists/" + fileName;
 
-                    // Write body content to file
-                    std::ofstream file(filePath, std::ios::binary);
-                    if (!file.is_open()) {
-                        response["error"] = "Failed to create file: " + fileName;
-                        res->writeStatus("500 Internal Server Error")->writeHeader("content-type", "application/json")->end(response.dump());
-                        body->clear();
-                        return;
-                    }
+        //             // Write body content to file
+        //             std::ofstream file(filePath, std::ios::binary);
+        //             if (!file.is_open()) {
+        //                 response["error"] = "Failed to create file: " + fileName;
+        //                 res->writeStatus("500 Internal Server Error")->writeHeader("content-type", "application/json")->end(response.dump());
+        //                 body->clear();
+        //                 return;
+        //             }
 
-                    file << *body;
-                    file.close();
+        //             // Extract the "data" field as a string
+        //             std::string dataString;
+        //             if (parsed.contains("data") && parsed["data"].is_string()) {
+        //                 dataString = parsed["data"].dump();
+        //             } else {
+        //                 // Handle error case - no data field or not a string
+        //                 response["error"] = "Missing or invalid 'data' field";
+        //                 res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
+        //                 body->clear();
+        //                 return;
+        //             }           
+        //         }
 
-                    response["success"] = true;
-                    response["message"] = "File saved successfully";
-                    response["file_name"] = fileName;
-                    res->writeHeader("content-type", "application/json")->end(response.dump());
+        //         // Write only the data string to file
+        //         std::ofstream file(filePath, std::ios::binary);
+        //         if (!file.is_open()) {
+        //             response["error"] = "Failed to create file: " + fileName;
+        //             res->writeStatus("500 Internal Server Error")->writeHeader("content-type", "application/json")->end(response.dump());
+        //             body->clear();
+        //             return;
+        //         }   
+        //         file << dataString;
+        //         file.close();
 
-                } catch (const std::exception& e) {
-                    json errorResponse = {{"error", std::string("Exception: ") + e.what()}};
-                    res->writeStatus("500 Internal Server Error")->writeHeader("content-type", "application/json")->end(errorResponse.dump());
+        //             response["success"] = true;
+        //             response["message"] = "File saved successfully";
+        //             response["file_name"] = fileName;
+        //             res->writeHeader("content-type", "application/json")->end(response.dump());
+
+        //         } catch (const std::exception& e) {
+        //             json errorResponse = {{"error", std::string("Exception: ") + e.what()}};
+        //             res->writeStatus("500 Internal Server Error")->writeHeader("content-type", "application/json")->end(errorResponse.dump());
+        //         }
+
+        //         body->clear();
+        //     });
+        // })
+
+.post("/api/pub_defs/save_var_list", [](auto *res, auto *req) {
+    std::shared_ptr<std::string> body = std::make_shared<std::string>();
+
+    res->onAborted([body]() {
+        body->clear();
+        std::cerr << "Request aborted by client" << std::endl;
+    });
+
+    res->onData([res, req, body](std::string_view data, bool last) {
+        body->append(data.data(), data.size());
+
+        if (!last) {
+            return;
+        }
+
+        json response = json::object();
+
+        try {
+            std::string fileName;
+
+            // Option 1: Get filename from query parameter
+            std::string query(req->getQuery());
+            if (query.find("file_name=") != std::string::npos) {
+                size_t start = query.find("file_name=") + 10;
+                size_t end = query.find("&", start);
+                if (end == std::string::npos) end = query.length();
+                fileName = query.substr(start, end - start);
+            }
+
+            // Option 2: Get filename from JSON body (if not in query)
+            json parsed;
+            if (fileName.empty() && !body->empty()) {
+                parsed = json::parse(*body);
+                if (parsed.contains("file_name") && parsed["file_name"].is_string()) {
+                    fileName = parsed["file_name"];
                 }
+            }
 
+            // Validate filename
+            if (fileName.empty()) {
+                response["error"] = "Missing filename parameter";
+                res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
                 body->clear();
-            });
-        })
+                return;
+            }
 
+            // Basic sanitization
+            if (fileName.find("..") != std::string::npos || fileName.find('/') != std::string::npos) {
+                response["error"] = "Invalid filename";
+                res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
+                body->clear();
+                return;
+            }
 
+            std::string filePath = "var_lists/" + fileName;
+
+            // Extract the "data" field as a JSON object and dump it as string
+            if (!parsed.contains("data") || !parsed["data"].is_array()) {
+                response["error"] = "Missing or invalid 'data' field";
+                res->writeStatus("400 Bad Request")->writeHeader("content-type", "application/json")->end(response.dump());
+                body->clear();
+                return;
+            }
+            std::string dataString = parsed["data"].dump();
+
+            // Write only the data string to file
+            std::ofstream file(filePath, std::ios::binary);
+            if (!file.is_open()) {
+                response["error"] = "Failed to create file: " + fileName;
+                res->writeStatus("500 Internal Server Error")->writeHeader("content-type", "application/json")->end(response.dump());
+                body->clear();
+                return;
+            }
+            file << dataString;
+            file.close();
+
+            response["success"] = true;
+            response["message"] = "File saved successfully";
+            response["file_name"] = fileName;
+            res->writeHeader("content-type", "application/json")->end(response.dump());
+
+        } catch (const std::exception& e) {
+            json errorResponse = {{"error", std::string("Exception: ") + e.what()}};
+            res->writeStatus("500 Internal Server Error")->writeHeader("content-type", "application/json")->end(errorResponse.dump());
+        }
+
+        body->clear();
+    });
+})
         .post("/api/pub_defs/load_var_list", [](auto *res, auto *req) {
             // Buffer to accumulate body data
             std::shared_ptr<std::string> body = std::make_shared<std::string>();
