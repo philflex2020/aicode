@@ -9,17 +9,21 @@ done save_var needs to extract just the data segment from the json
 done JSON DIr = project , add version box 
 
 consolidate load from db and export json
-defer no need for limit valiues modal
-almost done make limit values stick ()
+defer no need for limit values modal
+almost done make limits values stick () does not work from the tab 
 
 get / set on limit values
  collectLimitsForAlarm
 
  we need a setLimitsForAlarm whick uses collect and then puts the values back into lv.
 
+LimitDefModal
+openLimitDefModal
+closeLimitDefModal
+
+done working need to click refresh after save to see changes
 
 
-partially working
  CurrentLimitsValues
 lv.name
  lv.alarm_num
@@ -49,12 +53,22 @@ lv.name
 
   
 write data read data boxes too big on target page ( scrolling)
-duplicate entries in the Json lists
-save json button not working on the target page
+done duplicate entries in the Json lists
+done save json button not working on the target page
 need file <-> json on target page
 
+export json from target page
+http://192.168.86.51:9100/api/alarms/export-json
+config: {,…}
+directory: "hithium"
+file_name: "alarm_config.json"
+version: "0.42.1"
 
-
+import json to target page
+http://192.168.86.51:9100/api/alarms/import-json
+directory: "hithium"
+file_name: "alarm_config.json"
+version: "0.42.1"
 def2.Json
  cat var_lists/hithium_def2.json
 [
@@ -82,3 +96,40 @@ def4.json
         {"name":"rtos:hold:alarm_limits","sm_name":"rtos","reg_type":"mb_hold","offset":"9","num":4,"write_data":[7,8,9]},
         {"name":"rtos:hold:alarm_limits","sm_name":"rtos","reg_type":"mb_hold","offset":"9","num":4,"write_data":[10,11,12]}
         ]}]}
+
+
+
+interface with 9001
+
+{"help": "examples"}
+{"action":"get", "seq": 123, "sm_name": "test", "reg_type": "mb_input", "offset":1000, "num":10}
+{"action":"get", "seq": 123, "sm_name": "sbmu", "reg_type": "sm16", "offset":0, "num":10}
+{"action":"get", "seq": 124, "sm_name": "rtos_0", "reg_type": "mb_input", "offset":1000, "num":10}
+{"action":"set", "seq": 125, "sm_name": "rtos_0", "reg_type": "mb_hold", "offset":1000, "data":[101,102,103]}
+{"action":"get", "seq": 126, "sm_name": "rtos_0", "reg_type": "sm16", "offset":"0xc800", "num":64}
+{"action":"get", "seq": 126, "sm_name": "rtos_0", "reg_type": "sm8", "offset":0, "num":64}
+{"action":"get", "seq": 126, "sm_name": "rack_0", "reg_type": "sm8", "offset":0, "num":64}
+{"action":"set", "seq": 126, "sm_name": "rtos_0", "reg_type": "mb_hold","note":"HV ON", "offset":99, "data":[1,85]}
+{"action":"set", "seq": 126, "sm_name": "rtos_0", "reg_type": "mb_hold","note":"HV OFF", "offset":99, "data":[1,170]}
+{"action":"set", "seq": 126, "sm_name": "rtos_0", "reg_type": "mb_hold","note":"Relay Ctrl #1", "offset":99, "data":[3]}
+{"action":"set", "seq": 126, "sm_name": "rtos_0", "reg_type": "mb_hold","note":"Relay Ctrl #2", "offset":101, "data":[255]}
+{"action":"get", "seq": 124, "sm_name": "rack_2", "reg_type": "sm16","note":"comms state", "offset":26626, "num":82}
+{"action":"set", "seq": 124, "sm_name": "rtos_2", "reg_type": "rack_config", "offset":"8", "num":64 ,"operation":33, "data":[0], "debug":true}
+{"action":"set", "seq": 124, "sm_name": "rtos_2", "reg_type": "rack_status", "offset":"8", "num":64 ,"operation":33, "data":[0], "debug":true}
+{"action":"set", "seq": 124, "sm_name": "rtos_2", "reg_type": "can", "offset":"0x1832", "num":8 , "data":[0,1,2,3,4,5,6,7], "debug":true}
+{"action":"get", "seq": 124, "sm_name": "rack_2", "reg_type": "mb_input", "offset":500, "num":100, "note":"pole_temp"}
+{"action":"get", "seq": 124, "sm_name": "rack_2", "reg_type": "mb_input", "offset":3480, "num":40, "note":"module_soc"}
+{"action":"get", "seq": 124, "sm_name": "rack_2", "reg_type": "mb_input", "offset":3560, "num":40, "note":"module_volt"}
+{"action":"get", "seq": 124, "sm_name": "rack_2", "reg_type": "mb_input", "offset":3600, "num":40, "note":"module_temp"}
+{"action":"get", "seq": 123, "sm_name": "sbmu", "reg_type": "sm16", "offset":"0x3f800", "num":10, "note":"sbmu event buf"}
+{"action":"get", "seq": 124, "sm_name": "sbmu", "reg_type": "sm16", "offset":188680, "num":32, "note":"sbmu gpios"}
+{"action":"get","sm_name":"sbmu","reg_type":"sm16","offset":"sdul-60a_current_temp_2_1","num":9,"seq":123}
+{"action":"set", "seq":123, "sm_name":"r485", "reg_type":"mb_hold", "offset":"env_Status_bits_3_1", "num":1, "note":"rs485 write", "data":[35]}
+{"action":"get","sm_name":"sbmu","reg_type":"sm16","offset":"pcs_data","note":"pcs can data","num":9,"seq":123}
+{"action":"getPub", "name":"racks","path":"hithium.periodic","rate":1000, "note":" starts to pub the tpath.periodic table every second"}
+{"action":"getPub", "name":"racks","path":"hithium.periodic","rate":0, "note":" stops the tpath.periodic pub"}
+{"action":"addItem", "path":"hithium.periodic", "item": {"name":"AvgCellV", "src":"rtos:input:avg_voltage", "scale":0.001, "fmt":"%3.2f", "type":"float"}
+> tables
+< [":sm16" "local:none" "rack:sm16" "rack:sm8" "rtos:bits" "rtos:hold" "rtos:input" "rtos:sm16" "rtos:sm8" "sbmu:bits" "sbmu:hold" "sbmu:input" "sbmu:sm16" "sbmu:sm8" ]
+> pubs  todo
+< {"error": "parse"}

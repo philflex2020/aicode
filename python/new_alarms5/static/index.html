@@ -570,9 +570,8 @@
       Defs:
       <input type="text" id="limitDefs" style="padding:8px; font-family:inherit; border:1px solid #ccc; border-radius:6px;">
     </label>
-
     <div style="margin-top:12px;">
-      <button type="submit" style="background-color:#d4ac0d; border:none; border-radius:6px; padding:8px 16px; color:#333; font-weight:600; cursor:pointer;">Save</button>
+      <button type="button" id="saveLimitDefBtn" style="background-color:#d4ac0d; border:none; border-radius:6px; padding:8px 16px; color:#333; font-weight:600; cursor:pointer;">Save</button>
     </div>
   </form>
 </div>
@@ -923,6 +922,9 @@ function populateLimitsValuesTable() {
     });
 }
 
+document.getElementById('saveLimitDefBtn').addEventListener('click', closeLimitDefModal);
+
+
 function populateJsonDefSelect() {
   const select = document.getElementById('jsonDefSelect');
   
@@ -1097,7 +1099,7 @@ function updateLimitsValuesForAlarm(alarmNum) {
 }
 
 function collectLimitsForAlarm(alarmNum) {
-    const tr = document.querySelector(`#limitsTable tr[data-alarm-num='${alarmNum}']`);
+    const tr = document.querySelector(`#limitsTable tr[data-index='${alarmNum}']`);
     if (!tr) return null;
 
     return {
@@ -1731,13 +1733,65 @@ function openLimitDefModal(limitName, index) {
   document.getElementById('limitDefRegType').value = item.reg_type || '';
   document.getElementById('limitDefOffset').value = item.offset || '';
   document.getElementById('limitDefNum').value = item.num || '';
-  document.getElementById('limitDefs').value = item.write_data || '[]';
+  document.getElementById('limitDefs').value = JSON.stringify(item.write_data || [], null, 2);
 
   // Show modal
   document.getElementById('limitDefModal').style.display = 'block';
 
   // Save reference to item for saving
   window.currentEditingItem = item;
+  window.currentEditingIndex = index;
+}
+
+function closeLimitDefModal() {
+
+  if (!window.currentEditingItem) {
+    console.warn('No current editing item set');
+    return;
+  }
+
+  const item = window.currentEditingItem;
+  const index = window.currentEditingIndex;
+  console.log('Closing modal for item:', item, 'at index:', index);
+
+  // Read values from modal fields
+  item.name = document.getElementById('limitDefName').value;
+  item.sm_name = document.getElementById('limitDefSmName').value;
+  item.reg_type = document.getElementById('limitDefRegType').value;
+  item.offset = document.getElementById('limitDefOffset').value;
+  item.num = document.getElementById('limitDefNum').value;
+
+  try {
+    item.write_data = JSON.parse(document.getElementById('limitDefs').value);
+  } catch (e) {
+    alert('Invalid JSON in write_data field: ' + e.message);
+    return; // Don't close modal if JSON is invalid
+  }
+
+  // Update the map entry (assuming item.name is the key)
+  limitsDefsMap.set(item.name, item);
+
+
+  const row = document.querySelector(`#limitsTable tr[data-index="${index}"]`);
+  console.log('Updating row for alarm num row:', index, row);
+  if (row) {
+    // Decode write_data array back into individual limit fields
+    const writeData = item.write_data || [];
+    const level1 = writeData.length > 0 ? writeData[0] : '';
+    const level2 = writeData.length > 1 ? writeData[1] : '';
+    const level3 = writeData.length > 2 ? writeData[2] : '';
+    const hyst = writeData.length > 3 ? writeData[3] : '';
+
+    row.querySelector('input[data-col="level1_limit"]').value = level1;
+    row.querySelector('input[data-col="level2_limit"]').value = level2;
+    row.querySelector('input[data-col="level3_limit"]').value = level3;
+    row.querySelector('input[data-col="hysteresis"]').value = hyst;
+  }
+  // Hide modal
+  document.getElementById('limitDefModal').style.display = 'none';
+
+  // Clear current editing reference
+  window.currentEditingItem = null;
 }
 
 document.getElementById('limitDefForm').addEventListener('submit', function(e) {
@@ -1760,6 +1814,7 @@ document.getElementById('limitDefForm').addEventListener('submit', function(e) {
 
 document.querySelector('#limitDefModal .close').onclick = function() {
   document.getElementById('limitDefModal').style.display = 'none';
+  console.log('Limit Definition modal closed');
 };
 
 function oldopenLimitsModal(cell) {
