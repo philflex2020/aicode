@@ -1,8 +1,114 @@
 TODO
+
+
+
+
+fractal_esmu_ws todo
+// extern std::map<std::string, DataTable> data_tables;
+// extern std::map<std::string, DataTable> pub_tables;
+
+struct DataTable {
+    int base_offset = 0;
+    int calculated_size = 0;
+    std::string name;
+    std::string rkey;   // RBMS
+    int number_of_racks= 0;
+    int period = 0;
+    int runs = 0;
+    uint32_t version;   // used to track changes matched with the data_item_version
+
+    std::vector<DataItem> items;
+
+    DataTable(int current_offset) : base_offset(current_offset) {}
+    DataTable() = default;
+};
+
+struct DataItem {
+    std::string system_name;
+    std::string reg_type_name;
+    std::string src;
+    std::string dest;
+    std::string example;
+    std::string notes;
+
+    MemId mem_id;
+    RegId reg_id;
+    std::string name;
+    std::string fmt;
+    std::string type;
+    int type_id;
+    double scale;
+    double rand_val;
+    int offset;
+    int size;
+    int val;       //possible value
+    int num;
+    uint32_t myid;      // id to access data
+    uint32_t mykey;      // Unique numeric key
+    uint32_t version;   // used to track changes matched with the data_item_version
+     
+    std::vector<uint32_t> mappedkeys;  // Key for mapping to another DataItem
+    std::vector<DataItem> items;  // Key for mapping to another DataItem
+
+    DataItem() {};
+
+
+{ "table": "rtos:hold", "items":[
+   {"name":                                           "_gap1", "offset": 0, "size": 1},
+   {"name":                                 "at_total_v_over", "offset": 1, "size": 4},
+   {"name":                                "at_total_v_under", "offset": 5, "size": 4},
+   {"name":                          "at_discharge_curr_over", "offset": 9, "size": 4},
+   {"name":                        "at_fast_charge_curr_over", "offset": 13, "size": 4},
+
+
+pub
+ { "pub": "config", 
+        "items": [ 
+            { "table": "first", "rate":0,
+                "items":[
+                    {"name":"Configuration",
+                        "items": [
+                        { "name":"Number of Racks",  "src":"const:num_racks", "example":"4"},
+                        { "name":"CAN Enabled",      "src":"xsbmu:input:num_racks", "example": "Enabled"},
+                        { "name":"SD Card Enabled",  "src":"xsbmu:input:num_racks", "example": "Disabled"},
+                        { "name":"Clock",
+                            "items": [
+                            { "name":"Mode",             "src":"xsbmu:input:num_racks", "example": "NTP"},
+                            { "name":"NTP Server",       "src":"xsbmu:input:num_racks", "example": "216.239.35.12"},
+                            { "name":"NTP Port",         "src":"xsbmu:input:num_racks", "example": "123"},
+                            { "name":"Date",    "type":"date" , "fmt":"%Y-%m-%d","src":"sbmu:hold:year", "example": "2025-01-28"},
+                            { "name":"Hour",             "src":"sbmu:hold:hour", "example": "22"},
+                            { "name":"Minute",           "src":"sbmu:hold:minute", "example": "37"},
+                            { "name":"Second",           "src":"sbmu:hold:second", "example": "10"}
+                            ]
+                        },
+
+
+tables
+table:<table_name>[:OFFSET]
+
+ptables
+ptables:<pub_name>[:OFFSET]
+
+
+8TE:ui9FSe8qNjw
+8TE:ui9FSe8qNjw
+
+
+save does not include version number in json
+
+add save to json, save to file buttons to target page
+
+done workaround (you have to save) target tab set write data does not update afyter load from json 
 done  autoload refresh lists when the limits tab pops up
+
+modify load from db save to db to load config and save config buttons
+    check operation save may work but load does not
 
 done load file from saved file does not work check file data
 done save_var needs to extract just the data segment from the json
+  reloadVarListOptions
+
 
 
 

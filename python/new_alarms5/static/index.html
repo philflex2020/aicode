@@ -313,7 +313,7 @@
 
         /* Limits structure and definition cells */
         .limits-structure-cell, .limits-def-cell {
-            background-color: #d4ac0d; /* darker golden yellow */
+            background-color: #fffde7; /* light golden yellow */
             cursor: pointer;
             border-radius: 6px;
             padding: 4px 8px;
@@ -321,7 +321,7 @@
         }
 
         .limits-def-cell:hover, .limits-structure-cell:hover {
-            background-color: #b7950b; /* slightly darker on hover */
+            background-color: #dbb20c; /* slightly darker on hover */
         }
 
         /* Limits table input number styling */
@@ -393,7 +393,7 @@
         }
 
         .nice-modal button {
-            background-color: #f1c40f;
+            background-color: #fffde7;
             border: none;
             color: #333;
             padding: 8px 16px;
@@ -418,7 +418,7 @@
         }
 
         .actions-cell-highlight:hover {
-            background-color: #b7950b; /* slightly darker on hover */
+            background-color: #dbbc3d; /* slightly darker on hover */
         }
     </style>
 </head>
@@ -428,8 +428,8 @@
     <div class="controls">
         <label>Project: <input type="text" id="projectInput" value="hithium"></label>
         <label>Version: <input type="text" id="versionInput" value="0.42.1"></label>
-        <button id="loadBtn">Load from DB</button>
-        <button id="saveBtn">Save to DB</button>
+        <button id="loadBtn">Load Config</button>
+        <button id="saveBtn">Save Config</button>
         <button id="exportBtn">Export JSON</button>
         <button id="importBtn">Import JSON</button>
     </div>
@@ -1409,7 +1409,7 @@ function buildLimitsDefNestedFromMap() {
     }));
 }
 
-async function loadFromDB() {
+async function loadFromConfig() {
     setStatus('Loading from /api/alarms/config ...');
     try {
         const res = await fetch(apiBase + '/config');
@@ -1438,7 +1438,7 @@ async function loadFromDB() {
     }
 }
 
-async function saveToDB() {
+async function savetoConfig() {
     const payload = {
         alarm_definitions: collectDefs(),
         alarm_level_actions: collectLevels(),
@@ -1455,7 +1455,7 @@ async function saveToDB() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
         setStatus('Saved configuration to DB. Reloading...', false);
-        await loadFromDB();
+        await loadFromConfig();
     } catch (err) {
         console.error(err);
         setStatus('Error saving config: ' + err.message, true);
@@ -1572,7 +1572,7 @@ async function importJSON() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
         setStatus('Imported JSON from: ' + projectDir + '. Reloading ...', false);
-        await loadFromDB();
+        await loadFromConfig();
     } catch (err) {
         console.error(err);
         setStatus('Error importing JSON: ' + err.message, true);
@@ -1817,181 +1817,7 @@ document.querySelector('#limitDefModal .close').onclick = function() {
   console.log('Limit Definition modal closed');
 };
 
-function oldopenLimitsModal(cell) {
-  currentLimitsCell = cell;
-  const tr = cell.parentElement;
-  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
-  const alarmName = tr.querySelector('td[data-col="alarm_name"]').textContent.trim();
 
-  // Find the alarm data in your global data model
-  currentLimitDefs = null;
-  console.log('alarmNum :',alarmNum);
-  console.log('alarmName :',alarmName);
-
-
-
-  for (const alarm of alarmDefsData) {
-    if (String(alarm.alarm_num) === alarmNum) {
-      console.log('alarm  :',alarm);
-      currentLimitDefs = alarm.limit_defs || [];
-      break;
-    }
-  }
-
-  if (!currentLimitDefs || !Array.isArray(currentLimitDefs)) {
-    alert('No limit_defs array found for this alarm.');
-    return;
-  }
-
-  //console.log('currentLimitDefs :',currentLimitDefs);
-
-  const modalContent = document.getElementById('limitsModalContent');
-  modalContent.innerHTML = '';
-
-// Find the matching limits definition
-//    const existingDef = findLimitByPath(limitsDefsMap, "target_vars.online");
-    const limitsDef = findLimitByPathName(limitsDefsMap, "alarm_limits", alarmName);
-    //const limitsDef = limitsDefsData.find(ld => ld.alarm_name === alarmName);
-
-    if (!limitsDef) {
-        console.warn('No limits definition found for alarm:', alarmName);
-        clearLimitsModal();
-        return;
-    }
-
-    // Populate modal fields
-    document.getElementById('limit1_label').value = limitsDef.limit1_label || '';
-
-  // Create table
-  const table = document.createElement('table');
-  table.classList.add('limits-table'); // add your CSS class if any
-
-  // Table header
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  const columns = ['name', 'sm_name', 'reg_type', 'offset', 'num', 'write_data', 'read_data'];
-  columns.forEach(col => {
-    const th = document.createElement('th');
-    th.textContent = col;
-    headerRow.appendChild(th);
-  });
-  // Add action column header
-  const actionTh = document.createElement('th');
-  actionTh.textContent = 'Actions';
-  headerRow.appendChild(actionTh);
-
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
-  // Table body
-  const tbody = document.createElement('tbody');
-
-  currentLimitDefs.forEach(item => {
-    const tr = document.createElement('tr');
-
-    columns.forEach(col => {
-      const td = document.createElement('td');
-      let cellValue = item[col];
-
-      // For write_data and read_data, stringify arrays or objects
-      if ((col === 'write_data' || col === 'read_data') && typeof cellValue !== 'string') {
-        try {
-          cellValue = JSON.stringify(cellValue || [], null, 2);
-        } catch {
-          cellValue = '';
-        }
-      } else if (cellValue == null) {
-        cellValue = '';
-      }
-
-      td.textContent = cellValue;
-      td.setAttribute('data-col', col);
-      td.setAttribute('contenteditable', 'true');
-      tr.appendChild(td);
-    });
-
-    // Actions cell with buttons
-    const actionTd = document.createElement('td');
-    actionTd.className = 'action-cell';
-
-    const getBtn = document.createElement('button');
-    getBtn.textContent = '📥 Get';
-    getBtn.onclick = () => getTargetData(tr);
-    actionTd.appendChild(getBtn);
-
-    const setBtn = document.createElement('button');
-    setBtn.textContent = '📤 Set';
-    setBtn.onclick = () => setTargetData(tr);
-    actionTd.appendChild(setBtn);
-
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '🗑️';
-    delBtn.onclick = () => tr.remove();
-    actionTd.appendChild(delBtn);
-
-    tr.appendChild(actionTd);
-    tbody.appendChild(tr);
-  });
-
-  table.appendChild(tbody);
-  modalContent.appendChild(table);
-
-  // Show modal and backdrop
-  document.getElementById('limitsModal').style.display = 'block';
-  document.getElementById('modalBackdrop').style.display = 'block';
-}
-function xxxopenLimitsModal(cell) {
-  currentLimitsCell = cell;
-  const tr = cell.parentElement;
-  const alarmNum = tr.querySelector('td[data-col="alarm_num"]').textContent.trim();
-
-  // Find the alarm data in your global data model
-  currentLimitDefs = null;
-  for (const alarm of alarmDefsData) {
-    if (String(alarm.alarm_num) === alarmNum) {
-      currentLimitDefs = alarm.limit_defs || {};
-      break;
-    }
-  }
-
-  if (!currentLimitDefs) {
-    alert('No limit_defs found for this alarm.');
-    return;
-  }
-
-  // Build editable form for limit_defs
-  const modalContent = document.getElementById('limitsModalContent');
-  modalContent.innerHTML = '';
-
-  // Create input fields for each key except write_data and read_data
-  ['name', 'sm_name', 'reg_type', 'offset', 'num'].forEach(key => {
-    const label = document.createElement('label');
-    label.textContent = key + ': ';
-    const input = document.createElement('input');
-    input.type = (key === 'num') ? 'number' : 'text';
-    input.value = currentLimitDefs[key] || '';
-    input.id = 'limitDef_' + key;
-    input.style.marginRight = '10px';
-    label.appendChild(input);
-    modalContent.appendChild(label);
-  });
-
-  // Create editable textarea for write_data and read_data arrays
-  ['write_data', 'read_data'].forEach(key => {
-    const label = document.createElement('label');
-    label.textContent = key + ': ';
-    const textarea = document.createElement('textarea');
-    textarea.id = 'limitDef_' + key;
-    textarea.style.width = '100%';
-    textarea.style.height = '80px';
-    textarea.value = JSON.stringify(currentLimitDefs[key] || [], null, 2);
-    label.appendChild(textarea);
-    modalContent.appendChild(label);
-  });
-
-  document.getElementById('limitsModal').style.display = 'block';
-  document.getElementById('modalBackdrop').style.display = 'block';
-}
 
 
 function closeLimitsModal() {
@@ -3100,14 +2926,14 @@ async function setAllTarget() {
 }
 
 // Wire buttons
-document.getElementById('loadBtn').addEventListener('click', loadFromDB);
-document.getElementById('saveBtn').addEventListener('click', saveToDB);
+document.getElementById('loadBtn').addEventListener('click', loadFromConfig);
+document.getElementById('saveBtn').addEventListener('click', savetoConfig);
 document.getElementById('exportBtn').addEventListener('click', exportJSON);
 document.getElementById('importBtn').addEventListener('click', importJSON);
 document.getElementById('addAlarmBtn').addEventListener('click', addNewAlarm);
 
 // Initial load
-loadFromDB();
+loadFromConfig();
 loadTargetConfig();
 populateJsonDefSelect();
 reloadVarListOptions();
