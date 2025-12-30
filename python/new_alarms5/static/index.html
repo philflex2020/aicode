@@ -707,9 +707,12 @@ fileInput.addEventListener('change', () => {
 });
 
 let alarmDefsData = []; // This will be populated when you load the data
+let alarmActionsData = []; // This will be populated when you load the data
 let limitsDefsData = []; // This will be populated when you load the data
 let limitsDefsMap = new Map(); // This will be populated when you load the data
-let limitsDefList= []; // This is the list of limits_def items cool this worls
+let limitsDefList= []; // This is the list of limits_def items cool this works
+let limitsDefPresenceMap = new Map(); // this keeps a record of the alarms levels defined for each alarm 
+
 const apiBase = location.origin + '/api/alarms';
 const pubApiBase = location.origin + '/api/pub_defs';
 
@@ -880,17 +883,28 @@ document.getElementById('limitsSetAllBtn').addEventListener('click', async () =>
     await setAllLimitValues();
 });
 // --- Limits Values Table Population ---
+
+
 function populateLimitsValuesTable() {
     const tbody = document.querySelector('#limitsTable tbody');
     tbody.innerHTML = ''; // Clear existing rows
 
     // Convert Map to array of items
     const items = Array.from(limitsDefsMap.values());
+    console.log(" populating limits values table with items: ", items);
 
     items.forEach((item, index) => {
+        const actionMask = item.actionMask ?? 7; // bitmask for levels
+        let hasHysteresis = item.hysteresis ?? 1; // 0 or 1
+        // Helper to check if bit is set
+        const isLevelUsed = (level) => (actionMask & (1 << (level - 1))) !== 0;
+
         const tr = document.createElement('tr');
         tr.dataset.index = index;
-
+        if(item.num == 1)
+        {
+            hasHysteresis = 0; // disable hysteresis if only one value
+        } 
         // Use default 0 if not defined
         const level1 = item.write_data[0] ?? 0;
         const level2 = item.write_data[1] ?? 0;
@@ -904,14 +918,14 @@ function populateLimitsValuesTable() {
 
         tr.innerHTML = `
             <td class="limits-def-cell" onclick='openLimitDefModal(${JSON.stringify(item.name)}, ${index})'>${item.name ?? ''}</td>
-            <td><input type="number" data-col="level1_limit" value="${level1}"></td>
-            <td><input type="number" data-col="level2_limit" value="${level2}"></td>
-            <td><input type="number" data-col="level3_limit" value="${level3}"></td>
-            <td><input type="number" data-col="hysteresis" value="${hyst}"></td>
-            <td><span data-col="target_level1">${target1}</span></td>
-            <td><span data-col="target_level2">${target2}</span></td>
-            <td><span data-col="target_level3">${target3}</span></td>
-            <td><span data-col="target_hysteresis">${target_hyst}</span></td>
+            <td><input type="number" data-col="level1_limit" value="${level1}" ${!isLevelUsed(1) ? 'disabled style="background:#eee;color:#999;"' : ''}></td>
+            <td><input type="number" data-col="level2_limit" value="${level2}" ${!isLevelUsed(2) ? 'disabled style="background:#eee;color:#999;"' : ''}></td>
+            <td><input type="number" data-col="level3_limit" value="${level3}" ${!isLevelUsed(3) ? 'disabled style="background:#eee;color:#999;"' : ''}></td>
+            <td><input type="number" data-col="hysteresis" value="${hyst}" ${hasHysteresis ? '' : 'disabled style="background:#eee;color:#999;"'}></td>
+            <td><input type="number" data-col="target_level1" value="${target1}" ${!isLevelUsed(1) ? 'disabled style="background:#eee;color:#999;"' : ''}></td>
+            <td><input type="number" data-col="target_level2" value="${target2}" ${!isLevelUsed(2) ? 'disabled style="background:#eee;color:#999;"' : ''}></td>
+            <td><input type="number" data-col="target_level3" value="${target3}" ${!isLevelUsed(3) ? 'disabled style="background:#eee;color:#999;"' : ''}></td>
+            <td><input type="number" data-col="target_hysteresis" value="${target_hyst}" ${hasHysteresis ? '' : 'disabled style="background:#eee;color:#999;"'}></td>
             <td class="action-cell">
                 <button onclick='getLimitVals("${item.name}", ${index})'>📥 Get</button>
                 <button onclick='setLimitVals("${item.name}", ${index})'>📤 Set</button>
@@ -949,13 +963,12 @@ function populateJsonDefSelect() {
 }
 
 async function getLimitVals(limit_name, index) {
-
-     const item = findLimitByPathName(limitsDefsMap, "alarm_limits", limit_name);
-
-    console.log(" limit_def ", item);
-
-    if (!item) return;
-
+    const item = findLimitByPathName(limitsDefsMap, "alarm_limits", limit_name);
+    if (!item) {
+      console.log("getLimitVals item not found:", limit_name);      
+      return;
+    }
+    //console.log("Limit item found:", limit_name);      
     const ip = document.getElementById('limitsTargetIp').value;
     const port = document.getElementById('limitsTargetPort').value;
     const secure = document.getElementById('limitsTargetSecure').checked;
@@ -974,21 +987,41 @@ async function getLimitVals(limit_name, index) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-            });
+        });
         const data = await res.json();
-        console.log(" got data :", data);
         if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
 
         item.read_data = data.read_data || [];
 
-        // Update UI accordingly...
-        // Update target fields in UI
         const tr = document.querySelector(`#limitsTable tbody tr[data-index="${index}"]`);
         if (tr) {
-            tr.querySelector('span[data-col="target_level1"]').textContent =  data.read_data[0] ?? '';
-            tr.querySelector('span[data-col="target_level2"]').textContent = data.read_data[1] ?? '';
-            tr.querySelector('span[data-col="target_level3"]').textContent = data.read_data[2] ?? '';
-            tr.querySelector('span[data-col="target_hysteresis"]').textContent = data.read_data[3] ?? '';
+            const actionMask = item.actionMask ?? 0;
+            const hasHysteresis = item.hysteresis ?? 1;
+            let idx = 0;
+
+            // Update inputs only if enabled by actionMask
+            if ((actionMask & (1 << 0)) !== 0) {
+                tr.querySelector('input[data-col="target_level1"]').value = data.read_data[idx++] ?? '';
+            } else {
+                tr.querySelector('input[data-col="target_level1"]').value = '';
+            }
+            if ((actionMask & (1 << 1)) !== 0) {
+                tr.querySelector('input[data-col="target_level2"]').value = data.read_data[idx++] ?? '';
+            } else {
+                tr.querySelector('input[data-col="target_level2"]').value = '';
+            }
+            if ((actionMask & (1 << 2)) !== 0) {
+                tr.querySelector('input[data-col="target_level3"]').value = data.read_data[idx++] ?? '';
+            } else {
+                tr.querySelector('input[data-col="target_level3"]').value = '';
+            }
+
+            // Hysteresis input only if enabled
+            if (hasHysteresis) {
+                tr.querySelector('input[data-col="target_hysteresis"]').value = data.read_data[idx++] ?? '';
+            } else {
+                tr.querySelector('input[data-col="target_hysteresis"]').value = '';
+            }
         }
 
         setStatus('Got data: ' + JSON.stringify(data), false);
@@ -998,13 +1031,15 @@ async function getLimitVals(limit_name, index) {
     }
 }
 
+
+
 async function setLimitVals(limit_name, index) {
-
     const item = findLimitByPathName(limitsDefsMap, "alarm_limits", limit_name);
-
-    console.log(" limit_def ", item);
-
-    if (!item) return;
+      if (!item) {
+        console.log("setLimitVals item not found:", limit_name);      
+      return;
+    }
+    console.log("setLimitVals item found:", limit_name);      
 
 
     const tr = document.querySelector(`#limitsTable tbody tr[data-index="${index}"]`);
@@ -1013,11 +1048,30 @@ async function setLimitVals(limit_name, index) {
         return;
     }
 
-    // Collect values from inputs in the row
-    const level1 = Number(tr.querySelector('input[data-col="level1_limit"]').value);
-    const level2 = Number(tr.querySelector('input[data-col="level2_limit"]').value);
-    const level3 = Number(tr.querySelector('input[data-col="level3_limit"]').value);
-    const hysteresis = Number(tr.querySelector('input[data-col="hysteresis"]').value);
+    const actionMask = item.actionMask ?? 0;
+    const hasHysteresis = item.hysteresis ?? 0;
+
+    const write_data = [];
+    
+    // Level 1
+    if ((actionMask & (1 << 0)) !== 0) {
+        write_data.push(Number(tr.querySelector('input[data-col="level1_limit"]').value));
+    }
+
+    // Level 2
+    if ((actionMask & (1 << 1)) !== 0) {
+        write_data.push(Number(tr.querySelector('input[data-col="level2_limit"]').value));
+    }
+
+    // Level 3
+    if ((actionMask & (1 << 2)) !== 0) {
+        write_data.push(Number(tr.querySelector('input[data-col="level3_limit"]').value));
+    }
+
+    // Hysteresis
+    if (hasHysteresis) {
+        write_data.push(Number(tr.querySelector('input[data-col="hysteresis"]').value));
+    }
 
     const ip = document.getElementById('limitsTargetIp').value;
     const port = document.getElementById('limitsTargetPort').value;
@@ -1027,7 +1081,7 @@ async function setLimitVals(limit_name, index) {
         sm_name: item.sm_name,
         reg_type: item.reg_type,
         offset: item.offset,
-        write_data: [level1, level2, level3, hysteresis]
+        write_data: write_data
     };
 
     setStatus('Setting data on target...');
@@ -1037,13 +1091,13 @@ async function setLimitVals(limit_name, index) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-            });
- 
+        });
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
 
         // Update write_data in the map
-        item.write_data = payload.write_data;
+        item.write_data = write_data;
 
         setStatus('Set data success: ' + JSON.stringify(data), false);
     } catch (err) {
@@ -1052,6 +1106,7 @@ async function setLimitVals(limit_name, index) {
     }
 }
 
+// possibly not used
 async function getLimitValue(alarmNum) {
     try {
         const res = await fetch(`${apiBase}/target/limits/${alarmNum}`);
@@ -1409,6 +1464,202 @@ function buildLimitsDefNestedFromMap() {
     }));
 }
 
+const currentLimitsDefTable = "alarm_limits";
+
+async function populateLimitsPresentMap() {
+  limitsDefPresenceMap.clear();
+
+  // Map from alarm_name to bitmask of levels present
+  const alarmLevelBitmaskMap = new Map();
+
+  alarmActionsData.forEach(actionEntry => {
+    const name = actionEntry.alarm_name;
+    const level = actionEntry.level;
+
+    if (typeof level === 'number' && level >= 1 && level <= 32) {
+      if (!alarmLevelBitmaskMap.has(name)) {
+        alarmLevelBitmaskMap.set(name, 0);
+      }
+      // Set the bit corresponding to this level
+      alarmLevelBitmaskMap.set(name, alarmLevelBitmaskMap.get(name) | (1 << (level - 1)));
+    }
+  });
+
+  alarmDefsData.forEach(alarmDef => {
+    const limitsTableName = currentLimitsDefTable;
+    const actionLevelsMask = alarmLevelBitmaskMap.get(alarmDef.alarm_name) || 0;
+
+    // You can still use hasHysteresis = 1 or derive it from your data if needed
+// pick out the hysterises value from limitsDefsMap with a key of currentLimitsDefTable:alarmDef.alarm_name
+    const limitsKey = `${limitsTableName}:${alarmDef.limits_def || alarmDef.alarm_name}`;
+    const limitEntry = limitsDefsMap.get(limitsKey);
+    let hasHysteresis = 1;
+    if (limitEntry && typeof limitEntry.hysteresis === 'number') {
+        hasHysteresis = limitEntry.hysteresis !== 0 ? 1 : 0;
+    }
+    limitEntry.actionMask = actionLevelsMask;
+
+    const presence = {
+      actionLevelsMask,
+      hasHysteresis
+    };
+
+    if (!limitsDefPresenceMap.has(limitsTableName)) {
+      limitsDefPresenceMap.set(limitsTableName, {});
+    }
+
+    limitsDefPresenceMap.get(limitsTableName)[alarmDef.limits_def || alarmDef.alarm_name] = presence;
+  });
+}
+
+
+
+
+async function xpopulateLimitsPresentMap() {
+  limitsDefPresenceMap.clear();
+  let count_bits = 0  
+
+  // Build a map from alarm_name to array of levels present
+  const alarmLevelActionsMap = new Map();
+  alarmActionsData.forEach(levelAction => {
+    const name = levelAction.alarm_name;
+    let actionsArray = [];
+    try {
+      actionsArray = JSON.parse(levelAction.actions);
+    } catch (e) {
+      console.warn(`Failed to parse actions for alarm ${name}:`, e);
+    }
+    if (!alarmLevelActionsMap.has(name)) {
+      alarmLevelActionsMap.set(name, []);
+    }
+    // Assuming you want to mark presence for each level in actions array
+    actionsArray.forEach(level => {
+      if (!alarmLevelActionsMap.get(name).includes(level)) {
+        alarmLevelActionsMap.get(name).push(level);
+      }
+    });
+  });
+
+  alarmDefsData.forEach(alarmDef => {
+    const limitsTableName = currentLimitsDefTable;
+    const levelsPresent = alarmLevelActionsMap.get(alarmDef.alarm_name) || [];
+    //console.log(`Alarm: [${alarmDef.alarm_name}] Levels Present:`, levelsPresent);
+
+    // Create bitmask from levelsPresent array
+    let actionLevelsMask = 0;
+    count_bits = 0;
+    levelsPresent.forEach(level => {
+      if (typeof level === 'number' && level >= 1 && level <= 32) {
+        actionLevelsMask |= (1 << (level - 1));
+        count_bits++;
+      }
+    });
+
+    // Determine hasHysteresis based on your logic or default to 1
+    let hasHysteresis = 1;
+       // Find the limitsDef entry for this limitsTableName and alarmDef.limits_def
+    const limitsGroup = limitsDefsData.find(ld => ld.table === limitsTableName);
+    if (limitsGroup && alarmDef.limits_def) {
+      const limitEntry = limitsGroup.items.find(item => item.name === alarmDef.limits_def);
+      if (limitEntry && typeof limitEntry.num === 'number') {
+        // If num exceeds number of bits set, set hasHysteresis to 1
+        if (limitEntry.num > count_bits) {
+          hasHysteresis = 1;
+        } else {
+          hasHysteresis = 0;
+        }
+      }
+    }
+
+    const presence = {
+      actionLevelsMask,
+      hasHysteresis
+    };
+
+    if (!limitsDefPresenceMap.has(limitsTableName)) {
+      limitsDefPresenceMap.set(limitsTableName, {});
+    }
+
+    limitsDefPresenceMap.get(limitsTableName)[alarmDef.limits_def || alarmDef.alarm_name] = presence;
+  });
+}
+
+
+// async function populateLimitsPresentTable() {
+//   let count_bits = 0  
+//   limitsDefPresenceMap.clear();
+
+//   alarmDefsData.forEach(alarmDef => {
+//     console.log(`name: [${alarmDef.alarm_name}]`);
+//     if (alarmDef.alarm_name === "Terminal Over Voltage") console.log('Actions:', alarmDef.actions);
+//     const limitsTableName = currentLimitsDefTable;
+//     const actions = Array.isArray(alarmDef.actions) ? alarmDef.actions : [];
+
+
+//     // Create a bitmask for action levels (bit 0 = level 1, bit 1 = level 2, etc.)
+//     let actionLevelsMask = 0;
+//     actions.forEach(action => {
+//       if (alarmDef.alarm_name == "Terminal Over Voltage") console.log('Action:', action);
+//       count_bits = 0;
+//       if (action && typeof action.level === 'number' && action.level >= 1 && action.level <= 32) {
+//         actionLevelsMask |= (1 << (action.level - 1)); // set bit for this level
+//         count_bits++;
+//       }
+//     });
+
+//     let hasHysteresis = 2; 
+//     // Find the limitsDef entry for this limitsTableName and alarmDef.limits_def
+//     const limitsGroup = limitsDefsData.find(ld => ld.table === limitsTableName);
+//     if (limitsGroup && alarmDef.limits_def) {
+//       const limitEntry = limitsGroup.items.find(item => item.name === alarmDef.limits_def);
+//       if (limitEntry && typeof limitEntry.num === 'number') {
+//         // If num exceeds number of bits set, set hasHysteresis to 1
+//         if (limitEntry.num > count_bits) {
+//           hasHysteresis = 1;
+//         } else {
+//           hasHysteresis = 0;
+//         }
+//       }
+//     }
+
+//     const presence = {
+//       actionLevelsMask,  // bitmask indicating which levels are set
+//       hasHysteresis
+//     };
+
+//     if (!limitsDefPresenceMap.has(limitsTableName)) {
+//       limitsDefPresenceMap.set(limitsTableName, {});
+//     }
+
+//     limitsDefPresenceMap.get(limitsTableName)[alarmDef.limits_def || alarmDef.name] = presence;
+//   });
+
+//    // look for limitsDefsData [currentLimitsDefTable][alarmDef.limits_def].num
+//    //if this exceeds  number of bits set in actionLevelsMask  then set hasHysteresis to 1
+// }
+// const currentLimitsDefTable = "alarm_limits";
+
+// async function populateLimitsPresentTable() {
+//   limitsDefPresenceMap.clear();
+
+//   alarmDefsData.forEach(alarmDef => {
+//     const limitsTableName = currentLimitsDefTable; // use global fixed table name
+//     const actions = Array.isArray(alarmDef.actions) ? alarmDef.actions : [];
+//     const hasHysteresis = !!alarmDef.hysteresis;
+
+//     const presence = {
+//       actionLevelsSet: actions.map(action => !!action),
+//       hasHysteresis
+//     };
+
+//     if (!limitsDefPresenceMap.has(limitsTableName)) {
+//       limitsDefPresenceMap.set(limitsTableName, {});
+//     }
+
+//     limitsDefPresenceMap.get(limitsTableName)[alarmDef.id || alarmDef.name] = presence;
+//   });
+// }
+
 async function loadFromConfig() {
     setStatus('Loading from /api/alarms/config ...');
     try {
@@ -1416,6 +1667,7 @@ async function loadFromConfig() {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         alarmDefsData = data.alarm_definitions || [];
+        alarmActionsData = data.alarm_level_actions || [];
         limitsDefsData = data.limits_def || [];
         // In your fetchConfig or where you process the config data:
         data.limits_def.forEach(tableGroup => {
@@ -1425,11 +1677,14 @@ async function loadFromConfig() {
                 limitsDefsMap.set(`${tableName}:${item.name}`, item);
             });
         });
+
         renderDefs(data.alarm_definitions || []);
         renderLevels(data.alarm_level_actions || []);
         renderLimits(data.limits_values || []);
         populateJsonDefSelect();
+        populateLimitsPresentMap();
         populateLimitsValuesTable();
+        console.log("limitsDefPresenceMap", limitsDefPresenceMap);
         
         setStatus('Loaded configuration from DB.', false);
     } catch (err) {
@@ -1744,6 +1999,103 @@ function openLimitDefModal(limitName, index) {
 }
 
 function closeLimitDefModal() {
+  if (!window.currentEditingItem) {
+    console.warn('No current editing item set');
+    return;
+  }
+
+  const item = window.currentEditingItem;
+  const index = window.currentEditingIndex;
+  console.log('Closing modal for item:', item, 'at index:', index);
+
+  // Read values from modal fields
+  item.name = document.getElementById('limitDefName').value;
+  item.sm_name = document.getElementById('limitDefSmName').value;
+  item.reg_type = document.getElementById('limitDefRegType').value;
+  item.offset = document.getElementById('limitDefOffset').value;
+  item.num = document.getElementById('limitDefNum').value;
+
+  try {
+    item.write_data = JSON.parse(document.getElementById('limitDefs').value);
+  } catch (e) {
+    alert('Invalid JSON in write_data field: ' + e.message);
+    return; // Don't close modal if JSON is invalid
+  }
+
+  // Update the map entry (assuming item.name is the key)
+  limitsDefsMap.set(item.name, item);
+
+  const row = document.querySelector(`#limitsTable tr[data-index="${index}"]`);
+  console.log('Updating row for alarm num row:', index, row);
+  if (row) {
+    const writeData = item.write_data || [];
+    const actionMask = item.actionMask ?? 0;
+    const hasHysteresis = item.hysteresis ?? 0;
+
+    // Helper to check if level is enabled
+    const isLevelUsed = (level) => (actionMask & (1 << (level - 1))) !== 0;
+    let idx = 0;
+    // Level 1
+    if (isLevelUsed(1)) {
+      row.querySelector('input[data-col="level1_limit"]').value = writeData[idx++] ?? '';
+      row.querySelector('input[data-col="level1_limit"]').disabled = false;
+      row.querySelector('input[data-col="level1_limit"]').style.background = '';
+      row.querySelector('input[data-col="level1_limit"]').style.color = '';
+    } else {
+      row.querySelector('input[data-col="level1_limit"]').value = '';
+      row.querySelector('input[data-col="level1_limit"]').disabled = true;
+      row.querySelector('input[data-col="level1_limit"]').style.background = '#eee';
+      row.querySelector('input[data-col="level1_limit"]').style.color = '#999';
+    }
+
+    // Level 2
+    if (isLevelUsed(2)) {
+      row.querySelector('input[data-col="level2_limit"]').value = writeData[idx++] ?? '';
+      row.querySelector('input[data-col="level2_limit"]').disabled = false;
+      row.querySelector('input[data-col="level2_limit"]').style.background = '';
+      row.querySelector('input[data-col="level2_limit"]').style.color = '';
+    } else {
+      row.querySelector('input[data-col="level2_limit"]').value = '';
+      row.querySelector('input[data-col="level2_limit"]').disabled = true;
+      row.querySelector('input[data-col="level2_limit"]').style.background = '#eee';
+      row.querySelector('input[data-col="level2_limit"]').style.color = '#999';
+    }
+
+    // Level 3
+    if (isLevelUsed(3)) {
+      row.querySelector('input[data-col="level3_limit"]').value = writeData[idx++] ?? '';
+      row.querySelector('input[data-col="level3_limit"]').disabled = false;
+      row.querySelector('input[data-col="level3_limit"]').style.background = '';
+      row.querySelector('input[data-col="level3_limit"]').style.color = '';
+    } else {
+      row.querySelector('input[data-col="level3_limit"]').value = '';
+      row.querySelector('input[data-col="level3_limit"]').disabled = true;
+      row.querySelector('input[data-col="level3_limit"]').style.background = '#eee';
+      row.querySelector('input[data-col="level3_limit"]').style.color = '#999';
+    }
+
+    // Hysteresis
+    if (hasHysteresis) {
+      row.querySelector('input[data-col="hysteresis"]').value = writeData[idx++] ?? '';
+      row.querySelector('input[data-col="hysteresis"]').disabled = false;
+      row.querySelector('input[data-col="hysteresis"]').style.background = '';
+      row.querySelector('input[data-col="hysteresis"]').style.color = '';
+    } else {
+      row.querySelector('input[data-col="hysteresis"]').value = '';
+      row.querySelector('input[data-col="hysteresis"]').disabled = true;
+      row.querySelector('input[data-col="hysteresis"]').style.background = '#eee';
+      row.querySelector('input[data-col="hysteresis"]').style.color = '#999';
+    }
+  }
+
+  // Hide modal
+  document.getElementById('limitDefModal').style.display = 'none';
+
+  // Clear current editing reference
+  window.currentEditingItem = null;
+}
+
+function xcloseLimitDefModal() {
 
   if (!window.currentEditingItem) {
     console.warn('No current editing item set');

@@ -1364,7 +1364,7 @@
     },
     {
       "num": 23,
-      "name": "Di4 mcerror",
+      "name": "DI4 mcerror",
       "levels": 1,
       "measured": "",
       "limits": [
@@ -1376,21 +1376,21 @@
       "notes": "some notes",
       "actions": [
         {
-          "level": 1,
+          "level": 3,
           "level_enabled": true,
-          "duration": "0:0",
+          "duration": "3:6",
           "actions": [
             {
               "when_set": [
-                "set_di4_mcerror_level1",
-                "log:DI4_MCERROR_L1_ACTIVE",
-                "notify:ui_warning:Di4 mcerror Level 1 active"
+                "set_DI4_mcerror_level3",
+                "log:DI4_MCERROR_L3_ACTIVE",
+                "notify:ui_warning:DI4 mcerror Level 3 active"
               ]
             },
             {
               "when_clear": [
-                "reset_di4_mcerror_level1",
-                "log:DI4_MCERROR_L1_CLEAR"
+                "reset_DI4_mcerror_level3",
+                "log:DI4_MCERROR_L3_CLEAR"
               ]
             }
           ],
@@ -1399,7 +1399,7 @@
       ],
       "_limit_def_matched": "Di4 mcerror",
       "_limit_def_dummy": true,
-      "limits_def": "Di4 mcerror"
+      "limits_def": "DI4 mcerror"
     },
     {
       "num": 24,
@@ -8332,11 +8332,12 @@
           "__dummy_created": true
         },
         {
-          "name": "Di4 mcerror",
+          "name": "DI4 mcerror",
           "sm_name": "rtos",
           "reg_type": "mb_hold",
-          "offset": "Di4 mcerror",
+          "offset": "DI4 mcerror",
           "num": 1,
+          "hysteresis": 0,
           "write_data": [
             0
           ],
