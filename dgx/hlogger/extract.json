@@ -1,0 +1,7 @@
+{
+  "columns": ["timestamp", "soc", "pack_current"],
+  "output_format": "parquet",
+  "resample_rate": "1s",
+  "start_date": "2026-01-01",
+  "end_date": "2026-02-05"
+}

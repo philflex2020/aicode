@@ -1,0 +1,12 @@
+{
+  "dataset_name": "BMS_Telemetry_5Hz",
+  "fields": {
+    "timestamp": { "type": "datetime", "unit": "ISO8601" },
+    "soc": { "type": "float", "unit": "percentage", "description": "State of Charge" },
+    "pack_voltage": { "type": "float", "unit": "V", "description": "Total Pack Voltage" },
+    "pack_current": { "type": "float", "unit": "A", "description": "Current Draw" },
+    "min_cell_v": { "type": "float", "unit": "V", "description": "Lowest Individual Cell Voltage" },
+    "max_cell_temp": { "type": "float", "unit": "C", "description": "Highest Cell Temperature" }
+  }
+}
+
